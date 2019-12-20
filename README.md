@@ -5,7 +5,7 @@ OpenApi 3.0 json schemas. Files are automatically synced to the developer docs p
 
 - The files should follow the JSON OpenApi 3.0 format [Specification](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
 - Schema files shoud have a mnemonic file name that specify the API being described
-- VTEX_TEMPLATE.json helps to port new APIs to spec
+- VTEX_TEMPLATE.json helps to port new APIs to spec `TODO`
 
 ## Sync Automation
 
@@ -13,7 +13,7 @@ To get schema files to sync with our developer docs, they should be described at
 
 Add this code to the action description to sync a new file:
 
-```
+```yaml
 - name: ReadMe API GitHub Sync
   uses: readmeio/github-readme-sync@1.0.1
   with:
@@ -28,3 +28,75 @@ Add this code to the action description to sync a new file:
     # ReadMe version to sync API into
     readme-api-version: # optional
 ```
+
+# Important Schema Details:
+
+## Server
+
+OpenApi describes the full endpoint for accessing the API as `{Server URL}` + `{endpoint Path}` + `{Path Parameters}`.
+So a endpoint with `/api/getResults` as path in a schema with `https://example.com` as the url in the `server` object and no parameters will tell clients to send requests to `https://example.com/api/getResults`
+
+Server Object Example: 
+
+```JSON 
+"servers": [
+    {
+        "url": "https://{accountName}.{environment}.com.br",
+        "description": "VTEX server url",
+        "variables": {
+            "accountName": {
+                "default": "apiexamples",
+                "description": "Your VTEX account name"
+            },
+            "environment": {
+                "enum": [
+                    "vtexcommercestable",
+                    "myvtex"
+                ],
+                "default": "vtexcommercestable"
+            }
+        }
+    }
+],
+```
+The `servers` key contains an array of server objects. But `Readme.io`, our documentation system, will select the first one and use default values for the variables
+
+## Security Scheme
+
+_Security schemes_ describe autentication types that are available in this API. you can check the all the options available int the [Security Scheme Spec](http://spec.openapis.org/oas/v3.0.0#security-scheme-object) 
+They should be inserted inside the _Components Object_ 
+
+the ones we use for VTEX appKey and appToken are:
+
+```JSON 
+"securitySchemes": {
+    "appKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-VTEX-API-AppKey"
+    },
+    "appToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-VTEX-API-AppToken"
+    }
+}
+```
+
+This tells the client that the request should have `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken` as variables in the request header
+
+## Security Requirement
+
+If defined inside the _Open API Object_ the security requirement will define the required security schemes for all endpoints. If defined inside a path object, it will define a per-endpoint security scheme. 
+
+The example we are currently using, defined inside the _Open API Object_, is:
+
+```JSON 
+"security": [
+        {
+            "appKey": [],
+            "appToken": []
+        }
+    ]
+```
+
