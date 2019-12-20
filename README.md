@@ -66,7 +66,8 @@ The `servers` key contains an array of server objects. But `Readme.io`, our docu
 ### Security Scheme
 
 _Security schemes_ describe autentication types that are available in this API. you can check the all the options available int the [Security Scheme Spec](http://spec.openapis.org/oas/v3.0.0#security-scheme-object) 
-They should be inserted inside the _Components Object_ 
+
+**They should be inserted inside the _Components Object_** 
 
 the ones we use for VTEX appKey and appToken are:
 
@@ -105,3 +106,29 @@ The example we are currently using, defined inside the _Open API Object_, is:
 ## Examples
 
 Example objects will be ignored by our documentation generator. If the desired outcome is to have the values as placeholders in the request parameters form, they should be inside the parameter schema object in the `default` key. 
+
+# To Do:
+## APIs to upload:
+- [ ] Catalog API
+- [ ] Checkout API
+- [ ] CMS - Change URI Schema
+- [ ] Customer Credit API
+- [ ] GiftCard System API
+- [ ] GiftCard Hub API
+- [ ] GiftCard API
+- [ ] GiftCard Provider Protocol
+- [ ] License Manager API
+- [ ] Logistics API
+- [x] Master Data API - v10.2
+- [x] Master Data API - v2
+- [ ] Orders API
+- [ ] Payment Provider Protocol
+- [ ] Payments Gateway API
+- [ ] Pricing API
+- [ ] Rates and Benefits API
+- [ ] Recurrence (v1 - deprecated)
+- [ ] Search API
+- [x] Session Manager API
+- [ ] Subscriptions (v2)
+- [ ] Suggestions API
+- [ ] VTEX Do API
