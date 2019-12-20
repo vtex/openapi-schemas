@@ -5,7 +5,7 @@ OpenApi 3.0 json schemas. Files are automatically synced to the developer docs p
 
 - The files should follow the JSON OpenApi 3.0 format [Specification](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
 - Schema files shoud have a mnemonic file name that specify the API being described
-- VTEX_TEMPLATE.json helps to port new APIs to spec `TODO`
+- VTEX_TEMPLATE.json is an example of a simple api. It shows how to represent endpoints and parameters. Also all server and auth configuration are as they should be for VTEX APIs.
 
 ## Sync Automation
 
@@ -109,7 +109,7 @@ Example objects will be ignored by our documentation generator. If the desired o
 
 # To Do:
 ## APIs to upload:
-- [ ] Catalog API
+- [x] Catalog API
 - [ ] Checkout API
 - [ ] CMS - Change URI Schema
 - [ ] Customer Credit API
@@ -117,7 +117,7 @@ Example objects will be ignored by our documentation generator. If the desired o
 - [ ] GiftCard Hub API
 - [ ] GiftCard API
 - [ ] GiftCard Provider Protocol
-- [ ] License Manager API
+- [x] License Manager API
 - [ ] Logistics API
 - [x] Master Data API - v10.2
 - [x] Master Data API - v2
