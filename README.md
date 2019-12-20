@@ -38,7 +38,7 @@ So a endpoint with `/api/getResults` as path in a schema with `https://example.c
 
 Server Object Example: 
 
-```JSON 
+```json 
 "servers": [
     {
         "url": "https://{accountName}.{environment}.com.br",
@@ -61,14 +61,16 @@ Server Object Example:
 ```
 The `servers` key contains an array of server objects. But `Readme.io`, our documentation system, will select the first one and use default values for the variables
 
-## Security Scheme
+## Authentication
+
+### Security Scheme
 
 _Security schemes_ describe autentication types that are available in this API. you can check the all the options available int the [Security Scheme Spec](http://spec.openapis.org/oas/v3.0.0#security-scheme-object) 
 They should be inserted inside the _Components Object_ 
 
 the ones we use for VTEX appKey and appToken are:
 
-```JSON 
+```json 
 "securitySchemes": {
     "appKey": {
         "type": "apiKey",
@@ -85,13 +87,13 @@ the ones we use for VTEX appKey and appToken are:
 
 This tells the client that the request should have `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken` as variables in the request header
 
-## Security Requirement
+### Security Requirement
 
 If defined inside the _Open API Object_ the security requirement will define the required security schemes for all endpoints. If defined inside a path object, it will define a per-endpoint security scheme. 
 
 The example we are currently using, defined inside the _Open API Object_, is:
 
-```JSON 
+```json 
 "security": [
         {
             "appKey": [],
@@ -100,3 +102,6 @@ The example we are currently using, defined inside the _Open API Object_, is:
     ]
 ```
 
+## Examples
+
+Example objects will be ignored by our documentation generator. If the desired outcome is to have the values as placeholders in the request parameters form, they should be inside the parameter schema object in the `default` key. 
