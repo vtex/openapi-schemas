@@ -110,7 +110,7 @@ Example objects will be ignored by our documentation generator. If the desired o
 # To Do:
 ## APIs to upload:
 - [x] Catalog API
-- [ ] Checkout API
+- [x] Checkout API
 - [ ] CMS - Change URI Schema
 - [ ] Customer Credit API
 - [ ] GiftCard System API
