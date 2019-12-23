@@ -4,7 +4,7 @@ OpenApi 3.0 json schemas. Files are automatically synced to the developer docs p
 ## Schema files
 
 - The files should follow the JSON OpenApi 3.0 format [Specification](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
-- Schema files shoud have a mnemonic file name that specify the API being described
+- Schema files shoud have a mnemonic file name that specifies the API being described
 - VTEX_TEMPLATE.json is an example of a simple api. It shows how to represent endpoints and parameters. Also all server and auth configuration are as they should be for VTEX APIs.
 
 ## Sync Automation
@@ -14,15 +14,15 @@ To get schema files to sync with our developer docs, they should be described at
 Add this code to the action description to sync a new file:
 
 ```yaml
-- name: ReadMe API GitHub Sync
+- name: Sync ____________ API #Replace with API title
   uses: readmeio/github-readme-sync@1.0.1
   with:
     # The GITHUB_TOKEN secret
-    repo-token: '${{ secrets.GITHUB_TOKEN }}'
+    repo-token: '${{ secrets.GITHUB_TOKEN }}' #Do not change
     # The path for your API spec file
-    api-file-path: # optional
+    api-file-path: # .json files should be in the root folder
     # Your API key for your ReadMe project
-    readme-api-key: ${{ secrets.README_API_KEY }} # optional
+    readme-api-key: ${{ secrets.README_API_KEY }} #Do not change
     # ID for the API Setting in ReadMe - you can get that from the dashboard
     readme-api-id: # optional
     # ReadMe version to sync API into
@@ -111,7 +111,7 @@ Example objects will be ignored by our documentation generator. If the desired o
 ## APIs to upload:
 - [x] Catalog API
 - [x] Checkout API
-- [ ] CMS - Change URI Schema
+- [x] CMS - Change URI Schema
 - [ ] Customer Credit API
 - [ ] GiftCard System API
 - [ ] GiftCard Hub API
