@@ -112,8 +112,8 @@ Example objects will be ignored by our documentation generator. If the desired o
 - [x] Catalog API
 - [x] Checkout API
 - [x] CMS - Change URI Schema
-- [ ] Customer Credit API
-- [ ] GiftCard System API
+- [x] Customer Credit API
+- [x] GiftCard System API
 - [ ] GiftCard Hub API
 - [ ] GiftCard API
 - [ ] GiftCard Provider Protocol
