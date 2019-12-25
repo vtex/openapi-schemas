@@ -118,7 +118,7 @@ Example objects will be ignored by our documentation generator. If the desired o
 - [x] GiftCard API - TODO: MARKDOWN
 - [x] GiftCard Provider Protocol - TODO: MARKDOWN
 - [x] License Manager API
-- [ ] Logistics API
+- [x] Logistics API - TODO: MARKDOWN
 - [x] Master Data API - v10.2
 - [x] Master Data API - v2
 - [ ] Orders API
