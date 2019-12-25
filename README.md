@@ -114,9 +114,9 @@ Example objects will be ignored by our documentation generator. If the desired o
 - [x] CMS - Change URI Schema
 - [x] Customer Credit API - TODO: MARKDOWN
 - [x] GiftCard System API - TODO: MARKDOWN
-- [ ] GiftCard Hub API
-- [ ] GiftCard API
-- [ ] GiftCard Provider Protocol
+- [x] GiftCard Hub API - TODO: MARKDOWN
+- [x] GiftCard API - TODO: MARKDOWN
+- [x] GiftCard Provider Protocol - TODO: MARKDOWN
 - [x] License Manager API
 - [ ] Logistics API
 - [x] Master Data API - v10.2
