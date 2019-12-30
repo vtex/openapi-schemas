@@ -122,8 +122,8 @@ Example objects will be ignored by our documentation generator. If the desired o
 - [x] Master Data API - v10.2
 - [x] Master Data API - v2
 - [x] Orders API - TODO: SYNC
-- [ ] Payment Provider Protocol
-- [ ] Payments Gateway API
+- [x] Payment Provider Protocol - TODO: MARKDOWN
+- [x] Payments Gateway API - TODO: MARKDOWN
 - [ ] Pricing API
 - [ ] Rates and Benefits API
 - [ ] Recurrence (v1 - deprecated)
