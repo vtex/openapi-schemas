@@ -127,7 +127,7 @@ Example objects will be ignored by our documentation generator. If the desired o
 - [x] Pricing API - TODO: MARKDOWN
 - [x] Rates and Benefits API - TODO: MARKDOWN
 - [x] Recurrence (v1 - deprecated) - TODO: MARKDOWN
-- [x] Search API - TODO: MARKDOWN
+- [x] Search API - TODO: MARKDOWN - TODO: SYNC
 - [x] Session Manager API
 - [x] Subscriptions (v2) - TODO: MARKDOWN
 - [x] Suggestions API - TODO: MARKDOWN
