@@ -124,11 +124,11 @@ Example objects will be ignored by our documentation generator. If the desired o
 - [x] Orders API - TODO: SYNC
 - [x] Payment Provider Protocol - TODO: MARKDOWN
 - [x] Payments Gateway API - TODO: MARKDOWN
-- [ ] Pricing API
-- [ ] Rates and Benefits API
-- [ ] Recurrence (v1 - deprecated)
-- [ ] Search API
+- [x] Pricing API - TODO: MARKDOWN
+- [x] Rates and Benefits API - TODO: MARKDOWN
+- [x] Recurrence (v1 - deprecated) - TODO: MARKDOWN
+- [x] Search API - TODO: MARKDOWN
 - [x] Session Manager API
-- [ ] Subscriptions (v2)
-- [ ] Suggestions API
-- [ ] VTEX Do API
+- [x] Subscriptions (v2) - TODO: MARKDOWN
+- [x] Suggestions API - TODO: MARKDOWN
+- [x] VTEX Do API - TODO: MARKDOWN
