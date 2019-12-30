@@ -118,10 +118,10 @@ Example objects will be ignored by our documentation generator. If the desired o
 - [x] GiftCard API - TODO: MARKDOWN
 - [x] GiftCard Provider Protocol - TODO: MARKDOWN
 - [x] License Manager API
-- [x] Logistics API - TODO: MARKDOWN
+- [x] Logistics API - TODO: MARKDOWN - TODO: SYNC
 - [x] Master Data API - v10.2
 - [x] Master Data API - v2
-- [ ] Orders API
+- [x] Orders API - TODO: SYNC
 - [ ] Payment Provider Protocol
 - [ ] Payments Gateway API
 - [ ] Pricing API
