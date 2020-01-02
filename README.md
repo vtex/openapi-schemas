@@ -112,23 +112,23 @@ Example objects will be ignored by our documentation generator. If the desired o
 - [x] Catalog API
 - [x] Checkout API
 - [x] CMS - Change URI Schema
-- [x] Customer Credit API - TODO: MARKDOWN
-- [x] GiftCard System API - TODO: MARKDOWN
-- [x] GiftCard Hub API - TODO: MARKDOWN
-- [x] GiftCard API - TODO: MARKDOWN
-- [x] GiftCard Provider Protocol - TODO: MARKDOWN
+- [x] Customer Credit API
+- [x] GiftCard System API
+- [x] GiftCard Hub API
+- [x] GiftCard API
+- [x] GiftCard Provider Protocol
 - [x] License Manager API
-- [x] Logistics API - TODO: MARKDOWN
+- [x] Logistics API
 - [x] Master Data API - v10.2
 - [x] Master Data API - v2
 - [x] Orders API
-- [x] Payment Provider Protocol - TODO: MARKDOWN
-- [x] Payments Gateway API - TODO: MARKDOWN
-- [x] Pricing API - TODO: MARKDOWN
-- [x] Rates and Benefits API - TODO: MARKDOWN
-- [x] Recurrence (v1 - deprecated) - TODO: MARKDOWN
-- [x] Search API - TODO: MARKDOWN
+- [x] Payment Provider Protocol
+- [x] Payments Gateway API
+- [x] Pricing API
+- [x] Rates and Benefits API
+- [x] Recurrence (v1 - deprecated)
+- [x] Search API
 - [x] Session Manager API
-- [x] Subscriptions (v2) - TODO: MARKDOWN
-- [x] Suggestions API - TODO: MARKDOWN
-- [x] VTEX Do API - TODO: MARKDOWN
+- [x] Subscriptions (v2)
+- [x] Suggestions API
+- [x] VTEX Do API
