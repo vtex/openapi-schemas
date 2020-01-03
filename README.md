@@ -1,6 +1,31 @@
 # openapi-schemas
 OpenApi 3.0 json schemas. Files are automatically synced to the developer docs pages
 
+## VTEX APIs Here:
+- Catalog API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Catalog%2520API.json&label=OpenAPI)
+- Checkout API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Checkout%2520API.json&label=OpenAPI)
+- CMS - Change URI Schema ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FCMS%2520-%2520Change%2520URI%2520Schema.json&label=OpenAPI)
+- Customer Credit API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Customer%2520Credit%2520API.json&label=OpenAPI)
+- GiftCard System API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Giftcard%2520System%2520API.json&label=OpenAPI)
+- GiftCard Hub API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520GiftCard%2520Hub%2520API.json&label=OpenAPI)
+- GiftCard API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520GiftCard%2520API.json&label=OpenAPI)
+- GiftCard Provider Protocol ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Giftcard%2520Provider%2520Protocol.json&label=OpenAPI)
+- License Manager API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520License%2520Manager%2520API.json&label=OpenAPI)
+- Logistics API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Logistics%2520API.json&label=OpenAPI)
+- Master Data API - v1 ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520MasterData%2520API%2520-%2520v10.2.json&label=OpenAPI)
+- Master Data API - v2 ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Master%2520Data%2520API%2520-%2520v2.json&label=OpenAPI)
+- Orders API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Orders%2520API.json&label=OpenAPI)
+- Payment Provider Protocol ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Payment%2520Provider%2520Protocol.json)
+- Payments Gateway API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Payments%2520Gateway%2520API.json)
+- Pricing API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Pricing%2520API.json)
+- Rates and Benefits API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Rates%2520and%2520Benefits%2520API.json)
+- Recurrence (v1 - deprecated) ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Recurrence%2520%28v1%2520-%2520deprecated%29.json)
+- Search API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Search%2520API.json)
+- Session Manager API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Session%2520Manager%2520API.json)
+- Subscriptions (v2) ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Subscriptions%2520API%2520%28v2%29.json)
+- Suggestions API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Suggestions%2520API.json)
+- VTEX Do API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520VTEX%2520Do%2520API.json)
+
 ## Schema files
 
 - The files should follow the JSON OpenApi 3.0 format [Specification](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
@@ -107,28 +132,3 @@ The example we are currently using, defined inside the _Open API Object_, is:
 
 Example objects will be ignored by our documentation generator. If the desired outcome is to have the values as placeholders in the request parameters form, they should be inside the parameter schema object in the `default` key. 
 
-# To Do:
-## APIs to upload:
-- [x] Catalog API
-- [x] Checkout API
-- [x] CMS - Change URI Schema
-- [x] Customer Credit API
-- [x] GiftCard System API
-- [x] GiftCard Hub API
-- [x] GiftCard API
-- [x] GiftCard Provider Protocol
-- [x] License Manager API
-- [x] Logistics API
-- [x] Master Data API - v10.2
-- [x] Master Data API - v2
-- [x] Orders API
-- [x] Payment Provider Protocol
-- [x] Payments Gateway API
-- [x] Pricing API
-- [x] Rates and Benefits API
-- [x] Recurrence (v1 - deprecated)
-- [x] Search API
-- [x] Session Manager API
-- [x] Subscriptions (v2)
-- [x] Suggestions API
-- [x] VTEX Do API
