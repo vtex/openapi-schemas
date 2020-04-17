@@ -1,5 +1,5 @@
 # openapi-schemas
-OpenApi 3.0 json schemas. Files are automatically synced our [Developer Portal](https://developers.vtex.com)
+OpenAPI 3.0 JSON schemas. Files are automatically synced our [Developer Portal](https://developers.vtex.com) and can be imported to Postman following [these instructions](https://learning.postman.com/docs/postman/collections/working-with-openAPI/).
 
 ## VTEX APIs Here:
 - Catalog API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Catalog%2520API.json&label=OpenAPI)
