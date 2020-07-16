@@ -1,584 +1,574 @@
 {
-	"openapi": "3.0.0",
-	"info": {
-		"title": "Pricing API",
-		"description": "Pricing (v2) is the VTEX module responsible for the SKU`s price list. At this module we have the base price of each SKU, some optional fixed prices by trade policy, and some rules that can be applied to generate dynamically different final prices accordingly with purchase context and Trade Policy. The variables used in this collection are:\n\n**{{account}}** = You VTEX account name.\n\n**{{tradePolicyId}}** = Current Trade Policy ID.\n\n**{{itemId}}** = SKU ID.\n\n**{{X-VTEX-API-AppKey}}** and **{{X-VTEX-API-AppToken}}** = Credentials.\n\nYou can get more information about how to use this module and its business logic at [VTEX Help](http://help.vtex.com).\n\n\n--------------\n\n\n# Rate Limits\n\n#### Limits per route\n\n- `GET`:  routes are not rate limited at the moment\n\n- `PUT or POST`: `40 requests/second/account` in any **price insert/update route** with 1000 *Burst Credits*\n\n- `DELETE`: `16 requests/second/account` in any **price deletion route**, with 300 *Burst Credits*.\n\n\n#### What are Burst Credits?\n\nIn case the account exceeds the limit frequency for a  `Rate Limiter` (for instance, when one account makes `41 requests/second` in any `price insert/update route`), we decrease from the *Burst Credit* count the exceeding (in this example, *1 Credit*).\n\nIn the event of the *Burst Credits* reaching **0 (zero)**, the request is blocked with a `Status 429` response.\n\nThe credits fill up over time when the route is not being used, in the same rate as the route's `Rate Limiter`. In our example, for each second not sending a **PUT or POST request**, we increase *40 Burst Credits* to this `Rate Limiter`\n\n\n#### New Response Headers\n\nIn the response headers of any request to Pricing v2 there are some new headers indicating the current status of the Rate Limiting.\nThis information may be useful to evaluate the ideal frequency to send requests to a route, and when to send a new request in the event of reaching a Rate Limit.\n\n- `Ratelimit-Limit` - Total *Burst Credits* offered to a route\n- `Ratelimit-Remaining` - How many *Burst Credits* are still available to use\n- `Ratelimit-Reset` - How long (in seconds) it will take to the *Burst Credits* to fill up completely (It will fill up to the `Ratelimit-Limit`)\n- `Retry-After` - Indicates how many seconds you will need to wait until the `Rate Limiter` accepts a new request to this route again. If this header response exists, this means your current request has been rate limited and has not been processed.\n\n#### How to integrate with Pricing v2 considering our Rate Limits\n\nIntegrate considering the limits of **requests/route/account** specified in the [*Limits per route*](#rate-limits) section, avoiding to surpass this frequency.\n\nIf you happen to be Rate Limited, wait the time in seconds specified in `Retry-After` before making another request to the service, and reduce the rate of requests per second that your integration is making.",
-		"contact": {},
-		"version": "1.0"
-	},
-	"servers": [
-		{
-			"url": "https://api.vtex.com/{accountName}/pricing",
-			"description": "VTEX server url"
-		}
-	],
-	"paths": {
-		"/pipeline/catalog/": {
-			"post": {
-				"tags": [
-					"Price Tables"
-				],
-				"summary": "Create rules for a price table",
-				"description": "This method will create the rules from a specific Price Table",
-				"parameters": [
-					{
-						"name": "accountName",
-						"in": "path",
-						"required": true,
-						"description": "Name of the VTEX account. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "apiexamples"
-						}
-					},
-					{
-						"name": "environment",
-						"in": "path",
-						"required": true,
-						"description": "Environment to use. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "vtexcommercestable"
-						}
-					},
-					{
-						"name": "Accept",
-						"in": "header",
-						"description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"example": "application/vnd.vtex.pricing.v3+json"
-						}
-					},
-					{
-						"name": "Content-Type",
-						"in": "header",
-						"description": "Describes the type of the content being sent",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"default": "application/json"
-						}
-					}
-				],
-				"responses": {
-					"201": {
-						"description": "Created"
-					}
-				}
-			}
-		},
-		"/prices/{itemId}": {
-			"get": {
-				"tags": [
-					"Prices and Fixed Prices"
-				],
-				"summary": "Get Price",
-				"description": "Retrieves price data by SKU Id It is possible that on the property fixedPrices exists a list of specific prices for Trade Policies and Minimium Quantities of the SKU. Fixed Prices may also be scheduled",
-				"operationId": "GetPrice",
-				"parameters": [
-					{
-						"name": "accountName",
-						"in": "path",
-						"required": true,
-						"description": "Name of the VTEX account. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "apiexamples"
-						}
-					},
-					{
-						"name": "environment",
-						"in": "path",
-						"required": true,
-						"description": "Environment to use. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "vtexcommercestable"
-						}
-					},
-					{
-						"name": "Content-Type",
-						"in": "header",
-						"description": "Describes the type of the content being sent",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"default": "application/json"
-						}
-					},
-					{
-						"name": "Accept",
-						"in": "header",
-						"description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"example": "application/vnd.vtex.pricing.v3+json"
-						}
-					},
-					{
-						"name": "itemId",
-						"in": "path",
-						"description": "SKU ID",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "",
-						"headers": {
-							"Access-Control-Allow-Credentials": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "true"
-									}
-								}
-							},
-							"Access-Control-Allow-Origin": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "*"
-									}
-								}
-							},
-							"Connection": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "close"
-									}
-								}
-							},
-							"Content-Encoding": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "gzip"
-									}
-								}
-							},
-							"Date": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "Mon, 28 Aug 2017 20:00:21 GMT"
-									}
-								}
-							},
-							"Server": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "nginx"
-									}
-								}
-							},
-							"X-CDNIgnore": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "1"
-									}
-								}
-							},
-							"X-Powered-by-VTEX-Janus-Edge": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "v1.41.0"
-									}
-								}
-							},
-							"X-Track": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "stable"
-									}
-								}
-							},
-							"X-VTEX-Janus-Router-Backend-App": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "pricing-v3.26.2"
-									}
-								}
-							}
-						},
-						"content": {
-							"application/json; charset=utf-8": {
-								"schema": {
-									"$ref": "#/components/schemas/PricewithFixedPrices_scheduledandindifferenttradepolicies_"
-								},
-								"example": {
-									"itemId": "1234512354",
-									"listPrice": 300,
-									"costPrice": 10,
-									"markup": 2400,
-									"basePrice": 250,
-									"fixedPrices": [
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Pricing API",
+        "description": "Pricing (v2) is the VTEX module responsible for the SKU`s price list. At this module we have the base price of each SKU, some optional fixed prices by trade policy, and some rules that can be applied to generate dynamically different final prices accordingly with purchase context and Trade Policy. The variables used in this collection are:\n\n**{{account}}** = You VTEX account name.\n\n**{{tradePolicyId}}** = Current Trade Policy ID.\n\n**{{itemId}}** = SKU ID.\n\n**{{X-VTEX-API-AppKey}}** and **{{X-VTEX-API-AppToken}}** = Credentials.\n\nYou can get more information about how to use this module and its business logic at [VTEX Help](http://help.vtex.com).\n\n\n--------------\n\n\n# Rate Limits\n\n#### Limits per route\n\n- `GET`:  routes are not rate limited at the moment\n\n- `PUT or POST`: `40 requests/second/account` in any **price insert/update route** with 1000 *Burst Credits*\n\n- `DELETE`: `16 requests/second/account` in any **price deletion route**, with 300 *Burst Credits*.\n\n\n#### What are Burst Credits?\n\nIn case the account exceeds the limit frequency for a  `Rate Limiter` (for instance, when one account makes `41 requests/second` in any `price insert/update route`), we decrease from the *Burst Credit* count the exceeding (in this example, *1 Credit*).\n\nIn the event of the *Burst Credits* reaching **0 (zero)**, the request is blocked with a `Status 429` response.\n\nThe credits fill up over time when the route is not being used, in the same rate as the route's `Rate Limiter`. In our example, for each second not sending a **PUT or POST request**, we increase *40 Burst Credits* to this `Rate Limiter`\n\n\n#### New Response Headers\n\nIn the response headers of any request to Pricing v2 there are some new headers indicating the current status of the Rate Limiting.\nThis information may be useful to evaluate the ideal frequency to send requests to a route, and when to send a new request in the event of reaching a Rate Limit.\n\n- `Ratelimit-Limit` - Total *Burst Credits* offered to a route\n- `Ratelimit-Remaining` - How many *Burst Credits* are still available to use\n- `Ratelimit-Reset` - How long (in seconds) it will take to the *Burst Credits* to fill up completely (It will fill up to the `Ratelimit-Limit`)\n- `Retry-After` - Indicates how many seconds you will need to wait until the `Rate Limiter` accepts a new request to this route again. If this header response exists, this means your current request has been rate limited and has not been processed.\n\n#### How to integrate with Pricing v2 considering our Rate Limits\n\nIntegrate considering the limits of **requests/route/account** specified in the [*Limits per route*](#rate-limits) section, avoiding to surpass this frequency.\n\nIf you happen to be Rate Limited, wait the time in seconds specified in `Retry-After` before making another request to the service, and reduce the rate of requests per second that your integration is making.",
+        "contact": {},
+        "version": "1.0"
+    },
+    "servers": [{
+        "url": "https://api.vtex.com/{accountName}/pricing",
+        "description": "VTEX server url"
+    }],
+    "paths": {
+        "/pipeline/catalog/": {
+            "post": {
+                "tags": [
+                    "Price Tables"
+                ],
+                "summary": "Create rules for a price table",
+                "description": "This method will create the rules from a specific Price Table",
+                "parameters": [{
+                        "name": "accountName",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "environment",
+                        "in": "path",
+                        "required": true,
+                        "description": "Environment to use. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "vtexcommercestable"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "application/vnd.vtex.pricing.v3+json"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Describes the type of the content being sent",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            }
+        },
+        "/prices/{itemId}": {
+            "get": {
+                "tags": [
+                    "Prices and Fixed Prices"
+                ],
+                "summary": "Get Price",
+                "description": "Retrieves price data by SKU Id It is possible that on the property fixedPrices exists a list of specific prices for Trade Policies and Minimium Quantities of the SKU. Fixed Prices may also be scheduled",
+                "operationId": "GetPrice",
+                "parameters": [{
+                        "name": "accountName",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "environment",
+                        "in": "path",
+                        "required": true,
+                        "description": "Environment to use. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "vtexcommercestable"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Describes the type of the content being sent",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "application/vnd.vtex.pricing.v3+json"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "description": "SKU ID",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "Access-Control-Allow-Credentials": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "true"
+                                    }
+                                }
+                            },
+                            "Access-Control-Allow-Origin": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "*"
+                                    }
+                                }
+                            },
+                            "Connection": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "close"
+                                    }
+                                }
+                            },
+                            "Content-Encoding": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "gzip"
+                                    }
+                                }
+                            },
+                            "Date": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "Mon, 28 Aug 2017 20:00:21 GMT"
+                                    }
+                                }
+                            },
+                            "Server": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "nginx"
+                                    }
+                                }
+                            },
+                            "X-CDNIgnore": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "1"
+                                    }
+                                }
+                            },
+                            "X-Powered-by-VTEX-Janus-Edge": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "v1.41.0"
+                                    }
+                                }
+                            },
+                            "X-Track": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "stable"
+                                    }
+                                }
+                            },
+                            "X-VTEX-Janus-Router-Backend-App": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "pricing-v3.26.2"
+                                    }
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json; charset=utf-8": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PricewithFixedPrices_scheduledandindifferenttradepolicies_"
+                                },
+                                "example": {
+                                    "itemId": "1234512354",
+                                    "listPrice": 300,
+                                    "costPrice": 10,
+                                    "markup": 2400,
+                                    "basePrice": 250,
+                                    "fixedPrices": [{
+                                            "tradePolicyId": "1",
+                                            "value": 666.66,
+                                            "listPrice": null,
+                                            "minQuantity": 1
+                                        },
+                                        {
+                                            "tradePolicyId": "9",
+                                            "value": 4500,
+                                            "listPrice": null,
+                                            "minQuantity": 1
+                                        },
+                                        {
+                                            "tradePolicyId": "9",
+                                            "value": 600,
+                                            "listPrice": null,
+                                            "minQuantity": 1,
+                                            "dateRange": {
+                                                "from": "2017-12-07T14:30:00Z",
+                                                "to": "2017-12-30T14:30:00Z"
+                                            }
+                                        },
+                                        {
+                                            "tradePolicyId": "9",
+                                            "value": 5555.55,
+                                            "listPrice": null,
+                                            "minQuantity": 1,
+                                            "dateRange": {
+                                                "from": "2017-12-20T14:30:00Z",
+                                                "to": "2017-12-22T14:30:00Z"
+                                            }
+                                        },
+                                        {
+                                            "tradePolicyId": "9",
+                                            "value": 555.55,
+                                            "listPrice": null,
+                                            "minQuantity": 1,
+                                            "dateRange": {
+                                                "from": "2017-12-06T15:00:00Z",
+                                                "to": "2017-12-14T15:00:00Z"
+                                            }
+                                        },
+                                        {
+                                            "tradePolicyId": "10",
+                                            "value": 5555.55,
+                                            "listPrice": null,
+                                            "minQuantity": 1
+                                        },
+                                        {
+                                            "tradePolicyId": "18",
+                                            "value": 555.55,
+                                            "listPrice": null,
+                                            "minQuantity": 1
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "deprecated": false,
+                "servers": [{
+                    "url": "https://api.vtex.com/{account}/pricing",
+                    "variables": {
+                        "account": {
+                            "default": "DefaultParameterValue"
+                        }
+                    }
+                }]
+            },
+            "delete": {
+                "tags": [
+                    "Prices and Fixed Prices"
+                ],
+                "summary": "Delete Price",
+                "description": "Removes an SKU price. This action removes both Base Price and all available Fixed Prices for and SKU in all trade policies",
+                "operationId": "DeletePrice",
+                "parameters": [{
+                        "name": "accountName",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "environment",
+                        "in": "path",
+                        "required": true,
+                        "description": "Environment to use. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "vtexcommercestable"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Describes the type of the content being sent",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand ",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "description": "SKU Id",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "Access-Control-Allow-Credentials": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "true"
+                                    }
+                                }
+                            },
+                            "Access-Control-Allow-Origin": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "*"
+                                    }
+                                }
+                            },
+                            "Connection": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "keep-alive"
+                                    }
+                                }
+                            },
+                            "Content-Length": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "0"
+                                    }
+                                }
+                            },
+                            "Date": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "Mon, 28 Aug 2017 20:17:58 GMT"
+                                    }
+                                }
+                            },
+                            "Server": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "nginx"
+                                    }
+                                }
+                            },
+                            "X-CDNIgnore": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "1"
+                                    }
+                                }
+                            },
+                            "X-Powered-by-VTEX-Janus-Edge": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "v1.41.0"
+                                    }
+                                }
+                            },
+                            "X-Track": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "stable"
+                                    }
+                                }
+                            },
+                            "X-VTEX-Janus-Router-Backend-App": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "pricing-v3.26.2"
+                                    }
+                                }
+                            }
+                        },
+                        "content": {
+                            "text/plain; charset=utf-8": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "deprecated": false,
+                "servers": [{
+                    "url": "https://api.vtex.com/{account}/pricing",
+                    "variables": {
+                        "account": {
+                            "default": "DefaultParameterValue"
+                        }
+                    }
+                }]
+            },
+            "put": {
+                "tags": [
+                    "Prices and Fixed Prices"
+                ],
+                "summary": " Create / Edit Price or Fixed Price",
+                "description": "Creates or updates an SKU Price or Fixed Price. The Fixed Price is an optional price of the SKU for a specific Trade Policy with a specific Minimum Quantity to be activated",
+                "parameters": [
 										{
-											"tradePolicyId": "1",
-											"value": 666.66,
-											"listPrice": null,
-											"minQuantity": 1
-										},
-										{
-											"tradePolicyId": "9",
-											"value": 4500,
-											"listPrice": null,
-											"minQuantity": 1
-										},
-										{
-											"tradePolicyId": "9",
-											"value": 600,
-											"listPrice": null,
-											"minQuantity": 1,
-											"dateRange": {
-												"from": "2017-12-07T14:30:00Z",
-												"to": "2017-12-30T14:30:00Z"
-											}
-										},
-										{
-											"tradePolicyId": "9",
-											"value": 5555.55,
-											"listPrice": null,
-											"minQuantity": 1,
-											"dateRange": {
-												"from": "2017-12-20T14:30:00Z",
-												"to": "2017-12-22T14:30:00Z"
-											}
-										},
-										{
-											"tradePolicyId": "9",
-											"value": 555.55,
-											"listPrice": null,
-											"minQuantity": 1,
-											"dateRange": {
-												"from": "2017-12-06T15:00:00Z",
-												"to": "2017-12-14T15:00:00Z"
-											}
-										},
-										{
-											"tradePolicyId": "10",
-											"value": 5555.55,
-											"listPrice": null,
-											"minQuantity": 1
-										},
-										{
-											"tradePolicyId": "18",
-											"value": 555.55,
-											"listPrice": null,
-											"minQuantity": 1
-										}
-									]
-								}
-							}
-						}
-					}
-				},
-				"deprecated": false,
-				"servers": [
-					{
-						"url": "https://api.vtex.com/{account}/pricing",
-						"variables": {
-							"account": {
-								"default": "DefaultParameterValue"
-							}
-						}
-					}
-				]
-			},
-			"delete": {
-				"tags": [
-					"Prices and Fixed Prices"
-				],
-				"summary": "Delete Price",
-				"description": "Removes an SKU price. This action removes both Base Price and all available Fixed Prices for and SKU in all trade policies",
-				"operationId": "DeletePrice",
-				"parameters": [
-					{
-						"name": "accountName",
-						"in": "path",
-						"required": true,
-						"description": "Name of the VTEX account. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "apiexamples"
-						}
-					},
-					{
-						"name": "environment",
-						"in": "path",
-						"required": true,
-						"description": "Environment to use. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "vtexcommercestable"
-						}
-					},
-					{
-						"name": "Content-Type",
-						"in": "header",
-						"description": "Describes the type of the content being sent",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"default": "application/json"
-						}
-					},
-					{
-						"name": "Accept",
-						"in": "header",
-						"description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand ",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"default": "application/json"
-						}
-					},
-					{
-						"name": "itemId",
-						"in": "path",
-						"description": "SKU Id",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "",
-						"headers": {
-							"Access-Control-Allow-Credentials": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "true"
-									}
-								}
-							},
-							"Access-Control-Allow-Origin": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "*"
-									}
-								}
-							},
-							"Connection": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "keep-alive"
-									}
-								}
-							},
-							"Content-Length": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "0"
-									}
-								}
-							},
-							"Date": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "Mon, 28 Aug 2017 20:17:58 GMT"
-									}
-								}
-							},
-							"Server": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "nginx"
-									}
-								}
-							},
-							"X-CDNIgnore": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "1"
-									}
-								}
-							},
-							"X-Powered-by-VTEX-Janus-Edge": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "v1.41.0"
-									}
-								}
-							},
-							"X-Track": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "stable"
-									}
-								}
-							},
-							"X-VTEX-Janus-Router-Backend-App": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "pricing-v3.26.2"
-									}
-								}
-							}
-						},
-						"content": {
-							"text/plain; charset=utf-8": {
-								"schema": {
-									"type": "object"
-								}
-							}
-						}
-					}
-				},
-				"deprecated": false,
-				"servers": [
-					{
-						"url": "https://api.vtex.com/{account}/pricing",
-						"variables": {
-							"account": {
-								"default": "DefaultParameterValue"
-							}
-						}
-					}
-				]
-			},
-			"put": {
-				"tags": [
-					"Prices and Fixed Prices"
-				],
-				"summary": " Create / Edit Price or Fixed Price",
-				"description": "Creates or updates an SKU Price or Fixed Price. The Fixed Price is an optional price of the SKU for a specific Trade Policy with a specific Minimum Quantity to be activated",
-				"parameters": [
-					{
-						"name": "accountName",
-						"in": "path",
-						"required": true,
-						"description": "Name of the VTEX account. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "apiexamples"
-						}
-					},
-					{
-						"name": "environment",
-						"in": "path",
-						"required": true,
-						"description": "Environment to use. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "vtexcommercestable"
-						}
-					},
-					{
-						"name": "Accept",
-						"in": "header",
-						"description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"example": "application/vnd.vtex.pricing.v3+json"
-						}
-					},
-					{
-						"name": "Content-Type",
-						"in": "header",
-						"description": "Describes the type of the content being sent",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"default": "application/json"
-						}
-					},
-					{
-						"name": "itemId",
-						"in": "path",
-						"description": "SKU ID",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "integer"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK"
-					}
-				},
-				"requestBody": {
-					"description": "",
-					"content": {
-						"application/json": {
-							"schema": {
+                        "name": "accountName",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "environment",
+                        "in": "path",
+                        "required": true,
+                        "description": "Environment to use. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "vtexcommercestable"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "application/vnd.vtex.pricing.v3+json"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Describes the type of the content being sent",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "description": "SKU ID",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "requestBody": {
+                    "description": "",
+                    "content": {
+                        "application/json": {
+                            "schema": {
                                 "type": "object",
                                 "title": "Request body",
                                 "default": {},
@@ -617,7 +607,7 @@
                                         "title": "fixedPrices",
                                         "description": "List of existing Fixed Prices",
                                         "default": [],
-                                        "required":[
+                                        "required": [
                                             "minQuantity",
                                             "value",
                                             "tradePolicyId"
@@ -674,2235 +664,2223 @@
                                         }
                                     }
                                 }
+														},
+														"example": [
+															{
+																"markup": 30,
+																"basePrice": 100,
+																"listPrice": 12,
+																"fixedPrices": [
+																		{
+																				"tradePolicyId": "1",
+																				"value": 2.99,
+																				"listPrice": 1,
+																				"minQuantity": 1,
+																				"dateRange": {
+																						"from": "2020-05-21T22:00:00Z",
+																						"to": "2020-05-28T22:00:00Z"
+																				}
+																		},
+																		{
+																				"tradePolicyId": "1",
+																				"value": 0.49,
+																				"listPrice": null,
+																				"minQuantity": 2
+																		}
+																	]
+															}
+														]
+												}
+                    }
+                }
+            }
+        },
+        "/prices/{itemId}/fixed": {
+            "get": {
+                "tags": [
+                    "Prices and Fixed Prices"
+                ],
+                "summary": "Get Fixed Prices",
+                "description": "Fixed Prices are a sub resource of Prices. This method get an array of Fixed Prices for an SKU in a Trade Policy with Minimum Quantities",
+                "operationId": "GetFixedPrices",
+                "parameters": [{
+                        "name": "accountName",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "environment",
+                        "in": "path",
+                        "required": true,
+                        "description": "Environment to use. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "vtexcommercestable"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "application/vnd.vtex.pricing.v3+json"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Describes the type of the content being sent",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "description": "SKU Id",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "Access-Control-Allow-Credentials": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "true"
+                                    }
+                                }
+                            },
+                            "Access-Control-Allow-Origin": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "*"
+                                    }
+                                }
+                            },
+                            "Connection": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "keep-alive"
+                                    }
+                                }
+                            },
+                            "Content-Encoding": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "gzip"
+                                    }
+                                }
+                            },
+                            "Content-Length": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "101"
+                                    }
+                                }
+                            },
+                            "Date": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "Mon, 28 Aug 2017 20:03:42 GMT"
+                                    }
+                                }
+                            },
+                            "Server": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "nginx"
+                                    }
+                                }
+                            },
+                            "X-CDNIgnore": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "1"
+                                    }
+                                }
+                            },
+                            "X-Powered-by-VTEX-Janus-Edge": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "v1.41.0"
+                                    }
+                                }
+                            },
+                            "X-Track": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "stable"
+                                    }
+                                }
+                            },
+                            "X-VTEX-Janus-Router-Backend-App": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "pricing-v3.26.2"
+                                    }
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json; charset=utf-8": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Examplewith2FixedPricesindifferentSalesChannel"
+                                    }
+                                },
+                                "example": [{
+                                        "tradePolicyId": "6",
+                                        "value": 20.9,
+                                        "listPrice": 22.9,
+                                        "minQuantity": 1
+                                    },
+                                    {
+                                        "tradePolicyId": "1",
+                                        "value": 18.9,
+                                        "listPrice": null,
+                                        "minQuantity": 1
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "deprecated": false,
+                "servers": [{
+                    "url": "https://api.vtex.com/{account}/pricing",
+                    "variables": {
+                        "account": {
+                            "default": "DefaultParameterValue"
+                        }
+                    }
+                }]
+            }
+        },
+        "/prices/{itemId}/fixed/{priceTableId}": {
+            "post": {
+                "tags": [
+                    "Prices and Fixed Prices"
+                ],
+                "summary": "Create / Edit Fixed Prices on a price table (or trade policy)",
+                "description": "This method will create or update the Fixed Prices of an SKU just for an specific Price Table (according to its Trade Policy)",
+                "operationId": "Create/EditFixedPricesonapricetable(ortradepolicy)",
+                "parameters": [{
+                        "name": "accountName",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "environment",
+                        "in": "path",
+                        "required": true,
+                        "description": "Environment to use. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "vtexcommercestable"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Describes the type of the content being sent",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "description": "SKU Id",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "priceTableId",
+                        "in": "path",
+                        "description": "SKU Price Table Id",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/Create~1EditFixedPricesonapricetable_ortradepolicy_Request"
+                                },
+                                "description": ""
+                            },
+                            "example": [{
+                                "value": 60.5,
+                                "listPrice": 90.5,
+                                "minQuantity": 1
+                            }]
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {},
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Addingafixedpriceforonespecificpricetable"
+                                    }
+                                },
+                                "example": [{
+                                    "tradePolicyId": "10",
+                                    "value": 60.5,
+                                    "listPrice": null,
+                                    "minQuantity": 1
+                                }]
+                            }
+                        }
+                    }
+                },
+                "deprecated": false,
+                "servers": [{
+                    "url": "https://api.vtex.com/{account}/pricing",
+                    "variables": {
+                        "account": {
+                            "default": "DefaultParameterValue"
+                        }
+                    }
+                }]
+            },
+            "get": {
+                "tags": [
+                    "Prices and Fixed Prices"
+                ],
+                "summary": "Get Fixed Prices on a price table",
+                "description": "Gets all Fixed Prices on a price table (or trade policy)",
+                "operationId": "GetFixedPricesonapricetable",
+                "parameters": [{
+                        "name": "accountName",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "environment",
+                        "in": "path",
+                        "required": true,
+                        "description": "Environment to use. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "vtexcommercestable"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Describes the type of the content being sent",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "application/vnd.vtex.pricing.v3+json"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "description": "SKU ID",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "priceTableId",
+                        "in": "path",
+                        "description": "Price Table ID",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "Access-Control-Allow-Credentials": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "true"
+                                    }
+                                }
+                            },
+                            "Access-Control-Allow-Origin": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "*"
+                                    }
+                                }
+                            },
+                            "Connection": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "keep-alive"
+                                    }
+                                }
+                            },
+                            "Content-Encoding": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "gzip"
+                                    }
+                                }
+                            },
+                            "Content-Length": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "101"
+                                    }
+                                }
+                            },
+                            "Date": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "Mon, 28 Aug 2017 20:03:42 GMT"
+                                    }
+                                }
+                            },
+                            "Server": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "nginx"
+                                    }
+                                }
+                            },
+                            "X-CDNIgnore": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "1"
+                                    }
+                                }
+                            },
+                            "X-Powered-by-VTEX-Janus-Edge": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "v1.41.0"
+                                    }
+                                }
+                            },
+                            "X-Track": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "stable"
+                                    }
+                                }
+                            },
+                            "X-VTEX-Janus-Router-Backend-App": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "pricing-v3.26.2"
+                                    }
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json; charset=utf-8": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Default"
+                                    }
+                                },
+                                "example": [{
+                                        "tradePolicyId": "6",
+                                        "value": 20.9,
+                                        "listPrice": 22.9,
+                                        "minQuantity": 1
+                                    },
+                                    {
+                                        "tradePolicyId": "1",
+                                        "value": 18.9,
+                                        "listPrice": null,
+                                        "minQuantity": 1
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "deprecated": false,
+                "servers": [{
+                    "url": "https://api.vtex.com/{account}/pricing",
+                    "variables": {
+                        "account": {
+                            "default": "DefaultParameterValue"
+                        }
+                    }
+                }]
+            }
+        },
+        "/{priceTableId}": {
+            "delete": {
+                "tags": [
+                    "Prices and Fixed Prices"
+                ],
+                "summary": "Delete fixed prices on a price table (or trade policy)",
+                "description": "Deletes all Fixed Prices of an SKU in a specific Price Table (or Trade Policy)",
+                "operationId": "Deletefixedpricesonapricetable(ortradepolicy)",
+                "parameters": [{
+                        "name": "accountName",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "environment",
+                        "in": "path",
+                        "required": true,
+                        "description": "Environment to use. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "vtexcommercestable"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Describes the type of the content being sent",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "application/vnd.vtex.pricing.v3+json"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "description": "SKU ID",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "priceTableId",
+                        "in": "path",
+                        "description": "Price Table or Sales Channel Id",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/Deletefixedpricesonapricetable_ortradepolicy_Request"
+                                },
+                                "description": ""
+                            },
+                            "example": [{
+                                "tradePolicyId": "1",
+                                "value": 100,
+                                "listPrice": 99.9,
+                                "minQuantity": 1
+                            }]
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {}
+                    }
+                },
+                "deprecated": false,
+                "servers": [{
+                    "url": "http://example.com/{account}/pricing/prices/{itemId}/fixed",
+                    "variables": {
+                        "account": {
+                            "default": "DefaultParameterValue"
+                        },
+                        "itemId": {
+                            "default": "DefaultParameterValue"
+                        }
+                    }
+                }]
+            }
+        },
+        "/prices/{itemId}/computed/{priceTableId}": {
+            "get": {
+                "tags": [
+                    "Prices and Fixed Prices"
+                ],
+                "summary": "Get Computed Price by price table",
+                "description": "Gets a computed Price (Price after all steps in pricing pipeline) for an SKU in a specific Trade Policy (or Price Table)",
+                "operationId": "GetComputedPricebypricetable",
+                "parameters": [{
+                        "name": "accountName",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "environment",
+                        "in": "path",
+                        "required": true,
+                        "description": "Environment to use. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "vtexcommercestable"
+                        }
+                    },
+                    {
+                        "name": "categoryIds",
+                        "in": "query",
+                        "description": "Category Id",
+                        "required": true,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": "[{{categoryId}}]"
+                        }
+                    },
+                    {
+                        "name": "brandId",
+                        "in": "query",
+                        "description": "Brand Id",
+                        "required": true,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": "{{brandId}}"
+                        }
+                    },
+                    {
+                        "name": "quantity",
+                        "in": "query",
+                        "description": "SKU quantity",
+                        "required": true,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": "{{quantity}}"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Describes the type of the content being sent",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "application/vnd.vtex.pricing.v3+json"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "description": "SKU Id",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "priceTableId",
+                        "in": "path",
+                        "description": "SKU Price Table Id",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "Access-Control-Allow-Credentials": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "true"
+                                    }
+                                }
+                            },
+                            "Access-Control-Allow-Origin": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "*"
+                                    }
+                                }
+                            },
+                            "Connection": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "keep-alive"
+                                    }
+                                }
+                            },
+                            "Content-Encoding": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "gzip"
+                                    }
+                                }
+                            },
+                            "Content-Length": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "71"
+                                    }
+                                }
+                            },
+                            "Date": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "Mon, 28 Aug 2017 20:15:19 GMT"
+                                    }
+                                }
+                            },
+                            "Server": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "nginx"
+                                    }
+                                }
+                            },
+                            "X-CDNIgnore": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "1"
+                                    }
+                                }
+                            },
+                            "X-Powered-by-VTEX-Janus-Edge": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "v1.41.0"
+                                    }
+                                }
+                            },
+                            "X-Track": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "stable"
+                                    }
+                                }
+                            },
+                            "X-VTEX-Janus-Router-Backend-App": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "pricing-v3.26.2"
+                                    }
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json; charset=utf-8": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Default1"
+                                },
+                                "example": {
+                                    "tradePolicyId": "1",
+                                    "listPrice": 30,
+                                    "sellingPrice": 18.9,
+                                    "priceValidUntil": "2018-12-20T18:12:14Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "deprecated": false,
+                "servers": [{
+                    "url": "https://api.vtex.com/{account}/pricing",
+                    "variables": {
+                        "account": {
+                            "default": "DefaultParameterValue"
+                        }
+                    }
+                }]
+            }
+        },
+        "/config": {
+            "get": {
+                "tags": [
+                    "Pricing Config"
+                ],
+                "summary": "Get Pricing Config",
+                "description": "Retrieves Pricing Module Configuration",
+                "operationId": "GetPricingConfig",
+                "parameters": [{
+                        "name": "accountName",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "environment",
+                        "in": "path",
+                        "required": true,
+                        "description": "Environment to use. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "vtexcommercestable"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Describes the type of the content being sent",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "application/vnd.vtex.pricing.v3+json"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "Access-Control-Allow-Credentials": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "true"
+                                    }
+                                }
+                            },
+                            "Access-Control-Allow-Origin": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "*"
+                                    }
+                                }
+                            },
+                            "Connection": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "keep-alive"
+                                    }
+                                }
+                            },
+                            "Content-Encoding": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "gzip"
+                                    }
+                                }
+                            },
+                            "Content-Length": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "118"
+                                    }
+                                }
+                            },
+                            "Date": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "Tue, 21 Feb 2017 16:11:39 GMT"
+                                    }
+                                }
+                            },
+                            "Server": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "nginx"
+                                    }
+                                }
+                            },
+                            "X-CDNIgnore": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "1"
+                                    }
+                                }
+                            },
+                            "X-Powered-by-VTEX-Janus-Edge": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "v1.35.3"
+                                    }
+                                }
+                            },
+                            "X-Track": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "stable"
+                                    }
+                                }
+                            },
+                            "X-VTEX-Janus-Router-Backend-App": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "pricing-v3.21.12"
+                                    }
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json; charset=utf-8": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Default2"
+                                },
+                                "example": {
+                                    "hasMigrated": true,
+                                    "migrationCurrentSKUIndex": 5200,
+                                    "migrationTotalSKU": 5200,
+                                    "defaultMarkup": 100,
+                                    "minimumMarkups": {
+                                        "1": 100,
+                                        "2": 90
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "deprecated": false,
+                "servers": [{
+                    "url": "https://api.vtex.com/{account}/pricing",
+                    "variables": {
+                        "account": {
+                            "default": "DefaultParameterValue"
+                        }
+                    }
+                }]
+            }
+        },
+        "/migration": {
+            "get": {
+                "tags": [
+                    "Pricing Config"
+                ],
+                "summary": "Gets Pricing v2 Active Status",
+                "description": "Gets Pricing v2 Active Status",
+                "operationId": "GetPricingv2ActiveStatus",
+                "parameters": [{
+                        "name": "accountName",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "environment",
+                        "in": "path",
+                        "required": true,
+                        "description": "Environment to use. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "vtexcommercestable"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Describes the type of the content being sent",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "application/vnd.vtex.pricing.v3+json"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "Access-Control-Allow-Credentials": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "true"
+                                    }
+                                }
+                            },
+                            "Access-Control-Allow-Origin": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "*"
+                                    }
+                                }
+                            },
+                            "Connection": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "keep-alive"
+                                    }
+                                }
+                            },
+                            "Content-Encoding": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "gzip"
+                                    }
+                                }
+                            },
+                            "Content-Length": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "52"
+                                    }
+                                }
+                            },
+                            "Date": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "Tue, 21 Feb 2017 16:13:39 GMT"
+                                    }
+                                }
+                            },
+                            "Server": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "nginx"
+                                    }
+                                }
+                            },
+                            "X-CDNIgnore": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "1"
+                                    }
+                                }
+                            },
+                            "X-Powered-by-VTEX-Janus-Edge": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "v1.35.3"
+                                    }
+                                }
+                            },
+                            "X-Track": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "stable"
+                                    }
+                                }
+                            },
+                            "X-VTEX-Janus-Router-Backend-App": {
+                                "content": {
+                                    "text/plain": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "example": "pricing-v3.21.12"
+                                    }
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json; charset=utf-8": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Default3"
+                                },
+                                "example": {
+                                    "isActive": true,
+                                    "hasMigrated": true
+                                }
+                            }
+                        }
+                    }
+                },
+                "deprecated": false,
+                "servers": [{
+                    "url": "https://api.vtex.com/{account}/pricing",
+                    "variables": {
+                        "account": {
+                            "default": "DefaultParameterValue"
+                        }
+                    }
+                }]
+            }
+        },
+        "/pipeline/catalog/{priceTableId}": {
+            "get": {
+                "tags": [
+                    "Price Tables"
+                ],
+                "summary": "Get rules for a price table",
+                "description": "This method will retrieve the rules from a specific Price Table. It will delete all the rules from the requested Price Table and create new rules based on the content of the request",
+                "operationId": "Createrulesforapricetable",
+                "parameters": [{
+                        "name": "accountName",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "environment",
+                        "in": "path",
+                        "required": true,
+                        "description": "Environment to use. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "vtexcommercestable"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Describes the type of the content being sent",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "application/vnd.vtex.pricing.v3+json"
+                        }
+                    },
+                    {
+                        "name": "priceTableId",
+                        "in": "path",
+                        "description": "Price Table ID",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {}
+                    }
+                },
+                "deprecated": false,
+                "servers": [{
+                    "url": "https://api.vtex.com/{account}/pricing",
+                    "variables": {
+                        "account": {
+                            "default": "DefaultParameterValue"
+                        }
+                    }
+                }]
+            },
+            "put": {
+                "tags": [
+                    "Price Tables"
+                ],
+                "summary": "Update rules for a price table",
+                "description": "This method will update the rules from a specific Price Table. It will delete all the rules from the requested Price Table and create new rules based on the content of the request",
+                "parameters": [{
+                        "name": "accountName",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "environment",
+                        "in": "path",
+                        "required": true,
+                        "description": "Environment to use. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "vtexcommercestable"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Describes the type of the content being sent",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "application/vnd.vtex.pricing.v3+json"
+                        }
+                    },
+                    {
+                        "name": "priceTableId",
+                        "in": "path",
+                        "description": "Price Table ID",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "headers": {}
+                    }
+                },
+                "requestBody": {
+                    "description": "",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "rules"
+                                ],
+                                "properties": {
+                                    "rules": {
+                                        "type": "array",
+                                        "title": "rules",
+                                        "description": "Rules for Price Table",
+                                        "default": [],
+                                        "items": {
+                                            "type": "object",
+                                            "title": "Rule's object",
+                                            "description": "Objects contained in rules",
+                                            "default": {},
+                                            "required": [
+                                                "id",
+                                                "context",
+                                                "percentualModifier"
+                                            ],
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "title": "id",
+                                                    "description": "Rule ID",
+                                                    "default": 0
+                                                },
+                                                "context": {
+                                                    "type": "object",
+                                                    "title": "context",
+                                                    "description": "Rule Context",
+                                                    "default": {},
+                                                    "required": [
+                                                        "stockStatuses",
+                                                        "internalCategories",
+                                                        "markupRange",
+                                                        "dateRange"
+                                                    ],
+                                                    "properties": {
+                                                        "categories": {
+                                                            "type": "object",
+                                                            "title": "categories",
+                                                            "description": "Categories Context",
+                                                            "properties": {
+                                                                "Category ID": {
+                                                                    "type": "integer",
+                                                                    "title": "Category ID",
+                                                                    "default": 1
+                                                                },
+                                                                "Category Name": {
+                                                                    "type": "string",
+                                                                    "title": "Category Name",
+                                                                    "default": "Books"
+                                                                }
+                                                            }
+                                                        },
+                                                        "brands": {
+                                                            "type": "object",
+                                                            "title": "brands",
+                                                            "description": "Brands Context",
+                                                            "properties": {
+                                                                "Brand ID": {
+                                                                    "type": "integer",
+                                                                    "title": "Brand ID",
+                                                                    "default": 1
+                                                                },
+                                                                "Brand Name": {
+                                                                    "type": "string",
+                                                                    "title": "Brand Name",
+                                                                    "default": "Books"
+                                                                }
+                                                            }
+
+                                                        },
+                                                        "stockStatuses": {
+                                                            "type": "object",
+                                                            "title": "stockStatuses",
+                                                            "description": "Stock status uses",
+                                                            "default": null
+                                                        },
+                                                        "internalCategories": {
+                                                            "type": "object",
+                                                            "title": "internalCategories",
+                                                            "description": "Internal Categories",
+                                                            "default": null
+                                                        },
+                                                        "markupRange": {
+                                                            "type": "object",
+                                                            "title": "markupRange",
+                                                            "description": "Markup Rule",
+                                                            "default": null,
+                                                            "required": [
+                                                                "from",
+                                                                "to"
+                                                            ],
+                                                            "properties": {
+                                                                "from": {
+                                                                    "type": "number",
+                                                                    "title": "from",
+                                                                    "description": "Item markup should be greater than or equal to this value",
+                                                                    "default": 0
+                                                                },
+                                                                "to": {
+                                                                    "type": "number",
+                                                                    "title": "to",
+                                                                    "description": "Item markup should be less than or equal to this value",
+                                                                    "default": 200
+                                                                }
+                                                            }
+                                                        },
+                                                        "dateRange": {
+                                                            "type": "object",
+                                                            "title": "dateRange",
+                                                            "description": "Date Range Rule",
+                                                            "default": null,
+                                                            "required": [
+                                                                "from",
+                                                                "to"
+                                                            ],
+                                                            "properties": {
+                                                                "from": {
+                                                                    "type": "string",
+                                                                    "title": "from",
+                                                                    "description": "First date that rule will be active",
+                                                                    "default": "2019-10-23T19:00:00.000Z"
+                                                                },
+                                                                "to": {
+                                                                    "type": "string",
+                                                                    "title": "to",
+                                                                    "description": "Item markup should be less than or equal to this value",
+                                                                    "default": "2019-10-26T00:00:00.000Z"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "percentualModifier": {
+                                                    "type": "number",
+                                                    "title": "percentualModifier",
+                                                    "description": "Percentual Modifier",
+                                                    "default": 0
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
-			}
-		},
-		"/prices/{itemId}/fixed": {
-			"get": {
-				"tags": [
-					"Prices and Fixed Prices"
-				],
-				"summary": "Get Fixed Prices",
-				"description": "Fixed Prices are a sub resource of Prices. This method get an array of Fixed Prices for an SKU in a Trade Policy with Minimum Quantities",
-				"operationId": "GetFixedPrices",
-				"parameters": [
-					{
-						"name": "accountName",
-						"in": "path",
-						"required": true,
-						"description": "Name of the VTEX account. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "apiexamples"
-						}
-					},
-					{
-						"name": "environment",
-						"in": "path",
-						"required": true,
-						"description": "Environment to use. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "vtexcommercestable"
-						}
-					},
-					{
-						"name": "Accept",
-						"in": "header",
-						"description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"example": "application/vnd.vtex.pricing.v3+json"
-						}
-					},
-					{
-						"name": "Content-Type",
-						"in": "header",
-						"description": "Describes the type of the content being sent",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"default": "application/json"
-						}
-					},
-					{
-						"name": "itemId",
-						"in": "path",
-						"description": "SKU Id",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "",
-						"headers": {
-							"Access-Control-Allow-Credentials": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "true"
-									}
-								}
-							},
-							"Access-Control-Allow-Origin": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "*"
-									}
-								}
-							},
-							"Connection": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "keep-alive"
-									}
-								}
-							},
-							"Content-Encoding": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "gzip"
-									}
-								}
-							},
-							"Content-Length": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "101"
-									}
-								}
-							},
-							"Date": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "Mon, 28 Aug 2017 20:03:42 GMT"
-									}
-								}
-							},
-							"Server": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "nginx"
-									}
-								}
-							},
-							"X-CDNIgnore": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "1"
-									}
-								}
-							},
-							"X-Powered-by-VTEX-Janus-Edge": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "v1.41.0"
-									}
-								}
-							},
-							"X-Track": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "stable"
-									}
-								}
-							},
-							"X-VTEX-Janus-Router-Backend-App": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "pricing-v3.26.2"
-									}
-								}
-							}
-						},
-						"content": {
-							"application/json; charset=utf-8": {
-								"schema": {
-									"type": "array",
-									"items": {
-										"$ref": "#/components/schemas/Examplewith2FixedPricesindifferentSalesChannel"
-									}
-								},
-								"example": [
-									{
-										"tradePolicyId": "6",
-										"value": 20.9,
-										"listPrice": 22.9,
-										"minQuantity": 1
-									},
-									{
-										"tradePolicyId": "1",
-										"value": 18.9,
-										"listPrice": null,
-										"minQuantity": 1
-									}
-								]
-							}
-						}
-					}
-				},
-				"deprecated": false,
-				"servers": [
-					{
-						"url": "https://api.vtex.com/{account}/pricing",
-						"variables": {
-							"account": {
-								"default": "DefaultParameterValue"
-							}
-						}
-					}
-				]
-			}
-		},
-		"/prices/{itemId}/fixed/{priceTableId}": {
-			"post": {
-				"tags": [
-					"Prices and Fixed Prices"
-				],
-				"summary": "Create / Edit Fixed Prices on a price table (or trade policy)",
-				"description": "This method will create or update the Fixed Prices of an SKU just for an specific Price Table (according to its Trade Policy)",
-				"operationId": "Create/EditFixedPricesonapricetable(ortradepolicy)",
-				"parameters": [
-					{
-						"name": "accountName",
-						"in": "path",
-						"required": true,
-						"description": "Name of the VTEX account. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "apiexamples"
-						}
-					},
-					{
-						"name": "environment",
-						"in": "path",
-						"required": true,
-						"description": "Environment to use. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "vtexcommercestable"
-						}
-					},
-					{
-						"name": "Content-Type",
-						"in": "header",
-						"description": "Describes the type of the content being sent",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"default": "application/json"
-						}
-					},
-					{
-						"name": "Accept",
-						"in": "header",
-						"description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"default": "application/json"
-						}
-					},
-					{
-						"name": "itemId",
-						"in": "path",
-						"description": "SKU Id",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"name": "priceTableId",
-						"in": "path",
-						"description": "SKU Price Table Id",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "integer"
-						}
-					}
-				],
-				"requestBody": {
-					"description": "",
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "array",
-								"items": {
-									"$ref": "#/components/schemas/Create~1EditFixedPricesonapricetable_ortradepolicy_Request"
-								},
-								"description": ""
-							},
-							"example": [
-								{
-									"value": 60.5,
-									"listPrice": 90.5,
-									"minQuantity": 1
-								}
-							]
-						}
-					},
-					"required": true
-				},
-				"responses": {
-					"200": {
-						"description": "",
-						"headers": {},
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "array",
-									"items": {
-										"$ref": "#/components/schemas/Addingafixedpriceforonespecificpricetable"
-									}
-								},
-								"example": [
-									{
-										"tradePolicyId": "10",
-										"value": 60.5,
-										"listPrice": null,
-										"minQuantity": 1
-									}
-								]
-							}
-						}
-					}
-				},
-				"deprecated": false,
-				"servers": [
-					{
-						"url": "https://api.vtex.com/{account}/pricing",
-						"variables": {
-							"account": {
-								"default": "DefaultParameterValue"
-							}
-						}
-					}
-				]
-			},
-			"get": {
-				"tags": [
-					"Prices and Fixed Prices"
-				],
-				"summary": "Get Fixed Prices on a price table",
-				"description": "Gets all Fixed Prices on a price table (or trade policy)",
-				"operationId": "GetFixedPricesonapricetable",
-				"parameters": [
-					{
-						"name": "accountName",
-						"in": "path",
-						"required": true,
-						"description": "Name of the VTEX account. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "apiexamples"
-						}
-					},
-					{
-						"name": "environment",
-						"in": "path",
-						"required": true,
-						"description": "Environment to use. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "vtexcommercestable"
-						}
-					},
-					{
-						"name": "Content-Type",
-						"in": "header",
-						"description": "Describes the type of the content being sent",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"default": "application/json"
-						}
-					},
-					{
-						"name": "Accept",
-						"in": "header",
-						"description": "",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"example": "application/vnd.vtex.pricing.v3+json"
-						}
-					},
-					{
-						"name": "itemId",
-						"in": "path",
-						"description": "SKU ID",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "integer"
-						}
-					},
-					{
-						"name": "priceTableId",
-						"in": "path",
-						"description": "Price Table ID",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "",
-						"headers": {
-							"Access-Control-Allow-Credentials": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "true"
-									}
-								}
-							},
-							"Access-Control-Allow-Origin": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "*"
-									}
-								}
-							},
-							"Connection": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "keep-alive"
-									}
-								}
-							},
-							"Content-Encoding": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "gzip"
-									}
-								}
-							},
-							"Content-Length": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "101"
-									}
-								}
-							},
-							"Date": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "Mon, 28 Aug 2017 20:03:42 GMT"
-									}
-								}
-							},
-							"Server": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "nginx"
-									}
-								}
-							},
-							"X-CDNIgnore": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "1"
-									}
-								}
-							},
-							"X-Powered-by-VTEX-Janus-Edge": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "v1.41.0"
-									}
-								}
-							},
-							"X-Track": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "stable"
-									}
-								}
-							},
-							"X-VTEX-Janus-Router-Backend-App": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "pricing-v3.26.2"
-									}
-								}
-							}
-						},
-						"content": {
-							"application/json; charset=utf-8": {
-								"schema": {
-									"type": "array",
-									"items": {
-										"$ref": "#/components/schemas/Default"
-									}
-								},
-								"example": [
-									{
-										"tradePolicyId": "6",
-										"value": 20.9,
-										"listPrice": 22.9,
-										"minQuantity": 1
-									},
-									{
-										"tradePolicyId": "1",
-										"value": 18.9,
-										"listPrice": null,
-										"minQuantity": 1
-									}
-								]
-							}
-						}
-					}
-				},
-				"deprecated": false,
-				"servers": [
-					{
-						"url": "https://api.vtex.com/{account}/pricing",
-						"variables": {
-							"account": {
-								"default": "DefaultParameterValue"
-							}
-						}
-					}
-				]
-			}
-		},
-		"/{priceTableId}": {
-			"delete": {
-				"tags": [
-					"Prices and Fixed Prices"
-				],
-				"summary": "Delete fixed prices on a price table (or trade policy)",
-				"description": "Deletes all Fixed Prices of an SKU in a specific Price Table (or Trade Policy)",
-				"operationId": "Deletefixedpricesonapricetable(ortradepolicy)",
-				"parameters": [
-					{
-						"name": "accountName",
-						"in": "path",
-						"required": true,
-						"description": "Name of the VTEX account. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "apiexamples"
-						}
-					},
-					{
-						"name": "environment",
-						"in": "path",
-						"required": true,
-						"description": "Environment to use. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "vtexcommercestable"
-						}
-					},
-					{
-						"name": "Content-Type",
-						"in": "header",
-						"description": "Describes the type of the content being sent",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"default": "application/json"
-						}
-					},
-					{
-						"name": "Accept",
-						"in": "header",
-						"description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"example": "application/vnd.vtex.pricing.v3+json"
-						}
-					},
-					{
-						"name": "itemId",
-						"in": "path",
-						"description": "SKU ID",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"name": "priceTableId",
-						"in": "path",
-						"description": "Price Table or Sales Channel Id",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"description": "",
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "array",
-								"items": {
-									"$ref": "#/components/schemas/Deletefixedpricesonapricetable_ortradepolicy_Request"
-								},
-								"description": ""
-							},
-							"example": [
-								{
-									"tradePolicyId": "1",
-									"value": 100,
-									"listPrice": 99.9,
-									"minQuantity": 1
-								}
-							]
-						}
-					},
-					"required": true
-				},
-				"responses": {
-					"200": {
-						"description": "",
-						"headers": {}
-					}
-				},
-				"deprecated": false,
-				"servers": [
-					{
-						"url": "http://example.com/{account}/pricing/prices/{itemId}/fixed",
-						"variables": {
-							"account": {
-								"default": "DefaultParameterValue"
-							},
-							"itemId": {
-								"default": "DefaultParameterValue"
-							}
-						}
-					}
-				]
-			}
-		},
-		"/prices/{itemId}/computed/{priceTableId}": {
-			"get": {
-				"tags": [
-					"Prices and Fixed Prices"
-				],
-				"summary": "Get Computed Price by price table",
-				"description": "Gets a computed Price (Price after all steps in pricing pipeline) for an SKU in a specific Trade Policy (or Price Table)",
-				"operationId": "GetComputedPricebypricetable",
-				"parameters": [
-					{
-						"name": "accountName",
-						"in": "path",
-						"required": true,
-						"description": "Name of the VTEX account. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "apiexamples"
-						}
-					},
-					{
-						"name": "environment",
-						"in": "path",
-						"required": true,
-						"description": "Environment to use. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "vtexcommercestable"
-						}
-					},
-					{
-						"name": "categoryIds",
-						"in": "query",
-						"description": "Category Id",
-						"required": true,
-						"style": "form",
-						"explode": true,
-						"schema": {
-							"type": "integer",
-							"example": "[{{categoryId}}]"
-						}
-					},
-					{
-						"name": "brandId",
-						"in": "query",
-						"description": "Brand Id",
-						"required": true,
-						"style": "form",
-						"explode": true,
-						"schema": {
-							"type": "integer",
-							"example": "{{brandId}}"
-						}
-					},
-					{
-						"name": "quantity",
-						"in": "query",
-						"description": "SKU quantity",
-						"required": true,
-						"style": "form",
-						"explode": true,
-						"schema": {
-							"type": "integer",
-							"example": "{{quantity}}"
-						}
-					},
-					{
-						"name": "Content-Type",
-						"in": "header",
-						"description": "Describes the type of the content being sent",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"default": "application/json"
-						}
-					},
-					{
-						"name": "Accept",
-						"in": "header",
-						"description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"example": "application/vnd.vtex.pricing.v3+json"
-						}
-					},
-					{
-						"name": "itemId",
-						"in": "path",
-						"description": "SKU Id",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"name": "priceTableId",
-						"in": "path",
-						"description": "SKU Price Table Id",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "integer"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "",
-						"headers": {
-							"Access-Control-Allow-Credentials": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "true"
-									}
-								}
-							},
-							"Access-Control-Allow-Origin": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "*"
-									}
-								}
-							},
-							"Connection": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "keep-alive"
-									}
-								}
-							},
-							"Content-Encoding": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "gzip"
-									}
-								}
-							},
-							"Content-Length": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "71"
-									}
-								}
-							},
-							"Date": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "Mon, 28 Aug 2017 20:15:19 GMT"
-									}
-								}
-							},
-							"Server": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "nginx"
-									}
-								}
-							},
-							"X-CDNIgnore": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "1"
-									}
-								}
-							},
-							"X-Powered-by-VTEX-Janus-Edge": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "v1.41.0"
-									}
-								}
-							},
-							"X-Track": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "stable"
-									}
-								}
-							},
-							"X-VTEX-Janus-Router-Backend-App": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "pricing-v3.26.2"
-									}
-								}
-							}
-						},
-						"content": {
-							"application/json; charset=utf-8": {
-								"schema": {
-									"$ref": "#/components/schemas/Default1"
-								},
-								"example": {
-									"tradePolicyId": "1",
-									"listPrice": 30,
-									"sellingPrice": 18.9,
-									"priceValidUntil": "2018-12-20T18:12:14Z"
-								}
-							}
-						}
-					}
-				},
-				"deprecated": false,
-				"servers": [
-					{
-						"url": "https://api.vtex.com/{account}/pricing",
-						"variables": {
-							"account": {
-								"default": "DefaultParameterValue"
-							}
-						}
-					}
-				]
-			}
-		},
-		"/config": {
-			"get": {
-				"tags": [
-					"Pricing Config"
-				],
-				"summary": "Get Pricing Config",
-				"description": "Retrieves Pricing Module Configuration",
-				"operationId": "GetPricingConfig",
-				"parameters": [
-					{
-						"name": "accountName",
-						"in": "path",
-						"required": true,
-						"description": "Name of the VTEX account. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "apiexamples"
-						}
-					},
-					{
-						"name": "environment",
-						"in": "path",
-						"required": true,
-						"description": "Environment to use. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "vtexcommercestable"
-						}
-					},
-					{
-						"name": "Content-Type",
-						"in": "header",
-						"description": "Describes the type of the content being sent",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"default": "application/json"
-						}
-					},
-					{
-						"name": "Accept",
-						"in": "header",
-						"description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"example": "application/vnd.vtex.pricing.v3+json"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "",
-						"headers": {
-							"Access-Control-Allow-Credentials": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "true"
-									}
-								}
-							},
-							"Access-Control-Allow-Origin": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "*"
-									}
-								}
-							},
-							"Connection": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "keep-alive"
-									}
-								}
-							},
-							"Content-Encoding": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "gzip"
-									}
-								}
-							},
-							"Content-Length": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "118"
-									}
-								}
-							},
-							"Date": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "Tue, 21 Feb 2017 16:11:39 GMT"
-									}
-								}
-							},
-							"Server": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "nginx"
-									}
-								}
-							},
-							"X-CDNIgnore": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "1"
-									}
-								}
-							},
-							"X-Powered-by-VTEX-Janus-Edge": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "v1.35.3"
-									}
-								}
-							},
-							"X-Track": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "stable"
-									}
-								}
-							},
-							"X-VTEX-Janus-Router-Backend-App": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "pricing-v3.21.12"
-									}
-								}
-							}
-						},
-						"content": {
-							"application/json; charset=utf-8": {
-								"schema": {
-									"$ref": "#/components/schemas/Default2"
-								},
-								"example": {
-									"hasMigrated": true,
-									"migrationCurrentSKUIndex": 5200,
-									"migrationTotalSKU": 5200,
-									"defaultMarkup": 100,
-									"minimumMarkups": {
-										"1": 100,
-										"2": 90
-									}
-								}
-							}
-						}
-					}
-				},
-				"deprecated": false,
-				"servers": [
-					{
-						"url": "https://api.vtex.com/{account}/pricing",
-						"variables": {
-							"account": {
-								"default": "DefaultParameterValue"
-							}
-						}
-					}
-				]
-			}
-		},
-		"/migration": {
-			"get": {
-				"tags": [
-					"Pricing Config"
-				],
-				"summary": "Gets Pricing v2 Active Status",
-				"description": "Gets Pricing v2 Active Status",
-				"operationId": "GetPricingv2ActiveStatus",
-				"parameters": [
-					{
-						"name": "accountName",
-						"in": "path",
-						"required": true,
-						"description": "Name of the VTEX account. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "apiexamples"
-						}
-					},
-					{
-						"name": "environment",
-						"in": "path",
-						"required": true,
-						"description": "Environment to use. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "vtexcommercestable"
-						}
-					},
-					{
-						"name": "Content-Type",
-						"in": "header",
-						"description": "Describes the type of the content being sent",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"default": "application/json"
-						}
-					},
-					{
-						"name": "Accept",
-						"in": "header",
-						"description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"example": "application/vnd.vtex.pricing.v3+json"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "",
-						"headers": {
-							"Access-Control-Allow-Credentials": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "true"
-									}
-								}
-							},
-							"Access-Control-Allow-Origin": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "*"
-									}
-								}
-							},
-							"Connection": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "keep-alive"
-									}
-								}
-							},
-							"Content-Encoding": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "gzip"
-									}
-								}
-							},
-							"Content-Length": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "52"
-									}
-								}
-							},
-							"Date": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "Tue, 21 Feb 2017 16:13:39 GMT"
-									}
-								}
-							},
-							"Server": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "nginx"
-									}
-								}
-							},
-							"X-CDNIgnore": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "1"
-									}
-								}
-							},
-							"X-Powered-by-VTEX-Janus-Edge": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "v1.35.3"
-									}
-								}
-							},
-							"X-Track": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "stable"
-									}
-								}
-							},
-							"X-VTEX-Janus-Router-Backend-App": {
-								"content": {
-									"text/plain": {
-										"schema": {
-											"type": "string"
-										},
-										"example": "pricing-v3.21.12"
-									}
-								}
-							}
-						},
-						"content": {
-							"application/json; charset=utf-8": {
-								"schema": {
-									"$ref": "#/components/schemas/Default3"
-								},
-								"example": {
-									"isActive": true,
-									"hasMigrated": true
-								}
-							}
-						}
-					}
-				},
-				"deprecated": false,
-				"servers": [
-					{
-						"url": "https://api.vtex.com/{account}/pricing",
-						"variables": {
-							"account": {
-								"default": "DefaultParameterValue"
-							}
-						}
-					}
-				]
-			}
-		},
-		"/pipeline/catalog/{priceTableId}": {
-			"get": {
-				"tags": [
-					"Price Tables"
-				],
-				"summary": "Get rules for a price table",
-				"description": "This method will retrieve the rules from a specific Price Table. It will delete all the rules from the requested Price Table and create new rules based on the content of the request",
-				"operationId": "Createrulesforapricetable",
-				"parameters": [
-					{
-						"name": "accountName",
-						"in": "path",
-						"required": true,
-						"description": "Name of the VTEX account. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "apiexamples"
-						}
-					},
-					{
-						"name": "environment",
-						"in": "path",
-						"required": true,
-						"description": "Environment to use. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "vtexcommercestable"
-						}
-					},
-					{
-						"name": "Content-Type",
-						"in": "header",
-						"description": "Describes the type of the content being sent",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"default": "application/json"
-						}
-					},
-					{
-						"name": "Accept",
-						"in": "header",
-						"description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"example": "application/vnd.vtex.pricing.v3+json"
-						}
-					},
-					{
-						"name": "priceTableId",
-						"in": "path",
-						"description": "Price Table ID",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "",
-						"headers": {}
-					}
-				},
-				"deprecated": false,
-				"servers": [
-					{
-						"url": "https://api.vtex.com/{account}/pricing",
-						"variables": {
-							"account": {
-								"default": "DefaultParameterValue"
-							}
-						}
-					}
-				]
-			},
-			"put": {
-				"tags": [
-					"Price Tables"
-				],
-				"summary": "Update rules for a price table",
-				"description": "This method will update the rules from a specific Price Table. It will delete all the rules from the requested Price Table and create new rules based on the content of the request",
-				"parameters": [
-					{
-						"name": "accountName",
-						"in": "path",
-						"required": true,
-						"description": "Name of the VTEX account. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "apiexamples"
-						}
-					},
-					{
-						"name": "environment",
-						"in": "path",
-						"required": true,
-						"description": "Environment to use. Used as part of the URL",
-						"schema": {
-							"type": "string",
-							"default": "vtexcommercestable"
-						}
-					},
-					{
-						"name": "Content-Type",
-						"in": "header",
-						"description": "Describes the type of the content being sent",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"default": "application/json"
-						}
-					},
-					{
-						"name": "Accept",
-						"in": "header",
-						"description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"example": "application/vnd.vtex.pricing.v3+json"
-						}
-					},
-					{
-						"name": "priceTableId",
-						"in": "path",
-						"description": "Price Table ID",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"201": {
-						"description": "Created",
-						"headers": {}
-					}
-				},
-				"requestBody": {
-					"description": "",
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"required": [
-									"rules"
-								],
-								"properties": {
-									"rules": {
-										"type": "array",
-										"title": "rules",
-										"description": "Rules for Price Table",
-										"default": [],
-										"items": {
-											"type": "object",
-											"title": "Rule's object",
-											"description": "Objects contained in rules",
-											"default": {},
-											"required": [
-												"id",
-												"context",
-												"percentualModifier"
-											],
-											"properties": {
-												"id": {
-													"type": "integer",
-													"title": "id",
-													"description": "Rule ID",
-													"default": 0
-													},
-												"context": {
-													"type": "object",
-													"title": "context",
-													"description": "Rule Context",
-													"default": {},
-													"required": [
-														"stockStatuses",
-														"internalCategories",
-														"markupRange",
-														"dateRange"
-													],
-													"properties": {
-														"categories": {
-															"type": "object",
-															"title": "categories",
-															"description": "Categories Context",
-															"properties": {
-																"Category ID":{
-																	"type": "integer",
-																	"title": "Category ID",
-																	"default": 1
-																},
-																"Category Name":{
-																	"type": "string",
-																	"title": "Category Name",
-																	"default": "Books"
-																}
-															}
-														},
-														"brands": {
-															"type": "object",
-															"title": "brands",
-															"description": "Brands Context",
-															"properties": {
-																"Brand ID":{
-																	"type": "integer",
-																	"title": "Brand ID",
-																	"default": 1
-																},
-																"Brand Name":{
-																	"type": "string",
-																	"title": "Brand Name",
-																	"default": "Books"
-																}
-															}
-
-														},
-														"stockStatuses": {
-															"type": "object",
-															"title": "stockStatuses",
-															"description": "Stock status uses",
-															"default": null
-														},
-														"internalCategories": {
-															"type": "object",
-															"title": "internalCategories",
-															"description": "Internal Categories",
-															"default": null
-														},
-														"markupRange": {
-															"type": "object",
-															"title": "markupRange",
-															"description": "Markup Rule",
-															"default": null,
-															"required": [
-																"from",
-																"to"
-															],
-															"properties": {
-																"from":{
-																	"type": "number",
-																	"title": "from",
-																	"description": "Item markup should be greater than or equal to this value",
-																	"default": 0
-																},
-																"to":{
-																	"type": "number",
-																	"title": "to",
-																	"description": "Item markup should be less than or equal to this value",
-																	"default": 200
-																}
-															}
-														},
-														"dateRange": {
-															"type": "object",
-															"title": "dateRange",
-															"description": "Date Range Rule",
-															"default": null,
-															"required": [
-																"from",
-																"to"
-															],
-															"properties": {
-																"from":{
-																	"type": "string",
-																	"title": "from",
-																	"description": "First date that rule will be active",
-																	"default": "2019-10-23T19:00:00.000Z"
-																},
-																"to":{
-																	"type": "string",
-																	"title": "to",
-																	"description": "Item markup should be less than or equal to this value",
-																	"default": "2019-10-26T00:00:00.000Z"
-																}
-															}
-														}
-													}
-												},
-												"percentualModifier": {
-													"type": "number",
-													"title": "percentualModifier",
-													"description": "Percentual Modifier",
-													"default": 0
-												}
-											}
-										}
-									}
-								}
-							}
-							}
-						}
-					}
-				}
-			}
-		},
-	"components": {
-		"schemas": {
-			"Examplewith2FixedPricesindifferentSalesChannel": {
-				"title": "Examplewith2FixedPricesindifferentSalesChannel",
-				"required": [
-					"tradePolicyId",
-					"value",
-					"listPrice",
-					"minQuantity"
-				],
-				"type": "object",
-				"properties": {
-					"tradePolicyId": {
-						"type": "string"
-					},
-					"value": {
-						"type": "number"
-					},
-					"listPrice": {
-						"type": "number",
-						"nullable": true
-					},
-					"minQuantity": {
-						"type": "integer",
-						"format": "int32"
-					}
-				},
-				"example": {
-					"tradePolicyId": "6",
-					"value": 20.9,
-					"listPrice": 22.9,
-					"minQuantity": 1
-				}
-			},
-			"Create/EditFixedPriceRequest": {
-				"title": "Create/EditFixedPriceRequest",
-				"required": [
-					"listPrice",
-					"costPrice",
-					"markup",
-					"fixedPrices"
-				],
-				"type": "object",
-				"properties": {
-					"listPrice": {
-						"type": "integer",
-						"format": "int32",
-						"description": "SKU List Price"
-					},
-					"costPrice": {
-						"type": "integer",
-						"format": "int32",
-						"description": "SKU Cost Price"
-					},
-					"markup": {
-						"type": "integer",
-						"format": "int32"
-					},
-					"basePrice": {
-						"type": "integer",
-						"format": "int32",
-						"description": "SKU Selling Base Price"
-					},
-					"fixedPrices": {
-						"type": "array",
-						"description": "SKU Fixed Prices Object",
-						"items": {
-							"$ref": "#/components/schemas/FixedPrice"
-						}
-					}
-				}
-			},
-			"FixedPrice": {
-				"title": "FixedPrice",
-				"required": [
-					"tradePolicyId",
-					"value",
-					"listPrice",
-					"minQuantity"
-				],
-				"type": "object",
-				"properties": {
-					"tradePolicyId": {
-						"type": "string",
-						"description": "Sales Channel Id"
-					},
-					"value": {
-						"type": "integer",
-						"format": "int32",
-						"description": "SKU Fixed Price Value"
-					},
-					"listPrice": {
-						"type": "integer",
-						"nullable": true,
-						"description": "SKU List Price"
-					},
-					"minQuantity": {
-						"type": "integer",
-						"format": "int32",
-						"description": "Minimum Quantity to active Fixed Price"
-					},
-					"dateRange": {
-						"description": "Trade Policy Fixed Price Validity Period Object",
-						"$ref": "#/components/schemas/DateRange",
-						"type": "object"
-					}
-				},
-				"example": {
-					"tradePolicyId": "9",
-					"value": 300,
-					"listPrice": null,
-					"minQuantity": 1
-				}
-			},
-			"DateRange": {
-				"title": "DateRange",
-				"required": [
-					"from",
-					"to"
-				],
-				"type": "object",
-				"properties": {
-					"from": {
-						"type": "string",
-						"description": "Validity start Date"
-					},
-					"to": {
-						"type": "string",
-						"description": "Validity end Date"
-					}
-				},
-				"example": {
-					"from": "2017-12-07T14:30:00Z",
-					"to": "2017-12-30T14:30:00Z"
-				}
-			},
-			"Create/EditFixedPricesonapricetable_ortradepolicy_Request": {
-				"title": "Create/EditFixedPricesonapricetable(ortradepolicy)Request",
-				"required": [
-					"value",
-					"listPrice",
-					"minQuantity"
-				],
-				"type": "object",
-				"properties": {
-					"value": {
-						"type": "number"
-					},
-					"listPrice": {
-						"type": "number"
-					},
-					"minQuantity": {
-						"type": "integer",
-						"format": "int32"
-					}
-				},
-				"example": {
-					"value": 60.5,
-					"listPrice": 90.5,
-					"minQuantity": 1
-				}
-			},
-			"Addingafixedpriceforonespecificpricetable": {
-				"title": "Addingafixedpriceforonespecificpricetable",
-				"required": [
-					"tradePolicyId",
-					"value",
-					"listPrice",
-					"minQuantity"
-				],
-				"type": "object",
-				"properties": {
-					"tradePolicyId": {
-						"type": "string"
-					},
-					"value": {
-						"type": "number"
-					},
-					"listPrice": {
-						"type": "string",
-						"nullable": true
-					},
-					"minQuantity": {
-						"type": "integer",
-						"format": "int32"
-					}
-				},
-				"example": {
-					"tradePolicyId": "10",
-					"value": 60.5,
-					"listPrice": null,
-					"minQuantity": 1
-				}
-			},
-			"SchedulingFixedPricesRequest": {
-				"title": "SchedulingFixedPricesRequest",
-				"required": [
-					"listPrice",
-					"costPrice",
-					"markup",
-					"fixedPrices"
-				],
-				"type": "object",
-				"properties": {
-					"listPrice": {
-						"type": "integer",
-						"format": "int32"
-					},
-					"costPrice": {
-						"type": "integer",
-						"format": "int32"
-					},
-					"markup": {
-						"type": "integer",
-						"format": "int32"
-					},
-					"fixedPrices": {
-						"type": "array",
-						"items": {
-							"$ref": "#/components/schemas/FixedPrice"
-						},
-						"description": ""
-					}
-				}
-			},
-			"Deletefixedpricesonapricetable_ortradepolicy_Request": {
-				"title": "Deletefixedpricesonapricetable(ortradepolicy)Request",
-				"required": [
-					"tradePolicyId",
-					"value",
-					"listPrice",
-					"minQuantity"
-				],
-				"type": "object",
-				"properties": {
-					"tradePolicyId": {
-						"type": "string"
-					},
-					"value": {
-						"type": "integer",
-						"format": "int32"
-					},
-					"listPrice": {
-						"type": "number"
-					},
-					"minQuantity": {
-						"type": "integer",
-						"format": "int32"
-					}
-				},
-				"example": {
-					"tradePolicyId": "1",
-					"value": 100,
-					"listPrice": 99.9,
-					"minQuantity": 1
-				}
-			},
-			"PricewithFixedPrices_scheduledandindifferenttradepolicies_": {
-				"title": "PricewithFixedPrices(scheduledandindifferenttradepolicies)",
-				"required": [
-					"itemId",
-					"listPrice",
-					"costPrice",
-					"markup",
-					"basePrice",
-					"fixedPrices"
-				],
-				"type": "object",
-				"properties": {
-					"itemId": {
-						"type": "string"
-					},
-					"listPrice": {
-						"type": "integer",
-						"format": "int32"
-					},
-					"costPrice": {
-						"type": "integer",
-						"format": "int32"
-					},
-					"markup": {
-						"type": "integer",
-						"format": "int32"
-					},
-					"basePrice": {
-						"type": "integer",
-						"format": "int32"
-					},
-					"fixedPrices": {
-						"type": "array",
-						"items": {
-							"$ref": "#/components/schemas/FixedPrice2"
-						},
-						"description": ""
-					}
-				},
-				"example": {
-					"itemId": "1234512354",
-					"listPrice": 300,
-					"costPrice": 10,
-					"markup": 2400,
-					"basePrice": 250,
-					"fixedPrices": [
-						{
-							"tradePolicyId": "1",
-							"value": 666.66,
-							"listPrice": null,
-							"minQuantity": 1
-						},
-						{
-							"tradePolicyId": "9",
-							"value": 4500,
-							"listPrice": null,
-							"minQuantity": 1
-						},
-						{
-							"tradePolicyId": "9",
-							"value": 600,
-							"listPrice": null,
-							"minQuantity": 1,
-							"dateRange": {
-								"from": "2017-12-07T14:30:00Z",
-								"to": "2017-12-30T14:30:00Z"
-							}
-						},
-						{
-							"tradePolicyId": "9",
-							"value": 5555.55,
-							"listPrice": null,
-							"minQuantity": 1,
-							"dateRange": {
-								"from": "2017-12-20T14:30:00Z",
-								"to": "2017-12-22T14:30:00Z"
-							}
-						},
-						{
-							"tradePolicyId": "9",
-							"value": 555.55,
-							"listPrice": null,
-							"minQuantity": 1,
-							"dateRange": {
-								"from": "2017-12-06T15:00:00Z",
-								"to": "2017-12-14T15:00:00Z"
-							}
-						},
-						{
-							"tradePolicyId": "10",
-							"value": 5555.55,
-							"listPrice": null,
-							"minQuantity": 1
-						},
-						{
-							"tradePolicyId": "18",
-							"value": 555.55,
-							"listPrice": null,
-							"minQuantity": 1
-						}
-					]
-				}
-			},
-			"FixedPrice2": {
-				"title": "FixedPrice2",
-				"required": [
-					"tradePolicyId",
-					"value",
-					"listPrice",
-					"minQuantity"
-				],
-				"type": "object",
-				"properties": {
-					"tradePolicyId": {
-						"type": "string"
-					},
-					"value": {
-						"type": "number"
-					},
-					"listPrice": {
-						"type": "string",
-						"nullable": true
-					},
-					"minQuantity": {
-						"type": "integer",
-						"format": "int32"
-					},
-					"dateRange": {
-						"$ref": "#/components/schemas/DateRange"
-					}
-				},
-				"example": {
-					"tradePolicyId": "1",
-					"value": 666.66,
-					"listPrice": null,
-					"minQuantity": 1
-				}
-			},
-			"Default": {
-				"title": "Default",
-				"required": [
-					"tradePolicyId",
-					"value",
-					"listPrice",
-					"minQuantity"
-				],
-				"type": "object",
-				"properties": {
-					"tradePolicyId": {
-						"type": "string"
-					},
-					"value": {
-						"type": "number"
-					},
-					"listPrice": {
-						"type": "number",
-						"nullable": true
-					},
-					"minQuantity": {
-						"type": "integer",
-						"format": "int32"
-					}
-				},
-				"example": {
-					"tradePolicyId": "6",
-					"value": 20.9,
-					"listPrice": 22.9,
-					"minQuantity": 1
-				}
-			},
-			"Default1": {
-				"title": "Default1",
-				"required": [
-					"tradePolicyId",
-					"listPrice",
-					"sellingPrice",
-					"priceValidUntil"
-				],
-				"type": "object",
-				"properties": {
-					"tradePolicyId": {
-						"type": "string"
-					},
-					"listPrice": {
-						"type": "integer",
-						"format": "int32"
-					},
-					"sellingPrice": {
-						"type": "number"
-					},
-					"priceValidUntil": {
-						"type": "string"
-					}
-				},
-				"example": {
-					"tradePolicyId": "1",
-					"listPrice": 30,
-					"sellingPrice": 18.9,
-					"priceValidUntil": "2018-12-20T18:12:14Z"
-				}
-			},
-			"Create/EditPriceRequest": {
-				"title": "Create/EditPriceRequest",
-				"required": [
-					"listPrice",
-					"costPrice",
-					"markup",
-					"fixedPrices"
-				],
-				"type": "object",
-				"properties": {
-					"listPrice": {
-						"type": "integer",
-						"format": "int32"
-					},
-					"costPrice": {
-						"type": "integer",
-						"format": "int32"
-					},
-					"markup": {
-						"type": "integer",
-						"format": "int32"
-					},
-					"fixedPrices": {
-						"type": "array",
-						"items": {
-							"$ref": "#/components/schemas/FixedPrice"
-						},
-						"description": ""
-					}
-				}
-			},
-			"Default2": {
-				"title": "Default2",
-				"required": [
-					"hasMigrated",
-					"migrationCurrentSKUIndex",
-					"migrationTotalSKU",
-					"defaultMarkup",
-					"minimumMarkups"
-				],
-				"type": "object",
-				"properties": {
-					"hasMigrated": {
-						"type": "boolean"
-					},
-					"migrationCurrentSKUIndex": {
-						"type": "integer",
-						"format": "int32"
-					},
-					"migrationTotalSKU": {
-						"type": "integer",
-						"format": "int32"
-					},
-					"defaultMarkup": {
-						"type": "integer",
-						"format": "int32"
-					},
-					"minimumMarkups": {
-						"type": "object",
-						"additionalProperties": {
-							"type": "integer",
-							"format": "int32"
-						}
-					}
-				},
-				"example": {
-					"hasMigrated": true,
-					"migrationCurrentSKUIndex": 5200,
-					"migrationTotalSKU": 5200,
-					"defaultMarkup": 100,
-					"minimumMarkups": {
-						"1": 100,
-						"2": 90
-					}
-				}
-			},
-			"Default3": {
-				"title": "Default3",
-				"required": [
-					"isActive",
-					"hasMigrated"
-				],
-				"type": "object",
-				"properties": {
-					"isActive": {
-						"type": "boolean"
-					},
-					"hasMigrated": {
-						"type": "boolean"
-					}
-				},
-				"example": {
-					"isActive": true,
-					"hasMigrated": true
-				}
-			}
-		},
-		"securitySchemes": {
-			"appKey": {
-				"type": "apiKey",
-				"in": "header",
-				"name": "X-VTEX-API-AppKey"
-			},
-			"appToken": {
-				"type": "apiKey",
-				"in": "header",
-				"name": "X-VTEX-API-AppToken"
-			}
-		}
-	},
-	"tags": [
-		{
-			"name": "Fixed Prices"
-		},
-		{
-			"name": "Prices",
-			"description": "Prices are the main resource of this Module. They are the prices of the SKUs in a VTEX store."
-		},
-		{
-			"name": "Pricing Config",
-			"description": "The Config is unique per account, and has generic data about the account."
-		},
-		{
-			"name": "Price Tables"
-		}
-	],
-	"security": [
-		{
-			"appKey": [],
-			"appToken": []
-		}
-	]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Examplewith2FixedPricesindifferentSalesChannel": {
+                "title": "Examplewith2FixedPricesindifferentSalesChannel",
+                "required": [
+                    "tradePolicyId",
+                    "value",
+                    "listPrice",
+                    "minQuantity"
+                ],
+                "type": "object",
+                "properties": {
+                    "tradePolicyId": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "number"
+                    },
+                    "listPrice": {
+                        "type": "number",
+                        "nullable": true
+                    },
+                    "minQuantity": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                },
+                "example": {
+                    "tradePolicyId": "6",
+                    "value": 20.9,
+                    "listPrice": 22.9,
+                    "minQuantity": 1
+                }
+            },
+            "Create/EditFixedPriceRequest": {
+                "title": "Create/EditFixedPriceRequest",
+                "required": [
+                    "listPrice",
+                    "costPrice",
+                    "markup",
+                    "fixedPrices"
+                ],
+                "type": "object",
+                "properties": {
+                    "listPrice": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "SKU List Price"
+                    },
+                    "costPrice": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "SKU Cost Price"
+                    },
+                    "markup": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "basePrice": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "SKU Selling Base Price"
+                    },
+                    "fixedPrices": {
+                        "type": "array",
+                        "description": "SKU Fixed Prices Object",
+                        "items": {
+                            "$ref": "#/components/schemas/FixedPrice"
+                        }
+                    }
+                }
+            },
+            "FixedPrice": {
+                "title": "FixedPrice",
+                "required": [
+                    "tradePolicyId",
+                    "value",
+                    "listPrice",
+                    "minQuantity"
+                ],
+                "type": "object",
+                "properties": {
+                    "tradePolicyId": {
+                        "type": "string",
+                        "description": "Sales Channel Id"
+                    },
+                    "value": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "SKU Fixed Price Value"
+                    },
+                    "listPrice": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "SKU List Price"
+                    },
+                    "minQuantity": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Minimum Quantity to active Fixed Price"
+                    },
+                    "dateRange": {
+                        "description": "Trade Policy Fixed Price Validity Period Object",
+                        "$ref": "#/components/schemas/DateRange",
+                        "type": "object"
+                    }
+                },
+                "example": {
+                    "tradePolicyId": "9",
+                    "value": 300,
+                    "listPrice": null,
+                    "minQuantity": 1
+                }
+            },
+            "DateRange": {
+                "title": "DateRange",
+                "required": [
+                    "from",
+                    "to"
+                ],
+                "type": "object",
+                "properties": {
+                    "from": {
+                        "type": "string",
+                        "description": "Validity start Date"
+                    },
+                    "to": {
+                        "type": "string",
+                        "description": "Validity end Date"
+                    }
+                },
+                "example": {
+                    "from": "2017-12-07T14:30:00Z",
+                    "to": "2017-12-30T14:30:00Z"
+                }
+            },
+            "Create/EditFixedPricesonapricetable_ortradepolicy_Request": {
+                "title": "Create/EditFixedPricesonapricetable(ortradepolicy)Request",
+                "required": [
+                    "value",
+                    "listPrice",
+                    "minQuantity"
+                ],
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "number"
+                    },
+                    "listPrice": {
+                        "type": "number"
+                    },
+                    "minQuantity": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                },
+                "example": {
+                    "value": 60.5,
+                    "listPrice": 90.5,
+                    "minQuantity": 1
+                }
+            },
+            "Addingafixedpriceforonespecificpricetable": {
+                "title": "Addingafixedpriceforonespecificpricetable",
+                "required": [
+                    "tradePolicyId",
+                    "value",
+                    "listPrice",
+                    "minQuantity"
+                ],
+                "type": "object",
+                "properties": {
+                    "tradePolicyId": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "number"
+                    },
+                    "listPrice": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "minQuantity": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                },
+                "example": {
+                    "tradePolicyId": "10",
+                    "value": 60.5,
+                    "listPrice": null,
+                    "minQuantity": 1
+                }
+            },
+            "SchedulingFixedPricesRequest": {
+                "title": "SchedulingFixedPricesRequest",
+                "required": [
+                    "listPrice",
+                    "costPrice",
+                    "markup",
+                    "fixedPrices"
+                ],
+                "type": "object",
+                "properties": {
+                    "listPrice": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "costPrice": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "markup": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "fixedPrices": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FixedPrice"
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "Deletefixedpricesonapricetable_ortradepolicy_Request": {
+                "title": "Deletefixedpricesonapricetable(ortradepolicy)Request",
+                "required": [
+                    "tradePolicyId",
+                    "value",
+                    "listPrice",
+                    "minQuantity"
+                ],
+                "type": "object",
+                "properties": {
+                    "tradePolicyId": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "listPrice": {
+                        "type": "number"
+                    },
+                    "minQuantity": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                },
+                "example": {
+                    "tradePolicyId": "1",
+                    "value": 100,
+                    "listPrice": 99.9,
+                    "minQuantity": 1
+                }
+            },
+            "PricewithFixedPrices_scheduledandindifferenttradepolicies_": {
+                "title": "PricewithFixedPrices(scheduledandindifferenttradepolicies)",
+                "required": [
+                    "itemId",
+                    "listPrice",
+                    "costPrice",
+                    "markup",
+                    "basePrice",
+                    "fixedPrices"
+                ],
+                "type": "object",
+                "properties": {
+                    "itemId": {
+                        "type": "string"
+                    },
+                    "listPrice": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "costPrice": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "markup": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "basePrice": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "fixedPrices": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FixedPrice2"
+                        },
+                        "description": ""
+                    }
+                },
+                "example": {
+                    "itemId": "1234512354",
+                    "listPrice": 300,
+                    "costPrice": 10,
+                    "markup": 2400,
+                    "basePrice": 250,
+                    "fixedPrices": [{
+                            "tradePolicyId": "1",
+                            "value": 666.66,
+                            "listPrice": null,
+                            "minQuantity": 1
+                        },
+                        {
+                            "tradePolicyId": "9",
+                            "value": 4500,
+                            "listPrice": null,
+                            "minQuantity": 1
+                        },
+                        {
+                            "tradePolicyId": "9",
+                            "value": 600,
+                            "listPrice": null,
+                            "minQuantity": 1,
+                            "dateRange": {
+                                "from": "2017-12-07T14:30:00Z",
+                                "to": "2017-12-30T14:30:00Z"
+                            }
+                        },
+                        {
+                            "tradePolicyId": "9",
+                            "value": 5555.55,
+                            "listPrice": null,
+                            "minQuantity": 1,
+                            "dateRange": {
+                                "from": "2017-12-20T14:30:00Z",
+                                "to": "2017-12-22T14:30:00Z"
+                            }
+                        },
+                        {
+                            "tradePolicyId": "9",
+                            "value": 555.55,
+                            "listPrice": null,
+                            "minQuantity": 1,
+                            "dateRange": {
+                                "from": "2017-12-06T15:00:00Z",
+                                "to": "2017-12-14T15:00:00Z"
+                            }
+                        },
+                        {
+                            "tradePolicyId": "10",
+                            "value": 5555.55,
+                            "listPrice": null,
+                            "minQuantity": 1
+                        },
+                        {
+                            "tradePolicyId": "18",
+                            "value": 555.55,
+                            "listPrice": null,
+                            "minQuantity": 1
+                        }
+                    ]
+                }
+            },
+            "FixedPrice2": {
+                "title": "FixedPrice2",
+                "required": [
+                    "tradePolicyId",
+                    "value",
+                    "listPrice",
+                    "minQuantity"
+                ],
+                "type": "object",
+                "properties": {
+                    "tradePolicyId": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "number"
+                    },
+                    "listPrice": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "minQuantity": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "dateRange": {
+                        "$ref": "#/components/schemas/DateRange"
+                    }
+                },
+                "example": {
+                    "tradePolicyId": "1",
+                    "value": 666.66,
+                    "listPrice": null,
+                    "minQuantity": 1
+                }
+            },
+            "Default": {
+                "title": "Default",
+                "required": [
+                    "tradePolicyId",
+                    "value",
+                    "listPrice",
+                    "minQuantity"
+                ],
+                "type": "object",
+                "properties": {
+                    "tradePolicyId": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "number"
+                    },
+                    "listPrice": {
+                        "type": "number",
+                        "nullable": true
+                    },
+                    "minQuantity": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                },
+                "example": {
+                    "tradePolicyId": "6",
+                    "value": 20.9,
+                    "listPrice": 22.9,
+                    "minQuantity": 1
+                }
+            },
+            "Default1": {
+                "title": "Default1",
+                "required": [
+                    "tradePolicyId",
+                    "listPrice",
+                    "sellingPrice",
+                    "priceValidUntil"
+                ],
+                "type": "object",
+                "properties": {
+                    "tradePolicyId": {
+                        "type": "string"
+                    },
+                    "listPrice": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "sellingPrice": {
+                        "type": "number"
+                    },
+                    "priceValidUntil": {
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "tradePolicyId": "1",
+                    "listPrice": 30,
+                    "sellingPrice": 18.9,
+                    "priceValidUntil": "2018-12-20T18:12:14Z"
+                }
+            },
+            "Create/EditPriceRequest": {
+                "title": "Create/EditPriceRequest",
+                "required": [
+                    "listPrice",
+                    "costPrice",
+                    "markup",
+                    "fixedPrices"
+                ],
+                "type": "object",
+                "properties": {
+                    "listPrice": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "costPrice": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "markup": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "fixedPrices": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FixedPrice"
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "Default2": {
+                "title": "Default2",
+                "required": [
+                    "hasMigrated",
+                    "migrationCurrentSKUIndex",
+                    "migrationTotalSKU",
+                    "defaultMarkup",
+                    "minimumMarkups"
+                ],
+                "type": "object",
+                "properties": {
+                    "hasMigrated": {
+                        "type": "boolean"
+                    },
+                    "migrationCurrentSKUIndex": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "migrationTotalSKU": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "defaultMarkup": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "minimumMarkups": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                },
+                "example": {
+                    "hasMigrated": true,
+                    "migrationCurrentSKUIndex": 5200,
+                    "migrationTotalSKU": 5200,
+                    "defaultMarkup": 100,
+                    "minimumMarkups": {
+                        "1": 100,
+                        "2": 90
+                    }
+                }
+            },
+            "Default3": {
+                "title": "Default3",
+                "required": [
+                    "isActive",
+                    "hasMigrated"
+                ],
+                "type": "object",
+                "properties": {
+                    "isActive": {
+                        "type": "boolean"
+                    },
+                    "hasMigrated": {
+                        "type": "boolean"
+                    }
+                },
+                "example": {
+                    "isActive": true,
+                    "hasMigrated": true
+                }
+            }
+        },
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey"
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken"
+            }
+        }
+    },
+    "tags": [{
+            "name": "Fixed Prices"
+        },
+        {
+            "name": "Prices",
+            "description": "Prices are the main resource of this Module. They are the prices of the SKUs in a VTEX store."
+        },
+        {
+            "name": "Pricing Config",
+            "description": "The Config is unique per account, and has generic data about the account."
+        },
+        {
+            "name": "Price Tables"
+        }
+    ],
+    "security": [{
+        "appKey": [],
+        "appToken": []
+    }]
 }
