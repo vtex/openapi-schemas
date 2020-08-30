@@ -1613,14 +1613,14 @@
             "post": {
                 "tags": ["Invoice"],
                 "summary": "Order Invoice Notification",
-                "description": "Sends Order invoice notifications. We strongly suggest that you always send the object of the invoiced items. With this practice, the rounding errors will be avoided. It is not allowed to use more than once the Invoice Notification API with the same {{invoiceNumber}}.",
+                "description": "Once the order is invoiced, the seller should use this request to send the invoice information to the marketplace.\n\nWe strongly recommend that you always send the object of the invoiced items. With this practice, rounding errors will be avoided.\n\nIt is not allowed to use the same `invoiceNumber` in more than one request to the Order Invoice Notification endpoint.\n\nBe aware that this endpoint is also used by the seller to send the order tracking information. This, however, should be done in a separate moment, once the seller has the tracking information.",
                 "operationId": "InvoiceNotification",
                 "parameters": [
                     {
                         "name": "accountName",
                         "in": "path",
                         "required": true,
-                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "description": "Name of the VTEX account to which you want to send the invoice information. It is used as part of the request URL.",
                         "schema": {
                             "type": "string",
                             "default": "apiexamples"
@@ -1630,7 +1630,7 @@
                         "name": "environment",
                         "in": "path",
                         "required": true,
-                        "description": "Environment to use. Used as part of the URL",
+                        "description": "Environment to be used as part of the request URL.",
                         "schema": {
                             "type": "string",
                             "default": "vtexcommercestable"
@@ -1639,7 +1639,7 @@
                     {
                         "name": "Accept",
                         "in": "header",
-                        "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand",
+                        "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
                         "required": true,
                         "style": "simple",
                         "schema": {
@@ -1650,7 +1650,7 @@
                     {
                         "name": "Content-Type",
                         "in": "header",
-                        "description": "Type of the content being sent",
+                        "description": "Describes the type of the content being sent.",
                         "required": true,
                         "style": "simple",
                         "schema": {
@@ -1661,7 +1661,7 @@
                     {
                         "name": "orderId",
                         "in": "path",
-                        "description": "",
+                        "description": "String that identifies the order whose invoice is being sent.",
                         "required": true,
                         "style": "simple",
                         "schema": {
@@ -8822,63 +8822,68 @@
                     "issuanceDate",
                     "invoiceNumber",
                     "invoiceValue",
-                    "invoiceKey",
                     "invoiceUrl",
-                    "courier",
-                    "trackingNumber",
-                    "trackingUrl",
-                    "dispatchedDate",
                     "items"
                 ],
                 "type": "object",
                 "properties": {
                     "type": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "The type of invoice. There are two possible values: **Output** and **Input**. The Output type should be used when the invoice you are sending is a selling invoice. The Input type should be used when you send a return invoice."
                     },
                     "issuanceDate": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Issuance date of the invoice."
                     },
                     "invoiceNumber": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Number that identifies the invoice."
                     },
                     "invoiceValue": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Total amount being invoiced."
                     },
                     "invoiceKey": {
                         "type": "string",
-                        "nullable": true
+                        "nullable": true,
+                        "description": ""
                     },
                     "invoiceUrl": {
                         "type": "string",
-                        "nullable": true
+                        "nullable": true,
+                        "description": "URL of the invoice."
                     },
                     "courier": {
                         "type": "string",
-                        "nullable": true
+                        "nullable": true,
+                        "description": "The name of the carrier responsible for delivering the order. *This field should only be used when sending the **tracking** information. When the request is used for sending the invoice, this field should be left empty (`\"\"`).*"
                     },
                     "trackingNumber": {
                         "type": "string",
-                        "nullable": true
+                        "nullable": true,
+                        "description": "The number code that identifies the order tracking. *This field should only be used when sending the **tracking** information. When the request is used for sending the invoice, this field should be left empty (`\"\"`).*"
                     },
                     "trackingUrl": {
                         "type": "string",
-                        "nullable": true
+                        "nullable": true,
+                        "description": "The URL used to track the order. *This field should only be used when sending the **tracking** information. When the request is used for sending the invoice, this field should be left empty (`\"\"`).*"
                     },
                     "dispatchedDate": {
                         "type": "string",
-                        "nullable": true
+                        "nullable": true,
+                        "description": "Order dispatch date. May be `null`."
                     },
                     "items": {
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/Item1"
                         },
-                        "description": ""
+                        "description": "Array containing the SKUs that are being invoiced."
                     }
                 },
                 "example": {
                     "type": "Output",
-                    "issuanceDate": "2010-01-31",
+                    "issuanceDate": "2019-01-30",
                     "invoiceNumber": "9999",
                     "invoiceValue": "10000",
                     "invoiceKey": null,
@@ -8886,7 +8891,7 @@
                     "courier": null,
                     "trackingNumber": null,
                     "trackingUrl": null,
-                    "dispatchedDate": null,
+                    "dispatchedDate": "2019-01-31T18:25:43-05:00",
                     "items": [
                         {
                             "id": "1234",
@@ -8902,15 +8907,18 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "ID of the SKU being invoiced."
                     },
                     "price": {
                         "type": "integer",
-                        "format": "int32"
+                        "format": "int32",
+                        "description": "Total price of the SKU being invoiced."
                     },
                     "quantity": {
                         "type": "integer",
-                        "format": "int32"
+                        "format": "int32",
+                        "description": "Quantity currently in inventory of the SKU being invoiced."
                     }
                 },
                 "example": {
