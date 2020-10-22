@@ -69,6 +69,7 @@
 											"paymentMethods": [
 												"Visa",
 												"Mastercard",
+												"Pix",
 												"American Express",
 												"BankInvoice",
 												"Privatelabels",
@@ -142,6 +143,10 @@
 												{
 													"name": "Visa",
 													"allowsSplit": "onCapture"
+												},
+												{
+													"name": "Pix",
+													"allowsSplit": "disabled"
 												},
 												{
 													"name": "Mastercard",
@@ -816,7 +821,7 @@
 															"title": "sellerId",
 															"description": "In case of a marketplace transaction, this is the Id of the seller for this specific item. Otherwise, this is filled with a '1'"
 														},
-														"shippingValue":{
+														"shippingValue": {
 															"type": "number",
 															"title": "shippingValue",
 															"description": "Total shipping value"
@@ -1136,18 +1141,20 @@
 						}
 					},
 					{
-						"name": "paymentId",
-						"in": "path",
-						"required": true,
-						"description": "VTEX payment identifier",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
 						"name": "Accept",
 						"in": "header",
 						"description": "Media type(s) that is/are acceptable for the response. Default value for payment provider protocol is application/json",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"default": "application/json"
+						}
+					},
+					{
+						"name": "Content-Type",
+						"in": "header",
+						"description": "The Media type of the body of the request. Default value for payment provider protocol is application/json",
 						"required": true,
 						"style": "simple",
 						"schema": {
@@ -1175,27 +1182,6 @@
 						"schema": {
 							"type": "string",
 							"default": "{{X-VTEX-API-AppToken}}"
-						}
-					},
-					{
-						"name": "Content-Type",
-						"in": "header",
-						"description": "The Media type of the body of the request. Default value for payment provider protocol is application/json",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string",
-							"default": "application/json"
-						}
-					},
-					{
-						"name": "paymentId",
-						"in": "path",
-						"description": "VTEX payment identifier",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string"
 						}
 					}
 				],
@@ -1445,16 +1431,6 @@
 							"type": "string",
 							"default": "application/json"
 						}
-					},
-					{
-						"name": "paymentId",
-						"in": "path",
-						"description": "VTEX payment identifier",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string"
-						}
 					}
 				],
 				"requestBody": {
@@ -1462,10 +1438,12 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"type": "string",
-								"example": "{\n    \"paymentId\": \"{{paymentId}}\",\n    \"transactionId\": \"{{transactionId}}\",\n    \"value\": {{settleValue}},\n    \"requestId\": \"{{requestId}}\"\n}"
+								"type": "object",
+								"$ref": "#/components/schemas/CapturePayment"
 							},
-							"example": "{\n    \"paymentId\": \"{{paymentId}}\",\n    \"transactionId\": \"{{transactionId}}\",\n    \"value\": {{settleValue}},\n    \"requestId\": \"{{requestId}}\"\n}"
+							"example":{
+
+							}
 						}
 					},
 					"required": true
@@ -1682,16 +1660,6 @@
 							"type": "string",
 							"default": "application/json"
 						}
-					},
-					{
-						"name": "paymentId",
-						"in": "path",
-						"description": "VTEX payment identifier",
-						"required": true,
-						"style": "simple",
-						"schema": {
-							"type": "string"
-						}
 					}
 				],
 				"requestBody": {
@@ -1699,10 +1667,12 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"type": "string",
-								"example": "{\n    \"paymentId\": \"{{paymentId}}\",\n    \"transactionId\": \"{{transactionId}}\",\n    \"settleId\": \"{{settleId}}\",\n    \"value\": {{refundValue}},\n    \"requestId\": \"{{requestId}}\"\n}"
+								"type": "object",
+								"$ref": "#/components/schemas/RefundPayment"
 							},
-							"example": "{\n    \"paymentId\": \"{{paymentId}}\",\n    \"transactionId\": \"{{transactionId}}\",\n    \"settleId\": \"{{settleId}}\",\n    \"value\": {{refundValue}},\n    \"requestId\": \"{{requestId}}\"\n}"
+							"example":{
+
+							}
 						}
 					},
 					"required": true
@@ -2482,6 +2452,7 @@
 					"paymentMethods": [
 						"Visa",
 						"Mastercard",
+						"Pix",
 						"American Express",
 						"BankInvoice",
 						"Privatelabels",
@@ -2576,7 +2547,8 @@
 				"title": "CancelPaymentRequest",
 				"required": [
 					"paymentId",
-					"requestId"
+					"requestId",
+					"authorizationId"
 				],
 				"type": "object",
 				"properties": {
@@ -2587,6 +2559,14 @@
 					"requestId": {
 						"type": "string",
 						"description": "VTEX request identifier"
+					},
+					"authorizationId": {
+						"type": "string",
+						"description": "Payment authorization identifier (in case it was authorized previous to the cancellation request)."
+					},
+					"sandboxMode": {
+						"type": "boolean",
+						"description": "Indicates whether or not this request is being sent from a sandbox environment"
 					}
 				},
 				"example": {
@@ -2830,6 +2810,241 @@
 					"code": "ERR123",
 					"message": "Refund has failed due to an internal error",
 					"requestId": "LA4E20D3B4E07B7E871F5B5BC9F91"
+				}
+			},
+			"CapturePayment": {
+				"title": "CapturePayment",
+				"required": [
+					"transactionId",
+					"requestId",
+					"paymentId",
+					"value",
+					"authorizationId",
+					"tid"
+				],
+				"type": "object",
+				"properties": {
+					"transactionId": {
+						"type": "string",
+						"description": "VTEX identifier for the transaction related to this payment"
+					},
+					"requestId": {
+						"type": "string",
+						"description": "The unique identifier for this request to ensure its idempotency"
+					},
+					"paymentId": {
+						"type": "string",
+						"description": "VTEX identifier for this payment"
+					},
+					"value": {
+						"type": "number",
+						"description": "The amount to be settled/captured"
+					},
+					"authorizationId": {
+						"type": "string",
+						"description": "The authorization identifier for this payment"
+					},
+					"tid": {
+						"type": "string",
+						"description": "Provider's unique identifier for the transaction"
+					},
+					"recipients": {
+						"type": "array",
+						"description": "Array containing the information for the recipients of this payment in case the Payment Provider is configured to allow the split of payments.",
+						"items":  {
+							"title": "Recipients",
+							"required": [
+							  "id",
+							  "name",
+							  "documentType",
+							  "document",
+							  "role",
+							  "amount"
+							],
+							"type": "object",
+							"properties": {
+							  "id": {
+								"type": "string",
+								"description": "Recipient identifier"
+							  },
+							  "name": {
+								"type": "string",
+								"description": "Recipient name"
+							  },
+							  "documentType": {
+								"type": "string",
+								"description": "Recipient document type"
+							  },
+							  "document": {
+								"type": "number",
+								"description": "Recipient document number"
+							  },
+							  "role": {
+								"type": "string",
+								"description": "Indicates if the recipient is the seller or the marketplace"
+							  },
+							  "chargeProcessingFee": {
+								"type": "boolean",
+								"description": "Indicates whether or not this recipient is charged for processing fees"
+							  },
+							  "chargebackLiable": {
+								  "type": "boolean",
+								  "description": "Indicates whether or not this recipient is liable to chargebacks"
+							  },
+							  "amount": {
+								  "type": "number",
+								  "description": "Amount due to this recipient"
+							  }
+							},
+							"example": {
+							  "id": "2D00FEBB5D7A43D598A99CFC43ADF158",
+							  "method": "CreditCard",
+							  "name": "Visa",
+							  "value": 63.98,
+							  "installments": 3,
+							  "details": {
+								"bin": "507860",
+								"lastDigits": "2798",
+								"holder": "John Doe",
+								"address": {
+								  "country": "BRA",
+								  "street": "Rua Praia de Botafogo",
+								  "number": "518",
+								  "complement": "2o. andar",
+								  "neighborhood": "Botafogo",
+								  "postalCode": "22250-040",
+								  "city": "Rio de Janeiro",
+								  "state": "RJ"
+								}
+							  }
+							}
+						  } 
+					},
+					"sandboxMode": {
+						"type": "boolean",
+						"description": "Indicates whether or not this request is being sent from a sandbox environment"
+					}
+				},
+				"example": {
+					"transactionId": "{{transactionId}}"
+				}
+			},
+			"RefundPayment": {
+				"title": "RefundPayment",
+				"required": [
+					"transactionId",
+					"requestId",
+					"settleId",
+					"paymentId",
+					"value",
+					"authorizationId",
+					"tid"
+				],
+				"type": "object",
+				"properties": {
+					"requestId": {
+						"type": "string",
+						"description": "The unique identifier for this request to ensure its idempotency"
+					},
+					"settleId": {
+						"type": "string",
+						"description": "Provider's settlement identifier"
+					},
+					"paymentId": {
+						"type": "string",
+						"description": "VTEX identifier for this payment"
+					},
+					"tid": {
+						"type": "string",
+						"description": "Provider's unique identifier for the transaction"
+					},
+					"value": {
+						"type": "number",
+						"description": "The amount to be refunded"
+					},
+					"transactionId": {
+						"type": "string",
+						"description": "VTEX identifier for this transaction"
+					},
+					"recipients": {
+						"type": "array",
+						"description": "Array containing the information for the recipients of this payment in case the Payment Provider is configured to allow the split of payments.",
+						"items":  {
+							"title": "Recipients",
+							"required": [
+							  "id",
+							  "name",
+							  "documentType",
+							  "document",
+							  "role",
+							  "amount"
+							],
+							"type": "object",
+							"properties": {
+							  "id": {
+								"type": "string",
+								"description": "Recipient identifier"
+							  },
+							  "name": {
+								"type": "string",
+								"description": "Recipient name"
+							  },
+							  "documentType": {
+								"type": "string",
+								"description": "Recipient document type"
+							  },
+							  "document": {
+								"type": "number",
+								"description": "Recipient document number"
+							  },
+							  "role": {
+								"type": "string",
+								"description": "Indicates if the recipient is the seller or the marketplace"
+							  },
+							  "chargeProcessingFee": {
+								"type": "boolean",
+								"description": "Indicates whether or not this recipient is charged for processing fees"
+							  },
+							  "chargebackLiable": {
+								  "type": "boolean",
+								  "description": "Indicates whether or not this recipient is liable to chargebacks"
+							  },
+							  "amount": {
+								  "type": "number",
+								  "description": "Amount due to this recipient"
+							  }
+							},
+							"example": {
+							  "id": "2D00FEBB5D7A43D598A99CFC43ADF158",
+							  "method": "CreditCard",
+							  "name": "Visa",
+							  "value": 63.98,
+							  "installments": 3,
+							  "details": {
+								"bin": "507860",
+								"lastDigits": "2798",
+								"holder": "John Doe",
+								"address": {
+								  "country": "BRA",
+								  "street": "Rua Praia de Botafogo",
+								  "number": "518",
+								  "complement": "2o. andar",
+								  "neighborhood": "Botafogo",
+								  "postalCode": "22250-040",
+								  "city": "Rio de Janeiro",
+								  "state": "RJ"
+								}
+							  }
+							}
+						  } 
+					},
+					"sandboxMode": {
+						"type": "boolean",
+						"description": "Indicates whether or not this request is being sent from a sandbox environment"
+					}
+				},
+				"example": {
+					"transactionId": "{{transactionId}}"
 				}
 			},
 			"InboundRequest_BETA_Request": {
