@@ -22,6 +22,7 @@ OpenAPI 3.0 JSON schemas. Files are automatically synced the VTEX Developer Port
 - Search API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Search%2520API.json)
 - Session Manager API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Session%2520Manager%2520API.json)
 - Subscriptions (v2) ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Subscriptions%2520API%2520%28v2%29.json)
+- Subscriptions (v3) ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Subscriptions%2520API%2520%28v2%29.json)
 - Suggestions API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Suggestions%2520API.json)
 - VTEX Do API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520VTEX%2520Do%2520API.json)
 
