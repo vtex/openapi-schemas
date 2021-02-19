@@ -2762,8 +2762,8 @@
         "/api/orders/feed/config": {
             "post": {
                 "tags": ["Feed v3"],
-                "summary": "Update Feed Configuration",
-                "description": "Configures the filter rule applied to Feed V3.",
+                "summary": "Create or update feed configuration",
+                "description": "Configures filtering rules applied to Feed V3.\n\r\n\rThere are two types of filtering that can be used. The `FromWorkflow` type filters orders by status, whereas the `FromOrders` type uses JSONata expressions to filter orders according to any property.\n\r\n\rTo learn more, access the [JSONata documentation](https://docs.jsonata.org/overview.html) and test filtering JSONata expressions in our [expressions API](https://developers.vtex.com/vtex-developer-docs/reference/jsonata-expression-evaluation).",
                 "operationId": "FeedConfiguration",
                 "parameters": [
                     {
@@ -2816,22 +2816,33 @@
                             "schema": {
                                 "$ref": "#/components/schemas/FeedConfigurationRequest"
                             },
-                            "example": {
-                                "filter": {
-                                    "status": [
-                                        "order-completed",
-                                        "start-handling",
-                                        "handling",
-                                        "ready-for-handling",
-                                        "waiting-ffmt-authorization",
-                                        "cancel"
-                                    ]
+                            "example": [
+                                {
+                                    "filter": {
+                                        "type": "FromOrders",
+                                        "expression": "value > 100",
+                                        "disableSingleFire": false
+                                    },
+                                    "queue": {
+                                        "visibilityTimeoutInSeconds": 250,
+                                        "MessageRetentionPeriodInSeconds": 345600
+                                    }
                                 },
-                                "queue": {
-                                    "visibilityTimeoutInSeconds": 250,
-                                    "MessageRetentionPeriodInSeconds": 345600
+                                {
+                                    "filter": {
+                                        "type": "FromWorkflow",
+                                        "status": [
+                                            "handling",
+                                            "ready-for-handling",
+                                            "start-handling"
+                                        ]
+                                    },
+                                    "queue": {
+                                        "visibilityTimeoutInSeconds": 250,
+                                        "MessageRetentionPeriodInSeconds": 345600
+                                    }
                                 }
-                            }
+                            ]
                         }
                     },
                     "required": true
@@ -9589,45 +9600,63 @@
                         "$ref": "#/components/schemas/Queue"
                     }
                 },
-                "example": {
-                    "filter": {
-                        "status": [
-                            "order-completed",
-                            "start-handling",
-                            "handling",
-                            "ready-for-handling",
-                            "waiting-ffmt-authorization",
-                            "cancel"
-                        ]
+                "example": [
+                    {
+                        "filter": {
+                            "type": "FromWorkflow",
+                            "status": [
+                                "order-completed",
+                                "start-handling",
+                                "handling",
+                                "ready-for-handling",
+                                "waiting-ffmt-authorization",
+                                "cancel"
+                            ]
+                        },
+                        "queue": {
+                            "visibilityTimeoutInSeconds": 250,
+                            "MessageRetentionPeriodInSeconds": 345600
+                        }
                     },
-                    "queue": {
-                        "visibilityTimeoutInSeconds": 250,
-                        "MessageRetentionPeriodInSeconds": 345600
+                    {
+                        "filter": {
+                            "type": "FromOrders",
+                            "expression": "value > 100",
+                            "disableSingleFire": false
+                        },
+                        "queue": {
+                            "visibilityTimeoutInSeconds": 250,
+                            "MessageRetentionPeriodInSeconds": 345600
+                        }
                     }
-                }
+                ]
             },
             "Filter": {
                 "title": "Filter",
-                "required": ["status"],
+                "required": ["type"],
                 "type": "object",
                 "properties": {
+                    "type": {
+                        "type": "string",
+                        "description": "Determines what orders appear in the feed and how they are filtered. If a feed has the `FromWorkflow` type configuration, it will receive order updates only when order’s statuses change and orders can be filtered by status, using the `status` field. A feed with the `FromOrders` type configuration gets updates whenever any change is made to an order. in this case, orders can be filtered by any property, according to JSONata expressions passed in the `expression` field.",
+                        "default": "FromWorkflow"
+                    },
                     "status": {
                         "type": "array",
                         "items": {
                             "type": "string"
                         },
-                        "description": ""
+                        "description": "List of order statuses that should be included in the feed. Should only be used in case `type` is `FromWorkflow`."
+                    },
+                    "expression": {
+                        "type": "string",
+                        "description": "JSONata query expression that defines what conditions must be met for an order to be included in the feed. Should only be used in case `type` is `FromOrders`."
+                    },
+                    "disableSingleFire": {
+                        "type": "boolean",
+                        "description": "Sets a limit to how many times a specific order shows on the feed, after it first meets filtering conditions. Using the `FromOrders` type configuration with JSONata filtering expressions might cause orders to appear more than once on a feed, whenever changes are made to that order. If this field is `false` orders will appear in the feed only once.",
+                        "default": false
                     }
-                },
-                "example": {
-                    "status": [
-                        "order-completed",
-                        "start-handling",
-                        "handling",
-                        "ready-for-handling",
-                        "waiting-ffmt-authorization",
-                        "cancel"
-                    ]
                 }
             },
             "Queue": {
