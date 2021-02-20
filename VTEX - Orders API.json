@@ -2763,7 +2763,7 @@
             "post": {
                 "tags": ["Feed v3"],
                 "summary": "Create or update feed configuration",
-                "description": "Configures filtering rules applied to Feed V3.\n\r\n\rThere are two types of filtering that can be used. The `FromWorkflow` type filters orders by status, whereas the `FromOrders` type uses JSONata expressions to filter orders according to any property.\n\r\n\rTo learn more, access the [JSONata documentation](https://docs.jsonata.org/overview.html) and test filtering JSONata expressions in our [expressions API](https://developers.vtex.com/vtex-developer-docs/reference/jsonata-expression-evaluation).",
+                "description": "Configures filtering rules applied to Feed V3.\n\r\n\rThere are two types of filtering that can be used. The `FromWorkflow` type filters orders by status, whereas the `FromOrders` type uses JSONata expressions to filter orders according to any property.\n\r\n\rTo learn more, access the [JSONata documentation](https://docs.jsonata.org/overview.html) and test filtering JSONata expressions with our [expressions API](https://developers.vtex.com/vtex-developer-docs/reference/jsonata-expression-evaluation).",
                 "operationId": "FeedConfiguration",
                 "parameters": [
                     {
@@ -2864,7 +2864,7 @@
             },
             "get": {
                 "tags": ["Feed v3"],
-                "summary": "Retrieve Feed Configuration",
+                "summary": "Retrieve feed configuration",
                 "description": "Lists a given Feed's configuration details.",
                 "operationId": "GetFeedConfiguration",
                 "parameters": [
@@ -2921,7 +2921,7 @@
             },
             "delete": {
                 "tags": ["Feed v3"],
-                "summary": "Delete Feed Configuration",
+                "summary": "Delete feed configuration",
                 "description": "Deletes the configuration set up in Feed v3.",
                 "operationId": "FeedConfigurationDelete",
                 "parameters": [
@@ -2987,7 +2987,7 @@
         "/api/orders/hook/config": {
             "post": {
                 "tags": ["Order Hook"],
-                "summary": "Create or Update Hook Configuration",
+                "summary": "Create or update hook configuration",
                 "description": "Configure filter rules to Order Hook",
                 "operationId": "HookConfiguration",
                 "parameters": [
@@ -3041,23 +3041,39 @@
                             "schema": {
                                 "$ref": "#/components/schemas/HookConfigurationRequest"
                             },
-                            "example": {
-                                "filter": {
-                                    "status": [
-                                        "order-completed",
-                                        "handling",
-                                        "ready-for-handling",
-                                        "waiting-ffmt-authorization",
-                                        "cancel"
-                                    ]
+                            "example": [
+                                {
+                                    "filter": {
+                                        "type": "FromWorkflow",
+                                        "status": [
+                                            "order-completed",
+                                            "handling",
+                                            "ready-for-handling",
+                                            "waiting-ffmt-authorization",
+                                            "cancel"
+                                        ]
+                                    },
+                                    "hook": {
+                                        "url": "https://endpoint.example/path",
+                                        "headers": {
+                                            "key": "value"
+                                        }
+                                    }
                                 },
-                                "hook": {
-                                    "url": "https://endpoint.example/path",
-                                    "headers": {
-                                        "key": "value"
+                                {
+                                    "filter": {
+                                        "type": "FromOrders",
+                                        "expression": "value > 100",
+                                        "disableSingleFire": false
+                                    },
+                                    "hook": {
+                                        "url": "https://endpoint.example/path",
+                                        "headers": {
+                                            "key": "value"
+                                        }
                                     }
                                 }
-                            }
+                            ]
                         }
                     },
                     "required": true
@@ -3091,8 +3107,8 @@
             },
             "delete": {
                 "tags": ["Order Hook"],
-                "summary": "Delete Hook Configuration",
-                "description": "Deletes Hook configuration.",
+                "summary": "Delete hook configuration",
+                "description": "Deletes hook configuration.",
                 "operationId": "DeleteHookConfiguration",
                 "parameters": [
                     {
@@ -9638,7 +9654,7 @@
                 "properties": {
                     "type": {
                         "type": "string",
-                        "description": "Determines what orders appear in the feed and how they are filtered. If a feed has the `FromWorkflow` type configuration, it will receive order updates only when order’s statuses change and orders can be filtered by status, using the `status` field. A feed with the `FromOrders` type configuration gets updates whenever any change is made to an order. in this case, orders can be filtered by any property, according to JSONata expressions passed in the `expression` field.",
+                        "description": "Determines what orders appear in the feed / hook and how they are filtered. If a feed / hook has the `FromWorkflow` type configuration, it will receive order updates only when order’s statuses change and orders can be filtered by status, using the `status` field. A feed / hookwith the `FromOrders` type configuration gets updates whenever any change is made to an order. in this case, orders can be filtered by any property, according to JSONata expressions passed in the `expression` field.",
                         "default": "FromWorkflow"
                     },
                     "status": {
@@ -9646,15 +9662,15 @@
                         "items": {
                             "type": "string"
                         },
-                        "description": "List of order statuses that should be included in the feed. Should only be used in case `type` is `FromWorkflow`."
+                        "description": "List of order statuses that should be included in the feed / hook. This should only be used in case `type` is `FromWorkflow`."
                     },
                     "expression": {
                         "type": "string",
-                        "description": "JSONata query expression that defines what conditions must be met for an order to be included in the feed. Should only be used in case `type` is `FromOrders`."
+                        "description": "JSONata query expression that defines what conditions must be met for an order to be included in the feed / hook. This should only be used in case `type` is `FromOrders`."
                     },
                     "disableSingleFire": {
                         "type": "boolean",
-                        "description": "Sets a limit to how many times a specific order shows on the feed, after it first meets filtering conditions. Using the `FromOrders` type configuration with JSONata filtering expressions might cause orders to appear more than once on a feed, whenever changes are made to that order. If this field is `false` orders will appear in the feed only once.",
+                        "description": "Sets a limit to how many times a specific order shows on the feed / hook, after it first meets filtering conditions. Using the `FromOrders` type configuration with JSONata filtering expressions might cause orders to appear more than once on a feed, whenever changes are made to that order. If this field is `false` orders will appear in the feed / hook only once.",
                         "default": false
                     }
                 }
@@ -9693,23 +9709,39 @@
                         "$ref": "#/components/schemas/Hook"
                     }
                 },
-                "example": {
-                    "filter": {
-                        "status": [
-                            "order-completed",
-                            "handling",
-                            "ready-for-handling",
-                            "waiting-ffmt-authorization",
-                            "cancel"
-                        ]
+                "example": [
+                    {
+                        "filter": {
+                            "type": "FromWorkflow",
+                            "status": [
+                                "order-completed",
+                                "handling",
+                                "ready-for-handling",
+                                "waiting-ffmt-authorization",
+                                "cancel"
+                            ]
+                        },
+                        "hook": {
+                            "url": "https://endpoint.example/path",
+                            "headers": {
+                                "key": "value"
+                            }
+                        }
                     },
-                    "hook": {
-                        "url": "https://endpoint.example/path",
-                        "headers": {
-                            "key": "value"
+                    {
+                        "filter": {
+                            "type": "FromOrders",
+                            "expression": "value > 100",
+                            "disableSingleFire": false
+                        },
+                        "hook": {
+                            "url": "https://endpoint.example/path",
+                            "headers": {
+                                "key": "value"
+                            }
                         }
                     }
-                }
+                ]
             },
             "Hook": {
                 "title": "Hook",
