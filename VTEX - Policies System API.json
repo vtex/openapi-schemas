@@ -345,19 +345,18 @@
                                   }
                               ]
                           }
-                          
                         }
-                        }
+                      }
                     }
-                    }
+                  }
                 }
             },
             "post": {
               "tags": [
                   "Policy"
               ],
-              "summary": "Policy_CreateOrUpdate",
-              "description": "",
+              "summary": "Create Policy",
+              "description": "Creates a new policy from scratch.",
               "operationId": "Policy_CreateOrUpdate",
               "parameters": [
                   {
@@ -401,6 +400,16 @@
                           "type": "string",
                           "default": "application/json"
                       }
+                  },
+                  {
+                      "name": "id",
+                      "in": "path",
+                      "required": true,
+                      "description": "Policy ID",
+                      "schema": {
+                          "type": "string",
+                          "default": "pa_test_001"
+                      }
                   }
               ],
               "requestBody": {
@@ -409,10 +418,52 @@
                   "application/json": {
                       "schema": {
                       "$ref": "#/components/schemas/PolicySaveRequest"
+                      },
+                      "example": {
+                              "name": "TestAlarmBerenice",
+                              "description": "TesteMarcosPromotionsAlert",
+                              "statements": [
+                                  {
+                                      "effect": "Allow",
+                                      "actions": [
+                                          {
+                                              "id": "SendSlackMessage",
+                                              "metadata": {
+                                                  "channel": "C01NJFF35R6",
+                                                  "relatedUsers": [
+                                                      "URUNDC2NB"
+                                                  ],
+                                                  "alertDescription": "Avoid selling products from Berenice with a discount greater than 40%."
+                                              }
+                                          }
+                                      ],
+                                      "resource": "vrn:vtex.promotions-alert:aws-us-east-1:kamila:master:/_v/promotions_alert",
+                                      "condition": {
+                                          "conditions": [
+                                              {
+                                                  "conditions": [],
+                                                  "operation": "stringEquals",
+                                                  "key": "brandId",
+                                                  "values": [
+                                                      "2000001"
+                                                  ]
+                                              },
+                                              {
+                                                  "conditions": [],
+                                                  "operation": "numericGreaterThan",
+                                                  "key": "discountPercentage",
+                                                  "values": [
+                                                      "40.00"
+                                                  ]
+                                              }
+                                          ],
+                                          "operation": "and"
+                                      }
+                                  }
+                              ]
+                          }
                       }
                   }
-                  },
-                  "required": true
               },
               "responses": {
                   "200": {
@@ -420,10 +471,58 @@
                   "headers": {},
                   "content": {
                       "application/octet-stream": {
-                      "schema": {
-                          "type": "string",
-                          "format": "binary"
-                      }
+                        "schema": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/PolicyGetResponse"
+                          },
+                          "example":  [
+                                  {
+                                      "id": "pa_test_001",
+                                      "name": "TestAlarmBerenice",
+                                      "description": "TesteMarcosPromotionsAlert",
+                                      "statements": [
+                                          {
+                                              "effect": "Allow",
+                                              "actions": [
+                                                  {
+                                                      "id": "SendSlackMessage",
+                                                      "metadata": {
+                                                          "channel": "C01NJFF35R6",
+                                                          "relatedUsers": [
+                                                              "URUNDC2NB"
+                                                          ],
+                                                          "alertDescription": "Avoid selling products from Berenice with a discount greater than 70%."
+                                                      }
+                                                  }
+                                              ],
+                                              "resource": "vrn:vtex.promotions-alert:aws-us-east-1:kamila:master:/_v/promotions_alert",
+                                              "condition": {
+                                                  "conditions": [
+                                                      {
+                                                          "conditions": [],
+                                                          "operation": "stringEquals",
+                                                          "key": "brandId",
+                                                          "values": [
+                                                              "2000001"
+                                                          ]
+                                                      },
+                                                      {
+                                                          "conditions": [],
+                                                          "operation": "numericGreaterThan",
+                                                          "key": "discountPercentage",
+                                                          "values": [
+                                                              "70.00"
+                                                          ]
+                                                      }
+                                                  ],
+                                                  "operation": "and"
+                                              }
+                                          }
+                                      ]
+                                  }
+                              ]        
+                        }
                       }
                   }
                   }
@@ -700,99 +799,23 @@
           "type": "object",
           "properties": {
             "name": {
-              "minLength": 1,
-              "type": "string"
+              "type": "string",
+              "description": "Policy Name",
+              "title": "name"
             },
             "description": {
-              "minLength": 1,
-              "type": "string"
+              "type": "string",
+              "description": "Policy description. This description is only for internal use of identification",
+              "title": "description"
+              
             },
             "statements": {
               "type": "array",
+              "title": "statements",
               "items": {
-                "$ref": "#/components/schemas/StatementSaveRequest"
+                "$ref": "#/components/schemas/StatementGetResponse"
               },
-              "description": ""
-            }
-          }
-        },
-        "StatementSaveRequest": {
-          "title": "StatementSaveRequest",
-          "required": [
-            "effect",
-            "actions",
-            "resource",
-            "condition"
-          ],
-          "type": "object",
-          "properties": {
-            "effect": {
-              "minLength": 1,
-              "type": "string"
-            },
-            "actions": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/PolicyActionSaveRequest"
-              },
-              "description": ""
-            },
-            "resource": {
-              "minLength": 1,
-              "pattern": "^vrn:([^:]+):([^:]+):([^:]+):([^:]+):([^:]+)$",
-              "type": "string"
-            },
-            "condition": {
-              "$ref": "#/components/schemas/ConditionSaveRequest"
-            }
-          }
-        },
-        "PolicyActionSaveRequest": {
-          "title": "PolicyActionSaveRequest",
-          "required": [
-            "id"
-          ],
-          "type": "object",
-          "properties": {
-            "id": {
-              "minLength": 1,
-              "type": "string"
-            },
-            "metadata": {
-              "type": "object"
-              
-            }
-          }
-        },
-        "ConditionSaveRequest": {
-          "title": "ConditionSaveRequest",
-          "required": [
-            "operation"
-          ],
-          "type": "object",
-          "properties": {
-            "conditions": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/ConditionSaveRequest"
-              },
-              "description": ""
-              
-            },
-            "operation": {
-              
-            },
-            "key": {
-              "type": "string"
-              
-            },
-            "values": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "description": ""
-              
+              "description": "Requirements to the Policy be applied" 
             }
           }
         },
