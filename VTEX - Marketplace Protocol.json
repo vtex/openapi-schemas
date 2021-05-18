@@ -1,7 +1,7 @@
 {
 	"openapi": "3.0.0",
 	"info": {
-		"title": "Marketplace Protocol",
+		"title": "Marketplace protocol",
 		"description": "The _Marketplace Protocol_ is a set of API requests and definitions to help you integrate external sellers into a VTEX marketplace as well as external marketplaces into VTEX sellers.",
 		"contact": {},
 		"version": "1.0"
@@ -13,12 +13,12 @@
 		}
 	],
 	"paths": {
-		"/pvt/orderForms/simulation?sc={salesChannelId}&an={merchantName}": {
+		"/pvt/orderForms/simulation": {
 			"post": {
 				"tags": [
-					"External Seller"
+					"External seller"
 				],
-				"summary": "Fulfillment Simulation",
+				"summary": "Fulfillment simulation",
 				"description": "When the Change Notification request returns a response with status 200, it means that the SKU already exists in the marketplace. Whenever this happens, the marketplace will call the seller to get two updated information about the SKU: Price and Inventory.\n\nThe seller needs to have an endpoint implemented in order to receive this call and send a response containing the requested information to the marketplace. We call it the Fulfillment Simulation endpoint.\n\nThe marketplace will send an object containing an array of items. The seller must use this list to get the updated information about the referred SKUs and send them back to the marketplace, following the response format explained in the API Reference.",
 				"operationId": "fulfillment-simulation",
 				"parameters": [                    
@@ -45,22 +45,22 @@
 						}
                     },
                     {
-						"name": "salesChannelId",
-						"in": "path",
-						"description": "ID of the trade policy.",
+						"name": "sc",
+						"in": "query",
+						"description": "ID of the sales channel.",
 						"required": true,
-						"style": "simple",
+						"style": "form",
 						"schema": {
 							"type": "string",
 							"example": "application/json"
 						}
                     },
                     {
-						"name": "merchantName",
-						"in": "path",
+						"name": "an",
+						"in": "query",
 						"description": "ID of the seller as registered in the marketplace administrative panel setup.",
 						"required": true,
-						"style": "simple",
+						"style": "form",
 						"schema": {
 							"type": "string",
 							"example": "application/json"
@@ -205,12 +205,12 @@
 				"deprecated": false
 			}
         },
-        "/pvt/orders?sc={sellerId}&an={accountName}": {
+        "/pvt/orders": {
             "post": {
                 "tags": [
-					"External Seller"
+					"External seller"
 				],
-				"summary": "Order Placement",
+				"summary": "Order placement",
 				"description": "Once the customer finishes their checkout, the marketplace needs to let the seller know there is a newly placed order. It does that by calling the **Order Placement** endpoint, which needs to be implemented by the seller.\n\nThe marketplace will send information such as the items contained in the cart, the client’s profile data, the shipping data, and the payment data. With all that, the seller will be able to create the order in their own store.",
 				"operationId": "order-placement",
 				"parameters": [                    
@@ -234,6 +234,28 @@
 						"schema": {
 							"type": "string",
 							"example": "application/json"
+						}
+					},
+                    {
+						"name": "sc",
+						"in": "query",
+						"description": "ID of the sales channel.",
+						"required": true,
+						"style": "form",
+						"schema": {
+							"type": "string",
+							"example": "{salesChannelID}"
+						}
+                    },
+                    {
+						"name": "an",
+						"in": "query",
+						"description": "ID of the seller as registered in the marketplace administrative panel setup.",
+						"required": true,
+						"style": "form",
+						"schema": {
+							"type": "string",
+							"example": "{merchantName}"
 						}
 					}
 				],
@@ -346,12 +368,12 @@
                 }
             }
         },
-        "/pvt/orders/{orderId}/fulfill?sc={sellerId}&an={accountName}": {
+        "/pvt/orders/{orderId}/fulfill": {
             "post": {
                 "tags": [
-					"External Seller"
+					"External seller"
 				],
-				"summary": "Order Dispatching",
+				"summary": "Order dispatching",
 				"description": "After the payment is finished and approved, the marketplace sends a request to the seller to notify it that the fulfillment process can be started. This is done through a request to the Order Dispatching endpoint, which needs to be implemented by the seller.\n\nThe body of the request received by the seller contains only one information: the `marketplaceOrderId`, which identifies the order in the marketplace. The seller should use this ID to trigger the fulfillment process of the corresponding order.\n\nThe seller should then respond with the same `marketplaceOrderId` and also with the `orderId`, which identifies the order in the seller, the date and time of the notification receipt, and a protocol code that confirms the receipt of the request (which may have the value `null`).",
 				"operationId": "order-dispatching",
 				"parameters": [                    
@@ -375,6 +397,39 @@
 						"schema": {
 							"type": "string",
 							"example": "application/json"
+						}
+					},
+                    {
+						"name": "orderId",
+						"in": "path",
+						"description": "ID of the order.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "{orderId}"
+						}
+                    },
+                    {
+						"name": "sc",
+						"in": "query",
+						"description": "ID of the sales channel.",
+						"required": true,
+						"style": "form",
+						"schema": {
+							"type": "string",
+							"example": "{salesChannelID}"
+						}
+                    },
+                    {
+						"name": "an",
+						"in": "query",
+						"description": "ID of the seller as registered in the marketplace administrative panel setup.",
+						"required": true,
+						"style": "form",
+						"schema": {
+							"type": "string",
+							"example": "{merchantName}"
 						}
 					}
 				],
@@ -416,12 +471,12 @@
             }
                                     
         },
-        "/pvt/orders/{orderId}/cancel?sc={sellerId}&an={accountName}": {
+        "/pvt/orders/{orderId}/cancel": {
             "post": {
                 "tags": [
-					"External Seller"
+					"External seller"
 				],
-				"summary": "Marketplace Order Cancellation",
+				"summary": "Marketplace order cancellation",
 				"description": "The seller must be ready to receive order cancellation requests from the marketplace. For that, you will need to implement the Marketplace Order Cancellation endpoint. Whenever this request is received by the seler, the order should be canceled and the fulfillment flow should not proceed.\n\nThe body of the request received by the seller contains only one information: the `marketplaceOrderId`, which identifies the order in the marketplace. The seller should use this ID to trigger the cancellation of the corresponding order.\n\nThe seller should then respond with the same `marketplaceOrderId` and also with the `orderId`, which identifies the order in the seller, the date and time of the notification receipt, and a protocol code that confirms the receipt of the request (which may have the value `null`).",
 				"operationId": "mkp-order-cancellation",
 				"parameters": [                    
@@ -445,6 +500,39 @@
 						"schema": {
 							"type": "string",
 							"example": "application/json"
+						}
+					},
+                    {
+						"name": "orderId",
+						"in": "path",
+						"description": "ID of the order.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "{orderId}"
+						}
+                    },
+                    {
+						"name": "sc",
+						"in": "query",
+						"description": "ID of the sales channel.",
+						"required": true,
+						"style": "form",
+						"schema": {
+							"type": "string",
+							"example": "{salesChannelID}"
+						}
+                    },
+                    {
+						"name": "an",
+						"in": "query",
+						"description": "ID of the seller as registered in the marketplace administrative panel setup.",
+						"required": true,
+						"style": "form",
+						"schema": {
+							"type": "string",
+							"example": "{merchantName}"
 						}
 					}
 				],
@@ -951,10 +1039,7 @@
     },
 	"tags": [
 		{
-			"name": "External Seller"
-		},
-		{
-			"name": "External Marketplace"
+			"name": "External seller"
 		}
 	]
 }
