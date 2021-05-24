@@ -7,16 +7,16 @@
         "version": "1.0"
     },
     "servers": [{
-        "url": "https://{accountName}.{environment}.com.br/api/logistics/pvt",
+        "url": "https://{accountName}.{environment}.com.br/api",
         "description": "VTEX server url"
     }],
     "paths": {
-        "/shipping-policies/{id}": {
+        "/logistics/pvt/shipping-policies/{id}": {
             "get": {
                 "tags": [
                     "Shipping Policies"
                 ],
-                "summary": "Retrieve Shipping Policies by ID",
+                "summary": "Retrieve shipping policies by ID",
                 "description": "This endpoint lists existing shipping policies from carriers in your store, searching by their IDs.",
                 "parameters": [{
                         "name": "accountName",
@@ -81,7 +81,7 @@
                 "tags": [
                     "Shipping Policies"
                 ],
-                "summary": "Delete Shipping Policies by ID",
+                "summary": "Delete shipping policies by ID",
                 "description": "This endpoint deletes existing shipping policies from carriers in your store, searching by their IDs.",
                 "parameters": [{
                         "name": "accountName",
@@ -277,12 +277,12 @@
                 }
             }
         },
-        "/shipping-policies": {
+        "/logistics/pvt/shipping-policies": {
             "get": {
                 "tags": [
                     "Shipping Policies"
                 ],
-                "summary": "List Shipping Policies",
+                "summary": "List shipping policies",
                 "description": "This endpoint lists existing shipping policies from carriers in your store.",
                 "parameters": [{
                         "name": "accountName",
@@ -357,7 +357,7 @@
                 "tags": [
                     "Shipping Policies"
                 ],
-                "summary": "Create Shipping Policy",
+                "summary": "Create shipping policy",
                 "description": "This endpoint creates new shipping policies from carriers in your store.",
                 "parameters": [{
                         "name": "accountName",
@@ -566,7 +566,7 @@
                                                     "deliveryRanges": {
                                                         "type": "array",
                                                         "title": "deliveryRanges",
-                                                        "description": "",
+                                                        "description": "Reservation windows for scheduled delivery.",
                                                         "default": [],
                                                         "required": [
                                                             "startTime",
@@ -591,6 +591,26 @@
                                                                 "title": "listPrice",
                                                                 "description": "",
                                                                 "default": "0.0"
+                                                            },
+                                                            "deliveryCapacity": {
+                                                                "type": "object",
+                                                                "description": "Sets maximum delivery capacity for a given reservation window for scheduled delivery.",
+                                                                "default": null,
+                                                                "required": [
+                                                                    "capacityType",
+                                                                    "maxValue"
+                                                                ],
+                                                                "properties":{
+                                                                    "capacityType": {
+                                                                        "type": "string",
+                                                                        "description": "Defines how the delivery capacity is measured for this reservation window, by maximum number of orders (`\"ORDERS_QUANTITY\"`) or SKUs (`\"SKUS_QUANTITY\"`)."
+                                                                    },
+                                                                    "maxValue": {
+                                                                        "type": "number",
+                                                                        "description": "Maximum number of orders or SKUs that the store is capable of fulfilling.",
+                                                                        "default": "0.0"
+                                                                    }
+                                                                }
                                                             }
                                                         }
                                                     }
@@ -743,16 +763,13 @@
                         }
                     }
                 }
-            }
-        },
-        "/configuration/carriers": {
-            "post": {
+            },
+            "put": {
                 "tags": [
-                    "Carriers"
+                    "Shipping Policies"
                 ],
-                "summary": "Create/Update Carrier",
-                "description": "This endpoint creates or updates carriers in your store. Fill in the params to check out an example of request.  ",
-                "operationId": "Create/UpdateCarrier",
+                "summary": "Update shipping policy",
+                "description": "This endpoint updates information on existing Shipping Policies from carriers.",
                 "parameters": [{
                         "name": "accountName",
                         "in": "path",
@@ -794,1498 +811,194 @@
                             "type": "string",
                             "example": "application/json"
                         }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Shipping policy's ID",
+                        "schema": {
+                            "type": "string",
+                            "default": "shippingpolicyid1"
+                        }
                     }
                 ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
                 "requestBody": {
                     "description": "",
                     "content": {
-                        "application/json; charset=utf-8": {
+                        "application/json": {
                             "schema": {
-                                "title": "Create/UpdateCarrierRequest",
-                                "required": [
-                                    "id",
-                                    "slaType",
-                                    "name",
-                                    "scheduledDelivery",
-                                    "maxRangeDelivery",
-                                    "dayOfWeekForDelivery",
-                                    "dayOfWeekBlockeds",
-                                    "freightValue",
-                                    "factorCubicWeight",
-                                    "freightTableProcessStatus",
-                                    "freightTableValueError",
-                                    "modals",
-                                    "onlyItemsWithDefinedModal",
-                                    "deliveryOnWeekends",
-                                    "carrierSchedule",
-                                    "maxDimension",
-                                    "exclusiveToDeliveryPoints",
-                                    "minimunCubicWeight",
-                                    "isPolygon",
-                                    "numberOfItemsPerShipment"
-                                ],
                                 "type": "object",
+                                "title": "Request body",
+                                "default": {},
+                                "required": [
+                                    "name",
+                                    "shippingMethod",
+                                    "deliveryOnWeekends",
+                                    "maxDimension",
+                                    "isActive"
+                                ],
                                 "properties": {
-                                    "id": {
-                                        "type": "string"
-                                    },
-                                    "slaType": {
-                                        "type": "string"
-                                    },
                                     "name": {
-                                        "type": "string"
-                                    },
-                                    "scheduledDelivery": {
-                                        "type": "boolean"
-                                    },
-                                    "maxRangeDelivery": {
-                                        "type": "integer",
-                                        "format": "int32"
-                                    },
-                                    "dayOfWeekForDelivery": {
                                         "type": "string",
-                                        "nullable": true
+                                        "title": "name",
+                                        "description": "Name of the shipping policy",
+                                        "default": "Correios PAC"
                                     },
-                                    "dayOfWeekBlockeds": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "description": ""
-                                    },
-                                    "freightValue": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "description": ""
-                                    },
-                                    "factorCubicWeight": {
+                                    "shippingMethod": {
                                         "type": "string",
-                                        "nullable": true
-                                    },
-                                    "freightTableProcessStatus": {
-                                        "type": "integer",
-                                        "format": "int32"
-                                    },
-                                    "freightTableValueError": {
-                                        "type": "string",
-                                        "nullable": true
-                                    },
-                                    "modals": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "description": ""
-                                    },
-                                    "onlyItemsWithDefinedModal": {
-                                        "type": "boolean"
+                                        "title": "shippingMethod",
+                                        "description": "Type of shipping available for this shipping policy (carrier). Options shown on freight simulation.",
+                                        "default": "Normal"
                                     },
                                     "deliveryOnWeekends": {
-                                        "type": "boolean"
-                                    },
-                                    "carrierSchedule": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "description": ""
+                                        "type": "boolean",
+                                        "title": "deliveryOnWeekends",
+                                        "description": "If the shipping policy (carrier) delivers on weekends",
+                                        "default": false
                                     },
                                     "maxDimension": {
-                                        "title": "MaxDimension",
-                                        "required": [
-                                            "weight",
-                                            "height",
-                                            "width",
-                                            "length",
-                                            "maxSumDimension"
-                                        ],
                                         "type": "object",
+                                        "title": "maxDimension",
+                                        "description": "Object containing attributes of maximum dimension permitted by the shipping policy (carrier).",
+                                        "default": {},
+                                        "required": [
+                                            "largestMeasure",
+                                            "maxMeasureSum"
+                                        ],
                                         "properties": {
-                                            "weight": {
-                                                "type": "integer",
-                                                "format": "int32"
+                                            "largestMeasure": {
+                                                "type": "number",
+                                                "title": "largestMeasure",
+                                                "description": "Largest measure of the package.",
+                                                "default": 0.0
                                             },
-                                            "height": {
-                                                "type": "integer",
-                                                "format": "int32"
-                                            },
-                                            "width": {
-                                                "type": "integer",
-                                                "format": "int32"
-                                            },
-                                            "length": {
-                                                "type": "integer",
-                                                "format": "int32"
-                                            },
-                                            "maxSumDimension": {
-                                                "type": "integer",
-                                                "format": "int32"
+                                            "maxMeasureSum": {
+                                                "type": "number",
+                                                "title": "maxMeasureSum",
+                                                "description": "Sum of all maximum measures of the package.",
+                                                "default": 0.0
                                             }
-                                        },
-                                        "example": {
-                                            "weight": 0,
-                                            "height": 0,
-                                            "width": 0,
-                                            "length": 0,
-                                            "maxSumDimension": 0
                                         }
                                     },
-                                    "exclusiveToDeliveryPoints": {
-                                        "type": "boolean"
+                                    "isActive": {
+                                        "type": "boolean",
+                                        "title": "isActive",
+                                        "description": "If the shipping policy is active or not.",
+                                        "default": true
                                     },
-                                    "minimunCubicWeight": {
-                                        "type": "integer",
-                                        "format": "int32"
-                                    },
-                                    "isPolygon": {
-                                        "type": "boolean"
-                                    },
-                                    "numberOfItemsPerShipment": {
-                                        "type": "string",
-                                        "nullable": true
-                                    }
-                                },
-                                "example": {
-                                    "id": "13942e4",
-                                    "slaType": "Expressa",
-                                    "name": "Transportadora Expressa",
-                                    "scheduledDelivery": false,
-                                    "maxRangeDelivery": 0,
-                                    "dayOfWeekForDelivery": null,
-                                    "dayOfWeekBlockeds": [],
-                                    "freightValue": [],
-                                    "factorCubicWeight": null,
-                                    "freightTableProcessStatus": 1,
-                                    "freightTableValueError": null,
-                                    "modals": [],
-                                    "onlyItemsWithDefinedModal": false,
-                                    "deliveryOnWeekends": false,
-                                    "carrierSchedule": [],
-                                    "maxDimension": {
-                                        "weight": 0,
-                                        "height": 0,
-                                        "width": 0,
-                                        "length": 0,
-                                        "maxSumDimension": 0
-                                    },
-                                    "exclusiveToDeliveryPoints": false,
-                                    "minimunCubicWeight": 0,
-                                    "isPolygon": false,
-                                    "numberOfItemsPerShipment": null
-                                }
-                            },
-                            "example": {
-                                "id": "13942e4",
-                                "slaType": "Expressa",
-                                "name": "Transportadora Expressa",
-                                "scheduledDelivery": false,
-                                "maxRangeDelivery": 0,
-                                "dayOfWeekForDelivery": null,
-                                "dayOfWeekBlockeds": [],
-                                "freightValue": [],
-                                "factorCubicWeight": null,
-                                "freightTableProcessStatus": 1,
-                                "freightTableValueError": null,
-                                "modals": [],
-                                "onlyItemsWithDefinedModal": false,
-                                "deliveryOnWeekends": false,
-                                "carrierSchedule": [],
-                                "maxDimension": {
-                                    "weight": 0,
-                                    "height": 0,
-                                    "width": 0,
-                                    "length": 0,
-                                    "maxSumDimension": 0
-                                },
-                                "exclusiveToDeliveryPoints": false,
-                                "minimunCubicWeight": 0,
-                                "isPolygon": false,
-                                "numberOfItemsPerShipment": null
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "headers": {}
-                    }
-                },
-                "deprecated": false
-            },
-            "get": {
-                "tags": [
-                    "Carriers"
-                ],
-                "summary": "List All Carriers",
-                "description": "Get information about all carriers in your store.",
-                "operationId": "AllCarriers",
-                "parameters": [{
-                        "name": "accountName",
-                        "in": "path",
-                        "required": true,
-                        "description": "Name of the VTEX account. Used as part of the URL",
-                        "schema": {
-                            "type": "string",
-                            "default": "apiexamples"
-                        }
-                    },
-                    {
-                        "name": "environment",
-                        "in": "path",
-                        "required": true,
-                        "description": "Environment to use. Used as part of the URL",
-                        "schema": {
-                            "type": "string",
-                            "default": "vtexcommercestable"
-                        }
-                    },
-                    {
-                        "name": "Content-Type",
-                        "in": "header",
-                        "description": "Type of the content being sent",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "example": "application/json; charset=utf-8"
-                        }
-                    },
-                    {
-                        "name": "Accept",
-                        "in": "header",
-                        "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "example": "application/json"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "headers": {
-                            "Cache-Control": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "no-cache"
-                                    }
-                                }
-                            },
-                            "Connection": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "keep-alive"
-                                    }
-                                }
-                            },
-                            "Content-Encoding": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "gzip"
-                                    }
-                                }
-                            },
-                            "Content-Length": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "690"
-                                    }
-                                }
-                            },
-                            "Date": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "Fri, 15 Apr 2016 19:35:41 GMT"
-                                    }
-                                }
-                            },
-                            "Expires": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "-1"
-                                    }
-                                }
-                            },
-                            "Pragma": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "no-cache"
-                                    }
-                                }
-                            },
-                            "Server": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "nginx"
-                                    }
-                                }
-                            },
-                            "Vary": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "Accept-Encoding"
-                                    }
-                                }
-                            },
-                            "X-CDNIgnore": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "1"
-                                    }
-                                }
-                            },
-                            "X-CacheServer": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "janus-apicache-nginx5"
-                                    }
-                                }
-                            },
-                            "X-Powered-by-VTEX-Janus-ApiCache": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "v1.3.8"
-                                    }
-                                }
-                            },
-                            "X-Powered-by-VTEX-Janus-Edge": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "v1.26.4"
-                                    }
-                                }
-                            },
-                            "X-Powered-by-VTEX-Janus-Router": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "2.1.155"
-                                    }
-                                }
-                            },
-                            "X-Track": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "stable"
-                                    }
-                                }
-                            },
-                            "X-VTEX-Cache-Status-Janus-ApiCache": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "MISS"
-                                    }
-                                }
-                            },
-                            "X-VTEX-Janus-Router-Backend-App": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "logist-v6.2.96-stable+863"
-                                    }
-                                }
-                            },
-                            "x-vtex-operation-id": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "218438ce-753a-4b59-a26f-2367fc883cc9"
-                                    }
-                                }
-                            }
-                        },
-                        "content": {
-                            "application/json; charset=utf-8": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "title": "allcarrier",
-                                        "required": [
-                                            "id",
-                                            "slaType",
-                                            "name",
-                                            "scheduledDelivery",
-                                            "maxRangeDelivery",
-                                            "dayOfWeekForDelivery",
-                                            "dayOfWeekBlockeds",
-                                            "freightValue",
-                                            "factorCubicWeight",
-                                            "freightTableProcessStatus",
-                                            "freightTableValueError",
-                                            "modals",
-                                            "onlyItemsWithDefinedModal",
-                                            "deliveryOnWeekends",
-                                            "carrierSchedule",
-                                            "maxDimension",
-                                            "exclusiveToDeliveryPoints",
-                                            "minimunCubicWeight",
-                                            "isPolygon",
-                                            "numberOfItemsPerShipment"
-                                        ],
+                                    "deliveryScheduleSettings": {
                                         "type": "object",
+                                        "title": "deliveryScheduleSettings",
+                                        "description": "Settings for the Scheduled Delivery feature.",
+                                        "default": {},
+                                        "required": [
+                                            "useDeliverySchedule",
+                                            "dayOfWeekForDelivery",
+                                            "maxRangeDelivery"
+                                        ],
                                         "properties": {
-                                            "id": {
-                                                "type": "string"
-                                            },
-                                            "slaType": {
-                                                "type": "string"
-                                            },
-                                            "name": {
-                                                "type": "string"
-                                            },
-                                            "scheduledDelivery": {
-                                                "type": "boolean"
+                                            "useDeliverySchedule": {
+                                                "type": "boolean",
+                                                "title": "useDeliverySchedule",
+                                                "description": "Select the Scheduled Delivery configuration.",
+                                                "default": true
                                             },
                                             "maxRangeDelivery": {
-                                                "type": "integer",
-                                                "format": "int32"
+                                                "type": "number",
+                                                "title": "maxRangeDelivery",
+                                                "description": "Range of days available within a delivery window, for the customer to choose the scheduled delivery. For example, if the configured maxRangeDelivery is equal 7, and the customer buys something on a Tuesday, the options for scheduled delivery will be shown until the following Tuesday (7 days from the purchase day). If no options are available within the maxRangeDelivery set, this shipping policy won't be shown on the checkout.",
+                                                "default": 0.0
                                             },
                                             "dayOfWeekForDelivery": {
-                                                "type": "array",
-                                                "items": {
-                                                    "title": "DayOfWeekForDelivery1",
-                                                    "required": [
-                                                        "dayOfWeek",
-                                                        "deliveryRanges"
-                                                    ],
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "dayOfWeek": {
-                                                            "type": "integer",
-                                                            "format": "int32"
-                                                        },
-                                                        "deliveryRanges": {
-                                                            "type": "array",
-                                                            "items": {
-                                                                "title": "DeliveryRange1",
-                                                                "required": [
-                                                                    "startTime",
-                                                                    "endTime",
-                                                                    "listPrice"
-                                                                ],
-                                                                "type": "object",
-                                                                "properties": {
-                                                                    "startTime": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "endTime": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "listPrice": {
-                                                                        "type": "number"
-                                                                    }
-                                                                },
-                                                                "example": {
-                                                                    "startTime": "08:00:00",
-                                                                    "endTime": "12:00:00",
-                                                                    "listPrice": 10
-                                                                }
-                                                            },
-                                                            "description": ""
-                                                        }
-                                                    },
-                                                    "example": {
-                                                        "dayOfWeek": 0,
-                                                        "deliveryRanges": [{
-                                                                "startTime": "08:00:00",
-                                                                "endTime": "12:00:00",
-                                                                "listPrice": 10
-                                                            },
-                                                            {
-                                                                "startTime": "12:01:00",
-                                                                "endTime": "18:00:00",
-                                                                "listPrice": 10
-                                                            }
-                                                        ]
-                                                    }
-                                                },
-                                                "description": "",
-                                                "nullable": true
-                                            },
-                                            "dayOfWeekBlockeds": {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "string"
-                                                },
-                                                "description": ""
-                                            },
-                                            "freightValue": {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "string"
-                                                },
-                                                "description": ""
-                                            },
-                                            "factorCubicWeight": {
-                                                "type": "number",
-                                                "nullable": true
-                                            },
-                                            "freightTableProcessStatus": {
-                                                "type": "integer",
-                                                "format": "int32"
-                                            },
-                                            "freightTableValueError": {
-                                                "type": "string",
-                                                "nullable": true
-                                            },
-                                            "modals": {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "string"
-                                                },
-                                                "description": ""
-                                            },
-                                            "onlyItemsWithDefinedModal": {
-                                                "type": "boolean"
-                                            },
-                                            "deliveryOnWeekends": {
-                                                "type": "boolean"
-                                            },
-                                            "carrierSchedule": {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "string"
-                                                },
-                                                "description": ""
-                                            },
-                                            "maxDimension": {
-                                                "title": "MaxDimension2",
-                                                "required": [
-                                                    "weight",
-                                                    "height",
-                                                    "width",
-                                                    "length",
-                                                    "maxSumDimension"
-                                                ],
                                                 "type": "object",
+                                                "title": "dayOfWeekForDelivery",
+                                                "description": "Select the chosen days for delivery. Values for each day of the week are: 0 = sunday, 1 = monday, 2 = tuesday, 3 = wednesday, 4 = thursday, 5 = friday, 6 = saturyday. Make sure to add the available hours for the chosen days, following the example.",
+                                                "default": {},
+                                                "required": [
+                                                    "dayOfWeek",
+                                                    "deliveryRanges"
+                                                ],
                                                 "properties": {
-                                                    "weight": {
-                                                        "type": "number"
+                                                    "dayOfWeek": {
+                                                        "type": "integer",
+                                                        "title": "dayOfWeek",
+                                                        "description": "",
+                                                        "default": 2
                                                     },
-                                                    "height": {
-                                                        "type": "number"
-                                                    },
-                                                    "width": {
-                                                        "type": "number"
-                                                    },
-                                                    "length": {
-                                                        "type": "number"
-                                                    },
-                                                    "maxSumDimension": {
-                                                        "type": "number"
+                                                    "deliveryRanges": {
+                                                        "type": "array",
+                                                        "title": "deliveryRanges",
+                                                        "description": "Reservation windows for scheduled delivery.",
+                                                        "default": [],
+                                                        "required": [
+                                                            "startTime",
+                                                            "endTime",
+                                                            "listPrice"
+                                                        ],
+                                                        "properties": {
+                                                            "startTime": {
+                                                                "type": "string",
+                                                                "title": "startTime",
+                                                                "description": "",
+                                                                "default": "11:00:00"
+                                                            },
+                                                            "endTime": {
+                                                                "type": "string",
+                                                                "title": "endTime",
+                                                                "description": "",
+                                                                "default": "12:30:00"
+                                                            },
+                                                            "listPrice": {
+                                                                "type": "number",
+                                                                "title": "listPrice",
+                                                                "description": "",
+                                                                "default": "0.0"
+                                                            },
+                                                            "deliveryCapacity": {
+                                                                "type": "object",
+                                                                "description": "Sets maximum delivery capacity for a given reservation window for scheduled delivery.",
+                                                                "default": null,
+                                                                "required": [
+                                                                    "capacityType",
+                                                                    "maxValue"
+                                                                ],
+                                                                "properties":{
+                                                                    "capacityType": {
+                                                                        "type": "string",
+                                                                        "description": "Defines how the delivery capacity is measured for this reservation window, by maximum number of orders (`\"ORDERS_QUANTITY\"`) or SKUs (`\"SKUS_QUANTITY\"`)."
+                                                                    },
+                                                                    "maxValue": {
+                                                                        "type": "number",
+                                                                        "description": "Maximum number of orders or SKUs that the store is capable of fulfilling.",
+                                                                        "default": "0.0"
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
                                                     }
-                                                },
-                                                "example": {
-                                                    "weight": 0,
-                                                    "height": 110,
-                                                    "width": 110,
-                                                    "length": 110,
-                                                    "maxSumDimension": 200
                                                 }
-                                            },
-                                            "exclusiveToDeliveryPoints": {
-                                                "type": "boolean"
-                                            },
-                                            "minimunCubicWeight": {
-                                                "type": "number"
-                                            },
-                                            "isPolygon": {
-                                                "type": "boolean"
-                                            },
-                                            "numberOfItemsPerShipment": {
-                                                "type": "string",
-                                                "nullable": true
                                             }
-                                        },
-                                        "example": {
-                                            "id": "11cc4b6",
-                                            "slaType": "Normal",
-                                            "name": "Correios PAC",
-                                            "scheduledDelivery": false,
-                                            "maxRangeDelivery": 0,
-                                            "dayOfWeekForDelivery": null,
-                                            "dayOfWeekBlockeds": [],
-                                            "freightValue": [],
-                                            "factorCubicWeight": 0.0167,
-                                            "freightTableProcessStatus": 1,
-                                            "freightTableValueError": null,
-                                            "modals": [],
-                                            "onlyItemsWithDefinedModal": false,
-                                            "deliveryOnWeekends": true,
-                                            "carrierSchedule": [],
-                                            "maxDimension": {
-                                                "weight": 0,
-                                                "height": 110,
-                                                "width": 110,
-                                                "length": 110,
-                                                "maxSumDimension": 200
-                                            },
-                                            "exclusiveToDeliveryPoints": false,
-                                            "minimunCubicWeight": 10000,
-                                            "isPolygon": false,
-                                            "numberOfItemsPerShipment": null
                                         }
                                     }
-                                },
-                                "example": [{
-                                        "id": "11cc4b6",
-                                        "slaType": "Normal",
-                                        "name": "Correios PAC",
-                                        "scheduledDelivery": false,
-                                        "maxRangeDelivery": 0,
-                                        "dayOfWeekForDelivery": null,
-                                        "dayOfWeekBlockeds": [],
-                                        "freightValue": [],
-                                        "factorCubicWeight": 0.0167,
-                                        "freightTableProcessStatus": 1,
-                                        "freightTableValueError": null,
-                                        "modals": [],
-                                        "onlyItemsWithDefinedModal": false,
-                                        "deliveryOnWeekends": true,
-                                        "carrierSchedule": [],
-                                        "maxDimension": {
-                                            "weight": 0,
-                                            "height": 110,
-                                            "width": 110,
-                                            "length": 110,
-                                            "maxSumDimension": 200
-                                        },
-                                        "exclusiveToDeliveryPoints": false,
-                                        "minimunCubicWeight": 10000,
-                                        "isPolygon": false,
-                                        "numberOfItemsPerShipment": null
-                                    },
-                                    {
-                                        "id": "teste1",
-                                        "slaType": "Entrega Agendada",
-                                        "name": "Entrega Agendada",
-                                        "scheduledDelivery": true,
-                                        "maxRangeDelivery": 7,
-                                        "dayOfWeekForDelivery": [{
-                                                "dayOfWeek": 0,
-                                                "deliveryRanges": [{
-                                                        "startTime": "08:00:00",
-                                                        "endTime": "12:00:00",
-                                                        "listPrice": 10
-                                                    },
-                                                    {
-                                                        "startTime": "12:01:00",
-                                                        "endTime": "18:00:00",
-                                                        "listPrice": 10
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                "dayOfWeek": 1,
-                                                "deliveryRanges": [{
-                                                        "startTime": "08:00:00",
-                                                        "endTime": "12:00:00",
-                                                        "listPrice": 10
-                                                    },
-                                                    {
-                                                        "startTime": "12:01:00",
-                                                        "endTime": "18:00:00",
-                                                        "listPrice": 10
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                "dayOfWeek": 2,
-                                                "deliveryRanges": [{
-                                                        "startTime": "08:00:00",
-                                                        "endTime": "12:00:00",
-                                                        "listPrice": 10
-                                                    },
-                                                    {
-                                                        "startTime": "12:01:00",
-                                                        "endTime": "18:00:00",
-                                                        "listPrice": 10
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                "dayOfWeek": 3,
-                                                "deliveryRanges": [{
-                                                        "startTime": "08:00:00",
-                                                        "endTime": "12:00:00",
-                                                        "listPrice": 10
-                                                    },
-                                                    {
-                                                        "startTime": "12:01:00",
-                                                        "endTime": "18:00:00",
-                                                        "listPrice": 10
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                "dayOfWeek": 4,
-                                                "deliveryRanges": [{
-                                                        "startTime": "08:00:00",
-                                                        "endTime": "12:00:00",
-                                                        "listPrice": 10
-                                                    },
-                                                    {
-                                                        "startTime": "12:01:00",
-                                                        "endTime": "18:00:00",
-                                                        "listPrice": 10
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                "dayOfWeek": 5,
-                                                "deliveryRanges": [{
-                                                        "startTime": "08:00:00",
-                                                        "endTime": "12:00:00",
-                                                        "listPrice": 10
-                                                    },
-                                                    {
-                                                        "startTime": "12:01:00",
-                                                        "endTime": "18:00:00",
-                                                        "listPrice": 10
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                "dayOfWeek": 6,
-                                                "deliveryRanges": [{
-                                                        "startTime": "08:00:00",
-                                                        "endTime": "12:00:00",
-                                                        "listPrice": 10
-                                                    },
-                                                    {
-                                                        "startTime": "12:01:00",
-                                                        "endTime": "18:00:00",
-                                                        "listPrice": 10
-                                                    }
-                                                ]
-                                            }
-                                        ],
-                                        "dayOfWeekBlockeds": [
-                                            "2015-12-09T01:00:00",
-                                            "2015-12-09T08:00:00"
-                                        ],
-                                        "freightValue": [],
-                                        "factorCubicWeight": null,
-                                        "freightTableProcessStatus": 1,
-                                        "freightTableValueError": null,
-                                        "modals": [],
-                                        "onlyItemsWithDefinedModal": false,
-                                        "deliveryOnWeekends": false,
-                                        "carrierSchedule": [],
-                                        "maxDimension": {
-                                            "weight": 0,
-                                            "height": 0,
-                                            "width": 0,
-                                            "length": 0,
-                                            "maxSumDimension": 0
-                                        },
-                                        "exclusiveToDeliveryPoints": false,
-                                        "minimunCubicWeight": 0,
-                                        "isPolygon": false,
-                                        "numberOfItemsPerShipment": null
-                                    },
-                                    {
-                                        "id": "186a2a6",
-                                        "slaType": "Poligono",
-                                        "name": "Poligono (ARG)",
-                                        "scheduledDelivery": false,
-                                        "maxRangeDelivery": 0,
-                                        "dayOfWeekForDelivery": null,
-                                        "dayOfWeekBlockeds": [],
-                                        "freightValue": [],
-                                        "factorCubicWeight": null,
-                                        "freightTableProcessStatus": 1,
-                                        "freightTableValueError": null,
-                                        "modals": [],
-                                        "onlyItemsWithDefinedModal": false,
-                                        "deliveryOnWeekends": false,
-                                        "carrierSchedule": [],
-                                        "maxDimension": {
-                                            "weight": 0,
-                                            "height": 0,
-                                            "width": 0,
-                                            "length": 0,
-                                            "maxSumDimension": 0
-                                        },
-                                        "exclusiveToDeliveryPoints": false,
-                                        "minimunCubicWeight": 0,
-                                        "isPolygon": false,
-                                        "numberOfItemsPerShipment": null
-                                    },
-                                    {
-                                        "id": "1962962",
-                                        "slaType": "Poligono",
-                                        "name": "Poligono (Botafogo)",
-                                        "scheduledDelivery": false,
-                                        "maxRangeDelivery": 0,
-                                        "dayOfWeekForDelivery": null,
-                                        "dayOfWeekBlockeds": [],
-                                        "freightValue": [],
-                                        "factorCubicWeight": null,
-                                        "freightTableProcessStatus": 1,
-                                        "freightTableValueError": null,
-                                        "modals": [],
-                                        "onlyItemsWithDefinedModal": false,
-                                        "deliveryOnWeekends": false,
-                                        "carrierSchedule": [],
-                                        "maxDimension": {
-                                            "weight": 0,
-                                            "height": 0,
-                                            "width": 0,
-                                            "length": 0,
-                                            "maxSumDimension": 0
-                                        },
-                                        "exclusiveToDeliveryPoints": false,
-                                        "minimunCubicWeight": 0,
-                                        "isPolygon": false,
-                                        "numberOfItemsPerShipment": null
-                                    },
-                                    {
-                                        "id": "173a63f",
-                                        "slaType": "Quimico e refrigerado",
-                                        "name": "Quimico e refrigerado",
-                                        "scheduledDelivery": true,
-                                        "maxRangeDelivery": 4,
-                                        "dayOfWeekForDelivery": [{
-                                                "dayOfWeek": 0,
-                                                "deliveryRanges": [{
-                                                    "startTime": "19:30:00",
-                                                    "endTime": "00:00:00",
-                                                    "listPrice": 0.05
-                                                }]
-                                            },
-                                            {
-                                                "dayOfWeek": 1,
-                                                "deliveryRanges": []
-                                            },
-                                            {
-                                                "dayOfWeek": 2,
-                                                "deliveryRanges": [{
-                                                    "startTime": "19:30:00",
-                                                    "endTime": "00:00:00",
-                                                    "listPrice": 0.05
-                                                }]
-                                            },
-                                            {
-                                                "dayOfWeek": 3,
-                                                "deliveryRanges": []
-                                            },
-                                            {
-                                                "dayOfWeek": 4,
-                                                "deliveryRanges": [{
-                                                    "startTime": "19:30:00",
-                                                    "endTime": "00:00:00",
-                                                    "listPrice": 0.05
-                                                }]
-                                            },
-                                            {
-                                                "dayOfWeek": 5,
-                                                "deliveryRanges": []
-                                            },
-                                            {
-                                                "dayOfWeek": 6,
-                                                "deliveryRanges": [{
-                                                    "startTime": "19:30:00",
-                                                    "endTime": "00:00:00",
-                                                    "listPrice": 0.05
-                                                }]
-                                            }
-                                        ],
-                                        "dayOfWeekBlockeds": [],
-                                        "freightValue": [],
-                                        "factorCubicWeight": null,
-                                        "freightTableProcessStatus": 1,
-                                        "freightTableValueError": null,
-                                        "modals": [
-                                            "Químico",
-                                            "Refrigerado"
-                                        ],
-                                        "onlyItemsWithDefinedModal": true,
-                                        "deliveryOnWeekends": false,
-                                        "carrierSchedule": [],
-                                        "maxDimension": {
-                                            "weight": 0,
-                                            "height": 200,
-                                            "width": 200,
-                                            "length": 200,
-                                            "maxSumDimension": 200
-                                        },
-                                        "exclusiveToDeliveryPoints": false,
-                                        "minimunCubicWeight": 0,
-                                        "isPolygon": false,
-                                        "numberOfItemsPerShipment": null
-                                    }
-                                ]
+                                }
                             }
                         }
                     }
-                },
-                "deprecated": false
+                }
             }
         },
-        "/configuration/carriers/{carrierId}": {
-            "get": {
-                "tags": [
-                    "Carriers"
-                ],
-                "summary": "List Carrier By Id",
-                "description": "Lists information about your store's carriers by searching through the Carrier's ID.",
-                "operationId": "CarrierById",
-                "parameters": [{
-                        "name": "accountName",
-                        "in": "path",
-                        "required": true,
-                        "description": "Name of the VTEX account. Used as part of the URL",
-                        "schema": {
-                            "type": "string",
-                            "default": "apiexamples"
-                        }
-                    },
-                    {
-                        "name": "environment",
-                        "in": "path",
-                        "required": true,
-                        "description": "Environment to use. Used as part of the URL",
-                        "schema": {
-                            "type": "string",
-                            "default": "vtexcommercestable"
-                        }
-                    },
-                    {
-                        "name": "Content-Type",
-                        "in": "header",
-                        "description": "Type of the content being sent",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "example": "application/json; charset=utf-8"
-                        }
-                    },
-                    {
-                        "name": "Accept",
-                        "in": "header",
-                        "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "example": "application/json"
-                        }
-                    },
-                    {
-                        "name": "carrierId",
-                        "in": "path",
-                        "description": "",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "headers": {
-                            "Cache-Control": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "no-cache"
-                                    }
-                                }
-                            },
-                            "Connection": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "keep-alive"
-                                    }
-                                }
-                            },
-                            "Content-Length": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "564"
-                                    }
-                                }
-                            },
-                            "Date": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "Fri, 15 Apr 2016 19:35:27 GMT"
-                                    }
-                                }
-                            },
-                            "Expires": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "-1"
-                                    }
-                                }
-                            },
-                            "Pragma": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "no-cache"
-                                    }
-                                }
-                            },
-                            "Server": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "nginx"
-                                    }
-                                }
-                            },
-                            "X-CDNIgnore": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "1"
-                                    }
-                                }
-                            },
-                            "X-CacheServer": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "janus-apicache-nginx2"
-                                    }
-                                }
-                            },
-                            "X-Powered-by-VTEX-Janus-ApiCache": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "v1.3.8"
-                                    }
-                                }
-                            },
-                            "X-Powered-by-VTEX-Janus-Edge": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "v1.26.4"
-                                    }
-                                }
-                            },
-                            "X-Powered-by-VTEX-Janus-Router": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "2.1.155"
-                                    }
-                                }
-                            },
-                            "X-Track": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "stable"
-                                    }
-                                }
-                            },
-                            "X-VTEX-Cache-Status-Janus-ApiCache": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "MISS"
-                                    }
-                                }
-                            },
-                            "X-VTEX-Janus-Router-Backend-App": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "logist-v6.2.96-stable+863"
-                                    }
-                                }
-                            },
-                            "x-vtex-operation-id": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "cc531f22-28fa-4e72-8653-2323fcb85c30"
-                                    }
-                                }
-                            }
-                        },
-                        "content": {
-                            "application/json; charset=utf-8": {
-                                "schema": {
-                                    "title": "carrierbyid",
-                                    "required": [
-                                        "id",
-                                        "slaType",
-                                        "name",
-                                        "scheduledDelivery",
-                                        "maxRangeDelivery",
-                                        "dayOfWeekForDelivery",
-                                        "dayOfWeekBlockeds",
-                                        "freightValue",
-                                        "factorCubicWeight",
-                                        "freightTableProcessStatus",
-                                        "freightTableValueError",
-                                        "modals",
-                                        "onlyItemsWithDefinedModal",
-                                        "deliveryOnWeekends",
-                                        "carrierSchedule",
-                                        "maxDimension",
-                                        "exclusiveToDeliveryPoints",
-                                        "minimunCubicWeight",
-                                        "isPolygon",
-                                        "numberOfItemsPerShipment"
-                                    ],
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {
-                                            "type": "string"
-                                        },
-                                        "slaType": {
-                                            "type": "string"
-                                        },
-                                        "name": {
-                                            "type": "string"
-                                        },
-                                        "scheduledDelivery": {
-                                            "type": "boolean"
-                                        },
-                                        "maxRangeDelivery": {
-                                            "type": "integer",
-                                            "format": "int32"
-                                        },
-                                        "dayOfWeekForDelivery": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "dayOfWeekBlockeds": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            },
-                                            "description": ""
-                                        },
-                                        "freightValue": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            },
-                                            "description": ""
-                                        },
-                                        "factorCubicWeight": {
-                                            "type": "number"
-                                        },
-                                        "freightTableProcessStatus": {
-                                            "type": "integer",
-                                            "format": "int32"
-                                        },
-                                        "freightTableValueError": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "modals": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            },
-                                            "description": ""
-                                        },
-                                        "onlyItemsWithDefinedModal": {
-                                            "type": "boolean"
-                                        },
-                                        "deliveryOnWeekends": {
-                                            "type": "boolean"
-                                        },
-                                        "carrierSchedule": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            },
-                                            "description": ""
-                                        },
-                                        "maxDimension": {
-                                            "title": "MaxDimension2",
-                                            "required": [
-                                                "weight",
-                                                "height",
-                                                "width",
-                                                "length",
-                                                "maxSumDimension"
-                                            ],
-                                            "type": "object",
-                                            "properties": {
-                                                "weight": {
-                                                    "type": "number"
-                                                },
-                                                "height": {
-                                                    "type": "number"
-                                                },
-                                                "width": {
-                                                    "type": "number"
-                                                },
-                                                "length": {
-                                                    "type": "number"
-                                                },
-                                                "maxSumDimension": {
-                                                    "type": "number"
-                                                }
-                                            },
-                                            "example": {
-                                                "weight": 0,
-                                                "height": 110,
-                                                "width": 110,
-                                                "length": 110,
-                                                "maxSumDimension": 200
-                                            }
-                                        },
-                                        "exclusiveToDeliveryPoints": {
-                                            "type": "boolean"
-                                        },
-                                        "minimunCubicWeight": {
-                                            "type": "number"
-                                        },
-                                        "isPolygon": {
-                                            "type": "boolean"
-                                        },
-                                        "numberOfItemsPerShipment": {
-                                            "type": "string",
-                                            "nullable": true
-                                        }
-                                    },
-                                    "example": {
-                                        "id": "11cc4b6",
-                                        "slaType": "Normal",
-                                        "name": "Correios PAC",
-                                        "scheduledDelivery": false,
-                                        "maxRangeDelivery": 0,
-                                        "dayOfWeekForDelivery": null,
-                                        "dayOfWeekBlockeds": [],
-                                        "freightValue": [],
-                                        "factorCubicWeight": 0.0167,
-                                        "freightTableProcessStatus": 1,
-                                        "freightTableValueError": null,
-                                        "modals": [],
-                                        "onlyItemsWithDefinedModal": false,
-                                        "deliveryOnWeekends": true,
-                                        "carrierSchedule": [],
-                                        "maxDimension": {
-                                            "weight": 0,
-                                            "height": 110,
-                                            "width": 110,
-                                            "length": 110,
-                                            "maxSumDimension": 200
-                                        },
-                                        "exclusiveToDeliveryPoints": false,
-                                        "minimunCubicWeight": 10000,
-                                        "isPolygon": false,
-                                        "numberOfItemsPerShipment": null
-                                    }
-                                },
-                                "example": {
-                                    "id": "11cc4b6",
-                                    "slaType": "Normal",
-                                    "name": "Correios PAC",
-                                    "scheduledDelivery": false,
-                                    "maxRangeDelivery": 0,
-                                    "dayOfWeekForDelivery": null,
-                                    "dayOfWeekBlockeds": [],
-                                    "freightValue": [],
-                                    "factorCubicWeight": 0.0167,
-                                    "freightTableProcessStatus": 1,
-                                    "freightTableValueError": null,
-                                    "modals": [],
-                                    "onlyItemsWithDefinedModal": false,
-                                    "deliveryOnWeekends": true,
-                                    "carrierSchedule": [],
-                                    "maxDimension": {
-                                        "weight": 0,
-                                        "height": 110,
-                                        "width": 110,
-                                        "length": 110,
-                                        "maxSumDimension": 200
-                                    },
-                                    "exclusiveToDeliveryPoints": false,
-                                    "minimunCubicWeight": 10000,
-                                    "isPolygon": false,
-                                    "numberOfItemsPerShipment": null
-                                }
-                            }
-                        }
-                    }
-                },
-                "deprecated": false
-            },
-            "delete": {
-                "tags": [
-                    "Carriers"
-                ],
-                "summary": "Delete Carrier",
-                "description": "Deletes carrier by carrier ID.",
-                "operationId": "Carrier",
-                "parameters": [{
-                        "name": "accountName",
-                        "in": "path",
-                        "required": true,
-                        "description": "Name of the VTEX account. Used as part of the URL",
-                        "schema": {
-                            "type": "string",
-                            "default": "apiexamples"
-                        }
-                    },
-                    {
-                        "name": "environment",
-                        "in": "path",
-                        "required": true,
-                        "description": "Environment to use. Used as part of the URL",
-                        "schema": {
-                            "type": "string",
-                            "default": "vtexcommercestable"
-                        }
-                    },
-                    {
-                        "name": "Content-Type",
-                        "in": "header",
-                        "description": "Type of the content being sent",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "example": "application/json; charset=utf-8"
-                        }
-                    },
-                    {
-                        "name": "Accept",
-                        "in": "header",
-                        "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "example": "application/json"
-                        }
-                    },
-                    {
-                        "name": "carrierId",
-                        "in": "path",
-                        "description": "",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "headers": {}
-                    }
-                },
-                "deprecated": false
-            }
-        },
-        "/configuration/freights/{carrierId}/values/update": {
+        "/logistics/pvt/configuration/freights/{carrierId}/values/update": {
             "post": {
                 "tags": [
-                    "Carriers"
+                    "Freight Values"
                 ],
-                "summary": "Create/Update Freight Values",
+                "summary": "Create/update freight values",
                 "description": "Creates or updates the freight values of your store's carriers.",
                 "operationId": "Create/UpdateFreightValues",
                 "parameters": [{
@@ -2452,12 +1165,12 @@
                 "deprecated": false
             }
         },
-        "/configuration/freights/{carrierId}/{cep}/values": {
+        "/logistics/pvt/configuration/freights/{carrierId}/{cep}/values": {
             "get": {
                 "tags": [
-                    "Carriers"
+                    "Freight Values"
                 ],
-                "summary": "List Freight Values",
+                "summary": "List freight values",
                 "description": "Lists freight values apoointed to your store's carriers, searching by carrier ID and cep.",
                 "operationId": "FreightValues",
                 "parameters": [{
@@ -2834,13 +1547,13 @@
                 "deprecated": false
             }
         },
-        "/configuration/carriers/{carrierId}/getdayofweekblocked": {
+        "/logistics/pvt/configuration/carriers/{carrierId}/getdayofweekblocked": {
             "get": {
                 "tags": [
-                    "Carriers"
+                    "Scheduled Delivery"
                 ],
-                "summary": "Retrieve Blocked Delivery Windows",
-                "description": "Lists all blocked delivery windows of your store's carriers, searching by carrier ID.",
+                "summary": "Retrieve blocked delivery windows",
+                "description": "Lists all blocked delivery windows of your store's shipping policies, searching by carrier ID.",
                 "operationId": "RetrieveBlockedDeliveryWindows",
                 "parameters": [{
                         "name": "accountName",
@@ -2904,13 +1617,13 @@
                 "deprecated": false
             }
         },
-        "/configuration/carriers/{carrierId}/adddayofweekblocked": {
+        "/logistics/pvt/configuration/carriers/{carrierId}/adddayofweekblocked": {
             "post": {
                 "tags": [
-                    "Carriers"
+                    "Scheduled Delivery"
                 ],
-                "summary": "Add Blocked Delivery Windows",
-                "description": "Adds blocked delivery windows for your store's carriers.",
+                "summary": "Add blocked delivery windows",
+                "description": "Adds blocked delivery windows for your store's shipping policies.",
                 "operationId": "AddBlockedDeliveryWindows",
                 "parameters": [{
                         "name": "accountName",
@@ -2987,13 +1700,13 @@
                 "deprecated": false
             }
         },
-        "/configuration/carriers/{carrierId}/removedayofweekblocked": {
+        "/logistics/pvt/configuration/carriers/{carrierId}/removedayofweekblocked": {
             "post": {
                 "tags": [
-                    "Carriers"
+                    "Scheduled Delivery"
                 ],
-                "summary": "Remove Blocked Delivery Windows",
-                "description": "Removes the blocked delivery windows set to your store's carriers.",
+                "summary": "Remove blocked delivery windows",
+                "description": "Removes the blocked delivery windows set to your store's shipping policies.",
                 "operationId": "RemoveBlockedDeliveryWindows",
                 "parameters": [{
                         "name": "accountName",
@@ -3070,152 +1783,12 @@
                 "deprecated": false
             }
         },
-        "/configuration/carriers/{carrierId}/activation": {
-            "post": {
-                "tags": [
-                    "Carriers"
-                ],
-                "summary": "Activate Carrier",
-                "description": "Activates a given carrier of your store y carrier ID.",
-                "operationId": "ActivateCarrier",
-                "parameters": [{
-                        "name": "accountName",
-                        "in": "path",
-                        "required": true,
-                        "description": "Name of the VTEX account. Used as part of the URL",
-                        "schema": {
-                            "type": "string",
-                            "default": "apiexamples"
-                        }
-                    },
-                    {
-                        "name": "environment",
-                        "in": "path",
-                        "required": true,
-                        "description": "Environment to use. Used as part of the URL",
-                        "schema": {
-                            "type": "string",
-                            "default": "vtexcommercestable"
-                        }
-                    },
-                    {
-                        "name": "Accept",
-                        "in": "header",
-                        "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "example": "application/json"
-                        }
-                    },
-                    {
-                        "name": "Content-Type",
-                        "in": "header",
-                        "description": "Type of the content being sent",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "example": "application/json"
-                        }
-                    },
-                    {
-                        "name": "carrierId",
-                        "in": "path",
-                        "description": "",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "headers": {}
-                    }
-                },
-                "deprecated": false
-            }
-        },
-        "/configuration/carriers/{carrierId}/deactivation": {
-            "post": {
-                "tags": [
-                    "Carriers"
-                ],
-                "summary": "Deactivate Carrier",
-                "description": "Deactivates a given carrier by carrier ID.",
-                "operationId": "DeactivateCarrier",
-                "parameters": [{
-                        "name": "accountName",
-                        "in": "path",
-                        "required": true,
-                        "description": "Name of the VTEX account. Used as part of the URL",
-                        "schema": {
-                            "type": "string",
-                            "default": "apiexamples"
-                        }
-                    },
-                    {
-                        "name": "environment",
-                        "in": "path",
-                        "required": true,
-                        "description": "Environment to use. Used as part of the URL",
-                        "schema": {
-                            "type": "string",
-                            "default": "vtexcommercestable"
-                        }
-                    },
-                    {
-                        "name": "Accept",
-                        "in": "header",
-                        "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "example": "application/json"
-                        }
-                    },
-                    {
-                        "name": "Content-Type",
-                        "in": "header",
-                        "description": "Type of the content being sent",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "example": "application/json"
-                        }
-                    },
-                    {
-                        "name": "carrierId",
-                        "in": "path",
-                        "description": "",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "headers": {}
-                    }
-                },
-                "deprecated": false
-            }
-        },
-        "/configuration/docks": {
+        "/logistics/pvt/configuration/docks": {
             "post": {
                 "tags": [
                     "Docks"
                 ],
-                "summary": "Create/Update Dock",
+                "summary": "Create/update dock",
                 "description": "Creates or updates docks to be used in your logistic operation.",
                 "operationId": "Create/UpdateDock",
                 "parameters": [{
@@ -3659,7 +2232,7 @@
                 "tags": [
                     "Docks"
                 ],
-                "summary": "List All  Docks",
+                "summary": "List all  docks",
                 "description": "Informs a list of all docks.",
                 "operationId": "AllDocks",
                 "parameters": [{
@@ -4218,12 +2791,12 @@
                 "deprecated": false
             }
         },
-        "/configuration/docks/{dockId}": {
+        "/logistics/pvt/configuration/docks/{dockId}": {
             "get": {
                 "tags": [
                     "Docks"
                 ],
-                "summary": "List Dock By Id",
+                "summary": "List dock by ID",
                 "description": "Informs a given dock's information, searching by dock ID.",
                 "operationId": "DockById",
                 "parameters": [{
@@ -4612,7 +3185,7 @@
                 "tags": [
                     "Docks"
                 ],
-                "summary": "Delete Dock",
+                "summary": "Delete dock",
                 "description": "Deletes dock by dock ID.",
                 "operationId": "Dock",
                 "parameters": [{
@@ -4677,12 +3250,12 @@
                 "deprecated": false
             }
         },
-        "/configuration/docks/{dockId}/activation": {
+        "/logistics/pvt/configuration/docks/{dockId}/activation": {
             "post": {
                 "tags": [
                     "Docks"
                 ],
-                "summary": "Activate Dock",
+                "summary": "Activate dock",
                 "description": "Activates dock through dock ID.",
                 "operationId": "ActivateDock",
                 "parameters": [{
@@ -4747,12 +3320,12 @@
                 "deprecated": false
             }
         },
-        "/configuration/docks/{dockId}/deactivation": {
+        "/logistics/pvt/configuration/docks/{dockId}/deactivation": {
             "post": {
                 "tags": [
                     "Docks"
                 ],
-                "summary": "Deactivate Dock",
+                "summary": "Deactivate dock",
                 "description": "Deactivate dock by dock ID",
                 "operationId": "DeactivateDock",
                 "parameters": [{
@@ -4817,12 +3390,12 @@
                 "deprecated": false
             }
         },
-        "/configuration/warehouses": {
+        "/logistics/pvt/configuration/warehouses": {
             "post": {
                 "tags": [
                     "Warehouses"
                 ],
-                "summary": "Create/Update Warehouse",
+                "summary": "Create/update warehouse",
                 "description": "Creates or updates your store's warehouses",
                 "operationId": "Create/UpdateWarehouse",
                 "parameters": [{
@@ -4973,7 +3546,7 @@
                 "tags": [
                     "Warehouses"
                 ],
-                "summary": "List All Warehouses",
+                "summary": "List all warehouses",
                 "description": "Lists information about all warehouses set up in your store.",
                 "operationId": "AllWarehouses",
                 "parameters": [{
@@ -5326,12 +3899,12 @@
                 "deprecated": false
             }
         },
-        "/configuration/warehouses/{warehouseId}": {
+        "/logistics/pvt/configuration/warehouses/{warehouseId}": {
             "get": {
                 "tags": [
                     "Warehouses"
                 ],
-                "summary": "List Warehouse By Id",
+                "summary": "List warehouse by ID",
                 "description": "Lists the information of a given warehouse, searching by warehouse ID.",
                 "operationId": "WarehouseById",
                 "parameters": [{
@@ -5648,7 +4221,7 @@
                 "tags": [
                     "Warehouses"
                 ],
-                "summary": "Remove Warehouse",
+                "summary": "Remove warehouse",
                 "description": "Deletes given warehouse by warehouse ID.",
                 "operationId": "RemoveWarehouse",
                 "parameters": [{
@@ -5713,12 +4286,12 @@
                 "deprecated": false
             }
         },
-        "/configuration/warehouses/{warehouseId}/activation": {
+        "/logistics/pvt/configuration/warehouses/{warehouseId}/activation": {
             "post": {
                 "tags": [
                     "Warehouses"
                 ],
-                "summary": "Activate Warehouse",
+                "summary": "Activate warehouse",
                 "description": "Activates a given warehouse, by warehouse ID.",
                 "operationId": "ActivateWarehouse",
                 "parameters": [{
@@ -5783,12 +4356,12 @@
                 "deprecated": false
             }
         },
-        "/configuration/warehouses/{warehouseId}/deactivation": {
+        "/logistics/pvt/configuration/warehouses/{warehouseId}/deactivation": {
             "post": {
                 "tags": [
                     "Warehouses"
                 ],
-                "summary": "Deactivate Warehouse",
+                "summary": "Deactivate warehouse",
                 "description": "Deactivates a given warehouse by warehouse ID.",
                 "operationId": "DeactivateWarehouse",
                 "parameters": [{
@@ -5853,12 +4426,12 @@
                 "deprecated": false
             }
         },
-        "/inventory/skus/{skuId}": {
+        "/logistics/pvt/inventory/skus/{skuId}": {
             "get": {
                 "tags": [
                     "Inventory"
                 ],
-                "summary": "List Inventory By SKU",
+                "summary": "List inventory by SKU",
                 "description": "Lists your store's inventory by SKU ID",
                 "operationId": "InventoryBySku",
                 "parameters": [{
@@ -6178,12 +4751,12 @@
                 "deprecated": false
             }
         },
-        "/inventory/items/{skuId}/warehouses/{warehouseId}": {
+        "/logistics/pvt/inventory/items/{skuId}/warehouses/{warehouseId}": {
             "get": {
                 "tags": [
                     "Inventory"
                 ],
-                "summary": "List Inventory per warehouse",
+                "summary": "List inventory per warehouse",
                 "description": "Lists inventory information per warehouse on your store.",
                 "operationId": "Inventoryperwarehouse",
                 "parameters": [{
@@ -6258,12 +4831,12 @@
                 "deprecated": false
             }
         },
-        "/inventory/skus/{skuId}/warehouses/{warehouseId}": {
+        "/logistics/pvt/inventory/skus/{skuId}/warehouses/{warehouseId}": {
             "put": {
                 "tags": [
                     "Inventory"
                 ],
-                "summary": "Update Inventory By SKU and Warehouse",
+                "summary": "Update inventory by SKU and warehouse",
                 "description": "Updates inventory by searching through SKU and warehouse.",
                 "operationId": "UpdateInventoryBySkuandWarehouse",
                 "parameters": [{
@@ -6382,12 +4955,12 @@
                 "deprecated": false
             }
         },
-        "/inventory/items/{skuId}/docks/{dockId}": {
+        "/logistics/pvt/inventory/items/{skuId}/docks/{dockId}": {
             "get": {
                 "tags": [
                     "Inventory"
                 ],
-                "summary": "List Inventory per dock",
+                "summary": "List inventory per dock",
                 "description": "Lists inventory information per dock set up in your store.",
                 "operationId": "Inventoryperdock",
                 "parameters": [{
@@ -6462,12 +5035,12 @@
                 "deprecated": false
             }
         },
-        "/inventory/items/{skuId}/docks/{dockId}/warehouses/{warehouseId}": {
+        "/logistics/pvt/inventory/items/{skuId}/docks/{dockId}/warehouses/{warehouseId}": {
             "get": {
                 "tags": [
                     "Inventory"
                 ],
-                "summary": "List Inventory per dock and warehouse",
+                "summary": "List inventory per dock and warehouse",
                 "description": "Lists information of inventory per dock and warehouse.",
                 "operationId": "Inventoryperdockandwarehouse",
                 "parameters": [{
@@ -6552,7 +5125,7 @@
                 "deprecated": false
             }
         },
-        "/inventory/items/{itemId}/warehouses/{warehouseId}/dispatched": {
+        "/logistics/pvt/inventory/items/{itemId}/warehouses/{warehouseId}/dispatched": {
             "get": {
                 "tags": [
                     "Inventory"
@@ -6863,12 +5436,12 @@
                 "deprecated": false
             }
         },
-        "/inventory/items/{skuId}/warehouses/{warehouseId}/supplyLots": {
+        "/logistics/pvt/inventory/items/{skuId}/warehouses/{warehouseId}/supplyLots": {
             "get": {
                 "tags": [
                     "Inventory"
                 ],
-                "summary": "List Supply Lots",
+                "summary": "List supply lots",
                 "description": "Returns a list of the supply lots of an SKU in a specific warehouse.",
                 "operationId": "GetSupplyLots",
                 "parameters": [{
@@ -6943,12 +5516,12 @@
                 "deprecated": false
             }
         },
-        "/inventory/items/{skuId}/warehouses/{warehouseId}/supplyLots/{supplyLotId}": {
+        "/logistics/pvt/inventory/items/{skuId}/warehouses/{warehouseId}/supplyLots/{supplyLotId}": {
             "put": {
                 "tags": [
                     "Inventory"
                 ],
-                "summary": "Save Supply Lot",
+                "summary": "Save supply lot",
                 "description": "Creates a new Supply Lot. A Supply Lot lets the store sell products that are not currently available in stock but whose arrival is already scheduled.\n\nCheck out our [documentation](https://help.vtex.com/en/tutorial/setting-up-future-inventory--UMSGjooqRfkRbeoh94kS4) about this feature.",
                 "operationId": "SaveSupplyLot",
                 "parameters": [{
@@ -7071,12 +5644,12 @@
                 "deprecated": false
             }
         },
-        "/inventory/items/{skuId}/warehouses/{warehouseId}/supplyLots/{supplyLotId}/transfer": {
+        "/logistics/pvt/inventory/items/{skuId}/warehouses/{warehouseId}/supplyLots/{supplyLotId}/transfer": {
             "post": {
                 "tags": [
                     "Inventory"
                 ],
-                "summary": "Transfer Supply Lot",
+                "summary": "Transfer supply lot",
                 "description": "Transfers an SKU from a Supply Lot to the currently available inventory.\n\nCheck out how this transfer works in further detail by reading our [documentation](https://help.vtex.com/pt/tutorial/configurar-estoque-futuro--UMSGjooqRfkRbeoh94kS4) about this feature.",
                 "operationId": "TransferSupplyLot",
                 "parameters": [{
@@ -7161,12 +5734,12 @@
                 "deprecated": false
             }
         },
-        "/configuration/holidays/{holidayId}": {
+        "/logistics/pvt/configuration/holidays/{holidayId}": {
             "put": {
                 "tags": [
                     "Holidays"
                 ],
-                "summary": "Create/Update Holiday",
+                "summary": "Create/update holiday",
                 "description": "Creates or updates holidays through holiday ID.",
                 "operationId": "Create/UpdateHoliday",
                 "parameters": [{
@@ -7266,7 +5839,7 @@
                 "tags": [
                     "Holidays"
                 ],
-                "summary": "List Holiday By Id",
+                "summary": "List holiday by ID",
                 "description": "Lists holiday's information by holiday ID.",
                 "operationId": "HolidayById",
                 "parameters": [{
@@ -7334,7 +5907,7 @@
                 "tags": [
                     "Holidays"
                 ],
-                "summary": "Delete Holiday",
+                "summary": "Delete holiday",
                 "description": "Deletes given holidays set up in your store.",
                 "operationId": "Holiday",
                 "parameters": [{
@@ -7399,12 +5972,12 @@
                 "deprecated": false
             }
         },
-        "/configuration/holidays": {
+        "/logistics/pvt/configuration/holidays": {
             "get": {
                 "tags": [
                     "Holidays"
                 ],
-                "summary": "List All Holidays",
+                "summary": "List all holidays",
                 "description": "Lists information of all holidays.",
                 "operationId": "AllHolidays",
                 "parameters": [{
@@ -7459,12 +6032,12 @@
                 "deprecated": false
             }
         },
-        "/inventory/reservations": {
+        "/logistics/pvt/inventory/reservations": {
             "post": {
                 "tags": [
                     "Reservations"
                 ],
-                "summary": "Create Reservation",
+                "summary": "Create reservation",
                 "description": "Creates reservation",
                 "operationId": "CreateReservation",
                 "parameters": [{
@@ -8499,12 +7072,12 @@
                 "deprecated": false
             }
         },
-        "/inventory/reservations/{reservationId}": {
+        "/logistics/pvt/inventory/reservations/{reservationId}": {
             "get": {
                 "tags": [
                     "Reservations"
                 ],
-                "summary": "List Reservation By Id",
+                "summary": "List reservation by ID",
                 "description": "Lists reservation's information by ID.",
                 "operationId": "ReservationById",
                 "parameters": [{
@@ -9210,12 +7783,12 @@
                 "deprecated": false
             }
         },
-        "/inventory/reservations/{reservationId}/confirm": {
+        "/logistics/pvt/inventory/reservations/{reservationId}/confirm": {
             "post": {
                 "tags": [
                     "Reservations"
                 ],
-                "summary": "Confirm Reservation",
+                "summary": "Confirm reservation",
                 "description": "Confirms reservation by reservation ID.",
                 "operationId": "ConfirmReservation",
                 "parameters": [{
@@ -9280,12 +7853,12 @@
                 "deprecated": false
             }
         },
-        "/inventory/reservations/{reservationId}/acknowledge": {
+        "/logistics/pvt/inventory/reservations/{reservationId}/acknowledge": {
             "post": {
                 "tags": [
                     "Reservations"
                 ],
-                "summary": "Acknowledgment Reservation",
+                "summary": "Acknowledgment reservation",
                 "description": "Acknowledges reservations made by reservation ID.",
                 "operationId": "AcknowledgmentReservation",
                 "parameters": [{
@@ -9350,12 +7923,12 @@
                 "deprecated": false
             }
         },
-        "/inventory/reservations/{reservationId}/cancel": {
+        "/logistics/pvt/inventory/reservations/{reservationId}/cancel": {
             "post": {
                 "tags": [
                     "Reservations"
                 ],
-                "summary": "Cancel Reservation",
+                "summary": "Cancel reservation",
                 "description": "Cancels reservation by reservation ID.",
                 "operationId": "CancelReservation",
                 "parameters": [{
@@ -9420,12 +7993,12 @@
                 "deprecated": false
             }
         },
-        "/inventory/reservations/{warehouseId}/{skuId}": {
+        "/logistics/pvt/inventory/reservations/{warehouseId}/{skuId}": {
             "get": {
                 "tags": [
                     "Reservations"
                 ],
-                "summary": "List Reservation by Warehouse and SKU",
+                "summary": "List reservation by warehouse and SKU",
                 "description": "Lists reservations in your store, by searching through warehouse and SKU.",
                 "operationId": "ReservationbyWarehouseandSku",
                 "parameters": [{
@@ -9500,7 +8073,7 @@
                 "deprecated": false
             }
         },
-        "/shipping/calculate": {
+        "/logistics/pvt/shipping/calculate": {
             "post": {
                 "tags": [
                     "SLA"
@@ -10677,10 +9250,10 @@
                 "deprecated": false
             }
         },
-        "/configuration/pickuppoints/{pickupPointId}": {
+        "/logistics/pvt/configuration/pickuppoints/{pickupPointId}": {
             "put": {
                 "tags": [
-                    "Pickup Points"
+                    "Pickup points"
                 ],
                 "summary": "Create/Update Pickup Point",
                 "description": "Creates or updates pickup points in your store by Pickup Point ID.",
@@ -11461,7 +10034,7 @@
             },
             "get": {
                 "tags": [
-                    "Pickup Points"
+                    "Pickup points"
                 ],
                 "summary": "List Pickup Point By ID",
                 "description": "Lists your store's pickup points while searching by ID.",
@@ -11910,7 +10483,7 @@
             },
             "delete": {
                 "tags": [
-                    "Pickup Points"
+                    "Pickup points"
                 ],
                 "summary": "Delete Pickup Point",
                 "description": "Deletes a given pickup point for your store, by pickup point ID.",
@@ -11977,10 +10550,10 @@
                 "deprecated": false
             }
         },
-        "/configuration/pickuppoints/_search": {
+        "/logistics/pvt/configuration/pickuppoints/_search": {
             "get": {
                 "tags": [
-                    "Pickup Points"
+                    "Pickup points"
                 ],
                 "summary": "List paged Pickup Points",
                 "description": "Lists paged pickup points in your store.",
@@ -12073,12 +10646,12 @@
                 "deprecated": false
             }
         },
-        "/configuration/geoshape": {
+        "/logistics/pvt/configuration/geoshape": {
             "get": {
                 "tags": [
                     "Polygons"
                 ],
-                "summary": "List Paged Polygons",
+                "summary": "List paged polygons",
                 "description": "Lists stored polygons.",
                 "operationId": "PagedPolygons",
                 "parameters": [{
@@ -12160,7 +10733,7 @@
                 "tags": [
                     "Polygons"
                 ],
-                "summary": "Create/Update Polygon",
+                "summary": "Create/update polygon",
                 "description": "Creates or updates your store's polygons by geoshape coordinates and polygon name.",
                 "operationId": "Create/UpdatePolygon",
                 "parameters": [{
@@ -12254,12 +10827,12 @@
                 "deprecated": false
             }
         },
-        "/configuration/geoshape/{polygonName}": {
+        "/logistics/pvt/configuration/geoshape/{polygonName}": {
             "get": {
                 "tags": [
                     "Polygons"
                 ],
-                "summary": "List Polygon by Id",
+                "summary": "List polygon by ID",
                 "description": "Lists your store's polygons by searching through polygon name",
                 "operationId": "PolygonbyId",
                 "parameters": [{
@@ -12327,7 +10900,7 @@
                 "tags": [
                     "Polygons"
                 ],
-                "summary": "Delete Polygon",
+                "summary": "Delete polygon",
                 "description": "Deletes polygon set up in your store, by polygon name.",
                 "operationId": "DeletePolygon",
                 "parameters": [{
@@ -12387,6 +10960,287 @@
                     "200": {
                         "description": "",
                         "headers": {}
+                    }
+                },
+                "deprecated": false
+            }
+        },
+        "/logistics-capacity/resources/carrier@{capacityType}@{shippingPolicyId}/time-frames": {
+            "get": {
+                "tags": [
+                    "Scheduled Delivery"
+                ],
+                "summary": "Search capacity reservations in time range",
+                "description": "Get information on all capacity reservations made to scheduled delivery windows in a given time range.\n\r\n\rNote that the combined string `carrier@{capacityType}@{shippingPolicyId}` can be referred to as a \"resource\" in the API's messages.",
+                "parameters": [
+                    {
+                        "name": "accountName",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "environment",
+                        "in": "path",
+                        "required": true,
+                        "description": "Environment to use. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "vtexcommercestable"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Type of the content being sent",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json; charset=utf-8"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/vnd.vtex.availability.v1+json"
+                        }
+                    },
+                    {
+                        "name": "capacityType",
+                        "in": "path",
+                        "description": "How the delivery capacity is measured as defined in the shipping policy. Capacity can be measured by maximum number of orders (`\"orders_quantity\"`) or SKUs (`\"skus_quantity\"`).",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "{{capacityType}}"
+                        }
+                    },
+                    {
+                        "name": "shippingPolicyId",
+                        "in": "path",
+                        "description": "ID of shipping policy to search.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "{{shippingPolicyId}}"
+                        }
+                    },
+                    {
+                        "name": "startDate",
+                        "in": "query",
+                        "description": "Starting date of time range",
+                        "required": true,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "yyyy-mm-dd"
+                        }
+                    },
+                    {
+                        "name": "endDate",
+                        "in": "query",
+                        "description": "End date of time range.",
+                        "required": true,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "yyyy-mm-dd"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "id": "2021-05-03F1300T1700",
+                                    "resourceId": "carrier@skus_quantity@143e313",
+                                    "startDate": "2021-05-03T13:00:00+00:00",
+                                    "endDate": "2021-05-03T17:00:59+00:00",
+                                    "ownMaxCapacity": 10.0,
+                                    "resourceMaxCapacity": 10.0,
+                                    "reservedValue": 6.0,
+                                    "reservations": [
+                                        {
+                                            "id": "reservation-01",
+                                            "value": 4.0
+                                        },
+                                        {
+                                            "id": "reserva-02",
+                                            "value": 2.0
+                                        }
+                                    ],
+                                    "log": [
+                                        {
+                                            "when": "2021-04-29T15:56:09.1732357+00:00",
+                                            "who": "",
+                                            "why": "Reservation `reservation-01` with 2.0 units.",
+                                            "what": "Unblocked"
+                                        },
+                                        {
+                                            "when": "2021-04-29T17:29:11.9250354+00:00",
+                                            "who": "",
+                                            "why": "Reservation `reserva-02` with 4.0 units.",
+                                            "what": "Unblocked"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "deprecated": false
+            }
+        },
+        "/logistics-capacity/resources/carrier@{capacityType}@{shippingPolicyId}/time-frames/{windowDay}F{windowStartTime}T{windowEndTime}": {
+            "get": {
+                "tags": [
+                    "Scheduled Delivery"
+                ],
+                "summary": "Get capacity reservation usage by window",
+                "description": "Retrieves capacity usage of a specific scheduled delivery reservation window.\n\r\n\rNote that the combined string `carrier@{capacityType}@{shippingPolicyId}` can be referred to as a \"resource\" in the API's messages.",
+                "parameters": [
+                    {
+                        "name": "accountName",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "environment",
+                        "in": "path",
+                        "required": true,
+                        "description": "Environment to use. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "vtexcommercestable"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Type of the content being sent",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json; charset=utf-8"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/vnd.vtex.availability.v1+json"
+                        }
+                    },
+                    {
+                        "name": "capacityType",
+                        "in": "path",
+                        "description": "How the delivery capacity is measured as defined in the shipping policy. Capacity can be measured by maximum number of orders (`\"orders_quantity\"`) or SKUs (`\"skus_quantity\"`).",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "{{capacityType}}"
+                        }
+                    },
+                    {
+                        "name": "shippingPolicyId",
+                        "in": "path",
+                        "description": "ID of shipping policy to search.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "{{shippingPolicyId}}"
+                        }
+                    },
+                    {
+                        "name": "windowDay",
+                        "in": "path",
+                        "description": "Day of the specific scheduled delivery window to be consulted for reservations.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "yyyy-mm-dd"
+                        }
+                    },
+                    {
+                        "name": "windowStartTime",
+                        "in": "path",
+                        "description": "Start time of specific scheduled delivery window to be consulted for reservations.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "hhmm"
+                        }
+                    },
+                    {
+                        "name": "windowEndTime",
+                        "in": "path",
+                        "description": "End time of specific scheduled delivery window to be consulted for reservations.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "hhmm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "id": "2021-05-03F1300T1700",
+                                    "resourceId": "carrier@skus_quantity@143e313",
+                                    "startDate": "2021-05-03T13:00:00+00:00",
+                                    "endDate": "2021-05-03T17:00:59+00:00",
+                                    "ownMaxCapacity": 10.0,
+                                    "resourceMaxCapacity": 10.0,
+                                    "reservedValue": 4.0,
+                                    "reservations": [
+                                        {
+                                            "id": "reservation-01",
+                                            "value": 4.0
+                                        }
+                                    ],
+                                    "log": [
+                                        {
+                                            "when": "2021-04-29T15:56:09.1732357+00:00",
+                                            "who": "",
+                                            "why": "Reservation `reservation-01` with 4 units.",
+                                            "what": "Unblocked"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
                     }
                 },
                 "deprecated": false
@@ -18480,7 +17334,7 @@
         }
     },
     "tags": [{
-            "name": "Carriers"
+            "name": "Scheduled Delivery"
         },
         {
             "name": "Shipping Policies"
@@ -18508,6 +17362,9 @@
         },
         {
             "name": "Polygons"
+        },
+        {
+            "name": "Freight Values"
         }
     ],
     "security": [{
