@@ -8,7 +8,7 @@
 	},
 	"servers": [
 		{
-			"url": "https://{SellerEndpoint}",
+			"url": "{fulfillmentEndpoint}",
 			"description": ""
 		}
 	],
@@ -18,11 +18,22 @@
 				"tags": [
 					"External Seller"
 				],
-				"summary": "Fulfillment Simulation",
-				"description": "When the Change Notification request returns a response with status 200, it means that the SKU already exists in the marketplace. Whenever this happens, the marketplace will call the seller to get two updated information about the SKU: Price and Inventory.\n\nThe seller needs to have an endpoint implemented in order to receive this call and send a response containing the requested information to the marketplace. We call it the Fulfillment Simulation endpoint.\n\nIf the seller wishes to include other parameters in this call (like account name, or sales channel ID), this should be done within their {sellerEndpoint}. This path is then inserted in the marketplace's VTEX Admin when [configuring a seller](https://help.vtex.com/en/tutorial/configurando-seller--tutorials_392). \n\nThe marketplace will send an object containing an array of items. The seller must use this list to get the updated information about the referred SKUs and send them back to the marketplace, following the response format explained in the API Reference.",
+				"summary": "Fulfillment simulation",
+				"description": "When the Change Notification request returns a response with status 200, it means that the SKU already exists in the marketplace. Whenever this happens, the marketplace will call the seller to get two updated information about the SKU: Price and Inventory.\n\nThe seller needs to have an endpoint implemented in order to receive this call and send a response containing the requested information to the marketplace. We call it the Fulfillment Simulation endpoint.\n\nIf the seller wishes to include other parameters in this call (like account name, or sales channel ID), this should be done within their {fulfillmentEndpoint}. This path is then inserted in the marketplace's VTEX Admin when [configuring a seller](https://help.vtex.com/en/tutorial/configurando-seller--tutorials_392). \n\nThe marketplace will send an object containing an array of items. The seller must use this list to get the updated information about the referred SKUs and send them back to the marketplace, following the response format explained in the API Reference.",
 				"operationId": "fulfillment-simulation",
 				"parameters": [                    
 					{
+						"name": "fulfillmentEndpoint",
+						"in": "path",
+						"description": "This is the fulfillment endpoint registered for each specific external seller in the **seller management** section of VTEX's admin panel.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "https://marketplaceexample.externalseller.com"
+						}
+					},
+                    {
 						"name": "Accept",
 						"in": "header",
 						"description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
@@ -50,8 +61,40 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/fulfillmentSimulation"
-							},
+                                "required": [
+                                    "postalCode"
+                                ],
+                                "type": "object",
+                                "properties": {
+                                    "postalCode": {
+                                        "type": "string",
+                                        "description": "Delivery address postal code. This field is mandatory, for shopping carts simulations, where both Country and Postal Code are required. This field should be sent as `null` for storefront simulations, where the information is not necessary."
+                                    },
+                                    "geoCoordinates" : {
+                                        "type": "array",
+                                        "description": "Geographic coordinates of the delivery address. This may be used instead of the postalCode, in case the marketplace is configured to accept geolocation. Example of value: `[-22.9443504,-43.1825635]`.",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "description": "ISO 3-digit code of the country where the delivery address is located.  This field is mandatory, for shopping carts simulations, where both Country and Postal Code are required. This field should be sent as `null` for storefront simulations, where the information is not necessary."
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "description": "Array containing the cart items.",
+                                        "items": {
+                                            "$ref": "#/components/schemas/fulfillmentItem"
+                                        }
+                                    },
+                                    "merchantName": {
+                                        "type": "string",
+                                        "description": "Name of the marketplace, used to guide  payments. This field should be nulled if the marketplace is responsible for processing payments. Check out our [Split Payment](https://help.vtex.com/en/tutorial/split-de-pagamento--6k5JidhYRUxileNolY2VLx) article to know more.",
+                                        "default": "null"
+                                        }
+                                    }
+                            },
 							"example": {
 								
 							}
@@ -183,15 +226,26 @@
 				"deprecated": false
 			}
         },
-        "/pvt/orders?sc={sellerId}&an={accountName}": {
+        "/pvt/orders": {
             "post": {
                 "tags": [
 					"External Seller"
 				],
-				"summary": "Order Placement",
+				"summary": "Order placement",
 				"description": "Once the customer finishes their checkout, the marketplace needs to let the seller know there is a newly placed order. It does that by calling the **Order Placement** endpoint, which needs to be implemented by the seller.\n\nThe marketplace will send information such as the items contained in the cart, the client’s profile data, the shipping data, and the payment data. With all that, the seller will be able to create the order in their own store.",
 				"operationId": "order-placement",
 				"parameters": [                    
+					{
+						"name": "fulfillmentEndpoint",
+						"in": "path",
+						"description": "This is the fulfillment endpoint registered for each specific external seller in the **seller management** section of VTEX's admin panel.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "https://marketplaceexample.externalseller.com"
+						}
+					},                  
 					{
 						"name": "Accept",
 						"in": "header",
@@ -324,15 +378,26 @@
                 }
             }
         },
-        "/pvt/orders/{orderId}/fulfill?sc={sellerId}&an={accountName}": {
+        "/pvt/orders/{orderId}/fulfill": {
             "post": {
                 "tags": [
 					"External Seller"
 				],
-				"summary": "Order Dispatching",
+				"summary": "Order dispatching",
 				"description": "After the payment is finished and approved, the marketplace sends a request to the seller to notify it that the fulfillment process can be started. This is done through a request to the Order Dispatching endpoint, which needs to be implemented by the seller.\n\nThe body of the request received by the seller contains only one information: the `marketplaceOrderId`, which identifies the order in the marketplace. The seller should use this ID to trigger the fulfillment process of the corresponding order.\n\nThe seller should then respond with the same `marketplaceOrderId` and also with the `orderId`, which identifies the order in the seller, the date and time of the notification receipt, and a protocol code that confirms the receipt of the request (which may have the value `null`).",
 				"operationId": "order-dispatching",
 				"parameters": [                    
+					{
+						"name": "fulfillmentEndpoint",
+						"in": "path",
+						"description": "This is the fulfillment endpoint registered for each specific external seller in the **seller management** section of VTEX's admin panel.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "https://marketplaceexample.externalseller.com"
+						}
+					},                    
 					{
 						"name": "Accept",
 						"in": "header",
@@ -394,15 +459,26 @@
             }
                                     
         },
-        "/pvt/orders/{orderId}/cancel?sc={sellerId}&an={accountName}": {
+        "/pvt/orders/{orderId}/cancel": {
             "post": {
                 "tags": [
 					"External Seller"
 				],
-				"summary": "Marketplace Order Cancellation",
+				"summary": "Marketplace order cancellation",
 				"description": "The seller must be ready to receive order cancellation requests from the marketplace. For that, you will need to implement the Marketplace Order Cancellation endpoint. Whenever this request is received by the seler, the order should be canceled and the fulfillment flow should not proceed.\n\nThe body of the request received by the seller contains only one information: the `marketplaceOrderId`, which identifies the order in the marketplace. The seller should use this ID to trigger the cancellation of the corresponding order.\n\nThe seller should then respond with the same `marketplaceOrderId` and also with the `orderId`, which identifies the order in the seller, the date and time of the notification receipt, and a protocol code that confirms the receipt of the request (which may have the value `null`).",
 				"operationId": "mkp-order-cancellation",
 				"parameters": [                    
+					{
+						"name": "fulfillmentEndpoint",
+						"in": "path",
+						"description": "This is the fulfillment endpoint registered for each specific external seller in the **seller management** section of VTEX's admin panel.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "https://marketplaceexample.externalseller.com"
+						}
+					},                    
 					{
 						"name": "Accept",
 						"in": "header",
@@ -472,41 +548,6 @@
     ],
     "components": {
         "schemas": {
-            "fulfillmentSimulation":{
-                "required": [
-                    "postalCode"
-                ],
-                "type": "object",
-                "properties": {
-                    "postalCode": {
-                        "type": "string",
-                        "description": "Delivery address postal code. This field is mandatory, for shopping carts simulations, where both Country and Postal Code are required. This field should be sent as `null` for storefront simulations, where the information is not necessary."
-                    },
-                    "geoCoordinates" : {
-                        "type": "array",
-                        "description": "Geographic coordinates of the delivery address. This may be used instead of the postalCode, in case the marketplace is configured to accept geolocation. Example of value: `[-22.9443504,-43.1825635]`.",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "country": {
-                        "type": "string",
-                        "description": "ISO 3-digit code of the country where the delivery address is located.  This field is mandatory, for shopping carts simulations, where both Country and Postal Code are required. This field should be sent as `null` for storefront simulations, where the information is not necessary."
-                    },
-                    "items": {
-                        "type": "array",
-                        "description": "Array containing the cart items.",
-                        "items": {
-                            "$ref": "#/components/schemas/fulfillmentItem"
-                        }
-                    },
-					"merchantName": {
-						"type": "string",
-						"description": "Name of the marketplace, used to guide  payments. This field should be nulled if the marketplace is responsible for processing payments. Check out our [Split Payment](https://help.vtex.com/en/tutorial/split-de-pagamento--6k5JidhYRUxileNolY2VLx) article to know more.",
-						"default": "null"
-						}
-                    }
-            },
             "fulfillmentItem":{
                 "required": [
                     "id",
@@ -815,7 +856,7 @@
                     },
                     "postalCode": {
                         "type": "string",
-                        "description": "Delivery address postal code. This field is mandatory, for shopping carts simulations, where both Country and Postal Code are required. This field should be sent as `null` for storefront simulations, where the information is not necessary."
+                        "description": "Delivery address postal code. This field is mandatory for shopping carts simulations, where both Country and Postal Code are required. This field should be sent as `null` for storefront simulations, where the information is not necessary."
                     },
                     "city": {
                         "type": "string",
@@ -827,7 +868,7 @@
                     },
                     "country": {
                         "type": "string",
-                        "description": "Country of the delivery address. This field is mandatory, for shopping carts simulations, where both Country and Postal Code are required. This field should be sent as `null` for storefront simulations, where the information is not necessary."
+                        "description": "Country of the delivery address. This field is mandatory for shopping carts simulations, where both Country and Postal Code are required. This field should be sent as `null` for storefront simulations, where the information is not necessary."
                     },
                     "street": {
                         "type": "string",
