@@ -8,18 +8,18 @@
 	},
 	"servers": [
 		{
-			"url": "{fulfillmentEndpoint}",
+			"url": "/",
 			"description": ""
 		}
 	],
 	"paths": {
-		"/pvt/orderForms/simulation": {
+		"/{fulfillmentEndpoint}/pvt/orderForms/simulation": {
 			"post": {
 				"tags": [
 					"External Seller"
 				],
 				"summary": "Fulfillment simulation",
-				"description": "This endpoint may be called upon for fulfillment simulation in different contexts. See examples below.\n\nWhen the Change Notification request returns a response with status 200, it means that the SKU already exists in the marketplace. Whenever this happens, the marketplace will call the seller to get two updated information about the SKU: Price and Inventory.\n\nThe seller needs to have an endpoint implemented in order to receive this call and send a response containing the requested information to the marketplace. We call it the Fulfillment Simulation endpoint.\n\nIf the seller wishes to include other parameters in this call (like account name, or sales channel ID), this should be done within their {fulfillmentEndpoint}. This path is then inserted in the marketplace's VTEX admin when [configuring a seller](https://help.vtex.com/en/tutorial/configurando-seller--tutorials_392). \n\nThe marketplace will send an object containing an array of items. The seller must use this list to get the updated information about the referred SKUs and send them back to the marketplace, following the response format explained in the API Reference.",
+				"description": "This endpoint may be called upon for fulfillment simulation in different contexts. See examples below.\n\nWhen a [Notification request](https://developers.vtex.com/vtex-rest-api/reference/notification) returns a response with status 200, it means that the SKU already exists in the marketplace. Whenever this happens, the marketplace will call the seller to get two updated information about the SKU: Price and Inventory.\n\nThe seller needs to have an endpoint implemented in order to receive this call and send a response containing the requested information to the marketplace. We call it the Fulfillment Simulation endpoint.\n\nIf the seller wishes to include other parameters in this call (like account name, or sales channel ID), this should be done within their {fulfillmentEndpoint}. This path is then inserted in the marketplace's VTEX admin when [configuring a seller](https://help.vtex.com/en/tutorial/configurando-seller--tutorials_392). \n\nThe marketplace will send an object containing an array of items. The seller must use this list to get the updated information about the referred SKUs and send them back to the marketplace, following the response format explained in the API Reference.",
 				"operationId": "fulfillment-simulation",
 				"parameters": [                    
 					{
@@ -30,7 +30,7 @@
 						"style": "simple",
 						"schema": {
 							"type": "string",
-							"example": "https://marketplaceexample.externalseller.com"
+							"example": "marketplaceexample.externalseller.com"
 						}
 					},
                     {
@@ -221,7 +221,7 @@
 				"deprecated": false
 			}
         },
-        "/pvt/orders": {
+        "/{fulfillmentEndpoint}/pvt/orders": {
             "post": {
                 "tags": [
 					"External Seller"
@@ -483,7 +483,7 @@
                 }
             }
         },
-        "/pvt/orders/{orderId}/fulfill": {
+        "/{fulfillmentEndpoint}/pvt/orders/{orderId}/fulfill": {
             "post": {
                 "tags": [
 					"External Seller"
@@ -571,7 +571,7 @@
             }
                                     
         },
-        "/pvt/orders/{orderId}/cancel": {
+        "/{fulfillmentEndpoint}/pvt/orders/{orderId}/cancel": {
             "post": {
                 "tags": [
 					"External Seller"
@@ -588,7 +588,7 @@
 						"style": "simple",
 						"schema": {
 							"type": "string",
-							"example": "https://marketplaceexample.externalseller.com"
+							"example": "marketplaceexample.externalseller.com"
 						}
 					},                    
 					{
@@ -619,8 +619,18 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/mkpOrderCancellation"
-							},
+                                "required": [
+                                    "marketplaceOrderId"
+                                ],
+                                "type": "object",
+                                "properties": {
+                                    "marketplaceOrderId": {
+                                        "type": "string",
+                                        "description": "Identifies the order. The seller should use this ID to trigger the cancellation of the corresponding order.",
+                                        "example": "1138342255777-01"
+                                    }
+                                }
+                            },
 							"example": {
 								
 							}
@@ -650,6 +660,507 @@
                     }
                 }
             }
+        },
+        "/{marketplaceServicesEndpoint}/pvt/orders/{marketplaceOrderId}/invoice": {
+			"post": {
+				"tags": [
+					"External Seller"
+				],
+				"summary": "Send invoice",
+				"description": "This request is sent by the external seller to the VTEX marketplace to send invoice information.\n\nThis can be necessary in a regular order or in the case of a return. The `type` field is used to indicate which of these is the case.",
+				"operationId": "send-invoice",
+				"parameters": [                    
+					{
+						"name": "marketplaceServicesEndpoint",
+						"in": "path",
+						"description": "This is an endpoint sent from VTEX to the external seller in the [Order placement request](https://developers.vtex.com/vtex-rest-api/reference/external-seller#order-placement).",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "marketplaceservicesendpoint.myvtex.com"
+						}
+					},
+                    {
+						"name": "marketplaceOrderId",
+						"in": "path",
+						"description": "Identifies the order in the marketplace.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "1138342255777-01"
+						}
+					},
+                    {
+						"name": "Accept",
+						"in": "header",
+						"description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "application/json"
+						}
+					},
+					{
+						"name": "Content-Type",
+						"in": "header",
+						"description": "Describes the type of the content being sent.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "application/json"
+						}
+                    }
+				],
+				"requestBody": {
+					"description": "",
+					"content": {
+						"application/json": {
+							"schema": {
+                                "required": [
+                                    "type",
+                                    "invoiceNumber",
+                                    "items"
+                                ],
+                                "type": "object",
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "description": "Indicates the type of the invoice. Use `\"Output\"` for regular orders and `\"Input\"` for returns.",
+                                        "example": "Output"
+                                    },
+                                    "invoiceNumber" : {
+                                        "type": "string",
+                                        "description": "Invoice number",
+                                        "example": "NFe-00002"
+                                    },
+                                    "courier" : {
+                                        "type": "string",
+                                        "description": "Courier, if available on invoice.",
+                                        "example": "courier-example"
+                                    },
+                                    "trackingNumber": {
+                                        "type": "string",
+                                        "description": "Tracking number.",
+                                        "example": "12345678abc"
+                                    },
+                                    "trackingUrl": {
+                                        "type": "string",
+                                        "description": "Tracking URL.",
+                                        "example": "https://courier-example.com/tracking"
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "description": "Array containing the order items.",
+                                        "items": {
+                                            "type": "array",
+                                            "description": "",
+                                            "required": [
+                                                "id",
+                                                "quantity",
+                                                "price"
+                                            ],
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "description": "SKU ID.",
+                                                    "example": "6"
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "description": "Quantity of items of the SKU in the cart.",
+                                                    "example": 1
+                                                },
+                                                "price": {
+                                                    "type": "integer",
+                                                    "description": "Price of the item.",
+                                                    "example": 5500
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "issuanceDate": {
+                                        "type": "string",
+                                        "description": "Issuance date.",
+                                        "example": "2021-05-21T10:00:00"
+                                    },
+                                    "invoiceValue": {
+                                        "type": "integer",
+                                        "description": "Invoice value.",
+                                        "example": 6000
+                                    }
+                                }
+                            }
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"headers": {},
+						"content": {
+							"application/json": {								
+								"examples": {
+                                    "response": {
+                                        "value": {
+                                            "date":"2021-06-09T15:22:56.7612218-02:00",
+                                            "orderId": "1138342255777-01",
+                                            "receipt": "527b1ae251264ef1b7a9b597cd8f16b9"
+                                        }
+                                    }
+                                }
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+        },
+        "/{marketplaceServicesEndpoint}/pvt/orders/{marketplaceOrderId}/invoice/{invoiceNumber}": {
+            "post": {
+				"tags": [
+					"External Seller"
+				],
+				"summary": "Send tracking information",
+				"description": "This request is sent by the external seller to the VTEX marketplace to add tracking information to a given order's invoice, in case it is necessary to do so after the invoice has been sent.",
+				"operationId": "send-tracking-information",
+				"parameters": [                    
+					{
+						"name": "marketplaceServicesEndpoint",
+						"in": "path",
+						"description": "This is an endpoint sent from VTEX to the external seller in the [Order placement request](https://developers.vtex.com/vtex-rest-api/reference/external-seller#order-placement).",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "marketplaceservicesendpoint.myvtex.com"
+						}
+					},
+                    {
+						"name": "marketplaceOrderId",
+						"in": "path",
+						"description": "Identifies the order in the marketplace.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "1138342255777-01"
+						}
+					},
+                    {
+						"name": "invoiceNumber",
+						"in": "path",
+						"description": "Invoice number.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "NFe-00002"
+						}
+					},
+                    {
+						"name": "Accept",
+						"in": "header",
+						"description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "application/json"
+						}
+					},
+					{
+						"name": "Content-Type",
+						"in": "header",
+						"description": "Describes the type of the content being sent.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "application/json"
+						}
+                    }
+				],
+				"requestBody": {
+					"description": "",
+					"content": {
+						"application/json": {
+							"schema": {
+                                "type": "object",
+                                "properties": {
+                                    "courier" : {
+                                        "type": "string",
+                                        "description": "Courier.",
+                                        "example": "courier-example"
+                                    },
+                                    "trackingNumber": {
+                                        "type": "string",
+                                        "description": "Tracking number.",
+                                        "example": "12345678abc"
+                                    },
+                                    "trackingUrl": {
+                                        "type": "string",
+                                        "description": "Tracking URL.",
+                                        "example": "https://courier-example.com/tracking"
+                                    },
+                                    "dispatchedDate": {
+                                        "type": "string",
+                                        "description": "Date of order dispatch.",
+                                        "example": "2021-06-09"
+                                    }
+                                }
+                            }
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"headers": {},
+						"content": {
+							"application/json": {								
+								"examples": {
+                                    "response": {
+                                        "value": {
+                                            "date":"2021-06-09T15:22:56.7612218-02:00",
+                                            "orderId": "1138342255777-01",
+                                            "receipt": "527b1ae251264ef1b7a9b597cd8f16b9"
+                                        }
+                                    }
+                                }
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+        },
+        "/{marketplaceServicesEndpoint}/pvt/orders/{marketplaceOrderId}/invoice/{invoiceNumber}/tracking": {
+            "post": {
+				"tags": [
+					"External Seller"
+				],
+				"summary": "Update tracking status",
+				"description": "This request is sent by the external seller to the VTEX marketplace to update a given order's tracking status.",
+				"operationId": "update-tracking-status",
+				"parameters": [                    
+					{
+						"name": "marketplaceServicesEndpoint",
+						"in": "path",
+						"description": "This is an endpoint sent from VTEX to the external seller in the [Order placement request](https://developers.vtex.com/vtex-rest-api/reference/external-seller#order-placement).",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "marketplaceservicesendpoint.myvtex.com"
+						}
+					},
+                    {
+						"name": "marketplaceOrderId",
+						"in": "path",
+						"description": "Identifies the order in the marketplace.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "1138342255777-01"
+						}
+					},
+                    {
+						"name": "invoiceNumber",
+						"in": "path",
+						"description": "Invoice number.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "NFe-00002"
+						}
+					},
+                    {
+						"name": "Accept",
+						"in": "header",
+						"description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "application/json"
+						}
+					},
+					{
+						"name": "Content-Type",
+						"in": "header",
+						"description": "Describes the type of the content being sent.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "application/json"
+						}
+                    }
+				],
+				"requestBody": {
+					"description": "",
+					"content": {
+						"application/json": {
+							"schema": {
+                                "type": "object",
+                                "required": [
+                                    "isDelivered"
+                                ],
+                                "properties": {
+                                    "isDelivered" : {
+                                        "type": "boolean",
+                                        "description": "Indicates if order has been delivered. `false` if it is in transit.",
+                                        "example": true
+                                    },
+                                    "events": {
+                                        "type": "array",
+                                        "description": "Array containing information on each tracking event received.",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "city": {
+                                                    "type": "string",
+                                                    "description": "City where the event ocurred.",
+                                                    "example": "Rio de Janeiro"
+                                                },
+                                                "state": {
+                                                    "type": "string",
+                                                    "description": "State where the event ocurred.",
+                                                    "example": "Rio de Janeiro"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "description": "Description of the event.",
+                                                    "example": "Order delivered."
+                                                },
+                                                "date": {
+                                                    "type": "string",
+                                                    "description": "Date when event ocurred.",
+                                                    "example": "2021-03-16"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"headers": {},
+						"content": {
+							"application/json": {								
+								"examples": {
+                                    "response": {
+                                        "value": {
+                                            "date":"2021-06-09T15:22:56.7612218-02:00",
+                                            "orderId": "1138342255777-01",
+                                            "receipt": "527b1ae251264ef1b7a9b597cd8f16b9"
+                                        }
+                                    }
+                                }
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
+        },
+        "/{marketplaceServicesEndpoint}/pvt/orders/{marketplaceOrderId}/cancel": {
+            "post": {
+				"tags": [
+					"External Seller"
+				],
+				"summary": "Cancel order in marketplace",
+				"description": "This request is sent by the external seller to the VTEX marketplace to cancel an order.",
+				"operationId": "cancel-order-in-marketplace",
+				"parameters": [                    
+					{
+						"name": "marketplaceServicesEndpoint",
+						"in": "path",
+						"description": "This is an endpoint sent from VTEX to the external seller in the [Order placement request](https://developers.vtex.com/vtex-rest-api/reference/external-seller#order-placement).",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "marketplaceservicesendpoint.myvtex.com"
+						}
+					},
+                    {
+						"name": "marketplaceOrderId",
+						"in": "path",
+						"description": "Identifies the order in the marketplace.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "1138342255777-01"
+						}
+					},
+                    {
+						"name": "Accept",
+						"in": "header",
+						"description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "application/json"
+						}
+					},
+					{
+						"name": "Content-Type",
+						"in": "header",
+						"description": "Describes the type of the content being sent.",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "application/json"
+						}
+                    }
+				],
+				"requestBody": {
+					"description": "",
+					"content": {
+						"application/json": {
+							"schema": {}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "",
+						"headers": {},
+						"content": {
+							"application/json": {								
+								"examples": {
+                                    "response": {
+                                        "value": {
+                                            "date":"2021-06-09T15:22:56.7612218-02:00",
+                                            "orderId": "1138342255777-01",
+                                            "receipt": "527b1ae251264ef1b7a9b597cd8f16b9"
+                                        }
+                                    }
+                                }
+							}
+						}
+					}
+				},
+				"deprecated": false
+			}
         }
     },
 	"security": [
@@ -670,15 +1181,18 @@
                 "properties": {
                     "id": {
                         "type": "string",
-                        "description": "SKU ID."
+                        "description": "SKU ID.",
+                        "example": "6"
                     },
                     "quantity": {
                         "type": "integer",
-                        "description": "Quantity of items of the SKU in the cart."
+                        "description": "Quantity of items of the SKU in the cart.",
+                        "example": 1
                     },
                     "seller": {
                         "type": "string",
-                        "description": "ID of the seller registered in VTEX."
+                        "description": "ID of the seller registered in VTEX.",
+                        "example": "01"
                     }
                 }
             },
@@ -731,7 +1245,7 @@
                     "seller": {
                         "type": "string",
                         "description": "ID of the seller registered in VTEX.",
-                        "example": "{seller}"
+                        "example": "seller-example"
                     },
                     "commission": {
                         "type": "integer",
@@ -820,7 +1334,7 @@
                     },
                     "paymentData": {
                         "type": "object",
-                        "description": "This field holds payment information. However, since the payment is processed by the marketplace, it will be sent as null.",
+                        "description": "In other contexts, this field tipically holds an object with payment information. However, since the payment is processed by the marketplace, it will be sent to the seller as `null` in this context.",
                         "default": null
                     }
                 }
@@ -836,17 +1350,17 @@
                         "type": {
                             "type": "string",
                             "description": "Service type.",
-                            "example": "{type}"
+                            "example": "type"
                         },
                         "id": {
                             "type": "integer",
                             "description": "Service identifier.",
-                            "example": "{id}"
+                            "example": "id"
                         },
                         "name": {
                             "type": "string",
                             "description": "Service name.",
-                            "example": "{name}"
+                            "example": "name"
                         },
                         "price": {
                             "type": "integer",
@@ -1091,19 +1605,6 @@
                     "utmiCampaign": {
                         "type": "string",
                         "description": "utmi_campaign (internal utm)"
-                    }
-                }
-            },
-            "mkpOrderCancellation":{
-                "required": [
-                    "marketplaceOrderId"
-                ],
-                "type": "object",
-                "properties": {
-                    "marketplaceOrderId": {
-                        "type": "string",
-                        "description": "Identifies the order. The seller should use this ID to trigger the cancellation of the corresponding order.",
-                        "example": "1138342255777-01"
                     }
                 }
             }
