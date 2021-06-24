@@ -19,7 +19,7 @@
 					"External Seller"
 				],
 				"summary": "Fulfillment simulation",
-				"description": "This endpoint may be called upon for fulfillment simulation in different contexts. See examples below.\n\nWhen a [Notification request](https://developers.vtex.com/vtex-rest-api/reference/notification) returns a response with status 200, it means that the SKU already exists in the marketplace. Whenever this happens, the marketplace will call the seller to get two updated information about the SKU: Price and Inventory.\n\nThe seller needs to have an endpoint implemented in order to receive this call and send a response containing the requested information to the marketplace. We call it the Fulfillment Simulation endpoint.\n\nIf the seller wishes to include other parameters in this call (like account name, or sales channel ID), this should be done within their {fulfillmentEndpoint}. This path is then inserted in the marketplace's VTEX admin when [configuring a seller](https://help.vtex.com/en/tutorial/configurando-seller--tutorials_392). \n\nThe marketplace will send an object containing an array of items. The seller must use this list to get the updated information about the referred SKUs and send them back to the marketplace, following the response format explained in the API Reference.",
+				"description": "This endpoint may be called upon by VTEX for fulfillment simulation in the external seller different contexts. See examples below.\n\nWhen a [Notification request](https://developers.vtex.com/vtex-rest-api/reference/notification) returns a response with status 200, it means that the SKU already exists in the marketplace. Whenever this happens, the marketplace will call the seller to get two updated information about the SKU: Price and Inventory.\n\nThe seller needs to have an endpoint implemented in order to receive this call and send a response containing the requested information to the marketplace. We call it the Fulfillment Simulation endpoint.\n\nIf the seller wishes to include other parameters in this call (like account name, or sales channel ID), this should be done within their {fulfillmentEndpoint}. This path is then inserted in the marketplace's VTEX admin when [configuring a seller](https://help.vtex.com/en/tutorial/configurando-seller--tutorials_392). \n\nThe marketplace will send an object containing an array of items. The seller must use this list to get the updated information about the referred SKUs and send them back to the marketplace, following the response format explained in the API Reference.",
 				"operationId": "fulfillment-simulation",
 				"parameters": [                    
 					{
@@ -227,7 +227,7 @@
 					"External Seller"
 				],
 				"summary": "Order placement",
-				"description": "Once the customer finishes their checkout, the marketplace needs to let the seller know there is a newly placed order. It does that by calling the **Order Placement** endpoint, which needs to be implemented by the seller.\n\nThe marketplace will send information such as the items contained in the cart, the client’s profile data, the shipping data, and the payment data. With all that, the seller will be able to create the order in their own store.",
+				"description": "This request is sent by VTEX to the external seller once the customer finishes their checkout, to let the seller know there is a newly placed order. It does that by calling the **Order Placement** endpoint, which needs to be implemented by the seller.\n\nThe marketplace will send information such as the items contained in the cart, the client’s profile data, the shipping data, and the payment data. With all that, the seller will be able to create the order in their own store.",
 				"operationId": "order-placement",
 				"parameters": [                    
 					{
@@ -578,7 +578,7 @@
 					"External Seller"
 				],
 				"summary": "Marketplace order cancellation",
-				"description": "The seller must be ready to receive order cancellation requests from the marketplace. For that, you will need to implement the Marketplace Order Cancellation endpoint. Whenever this request is received by the seler, the order should be canceled and the fulfillment flow should not proceed.\n\nThe body of the request received by the seller contains only one information: the `marketplaceOrderId`, which identifies the order in the marketplace. The seller should use this ID to trigger the cancellation of the corresponding order.\n\nThe seller should then respond with the same `marketplaceOrderId` and also with the `orderId`, which identifies the order in the seller, the date and time of the notification receipt, and a protocol code that confirms the receipt of the request (which may have the value `null`).",
+				"description": "This request may be sent from VTEX to the external seller in case of order cancelation. For that, the seller will need to implement the Marketplace order cancellation endpoint. Whenever this request is received by the seler, the order should be canceled and the fulfillment flow should not proceed.\n\nThe body of the request received by the seller contains only one information: the `marketplaceOrderId`, which identifies the order in the marketplace. The seller should use this ID to trigger the cancellation of the corresponding order.\n\nThe seller should then respond with the same `marketplaceOrderId` and also with the `orderId`, which identifies the order in the seller, the date and time of the notification receipt, and a protocol code that confirms the receipt of the request (which may have the value `null`).",
 				"operationId": "mkp-order-cancellation",
 				"parameters": [                    
 					{
@@ -1198,10 +1198,7 @@
                 }
             },
             "orderPlacement":{
-                "required": [
-                    ""
-                ],
-                "type": "array",
+                "type": "object",
                 "properties": {
                     "marketplaceOrderId": {
                         "type": "string",
@@ -1211,7 +1208,7 @@
                     "marketplaceServicesEndpoint": {
                         "type": "string",
                         "description": "Endpoint sent by VTEX to the seller, that will be used to send the invoice and tracking data to the marketplace.",
-                        "example": "marketplaceservicesendpoint.myvtex.com"
+                        "example": "https://marketplaceservicesendpoint.myvtex.com/"
                     },
                     "marketplacePaymentValue": {
                         "type": "integer",
@@ -1222,9 +1219,6 @@
                         "type": "array",
                         "description": "Array of objects containing data about each SKU in the cart.",
                         "items": {
-                            "required": [
-                                ""
-                            ],
                             "type": "object",
                             "properties": {
                                 "id": {
@@ -1309,7 +1303,7 @@
                                         }
                                       }
                                     }
-                                  },
+                                },
                                 "measurementUnit": {
                                     "type": "string",
                                     "description": "SKU measurement unit.",
@@ -1323,240 +1317,269 @@
                                 "isGift": {
                                     "type": "boolean",
                                     "description": "`true` if the item is a gift."
-                                },
-                                "clientProfileData": {
-                                    "type": "object",
-                                    "description": "Customer's profile information.",
-                                    "required": [
-                                      "email",
-                                      "firstName",
-                                      "lastName",
-                                      "documentType",
-                                      "document",
-                                      "isCorporate"
-                                    ],
-                                    "properties": {
-                                      "email": {
-                                        "type": "string",
-                                        "description": "Customer's email address.",
-                                        "example": "customer@examplemail.com"
-                                      },
-                                      "firstName": {
-                                        "type": "string",
-                                        "description": "Customer's first name.",
-                                        "example": "{firstName}"
-                                      },
-                                      "lastName": {
-                                        "type": "string",
-                                        "description": "Customer's last name.",
-                                        "example": "{lastName}"
-                                      },
-                                      "documentType": {
-                                        "type": "string",
-                                        "description": "Type of the document informed by the customer.",
-                                        "example": "cpf"
-                                      },
-                                      "document": {
-                                        "type": "string",
-                                        "description": "Document number informed by the customer.",
-                                        "example": "123456789"
-                                      },
-                                      "phone": {
-                                        "type": "string",
-                                        "description": "Customer's phone number.",
-                                        "example": "+55110988887777"
-                                      },
-                                      "corporateName": {
-                                        "type": "string",
-                                        "description": "Company name, if the customer is a legal entity.",
-                                        "example": "{companyName}"
-                                      },
-                                      "tradeName": {
-                                        "type": "string",
-                                        "description": "Trade name, if the customer is a legal entity.",
-                                        "example": "{tradeName}"
-                                      },
-                                      "corporateDocument": {
-                                        "type": "string",
-                                        "description": "Corporate document, if the customer is a legal entity.",
-                                        "example": "12345678000100"
-                                      },
-                                      "stateInscription": {
-                                        "type": "string",
-                                        "description": "State inscription, if the customer is a legal entity.",
-                                        "example": "12345678"
-                                      },
-                                      "corporatePhone": {
-                                        "type": "string",
-                                        "description": "Corporate phone number, if the customer is a legal entity.",
-                                        "example": "+551100988887777"
-                                      },
-                                      "isCorporate": {
-                                        "type": "boolean",
-                                        "description": "`true` if the customer is a legal entity.",
-                                        "default": false
-                                      }
-                                    }
-                                },
-                                "shippingData": {
-                                    "type": "object",
-                                    "description": "Shipping information.",
-                                    "properties": {
-                                      "address": {
-                                        "type": "object",
-                                        "description": "Shipping address.",
-                                        "required": [
-                                          "addressType",
-                                          "receiverName",
-                                          "postalCode",
-                                          "city",
-                                          "state",
-                                          "country",
-                                          "street",
-                                          "neighborhood",
-                                          "number"
-                                        ],
-                                        "properties": {
-                                          "addressType": {
-                                            "type": "string",
-                                            "description": "Type of address. For example, `Residential` or `Pickup`, among others.",
-                                            "example": "residential"
-                                          },
-                                          "receiverName": {
-                                            "type": "string",
-                                            "description": "Name of the person who is going to receive the order.",
-                                            "example": "receiver-name"
-                                          },
-                                          "addressId": {
-                                            "type": "string",
-                                            "description": "Address ID.",
-                                            "example": "Home"
-                                          },
-                                          "postalCode": {
-                                            "type": "string",
-                                            "description": "Postal Code.",
-                                            "example": "12345-000"
-                                          },
-                                          "city": {
-                                            "type": "string",
-                                            "description": "City of the shipping address.",
-                                            "example": "Rio de Janeiro"
-                                          },
-                                          "state": {
-                                            "type": "string",
-                                            "description": "State of the shipping address.",
-                                            "example": "Rio de Janeiro"
-                                          },
-                                          "country": {
-                                            "type": "string",
-                                            "description": "Three letter ISO code of the country of the shipping address.",
-                                            "example": "BRA"
-                                          },
-                                          "street": {
-                                            "type": "string",
-                                            "description": "Street of the shipping address.",
-                                            "example": "Praia de Botafogo"
-                                          },
-                                          "number": {
-                                            "type": "string",
-                                            "description": "Number of the building, house or apartment in the shipping address.",
-                                            "example": "300"
-                                          },
-                                          "neighborhood": {
-                                            "type": "string",
-                                            "description": "Neighborhood of the shipping address.",
-                                            "example": "Botafogo"
-                                          },
-                                          "complement": {
-                                            "type": "string",
-                                            "description": "Complement to the shipping address in case it applies.",
-                                            "example": "3rd floor"
-                                          },
-                                          "reference": {
-                                            "type": "string",
-                                            "description": "Complement that might help locate the shipping address more precisely in case of delivery.",
-                                            "example": "Grey building"
-                                          },
-                                          "geoCoordinates": {
-                                            "type": "array",
-                                            "description": "Array with two strings with geocoordinates, first latitude, then longitude.",
-                                            "items": {
-                                              "type": "string",
-                                              "example": "00.00000"
-                                            }
-                                          }
-                                        }                       
-                                      },
-                                      "logisticsInfo": {
-                                        "type": "array",
-                                        "description": "Array of objects containing logistics information of each item.",
-                                        "items": {
-                                          "type": "object",
-                                          "required": [
-                                            "itemIndex",
-                                            "selectedSla",
-                                            "price"
-                                          ],
-                                          "properties": {
-                                            "itemIndex": {
-                                              "type": "integer",
-                                              "description": "Index of the item in the `items` array, starting from 0.",
-                                              "example": 0
-                                            },
-                                            "selectedSla": {
-                                              "type": "string",
-                                              "description": "Selected shipping option",
-                                              "example": "Express"
-                                            },
-                                            "lockTTL": {
-                                              "type": "string",
-                                              "description": "Logistics reservation waiting time.",
-                                              "example": "8d"
-                                            },
-                                            "shippingEstimate": {
-                                              "type": "string",
-                                              "description": "Estimated time until delivery for the item.",
-                                              "example": "7d"
-                                            },
-                                            "price": {
-                                              "type": "integer",
-                                              "description": "Shipping price for the item. Does not account for the whole order's shipping price.",
-                                              "example": 1099
-                                            },
-                                            "deliveryWindow": {
-                                              "type": "object",
-                                              "description": "Scheduled delivery window information, in case it applies to the item.",
-                                              "properties": {}
-                                            }
-                                          }
-                                        }
-                                      },
-                                      "updateStatus": {
-                                        "type": "string",
-                                        "description": "Indicate whether this object's information is up to date according to the order's items. An order can not be placed if `\"outdated\"`",
-                                        "example": "updated"
-                                      }
-                                    }
-                                },
-                                "openTextField": {
-                                    "type": "string",
-                                    "description": "Optional field meant to hold additional information about the order. We recommend using this field for text, not data formats such as `json` even if escaped. For that purpose, see [Creating customizable fields](https://developers.vtex.com/vtex-rest-api/docs/creating-customizable-fields-in-the-cart-with-checkout-api-1)",
-                                    "example": "open-text-example"
-                                },
-                                "marketingData": {
-                                    "type": "object",
-                                    "description": "Marketing tracking data. If the order has no tracking data, the value will be null.",
-                                    "items": {
-                                        "$ref": "#/components/schemas/marketingData"
-                                    }
-                                },
-                                "paymentData": {
-                                    "type": "object",
-                                    "description": "In other contexts, this field tipically holds an object with payment information. However, since the payment is processed by the marketplace, it will be sent to the seller as `null` in this context.",
-                                    "default": null
                                 }
                             }
                         }
+                    },
+                    "paymentData": {
+                        "type": "object",
+                        "description": "In other contexts, this field tipically holds an object with payment information. However, since the payment is processed by the marketplace, it will be sent to the seller as `null` in this context.",
+                        "default": null
+                    },
+                    "clientProfileData": {
+                        "type": "object",
+                        "description": "Customer's profile information.",
+                        "required": [
+                          "email",
+                          "firstName",
+                          "lastName",
+                          "documentType",
+                          "document",
+                          "isCorporate"
+                        ],
+                        "properties": {
+                          "email": {
+                            "type": "string",
+                            "description": "Customer's email address.",
+                            "example": "customer@examplemail.com"
+                          },
+                          "firstName": {
+                            "type": "string",
+                            "description": "Customer's first name.",
+                            "example": "{firstName}"
+                          },
+                          "lastName": {
+                            "type": "string",
+                            "description": "Customer's last name.",
+                            "example": "{lastName}"
+                          },
+                          "documentType": {
+                            "type": "string",
+                            "description": "Type of the document informed by the customer.",
+                            "example": "cpf"
+                          },
+                          "document": {
+                            "type": "string",
+                            "description": "Document number informed by the customer.",
+                            "example": "123456789"
+                          },
+                          "phone": {
+                            "type": "string",
+                            "description": "Customer's phone number.",
+                            "example": "+55110988887777"
+                          },
+                          "corporateName": {
+                            "type": "string",
+                            "description": "Company name, if the customer is a legal entity.",
+                            "example": "{companyName}"
+                          },
+                          "tradeName": {
+                            "type": "string",
+                            "description": "Trade name, if the customer is a legal entity.",
+                            "example": "{tradeName}"
+                          },
+                          "corporateDocument": {
+                            "type": "string",
+                            "description": "Corporate document, if the customer is a legal entity.",
+                            "example": "12345678000100"
+                          },
+                          "stateInscription": {
+                            "type": "string",
+                            "description": "State inscription, if the customer is a legal entity.",
+                            "example": "12345678"
+                          },
+                          "corporatePhone": {
+                            "type": "string",
+                            "description": "Corporate phone number, if the customer is a legal entity.",
+                            "example": "+551100988887777"
+                          },
+                          "isCorporate": {
+                            "type": "boolean",
+                            "description": "`true` if the customer is a legal entity.",
+                            "default": false
+                          }
+                        }
+                    },
+                    "shippingData": {
+                        "type": "object",
+                        "description": "Shipping information.",
+                        "properties": {
+                          "address": {
+                            "type": "object",
+                            "description": "Shipping address.",
+                            "required": [
+                              "addressType",
+                              "receiverName",
+                              "postalCode",
+                              "city",
+                              "state",
+                              "country",
+                              "street",
+                              "neighborhood",
+                              "number"
+                            ],
+                            "properties": {
+                              "addressType": {
+                                "type": "string",
+                                "description": "Type of address. For example, `Residential` or `Pickup`, among others.",
+                                "example": "residential"
+                              },
+                              "receiverName": {
+                                "type": "string",
+                                "description": "Name of the person who is going to receive the order.",
+                                "example": "receiver-name"
+                              },
+                              "addressId": {
+                                "type": "string",
+                                "description": "Address ID.",
+                                "example": "Home"
+                              },
+                              "postalCode": {
+                                "type": "string",
+                                "description": "Postal Code.",
+                                "example": "12345-000"
+                              },
+                              "city": {
+                                "type": "string",
+                                "description": "City of the shipping address.",
+                                "example": "Rio de Janeiro"
+                              },
+                              "state": {
+                                "type": "string",
+                                "description": "State of the shipping address.",
+                                "example": "Rio de Janeiro"
+                              },
+                              "country": {
+                                "type": "string",
+                                "description": "Three letter ISO code of the country of the shipping address.",
+                                "example": "BRA"
+                              },
+                              "street": {
+                                "type": "string",
+                                "description": "Street of the shipping address.",
+                                "example": "Praia de Botafogo"
+                              },
+                              "number": {
+                                "type": "string",
+                                "description": "Number of the building, house or apartment in the shipping address.",
+                                "example": "300"
+                              },
+                              "neighborhood": {
+                                "type": "string",
+                                "description": "Neighborhood of the shipping address.",
+                                "example": "Botafogo"
+                              },
+                              "complement": {
+                                "type": "string",
+                                "description": "Complement to the shipping address in case it applies.",
+                                "example": "3rd floor"
+                              },
+                              "reference": {
+                                "type": "string",
+                                "description": "Complement that might help locate the shipping address more precisely in case of delivery.",
+                                "example": "Grey building"
+                              },
+                              "geoCoordinates": {
+                                "type": "array",
+                                "description": "Array with two strings with geocoordinates, first latitude, then longitude.",
+                                "items": {
+                                  "type": "string",
+                                  "example": "00.00000"
+                                }
+                              }
+                            }                       
+                          },
+                          "logisticsInfo": {
+                            "type": "array",
+                            "description": "Array of objects containing logistics information of each item.",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "itemIndex",
+                                "selectedSla",
+                                "price"
+                              ],
+                              "properties": {
+                                "itemIndex": {
+                                  "type": "integer",
+                                  "description": "Index of the item in the `items` array, starting from 0.",
+                                  "example": 0
+                                },
+                                "selectedSla": {
+                                  "type": "string",
+                                  "description": "Selected shipping option",
+                                  "example": "Express"
+                                },
+                                "lockTTL": {
+                                  "type": "string",
+                                  "description": "Logistics reservation waiting time.",
+                                  "example": "8d"
+                                },
+                                "shippingEstimate": {
+                                  "type": "string",
+                                  "description": "Estimated time until delivery for the item.",
+                                  "example": "7d"
+                                },
+                                "price": {
+                                  "type": "integer",
+                                  "description": "Shipping price for the item. Does not account for the whole order's shipping price.",
+                                  "example": 1099
+                                },
+                                "deliveryWindow": {
+                                  "type": "object",
+                                  "description": "Scheduled delivery window information, in case it applies to the item.",
+                                  "properties": {}
+                                }
+                              }
+                            }
+                          },
+                          "updateStatus": {
+                            "type": "string",
+                            "description": "Indicate whether this object's information is up to date according to the order's items. An order can not be placed if `\"outdated\"`",
+                            "example": "updated"
+                          }
+                        }
+                    },
+                    "marketingData": {
+                        "type": "object",
+                        "description": "Marketing tracking data. If the order has no tracking data, the value will be `null`.",
+                        "properties": {
+                            "utmSource": {
+                                "type": "string",
+                                "description": "UTM source.",
+                                "example": "Facebook"
+                            },
+                            "utmMedium": {
+                                "type": "string",
+                                "description": "UTM medium.",
+                                "example": "CPC"
+                            },
+                            "utmCampaign": {
+                                "type": "string",
+                                "description": "UTM campaign",
+                                "example": "Black friday"
+                            },
+                            "utmiPage": {
+                                "type": "string",
+                                "description": "utmi_page (internal utm)",
+                                "example": "utmi_page-example"
+                            },
+                            "utmiPart": {
+                                "type": "string",
+                                "description": "utmi_part (internal utm)",
+                                "example": "utmi_part-exmaple"
+                            },
+                            "utmiCampaign": {
+                                "type": "string",
+                                "description": "utmi_campaign (internal utm)",
+                                "example": "utmi_campaign-exmaple"
+                            }
+                        }
+                    },
+                    "openTextField": {
+                        "type": "string",
+                        "description": "Optional field meant to hold additional information about the order. We recommend using this field for text, not data formats such as `json` even if escaped. For that purpose, see [Creating customizable fields](https://developers.vtex.com/vtex-rest-api/docs/creating-customizable-fields-in-the-cart-with-checkout-api-1)",
+                        "example": "open-text-example"
                     }
                 }
             },
@@ -1859,9 +1882,38 @@
                     },
                     "marketingData": {
                         "type": "object",
-                        "description": "Marketing tracking data. If the order has no tracking data, the value will be null.",
-                        "items": {
-                            "$ref": "#/components/schemas/marketingData"
+                        "description": "Marketing tracking data. If the order has no tracking data, the value will be `null`.",
+                        "properties": {
+                            "utmSource": {
+                                "type": "string",
+                                "description": "UTM source.",
+                                "example": "Facebook"
+                            },
+                            "utmMedium": {
+                                "type": "string",
+                                "description": "UTM medium.",
+                                "example": "CPC"
+                            },
+                            "utmCampaign": {
+                                "type": "string",
+                                "description": "UTM campaign",
+                                "example": "Black friday"
+                            },
+                            "utmiPage": {
+                                "type": "string",
+                                "description": "utmi_page (internal utm)",
+                                "example": "utmi_page-example"
+                            },
+                            "utmiPart": {
+                                "type": "string",
+                                "description": "utmi_part (internal utm)",
+                                "example": "utmi_part-exmaple"
+                            },
+                            "utmiCampaign": {
+                                "type": "string",
+                                "description": "utmi_campaign (internal utm)",
+                                "example": "utmi_campaign-exmaple"
+                            }
                         }
                     },
                     "paymentData": {
@@ -1912,34 +1964,37 @@
                 }
             },
             "marketingData":{
-                "required": [
-                    ""
-                ],
                 "type": "object",
                 "properties": {
                     "utmSource": {
                         "type": "string",
-                        "description": "utm_source"
+                        "description": "UTM source.",
+                        "example": "Facebook"
                     },
                     "utmMedium": {
                         "type": "string",
-                        "description": "utm_medium"
+                        "description": "UTM medium.",
+                        "example": "CPC"
                     },
                     "utmCampaign": {
                         "type": "string",
-                        "description": "utm_campaign"
+                        "description": "UTM campaign",
+                        "example": "Black friday"
                     },
                     "utmiPage": {
                         "type": "string",
-                        "description": "utmi_page (internal utm)"
+                        "description": "utmi_page (internal utm)",
+                        "example": "utmi_page-example"
                     },
                     "utmiPart": {
                         "type": "string",
-                        "description": "utmi_part (internal utm)"
+                        "description": "utmi_part (internal utm)",
+                        "example": "utmi_part-exmaple"
                     },
                     "utmiCampaign": {
                         "type": "string",
-                        "description": "utmi_campaign (internal utm)"
+                        "description": "utmi_campaign (internal utm)",
+                        "example": "utmi_campaign-exmaple"
                     }
                 }
             }
