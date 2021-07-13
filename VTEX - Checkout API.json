@@ -3086,7 +3086,7 @@
     "/api/checkout/pub/orderForm/{orderFormId}/transaction": {
       "post": {
         "tags": ["Order placement"],
-        "summary": "Place order from an existing `orderForm`",
+        "summary": "Place order from an existing cart",
         "description": "This endpoint places an order from an existing `orderForm` object, meaning an existing cart.\n\r\n\rAfter the creation of an order with this request, you have five minutes to send payment information and then request payment processing.",
         "operationId": "PlaceOrderFromExistingOrderForm",
         "parameters": [
@@ -3582,12 +3582,12 @@
         "deprecated": false
       }
     },
-    "/api/fulfillment/pvt/orders": {
-      "post": {
+    "/api/checkout/pub/orders": {
+      "put": {
         "tags": ["Order placement"],
-        "summary": "Place fulfillment order",
-        "description": "Creates fulfillment order, meaning that it is an order for the seller's side in a sale made through a marketplace. This order assumes the transaction itself has already happened on the marketplace's side and, therfore, cares only about the fulfillment side.",
-        "operationId": "PlaceFulfillmentOrder",
+        "summary": "Place order",
+        "description": "Places order without having any prior cart information. This means all information on items, client, payment and shipping mus be sent in the body.",
+        "operationId": "PlaceOrder",
         "parameters": [
           {
             "name": "accountName",
@@ -3630,28 +3630,6 @@
               "type": "string",
               "default": "application/json"
             }
-          },
-          {
-            "name": "sc",
-            "in": "query",
-            "description": "Sales channel.",
-            "required": false,
-            "style": "form",
-            "schema": {
-              "type": "string",
-              "example": "1"
-            }
-          },
-          {
-            "name": "affiliateId",
-            "in": "query",
-            "description": "Id of the marketplace where the order originates.",
-            "required": true,
-            "style": "form",
-            "schema": {
-              "type": "string",
-              "example": "MKP"
-            }
           }
         ],
         "requestBody": {
@@ -3660,30 +3638,12 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "marketplaceOrderId",
-                  "marketplaceServicesEndpoint",
-                  "marketplacePaymentValue",
                   "items",
                   "clientProfileData",
                   "shippingData",
-                  "logisticsInfo"
+                  "paymentData"
                 ],
                 "properties": {
-                  "marketplaceOrderId": {
-                    "type": "string",
-                    "description": "ID of the order in the marketplace.",
-                    "example": "123456789"
-                  },
-                  "marketplaceServicesEndpoint": {
-                    "type": "string",
-                    "description": "Endpoint provided by the marketplace for post purchase communication.",
-                    "example": "https://exampleseller.marketplaceservices.com"
-                  },
-                  "marketplacePaymentValue": {
-                    "type": "integer",
-                    "description": "Value of the payment made to the marketplace.",
-                    "example": 100
-                  },
                   "items": {
                     "type": "array",
                     "description": "Array of objects containing information on each of the order's items.",
@@ -3843,8 +3803,7 @@
                       "firstName",
                       "lastName",
                       "documentType",
-                      "document",
-                      "isCorporate"
+                      "document"
                     ],
                     "properties": {
                       "email": {
@@ -4076,6 +4035,9 @@
                   },
                   "paymentData": {
                     "type": "object",
+                    "required": [
+                      "payments"
+                    ],
                     "description": "Payment infomation.",
                     "properties": {
                       "giftCards": {
@@ -4226,6 +4188,12 @@
                         "description": "Payment information.",
                         "items": {
                           "type": "object",
+                          "required": [
+                            "paymentSystem",
+                            "referenceValue",
+                            "value",
+                            "installments"
+                          ],
                           "description": "",
                           "properties": {
                             "accountId": {
