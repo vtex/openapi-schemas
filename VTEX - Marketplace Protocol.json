@@ -1299,7 +1299,776 @@
                 },
                 "deprecated": false
               }                
-        }
+        },
+        "/{accountName}.{environment}.com/api/fulfillment/pvt/orders": {
+          "post": {
+            "tags": ["External Marketplace"],
+            "summary": "Place fulfillment order",
+            "description": "Creates fulfillment order, meaning that it is an order for the seller's side in a sale made through a marketplace. This order assumes the transaction itself has already happened on the marketplace's side and, therfore, cares only about the fulfillment side.",
+            "operationId": "PlaceFulfillmentOrder",
+            "parameters": [
+              {
+                "name": "accountName",
+                "in": "path",
+                "required": true,
+                "description": "Name of the VTEX account. Used as part of the URL.",
+                "schema": {
+                  "type": "string",
+                  "default": "apiexamples"
+                }
+              },
+              {
+                "name": "environment",
+                "in": "path",
+                "required": true,
+                "description": "Environment to be used. It is passed as part of the URL.",
+                "schema": {
+                  "type": "string",
+                  "default": "vtexcommercestable"
+                }
+              },
+              {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                  "type": "string",
+                  "default": "application/json"
+                }
+              },
+              {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                  "type": "string",
+                  "default": "application/json"
+                }
+              },
+              {
+                "name": "sc",
+                "in": "query",
+                "description": "Sales channel.",
+                "required": false,
+                "style": "form",
+                "schema": {
+                  "type": "string",
+                  "example": "1"
+                }
+              },
+              {
+                "name": "affiliateId",
+                "in": "query",
+                "description": "Id of the marketplace where the order originates.",
+                "required": true,
+                "style": "form",
+                "schema": {
+                  "type": "string",
+                  "example": "MKP"
+                }
+              }
+            ],
+            "requestBody": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "required": [
+                      "marketplaceOrderId",
+                      "marketplaceServicesEndpoint",
+                      "marketplacePaymentValue",
+                      "items",
+                      "clientProfileData",
+                      "shippingData"
+                    ],
+                    "properties": {
+                      "marketplaceOrderId": {
+                        "type": "string",
+                        "description": "ID of the order in the marketplace.",
+                        "example": "123456789"
+                      },
+                      "marketplaceServicesEndpoint": {
+                        "type": "string",
+                        "description": "Endpoint provided by the marketplace for post purchase communication.",
+                        "example": "https://exampleseller.marketplaceservices.com"
+                      },
+                      "marketplacePaymentValue": {
+                        "type": "integer",
+                        "description": "Value of the payment made to the marketplace.",
+                        "example": 100
+                      },
+                      "items": {
+                        "type": "array",
+                        "description": "Array of objects containing information on each of the order's items.",
+                        "items":{
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "quantity",
+                            "seller"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "The SKU ID.",
+                              "example": "123"
+                            },
+                            "quantity": {
+                              "type": "integer",
+                              "format": "int32",
+                              "description": "The quantity of items of this specific SKU in the cart to be simulated.",
+                              "example": 1
+                            },
+                            "seller": {
+                              "type": "string",
+                              "description": "The ID of the seller responsible for this SKU. This ID can be found in your VTEX Admin.",
+                              "example": "1"
+                            },
+                            "commission": {
+                              "type": "integer",
+                              "description": "Comission.",
+                              "example": 10
+                            },
+                            "freightCommission": {
+                              "type": "integer",
+                              "description": "Freight comission",
+                              "example": 10
+                            },
+                            "price": {
+                              "type": "integer",
+                              "description": "Item price within the context of the order without separating cents. For example, $24.99 is represented `2499`.",
+                              "example": 2499
+                            },
+                            "bundleItems": {
+                              "type": "array",
+                              "description": "Information on services sold along with the SKU. Example: a gift package.",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                      "type": "string",
+                                      "description": "Service type.",
+                                      "example": "type-example"
+                                  },
+                                  "id": {
+                                      "type": "integer",
+                                      "description": "Service identifier.",
+                                      "example": "id-example"
+                                  },
+                                  "name": {
+                                      "type": "string",
+                                      "description": "Service name.",
+                                      "example": "name-example"
+                                  },
+                                  "price": {
+                                      "type": "integer",
+                                      "description": "Service price. The last two digits are the cents.",
+                                      "example": 199
+                                  }
+                                }
+                              }
+                            },
+                            "itemAttachment": {
+                              "type": "object",
+                              "description": "Item attachment.",
+                              "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Attachment name.",
+                                    "example": "name-example"
+                                },
+                                "content": {
+                                    "type": "string",
+                                    "description": "Content referring to the customization requested by the customer.",
+                                    "example": "content-example"
+                                }
+                            }
+                            },
+                            "attachments": {
+                              "type": "array",
+                              "description": "Array containing information on attachments.",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "priceTags": {
+                              "type": "array",
+                              "description": "Array of price tags, each of which, modifies the price in some way, like discounts or rates that apply to the item in the context of the order.",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "identifier": {
+                                    "type": "string",
+                                    "description": "Price tag identifier.",
+                                    "example": "1234abc-5678b-1234c"
+                                  },
+                                  "isPercentual": {
+                                    "type": "boolean",
+                                    "description": "`true` if price tag value is applied through a percentage.",
+                                    "default": false
+                                  },
+                                  "name": {
+                                    "type": "string",
+                                    "description": "Price tag name.",
+                                    "example": "discount@name-1234abc-5678b-1234c"
+                                  },
+                                  "rawValue": {
+                                    "type": "integer",
+                                    "description": "Price tag value.",
+                                    "example": -12
+                                  },
+                                  "value": {
+                                    "type": "integer",
+                                    "description": "Price tag raw value.",
+                                    "example": -1200
+                                  }
+                                }
+                              }
+                            },
+                            "measurementUnit": {
+                              "type": "string",
+                              "description": "SKU measurement unit.",
+                              "example": "g"
+                            },
+                            "unitMultiplier": {
+                              "type": "integer",
+                              "description": "SKU unit multiplier.",
+                              "example": 1
+                            },
+                            "isGift": {
+                              "type": "boolean",
+                              "description": "Indicates whether the order is a gift.",
+                              "default": false
+                            }
+                          },
+                          "example": {
+                            "id": "123456789",
+                            "quantity": 1,
+                            "seller": "1"
+                          }
+                        }
+                      },
+                      "clientProfileData": {
+                        "type": "object",
+                        "description": "Customer's profile information.",
+                        "required": [
+                          "email",
+                          "firstName",
+                          "lastName",
+                          "documentType",
+                          "document"
+                        ],
+                        "properties": {
+                          "email": {
+                            "type": "string",
+                            "description": "Customer's email address.",
+                            "example": "customer@examplemail.com"
+                          },
+                          "firstName": {
+                            "type": "string",
+                            "description": "Customer's first name.",
+                            "example": "first-name"
+                          },
+                          "lastName": {
+                            "type": "string",
+                            "description": "Customer's last name.",
+                            "example": "last-name"
+                          },
+                          "documentType": {
+                            "type": "string",
+                            "description": "Type of the document informed by the customer.",
+                            "example": "cpf"
+                          },
+                          "document": {
+                            "type": "string",
+                            "description": "Document number informed by the customer.",
+                            "example": "123456789"
+                          },
+                          "phone": {
+                            "type": "string",
+                            "description": "Customer's phone number.",
+                            "example": "+55110988887777"
+                          },
+                          "corporateName": {
+                            "type": "string",
+                            "description": "Company name, if the customer is a legal entity.",
+                            "example": "company-name"
+                          },
+                          "tradeName": {
+                            "type": "string",
+                            "description": "Trade name, if the customer is a legal entity.",
+                            "example": "trade-name"
+                          },
+                          "corporateDocument": {
+                            "type": "string",
+                            "description": "Corporate document, if the customer is a legal entity.",
+                            "example": "12345678000100"
+                          },
+                          "stateInscription": {
+                            "type": "string",
+                            "description": "State inscription, if the customer is a legal entity.",
+                            "example": "12345678"
+                          },
+                          "corporatePhone": {
+                            "type": "string",
+                            "description": "Corporate phone number, if the customer is a legal entity.",
+                            "example": "+551100988887777"
+                          },
+                          "isCorporate": {
+                            "type": "boolean",
+                            "description": "`true` if the customer is a legal entity.",
+                            "example": false
+                          }
+                        }
+                      },
+                      "shippingData": {
+                        "type": "object",
+                        "description": "Shipping information.",
+                        "properties": {
+                          "address": {
+                            "type": "object",
+                            "description": "Shipping address.",
+                            "required": [
+                              "addressType",
+                              "receiverName",
+                              "postalCode",
+                              "city",
+                              "state",
+                              "country",
+                              "street",
+                              "number"
+                            ],
+                            "properties": {
+                              "addressType": {
+                                "type": "string",
+                                "description": "Type of address. For example, `Residential` or `Pickup`, among others.",
+                                "example": "residential"
+                              },
+                              "receiverName": {
+                                "type": "string",
+                                "description": "Name of the person who is going to receive the order.",
+                                "example": "receiver-name"
+                              },
+                              "addressId": {
+                                "type": "string",
+                                "description": "Address ID.",
+                                "example": "Home"
+                              },
+                              "postalCode": {
+                                "type": "string",
+                                "description": "Postal Code.",
+                                "example": "12345-000"
+                              },
+                              "city": {
+                                "type": "string",
+                                "description": "City of the shipping address.",
+                                "example": "Rio de Janeiro"
+                              },
+                              "state": {
+                                "type": "string",
+                                "description": "State of the shipping address.",
+                                "example": "Rio de Janeiro"
+                              },
+                              "country": {
+                                "type": "string",
+                                "description": "Three letter ISO code of the country of the shipping address.",
+                                "example": "BRA"
+                              },
+                              "street": {
+                                "type": "string",
+                                "description": "Street of the shipping address.",
+                                "example": "Praia de Botafogo"
+                              },
+                              "number": {
+                                "type": "string",
+                                "description": "Number of the building, house or apartment in the shipping address.",
+                                "example": "300"
+                              },
+                              "neighborhood": {
+                                "type": "string",
+                                "description": "Neighborhood of the shipping address.",
+                                "example": "Botafogo"
+                              },
+                              "complement": {
+                                "type": "string",
+                                "description": "Complement to the shipping address in case it applies.",
+                                "example": "3rd floor"
+                              },
+                              "reference": {
+                                "type": "string",
+                                "description": "Complement that might help locate the shipping address more precisely in case of delivery.",
+                                "example": "Grey building"
+                              },
+                              "geoCoordinates": {
+                                "type": "array",
+                                "description": "Array with two strings with geocoordinates, first latitude, then longitude.",
+                                "items": {
+                                  "type": "string",
+                                  "example": "00.00000"
+                                }
+                              }
+                            }                       
+                          },
+                          "logisticsInfo": {
+                            "type": "array",
+                            "description": "Array of objects containing logistics information of each item.",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "itemIndex",
+                                "selectedSla",
+                                "price"
+                              ],
+                              "properties": {
+                                "itemIndex": {
+                                  "type": "integer",
+                                  "description": "Index of the item in the `items` array, starting from 0.",
+                                  "example": 0
+                                },
+                                "selectedSla": {
+                                  "type": "string",
+                                  "description": "Selected shipping option",
+                                  "example": "Express"
+                                },
+                                "lockTTL": {
+                                  "type": "string",
+                                  "description": "Logistics reservation waiting time.",
+                                  "example": "8d"
+                                },
+                                "shippingEstimate": {
+                                  "type": "string",
+                                  "description": "Estimated time until delivery for the item.",
+                                  "example": "7d"
+                                },
+                                "price": {
+                                  "type": "integer",
+                                  "description": "Shipping price for the item. Does not account for the whole order's shipping price.",
+                                  "example": 1099
+                                },
+                                "deliveryWindow": {
+                                  "type": "object",
+                                  "description": "In case of scheduled delivery, this object will contain information on the delivery window selected by the shopper.",
+                                  "properties": {
+                                    "startDateUtc": {
+                                      "type": "string",
+                                      "description": "Delivery window starting day and time in UTC.",
+                                      "example": "2021-07-13T00:00:00+00:00"
+                                    },
+                                    "endDateUtc": {
+                                      "type": "string",
+                                      "description": "Delivery window ending day and time in UTC.",
+                                      "example": "2021-07-13T23:59:59+00:00"
+                                    },
+                                    "price": {
+                                      "type": "integer",
+                                      "description": "Delivery window price.",
+                                      "default": 0
+                                    },
+                                    "lisPrice": {
+                                      "type": "integer",
+                                      "description": "Delivery window list price.",
+                                      "default": 0
+                                    },
+                                    "tax": {
+                                      "type": "integer",
+                                      "description": "Delivery window tax.",
+                                      "default": 0
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "updateStatus": {
+                            "type": "string",
+                            "description": "Indicate whether this object's information is up to date according to the order's items. An order can not be placed if `\"outdated\"`",
+                            "example": "updated"
+                          }
+                        }
+                      },
+                      "paymentData": {
+                        "type": "object",
+                        "description": "In other contexts, this field tipically holds an object with payment information. However, since the payment is processed by the marketplace, it will be sent to the seller as `null` in this context.",
+                        "default": null
+                      },
+                      "marketingData": {
+                        "type": "object",
+                        "properties": {
+                            "utmSource": {
+                                "type": "string",
+                                "description": "UTM source.",
+                                "example": "Facebook"
+                            },
+                            "utmMedium": {
+                                "type": "string",
+                                "description": "UTM medium.",
+                                "example": "CPC"
+                            },
+                            "utmCampaign": {
+                                "type": "string",
+                                "description": "UTM campaign",
+                                "example": "Black friday"
+                            },
+                            "utmiPage": {
+                                "type": "string",
+                                "description": "utmi_page (internal utm)",
+                                "example": "utmi_page-example"
+                            },
+                            "utmiPart": {
+                                "type": "string",
+                                "description": "utmi_part (internal utm)",
+                                "example": "utmi_part-exmaple"
+                            },
+                            "utmiCampaign": {
+                                "type": "string",
+                                "description": "utmi_campaign (internal utm)",
+                                "example": "utmi_campaign-exmaple"
+                            }
+                        }
+                      },
+                      "openTextField": {
+                        "type": "string",
+                        "description": "Optional field meant to hold additional information about the order. We recommend using this field for text, not data formats such as `JSON` even if escaped. For that purpose, see [Creating customizable fields](https://developers.vtex.com/vtex-rest-api/docs/creating-customizable-fields-in-the-cart-with-checkout-api-1)",
+                        "example": "open-text-example"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "responses": {
+              "200": {
+                "description": "OK",
+                "headers": {},
+                "content": {
+                  "application/json": {
+                    "examples": {
+                      "response": {
+                        "value": [
+                          {
+                            "marketplaceOrderId": "956",
+                            "orderId": "MBR-956",
+                            "followUpEmail": "9762a2a9028a4b5d8eb9a8ff909d15ce@ct.vtex.com.br",
+                            "items": [
+                              {
+                                "id": "2",
+                                "quantity": 1,
+                                "seller": "1",
+                                "priceTable": null,
+                                "comission": 0,
+                                "freightComission": 0,
+                                "price": 13890,
+                                "bundleItems": [],
+                                "priceTags": [],
+                                "measurementUnit": "un",
+                                "unitMultiplier": 1.0000,
+                                "isGift": false
+                              }
+                            ],
+                            "clientProfileData": {
+                              "email": "fba45537f5c84d4092cf064da742fe3d@ct.vtex.com.br",
+                              "firstName": "Júlio",
+                              "lastName": "Augusto de Oliveira",
+                              "documentType": "cpf",
+                              "document": "11417984642",
+                              "phone": "395555258",
+                              "corporateName": null,
+                              "tradeName": null,
+                              "corporateDocument": null,
+                              "stateInscription": null,
+                              "corporatePhone": null,
+                              "isCorporate": false,
+                              "userProfileId": null
+                            },
+                            "shippingData": {
+                              "isFOB": false,
+                              "address": {
+                                "addressType": "Residencial",
+                                "receiverName": "Júlio Augusto de Oliveira",
+                                "addressId": "Casa",
+                                "postalCode": "98776003",
+                                "city": "Americana",
+                                "state": "SP",
+                                "country": "BRA",
+                                "street": "Rua da casa",
+                                "number": "31187",
+                                "neighborhood": "Grande circo",
+                                "complement": null,
+                                "reference": "Bairro do foca / Posto de Saúde 65",
+                                "geoCoordinates": []
+                              },
+                              "selectedaddresses": [
+                                {
+                                  "addressType": "Residencial",
+                                  "receiverName": "Júlio Augusto de Oliveira",
+                                  "addressId": "Casa",
+                                  "postalCode": "98776003",
+                                  "city": "Americana",
+                                  "state": "SP",
+                                  "country": "BRA",
+                                  "street": "Rua da casa",
+                                  "number": "31187",
+                                  "neighborhood": "Grande circo",
+                                  "complement": null,
+                                  "reference": "Bairro do foca / Posto de Saúde 65",
+                                  "geoCoordinates": []
+                                }
+                              ],
+                              "logisticsInfo": [
+                                {
+                                  "itemIndex": 0,
+                                  "selectedSla": "Correios",
+                                  "addressId": "Casa",
+                                  "selectedDeliveryChannel": "delivery",
+                                  "deliveryIds": [
+                                    {
+                                      "warehouseId": "1_1",
+                                      "dockId": "1"
+                                    }
+                                  ],
+                                  "lockTTL": "8d",
+                                  "shippingEstimate": "7d",
+                                  "price": 1090,
+                                  "deliveryWindow": null
+                                }
+                              ],
+                              "trackingHints": []
+                            },
+                            "paymentData":null,
+                            "customData": null
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "deprecated": false
+          }
+        },
+        "/{accountName}.{environment}.com/api/fulfillment/pvt/orders/{orderId}/fulfill": {
+            "post": {
+              "tags": ["External Marketplace"],
+              "summary": "Authorize dispatch for fulfillment order",
+              "description": "Creates fulfillment order, meaning that it is an order for the seller's side in a sale made through a marketplace. This order assumes the transaction itself has already happened on the marketplace's side and, therfore, cares only about the fulfillment side.",
+              "operationId": "AuthorizeDispatchForFulfillmentOrder",
+              "parameters": [
+                {
+                  "name": "accountName",
+                  "in": "path",
+                  "required": true,
+                  "description": "Name of the VTEX account. Used as part of the URL.",
+                  "schema": {
+                    "type": "string",
+                    "default": "apiexamples"
+                  }
+                },
+                {
+                  "name": "environment",
+                  "in": "path",
+                  "required": true,
+                  "description": "Environment to be used. It is passed as part of the URL.",
+                  "schema": {
+                    "type": "string",
+                    "default": "vtexcommercestable"
+                  }
+                },
+                {
+                  "name": "orderId",
+                  "in": "path",
+                  "required": true,
+                  "description": "ID of the order that is to be authorized. It is composed of the `afilliateId` and the `marketplaceOrderId` joined with a `-`. For instance, an order with an ID `\"123\"` coming from the marketplace `\"MKP\"` has an `orderId` of `\"MKP-123\"`.",
+                  "schema": {
+                    "type": "string",
+                    "default": "MKP-123"
+                  }
+                },
+                {
+                  "name": "Content-Type",
+                  "in": "header",
+                  "description": "Type of the content being sent.",
+                  "required": true,
+                  "style": "simple",
+                  "schema": {
+                    "type": "string",
+                    "default": "application/json"
+                  }
+                },
+                {
+                  "name": "Accept",
+                  "in": "header",
+                  "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                  "required": true,
+                  "style": "simple",
+                  "schema": {
+                    "type": "string",
+                    "default": "application/json"
+                  }
+                },
+                {
+                  "name": "sc",
+                  "in": "query",
+                  "description": "Sales channel.",
+                  "required": false,
+                  "style": "form",
+                  "schema": {
+                    "type": "string",
+                    "example": "1"
+                  }
+                },
+                {
+                  "name": "affiliateId",
+                  "in": "query",
+                  "description": "Id of the marketplace where the order originates.",
+                  "required": true,
+                  "style": "form",
+                  "schema": {
+                    "type": "string",
+                    "example": "MKP"
+                  }
+                }
+              ],
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                          "marketplaceOrderId": {
+                              "type": "string",
+                              "description": "ID of the order in the marketplace. It is the same as the `orderId` without the `afilliateId` at the beginning. For instance, if the `orderId` is `\"MKP-123\"`, the `marketplaceOrderId` is `\"123\"`.",
+                              "default": "123"
+                          }
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "OK",
+                  "headers": {},
+                  "content": {
+                    "application/json": {
+                      "examples": {
+                        "response": {
+                          "value": {
+                            "marketplaceOrderId": "123"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "deprecated": false
+            }
+          }
     },
 	"security": [
 		{
