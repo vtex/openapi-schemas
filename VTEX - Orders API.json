@@ -463,7 +463,7 @@
             "get": {
                 "tags": ["Orders"],
                 "summary": "List orders",
-                "description": "Retrieve a list of orders according to the filters described below.",
+                "description": "Retrieve a list of orders according to the filters described below.\n\r\n\r> This should **not** be used for integrations. Use the [orders Feed or hook](https://developers.vtex.com/vtex-rest-api/docs/feed-v3-1) for this purpose.\n\r\n\rThis endpoint returns only orders that already have been indexed, which takes aproximately four minutes. Because of this, the data retrieved may present inconsistencies. To get live up to date information and [build order integrations](https://developers.vtex.com/vtex-rest-api/docs/erp-integration-set-up-order-integration) use the [orders Feed or hook](https://developers.vtex.com/vtex-rest-api/docs/feed-v3-1).",
                 "operationId": "ListOrders",
                 "parameters": [
                     {
@@ -1357,14 +1357,14 @@
             "post": {
                 "tags": ["Orders"],
                 "summary": "Register change on order",
-                "description": "Register an order change of product or amount. Order status that allows Order Change: {{handling}}, {{waiting-for-fulfillment}}, and {{ready-for-invoicing}}.",
+                "description": "This request allows change an order by:\n\r- Adding items;\n\r- Removing items;\n\r- Applying discount to the total value of the order\n\r- Incrementing the total value of the order.\n\r\n\rThis action can only be done for orders in these status:\n\r- `handling`\n\r- `waiting-for-fulfillment`.",
                 "operationId": "RegisterChange",
                 "parameters": [
                     {
                         "name": "accountName",
                         "in": "path",
                         "required": true,
-                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "description": "Name of the VTEX account. Used as part of the URL.",
                         "schema": {
                             "type": "string",
                             "default": "apiexamples"
@@ -1374,7 +1374,7 @@
                         "name": "environment",
                         "in": "path",
                         "required": true,
-                        "description": "Environment to use. Used as part of the URL",
+                        "description": "Environment to use. Used as part of the URL.",
                         "schema": {
                             "type": "string",
                             "default": "vtexcommercestable"
@@ -8862,42 +8862,96 @@
             "RegisterChangeRequest": {
                 "title": "RegisterChangeRequest",
                 "required": [
+                    "requestId",
                     "reason",
                     "discountValue",
-                    "incrementValue",
-                    "itemsRemoved",
-                    "itemsAdded"
+                    "incrementValue"
                 ],
                 "type": "object",
                 "properties": {
+                    "requestId": {
+                        "type": "string",
+                        "description": "Request identification of the change. Only the first change made with each `requestId` will be effective on a given order. Use different IDs for different changes to the same order.",
+                        "default": "change-request-0123"
+                    },
                     "reason": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Reason for order change. This may be shown to the shopper in the UI or transactional emails.",
+                        "default": "Stock shortage"
                     },
                     "discountValue": {
                         "type": "integer",
-                        "format": "int32"
+                        "format": "int32",
+                        "description": "This field can be used to apply a discount to the total value of the order. Value in cents.",
+                        "default": 100
                     },
                     "incrementValue": {
                         "type": "integer",
-                        "format": "int32"
+                        "format": "int32",
+                        "description": "This field can be used to increment the total value of the order. Value in cents.",
+                        "default": 100
                     },
                     "itemsRemoved": {
                         "type": "array",
+                        "description": "List of items that should be removed from the order.",
                         "items": {
-                            "$ref": "#/components/schemas/ItemsRemoved1"
-                        },
-                        "description": ""
+                            "type": "object",
+                            "required": [
+                                "id",
+                                "price",
+                                "quantity"
+                            ],
+                            "properties": {
+                                "id": {
+                                   "type": "string",
+                                   "description": "Product ID of the item.",
+                                   "default": "0"
+                                },
+                                "price": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "description": "Price of the item in cents.",
+                                    "default": "2499"
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "description": "Amount of items to be removed.",
+                                    "default": "1"
+                                }
+                            }
+                        }
                     },
                     "itemsAdded": {
                         "type": "array",
+                        "description": "List of items that should be added to the order.",
                         "items": {
-                            "$ref": "#/components/schemas/ItemsAdded"
-                        },
-                        "description": ""
-                    },
-                    "requestId": {
-                        "type": "string",
-                        "description": "Request identification that is useful when more than one request is made for the same change. VTEX identifies all of these requests as a single one through the requestId. If you need two or more equal requests to be understood as retries of the same request, you must use the same requestId for all of these requests."
+                            "type": "object",
+                            "required": [
+                                "id",
+                                "price",
+                                "quantity"
+                            ],
+                            "properties": {
+                                "id": {
+                                   "type": "string",
+                                   "description": "Product ID of the item.",
+                                   "default": "0"
+                                },
+                                "price": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "description": "Price of the item in cents.",
+                                    "default": "2499"
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "description": "Amount of items to be added.",
+                                    "default": "1"
+                                }
+                            }
+                        }
                     }
                 },
                 "example": {
@@ -8920,65 +8974,21 @@
                     ]
                 }
             },
-            "ItemsRemoved1": {
-                "title": "ItemsRemoved1",
-                "required": ["id", "price", "quantity"],
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "price": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "quantity": {
-                        "type": "integer",
-                        "format": "int32"
-                    }
-                },
-                "example": {
-                    "id": "234794",
-                    "price": 600,
-                    "quantity": 2
-                }
-            },
-            "ItemsAdded": {
-                "title": "ItemsAdded",
-                "required": ["id", "price", "quantity"],
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "price": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "quantity": {
-                        "type": "integer",
-                        "format": "int32"
-                    }
-                },
-                "example": {
-                    "id": "234788",
-                    "price": 200,
-                    "quantity": 1
-                }
-            },
             "RegisterChange": {
                 "title": "RegisterChange",
-                "required": ["date", "orderId", "receipt"],
                 "type": "object",
                 "properties": {
                     "date": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Date of order change."
                     },
                     "orderId": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "ID of the order."
                     },
                     "receipt": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Receipt"
                     }
                 },
                 "example": {
