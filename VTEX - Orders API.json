@@ -17,7 +17,7 @@
             "get": {
                 "tags": ["Orders"],
                 "summary": "Get order",
-                "description": "Lists order details by searching through order ID.",
+                "description": "Retrieve order details by searching a specific order ID or sequence number.\n\r\n\r> The `View order` resource is needed to use this API request. This is included in `OMS - Full access` and `IntegrationProfile - Fulfillment Oms`, among other default roles available in the Admin. Learn more about the [License manager roles and resources](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#).",
                 "operationId": "GetOrder",
                 "parameters": [
                     {
@@ -65,11 +65,12 @@
                     {
                         "name": "orderId",
                         "in": "path",
-                        "description": "Order ID",
+                        "description": "Order ID. You can also get an order with its sequence number, by sending `seq{sequence-number}` in this parameter, instead of the order ID.",
                         "required": true,
                         "style": "simple",
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "default": "123456789"
                         }
                     }
                 ],
@@ -1207,7 +1208,7 @@
             "post": {
                 "tags": ["Orders"],
                 "summary": "Start handling order",
-                "description": "Change a Status Order to start-handling by Order ID. For example: in case you need change to {{start-handling}} the order status of order Id {{v5025004rjc-09}}, you will have to replace the variables {{orderId}} for {{v5025004rjc-09}} and status to {{start-handling}}",
+                "description": "Change the status of an order to indicate that is is in `handling`.\n\r\n\r> Expect a `status 204` response with no content in case of a successful request.\n\r\n\r> The `Change order workflow status` resource is needed to use this API request. This is included in `OMS - Full access` and `IntegrationProfile - Fulfillment Oms`, among other default roles available in the Admin. Learn more about the [License manager roles and resources](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#).",
                 "operationId": "StartHandling",
                 "parameters": [
                     {
@@ -1265,20 +1266,16 @@
                 ],
                 "responses": {
                     "204": {
-                        "description": "No content",
-                        "headers": {}
+                        "description": "No content"
                     },
                     "429": {
-                        "description": "Too many requests",
-                        "headers": {}
+                        "description": "Too many requests"
                     },
                     "403": {
-                        "description": "Forbidden",
-                        "headers": {}
+                        "description": "Forbidden"
                     },
                     "404": {
-                        "description": "Not found",
-                        "headers": {}
+                        "description": "Not found"
                     }
                 },
                 "deprecated": false
@@ -1288,7 +1285,7 @@
             "post": {
                 "tags": ["Orders"],
                 "summary": "Cancel order",
-                "description": "You should use this endpoint to cancel an order by its order identification number (the `orderId`).\n\nA common scenario is one where the seller has a problem with the order fulfillment and needs to request the order cancellation to the marketplace. To do this, the seller would need to make this request, passing the `orderId` in the URL.\n\nThere should be no body in this request.\n\nYou should expect a response with the date when the notification was received, the orderId, and a receipt protocol code.\n\nBe aware that if the order status is already `Invoiced`, the order can only be canceled if—before using this request—you send a return invoice through the [Order Invoice Notification endpoint](https://developers.vtex.com/reference/invoice#invoicenotification).",
+                "description": "You should use this endpoint to cancel an order by its order identification number (the `orderId`).\n\nA common scenario is one where the seller has a problem with the order fulfillment and needs to request the order cancellation to the marketplace. To do this, the seller would need to make this request, passing the `orderId` in the URL.\n\nThere should be no body in this request.\n\nYou should expect a response with the date when the notification was received, the orderId, and a receipt protocol code.\n\nBe aware that if the order status is already `Invoiced`, the order can only be canceled if—before using this request—you send a return invoice through the [Order Invoice Notification endpoint](https://developers.vtex.com/reference/invoice#invoicenotification).\n\r\n\r> The `Cancel order` resource is needed to use this API request. This is included in `OMS - Full access` and `IntegrationProfile - Fulfillment Oms`, among other default roles available in the Admin. Learn more about the [License manager roles and resources](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#).",
                 "operationId": "CancelOrder",
                 "parameters": [
                     {
@@ -1346,8 +1343,42 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
-                        "headers": {}
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "date": {
+                                            "type": "string",
+                                            "description": "Date and time when the notification was received."
+                                        },
+                                        "orderId": {
+                                            "type": "string",
+                                            "description": "Identification of the order in the seller."
+                                        },
+                                        "receipt": {
+                                            "type": "string",
+                                            "description": "Protocol code generated by the update. It may be `null`."
+                                        }
+                                    },
+                                    "example": {
+                                        "date": "2014-02-07T15:22:56.7612218-02:00",
+                                        "orderId": "123543123",
+                                        "receipt": "38e0e47da2934847b489216d208cfd91"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests."
+                    },
+                    "403": {
+                        "description": "The credentials are not enabled to access the service."
+                    },
+                    "404": {
+                        "description": "Value not found."
                     }
                 },
                 "deprecated": false
@@ -1357,7 +1388,7 @@
             "post": {
                 "tags": ["Orders"],
                 "summary": "Register change on order",
-                "description": "This request allows change an order by:\n\r- Adding items;\n\r- Removing items;\n\r- Applying discount to the total value of the order\n\r- Incrementing the total value of the order.\n\r\n\rThis action can only be done for orders in these status:\n\r- `handling`\n\r- `waiting-for-fulfillment`.",
+                "description": "This request allows change an order by:\n\r- Adding items;\n\r- Removing items;\n\r- Applying discount to the total value of the order\n\r- Incrementing the total value of the order.\n\r\n\rThis action can only be done for orders in these status:\n\r- `handling`\n\r- `waiting-for-fulfillment`.\n\r\n\r> The `Change order` resource is needed to use this API request. This is included in `OMS - Full access` and `IntegrationProfile - Fulfillment Oms`, among other default roles available in the Admin. Learn more about the [License manager roles and resources](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#).",
                 "operationId": "RegisterChange",
                 "parameters": [
                     {
@@ -1548,92 +1579,11 @@
                 "deprecated": false
             }
         },
-        "/api/oms/pvt/orders/{orderId}/message-attachment": {
-            "get": {
-                "tags": ["Orders"],
-                "summary": "List order attachment",
-                "description": "Retrieve an order attachment, by its name and order ID. For example, in case you need to get an attachment from order ID {{v5025004rjc-09}}, you should replace the variables {{orderId}} for {{v5025004rjc-09}} and {{attachmentName}} for the correspondent name of the attachment you're searching for.",
-                "operationId": "GetAttachment",
-                "parameters": [
-                    {
-                        "name": "accountName",
-                        "in": "path",
-                        "required": true,
-                        "description": "Name of the VTEX account. Used as part of the URL",
-                        "schema": {
-                            "type": "string",
-                            "default": "apiexamples"
-                        }
-                    },
-                    {
-                        "name": "environment",
-                        "in": "path",
-                        "required": true,
-                        "description": "Environment to use. Used as part of the URL",
-                        "schema": {
-                            "type": "string",
-                            "default": "vtexcommercestable"
-                        }
-                    },
-                    {
-                        "name": "attachmentName",
-                        "in": "query",
-                        "description": "",
-                        "required": true,
-                        "style": "form",
-                        "explode": true,
-                        "schema": {
-                            "type": "string",
-                            "default": ""
-                        }
-                    },
-                    {
-                        "name": "Accept",
-                        "in": "header",
-                        "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "default": "application/json"
-                        }
-                    },
-                    {
-                        "name": "Content-Type",
-                        "in": "header",
-                        "description": "Type of the content being sent",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "default": "application/json"
-                        }
-                    },
-                    {
-                        "name": "orderId",
-                        "in": "path",
-                        "description": "",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "headers": {}
-                    }
-                },
-                "deprecated": false
-            }
-        },
         "/api/oms/pvt/orders/{orderId}/invoice": {
             "post": {
                 "tags": ["Invoice"],
                 "summary": "Order invoice notification",
-                "description": "Once the order is invoiced, the seller should use this request to send the invoice information to the marketplace.\n\nWe strongly recommend that you always send the object of the invoiced items. With this practice, rounding errors will be avoided.\n\nIt is not allowed to use the same `invoiceNumber` in more than one request to the Order Invoice Notification endpoint.\n\nBe aware that this endpoint is also used by the seller to send the order tracking information. This, however, should be done in a separate moment, once the seller has the tracking information.",
+                "description": "Once the order is invoiced, the seller should use this request to send the invoice information to the marketplace.\n\nWe strongly recommend that you always send the object of the invoiced items. With this practice, rounding errors will be avoided.\n\nIt is not allowed to use the same `invoiceNumber` in more than one request to the Order Invoice Notification endpoint.\n\nBe aware that this endpoint is also used by the seller to send the order tracking information. This, however, should be done in a separate moment, once the seller has the tracking information.\n\r\n\r> The `Notify invoice` resource is needed to use this API request. This is included in `OMS - Full access` and `IntegrationProfile - Fulfillment Oms`, among other default roles available in the Admin. Learn more about the [License manager roles and resources](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#).",
                 "operationId": "InvoiceNotification",
                 "parameters": [
                     {
@@ -1721,17 +1671,30 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "",
-                        "headers": {},
+                        "description": "OK",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/InvoiceNotification"
-                                },
-                                "example": {
-                                    "date": "2019-02-08T13:16:13.4617653+00:00",
-                                    "orderId": "00-v5195004lux-01",
-                                    "receipt": "527b1ae251264ef1b7a9b597cd8f16b9"
+                                    "type": "object",
+                                    "properties": {
+                                        "date": {
+                                            "type": "string",
+                                            "description": "Date and time when the notification was received."
+                                        },
+                                        "orderId": {
+                                            "type": "string",
+                                            "description": "Identification of the order in the seller."
+                                        },
+                                        "receipt": {
+                                            "type": "string",
+                                            "description": "Protocol code generated by the update. It may be `null`."
+                                        }
+                                    },
+                                    "example": {
+                                        "date": "2014-02-07T15:22:56.7612218-02:00",
+                                        "orderId": "123543123",
+                                        "receipt": "38e0e47da2934847b489216d208cfd91"
+                                    }
                                 }
                             }
                         }
@@ -1744,7 +1707,7 @@
             "patch": {
                 "tags": ["Invoice"],
                 "summary": "Update order's partial invoice (send tracking number)",
-                "description": "Update a given order, adding its tracking number to its invoice.\n\r\n\rAfter using this call to add a tracking number to an order, you can use the [Update order tracking status API request](https://developers.vtex.com/vtex-rest-api/reference/tracking#updatetrackingstatus) to add tracking events.",
+                "description": "Update a given order, adding its tracking number to its invoice.\n\r\n\rAfter using this call to add a tracking number to an order, you can use the [Update order tracking status API request](https://developers.vtex.com/vtex-rest-api/reference/tracking#updatetrackingstatus) to add tracking events.\n\r\n\r> The `Notify invoice` resource is needed to use this API request. This is included in `OMS - Full access` and `IntegrationProfile - Fulfillment Oms`, among other default roles available in the Admin. Learn more about the [License manager roles and resources](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#).",
                 "operationId": "Updatepartialinvoice.SendTrackingNumber",
                 "parameters": [
                     {
@@ -1852,7 +1815,7 @@
             "put": {
                 "tags": ["Tracking"],
                 "summary": "Update order tracking status",
-                "description": "Sends a tracking event to an order that already has a tracking number registered to its invoice.\n\r\n\rThis endpoint is not meant to send tracking number and URL to the invoice. If you wish to send tracking number and URL to an order, use the [Update order's partial invoice API request](https://developers.vtex.com/vtex-rest-api/reference/invoice#updatepartialinvoicesendtrackingnumber).",
+                "description": "Sends a tracking event to an order that already has a tracking number registered to its invoice.\n\r\n\rThis endpoint is not meant to send tracking number and URL to the invoice. If you wish to send tracking number and URL to an order, use the [Update order's partial invoice API request](https://developers.vtex.com/vtex-rest-api/reference/invoice#updatepartialinvoicesendtrackingnumber).\n\r\n\r> The `Notify invoice` resource is needed to use this API request. This is included in `OMS - Full access` and `IntegrationProfile - Fulfillment Oms`, among other default roles available in the Admin. Learn more about the [License manager roles and resources](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#).",
                 "operationId": "UpdateTrackingStatus",
                 "parameters": [
                     {
@@ -2452,7 +2415,7 @@
             "post": {
                 "tags": ["Payment"],
                 "summary": "Send payment notification",
-                "description": "Send a payment notification of a given order, by order ID.",
+                "description": "Send a payment notification of a given order, by order ID.\n\r\n\r> The `Notify payment` resource is needed to use this API request. This is included in `OMS - Full access` and `IntegrationProfile - Fulfillment Oms`, among other default roles available in the Admin. Learn more about the [License manager roles and resources](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#).",
                 "operationId": "SendPaymentNotification",
                 "parameters": [
                     {
@@ -2650,8 +2613,67 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
-                        "headers": {}
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "filter": {
+                                            "type": "object",
+                                            "description": "Information on how orders are filtered to show on the feed.",
+                                            "properties": {
+                                                "type": {
+                                                    "type": "string",
+                                                    "description": "Determines what orders appear in the feed and how they are filtered. If a feed has the `FromWorkflow` type configuration, it will receive order updates only when order’s statuses change and orders can be filtered by status, using the `status` field. A feed with the `FromOrders` type configuration gets updates whenever any change is made to an order. in this case, orders can be filtered by any property, according to JSONata expressions set in the `expression` field."
+                                                },
+                                                "status": {
+                                                    "type": "array",
+                                                    "description": "List of order statuses that should be included in the feed. This should only be used in case `type` is `FromWorkflow`.",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "description": "Order status to be filtered in the feed."
+                                                    }
+                                                },
+                                                "expression": {
+                                                    "type": "string",
+                                                    "description": "JSONata query expression that defines what conditions must be met for an order to be included in the feed. This should only be used in case `type` is `FromOrders`."
+                                                },
+                                                "disableSingleFire": {
+                                                    "type": "boolean",
+                                                    "description": "Sets a limit to how many times a specific order shows on the feed, after it first meets filtering conditions. Using the `FromOrders` type configuration with JSONata filtering expressions might cause orders to appear more than once on a feed, whenever changes are made to that order. If this field is `false` orders will appear in the feed only once."
+                                                }
+                                            }
+                                        },
+                                        "queue": {
+                                            "type": "object",
+                                            "description": "Information that define the functioning of the queue.",
+                                            "properties": {
+                                                "visibilityTimeoutInSeconds": {
+                                                    "type": "integer",
+                                                    "description": "Period of time for which an item is not visible in the feed after it has been retrieved with the Get feed items request. Measured in seconds."
+                                                },
+                                                "MessageRetentionPeriodInSeconds": {
+                                                    "type": "integer",
+                                                    "description": "Maximum life span of an order update after it gets to the feed. When a feed item is on the feed for this period of time, it is removed from the feed. Measured in seconds."
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "example": {
+                                        "filter": {
+                                            "type": "FromOrders",
+                                            "expression": "status = \"payment-pending\"",
+                                            "disableSingleFire": false
+                                        },
+                                        "queue": {
+                                            "visibilityTimeoutInSeconds": 240,
+                                            "messageRetentionPeriodInSeconds": 345600
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 "deprecated": false
@@ -9279,27 +9301,6 @@
                     "id": "1234",
                     "price": 10000,
                     "quantity": 1
-                }
-            },
-            "InvoiceNotification": {
-                "title": "InvoiceNotification",
-                "required": ["date", "orderId", "receipt"],
-                "type": "object",
-                "properties": {
-                    "date": {
-                        "type": "string"
-                    },
-                    "orderId": {
-                        "type": "string"
-                    },
-                    "receipt": {
-                        "type": "string"
-                    }
-                },
-                "example": {
-                    "date": "2019-02-08T13:16:13.4617653+00:00",
-                    "orderId": "00-v5195004lux-01",
-                    "receipt": "527b1ae251264ef1b7a9b597cd8f16b9"
                 }
             },
             "Updatepartialinvoice.SendTrackingNumber.Request": {

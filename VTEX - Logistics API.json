@@ -16,9 +16,10 @@
                 "tags": [
                     "Shipping Policies"
                 ],
-                "summary": "Retrieve shipping policies by ID",
-                "description": "This endpoint lists existing shipping policies from carriers in your store, searching by their IDs.",
-                "parameters": [{
+                "summary": "Retrieve shipping policy by ID",
+                "description": "This endpoint lists existing shipping policies from carriers in your store, searching by their IDs.\n\r\n\r> Note that, while most of our API endpoints return time fields in UTC, this endpoint returns **Scheduled Delivery** related time fields adjusted to the configured time zone of the account.",
+                "parameters": [
+                    {
                         "name": "accountName",
                         "in": "path",
                         "required": true,
@@ -146,8 +147,8 @@
                 "tags": [
                     "Shipping Policies"
                 ],
-                "summary": "Update Shipping Policy",
-                "description": "This endpoint updates information on existing Shipping Policies from carriers.",
+                "summary": "Update shipping policy",
+                "description": "This endpoint updates information on existing Shipping Policies from carriers.\n\r\n\r> Note that, while most of our API endpoints return time fields in UTC, this endpoint returns **Scheduled Delivery** related time fields adjusted to the configured time zone of the account.",
                 "parameters": [{
                         "name": "accountName",
                         "in": "path",
@@ -269,6 +270,92 @@
                                         "title": "isActive",
                                         "description": "If the shipping policy is active or not.",
                                         "default": true
+                                    },
+                                    "deliveryScheduleSettings": {
+                                        "type": "object",
+                                        "description": "Settings for the Scheduled Delivery feature.",
+                                        "required": [
+                                            "useDeliverySchedule",
+                                            "dayOfWeekForDelivery",
+                                            "maxRangeDelivery"
+                                        ],
+                                        "properties": {
+                                            "useDeliverySchedule": {
+                                                "type": "boolean",
+                                                "description": "Select the Scheduled Delivery configuration.",
+                                                "default": true
+                                            },
+                                            "maxRangeDelivery": {
+                                                "type": "number",
+                                                "description": "Range of days available within a delivery window, for the customer to choose the scheduled delivery. For example, if the configured maxRangeDelivery is equal 7, and the customer buys something on a Tuesday, the options for scheduled delivery will be shown until the following Tuesday (7 days from the purchase day). If no options are available within the maxRangeDelivery set, this shipping policy won't be shown on the checkout.",
+                                                "default": 0.0
+                                            },
+                                            "dayOfWeekForDelivery": {
+                                                "type": "object",
+                                                "description": "Select the chosen days for delivery. Values for each day of the week are: 0 = sunday, 1 = monday, 2 = tuesday, 3 = wednesday, 4 = thursday, 5 = friday, 6 = saturyday. Make sure to add the available hours for the chosen days, following the example.",
+                                                "required": [
+                                                    "dayOfWeek",
+                                                    "deliveryRanges"
+                                                ],
+                                                "properties": {
+                                                    "dayOfWeek": {
+                                                        "type": "integer",
+                                                        "description": "Day of the week, from `0` (sunday) to `6` (saturday).",
+                                                        "default": 2
+                                                    },
+                                                    "deliveryRanges": {
+                                                        "type": "array",
+                                                        "description": "Reservation windows for scheduled delivery.",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "required": [
+                                                                "startTime",
+                                                                "endTime",
+                                                                "listPrice"
+                                                            ],
+                                                            "properties": {
+                                                                "startTime": {
+                                                                    "type": "string",
+                                                                    "title": "startTime",
+                                                                    "description": "Start time for day of the week.",
+                                                                    "default": "11:00:00"
+                                                                },
+                                                                "endTime": {
+                                                                    "type": "string",
+                                                                    "description": "End time for day of the week.",
+                                                                    "default": "12:30:00"
+                                                                },
+                                                                "listPrice": {
+                                                                    "type": "number",
+                                                                    "description": "List price for day of the week.",
+                                                                    "default": "0.0"
+                                                                },
+                                                                "deliveryCapacity": {
+                                                                    "type": "object",
+                                                                    "description": "Sets maximum delivery capacity for a given reservation window for scheduled delivery.",
+                                                                    "default": null,
+                                                                    "required": [
+                                                                        "capacityType",
+                                                                        "maxValue"
+                                                                    ],
+                                                                    "properties":{
+                                                                        "capacityType": {
+                                                                            "type": "string",
+                                                                            "description": "Defines how the delivery capacity is measured for this reservation window, by maximum number of orders (`\"ORDERS_QUANTITY\"`) or SKUs (`\"SKUS_QUANTITY\"`).",
+                                                                            "default": "ORDERS_QUANTITY"
+                                                                        },
+                                                                        "maxValue": {
+                                                                            "type": "number",
+                                                                            "description": "Maximum number of orders or SKUs that the store is capable of fulfilling.",
+                                                                            "default": "0.0"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }}
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -283,7 +370,7 @@
                     "Shipping Policies"
                 ],
                 "summary": "List shipping policies",
-                "description": "This endpoint lists existing shipping policies from carriers in your store.",
+                "description": "This endpoint lists existing shipping policies from carriers in your store.\n\r\n\r> Note that, while most of our API endpoints return time fields in UTC, this endpoint returns **Scheduled Delivery** related time fields adjusted to the configured time zone of the account.",
                 "parameters": [{
                         "name": "accountName",
                         "in": "path",
@@ -358,8 +445,9 @@
                     "Shipping Policies"
                 ],
                 "summary": "Create shipping policy",
-                "description": "This endpoint creates new shipping policies from carriers in your store.",
-                "parameters": [{
+                "description": "This endpoint creates new shipping policies from carriers in your store.\n\r\n\r> Note that, while most of our API endpoints return time fields in UTC, this endpoint returns **Scheduled Delivery** related time fields adjusted to the configured time zone of the account.",
+                "parameters": [
+                    {
                         "name": "accountName",
                         "in": "path",
                         "required": true,
@@ -626,7 +714,7 @@
                                             "properties": {
                                                 "dayOfWeek": {
                                                     "type": "integer",
-                                                    "description": "Day of the week from `0` (sunday) to `6` (saturday).",
+                                                    "description": "Day of the week, from `0` (sunday) to `6` (saturday).",
                                                     "example": 0
                                                 },
                                                 "timeLimit": {
@@ -767,237 +855,8 @@
                                     },
                                     "isActive": {
                                         "type": "boolean",
-                                        "title": "isActive",
-                                        "description": "",
+                                        "description": "Indicates whether shipping policy is active or not.",
                                         "default": false
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "Shipping Policies"
-                ],
-                "summary": "Update shipping policy",
-                "description": "This endpoint updates information on existing Shipping Policies from carriers.",
-                "parameters": [{
-                        "name": "accountName",
-                        "in": "path",
-                        "required": true,
-                        "description": "Name of the VTEX account. Used as part of the URL",
-                        "schema": {
-                            "type": "string",
-                            "default": "apiexamples"
-                        }
-                    },
-                    {
-                        "name": "environment",
-                        "in": "path",
-                        "required": true,
-                        "description": "Environment to use. Used as part of the URL",
-                        "schema": {
-                            "type": "string",
-                            "default": "vtexcommercestable"
-                        }
-                    },
-                    {
-                        "name": "Accept",
-                        "in": "header",
-                        "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "example": "application/json"
-                        }
-                    },
-                    {
-                        "name": "Content-Type",
-                        "in": "header",
-                        "description": "Type of the content being sent",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "example": "application/json"
-                        }
-                    },
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "description": "Shipping policy's ID",
-                        "schema": {
-                            "type": "string",
-                            "default": "shippingpolicyid1"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                },
-                "requestBody": {
-                    "description": "",
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "title": "Request body",
-                                "default": {},
-                                "required": [
-                                    "name",
-                                    "shippingMethod",
-                                    "deliveryOnWeekends",
-                                    "maxDimension",
-                                    "isActive"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "title": "name",
-                                        "description": "Name of the shipping policy",
-                                        "default": "Correios PAC"
-                                    },
-                                    "shippingMethod": {
-                                        "type": "string",
-                                        "title": "shippingMethod",
-                                        "description": "Type of shipping available for this shipping policy (carrier). Options shown on freight simulation.",
-                                        "default": "Normal"
-                                    },
-                                    "deliveryOnWeekends": {
-                                        "type": "boolean",
-                                        "title": "deliveryOnWeekends",
-                                        "description": "If the shipping policy (carrier) delivers on weekends",
-                                        "default": false
-                                    },
-                                    "maxDimension": {
-                                        "type": "object",
-                                        "title": "maxDimension",
-                                        "description": "Object containing attributes of maximum dimension permitted by the shipping policy (carrier).",
-                                        "default": {},
-                                        "required": [
-                                            "largestMeasure",
-                                            "maxMeasureSum"
-                                        ],
-                                        "properties": {
-                                            "largestMeasure": {
-                                                "type": "number",
-                                                "title": "largestMeasure",
-                                                "description": "Largest measure of the package.",
-                                                "default": 0.0
-                                            },
-                                            "maxMeasureSum": {
-                                                "type": "number",
-                                                "title": "maxMeasureSum",
-                                                "description": "Sum of all maximum measures of the package.",
-                                                "default": 0.0
-                                            }
-                                        }
-                                    },
-                                    "isActive": {
-                                        "type": "boolean",
-                                        "title": "isActive",
-                                        "description": "If the shipping policy is active or not.",
-                                        "default": true
-                                    },
-                                    "deliveryScheduleSettings": {
-                                        "type": "object",
-                                        "title": "deliveryScheduleSettings",
-                                        "description": "Settings for the Scheduled Delivery feature.",
-                                        "default": {},
-                                        "required": [
-                                            "useDeliverySchedule",
-                                            "dayOfWeekForDelivery",
-                                            "maxRangeDelivery"
-                                        ],
-                                        "properties": {
-                                            "useDeliverySchedule": {
-                                                "type": "boolean",
-                                                "title": "useDeliverySchedule",
-                                                "description": "Select the Scheduled Delivery configuration.",
-                                                "default": true
-                                            },
-                                            "maxRangeDelivery": {
-                                                "type": "number",
-                                                "title": "maxRangeDelivery",
-                                                "description": "Range of days available within a delivery window, for the customer to choose the scheduled delivery. For example, if the configured maxRangeDelivery is equal 7, and the customer buys something on a Tuesday, the options for scheduled delivery will be shown until the following Tuesday (7 days from the purchase day). If no options are available within the maxRangeDelivery set, this shipping policy won't be shown on the checkout.",
-                                                "default": 0.0
-                                            },
-                                            "dayOfWeekForDelivery": {
-                                                "type": "object",
-                                                "title": "dayOfWeekForDelivery",
-                                                "description": "Select the chosen days for delivery. Values for each day of the week are: 0 = sunday, 1 = monday, 2 = tuesday, 3 = wednesday, 4 = thursday, 5 = friday, 6 = saturyday. Make sure to add the available hours for the chosen days, following the example.",
-                                                "default": {},
-                                                "required": [
-                                                    "dayOfWeek",
-                                                    "deliveryRanges"
-                                                ],
-                                                "properties": {
-                                                    "dayOfWeek": {
-                                                        "type": "integer",
-                                                        "title": "dayOfWeek",
-                                                        "description": "",
-                                                        "default": 2
-                                                    },
-                                                    "deliveryRanges": {
-                                                        "type": "array",
-                                                        "title": "deliveryRanges",
-                                                        "description": "Reservation windows for scheduled delivery.",
-                                                        "default": [],
-                                                        "required": [
-                                                            "startTime",
-                                                            "endTime",
-                                                            "listPrice"
-                                                        ],
-                                                        "properties": {
-                                                            "startTime": {
-                                                                "type": "string",
-                                                                "title": "startTime",
-                                                                "description": "",
-                                                                "default": "11:00:00"
-                                                            },
-                                                            "endTime": {
-                                                                "type": "string",
-                                                                "title": "endTime",
-                                                                "description": "",
-                                                                "default": "12:30:00"
-                                                            },
-                                                            "listPrice": {
-                                                                "type": "number",
-                                                                "title": "listPrice",
-                                                                "description": "",
-                                                                "default": "0.0"
-                                                            },
-                                                            "deliveryCapacity": {
-                                                                "type": "object",
-                                                                "description": "Sets maximum delivery capacity for a given reservation window for scheduled delivery.",
-                                                                "default": null,
-                                                                "required": [
-                                                                    "capacityType",
-                                                                    "maxValue"
-                                                                ],
-                                                                "properties":{
-                                                                    "capacityType": {
-                                                                        "type": "string",
-                                                                        "description": "Defines how the delivery capacity is measured for this reservation window, by maximum number of orders (`\"ORDERS_QUANTITY\"`) or SKUs (`\"SKUS_QUANTITY\"`)."
-                                                                    },
-                                                                    "maxValue": {
-                                                                        "type": "number",
-                                                                        "description": "Maximum number of orders or SKUs that the store is capable of fulfilling.",
-                                                                        "default": "0.0"
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
                                     }
                                 }
                             }
@@ -1566,9 +1425,10 @@
                     "Scheduled Delivery"
                 ],
                 "summary": "Retrieve blocked delivery windows",
-                "description": "Lists all blocked delivery windows of your store's shipping policies, searching by carrier ID.",
+                "description": "Lists all blocked delivery windows of your store's shipping policies, searching by carrier ID.\n\r\n\r> Note that, while most of our API endpoints return time fields in UTC, this endpoint returns **Scheduled Delivery** related time fields adjusted to the configured time zone of the account.",
                 "operationId": "RetrieveBlockedDeliveryWindows",
-                "parameters": [{
+                "parameters": [
+                    {
                         "name": "accountName",
                         "in": "path",
                         "required": true,
@@ -1623,8 +1483,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
-                        "headers": {}
+                        "description": "OK"
                     }
                 },
                 "deprecated": false
@@ -1636,7 +1495,7 @@
                     "Scheduled Delivery"
                 ],
                 "summary": "Add blocked delivery windows",
-                "description": "Adds blocked delivery windows for your store's shipping policies.",
+                "description": "Adds blocked delivery windows for your store's shipping policies.\n\r\n\r> Note that, while most of our API endpoints return time fields in UTC, this endpoint returns time adjusted to the configured time zone of the account.",
                 "operationId": "AddBlockedDeliveryWindows",
                 "parameters": [{
                         "name": "accountName",
@@ -1719,7 +1578,7 @@
                     "Scheduled Delivery"
                 ],
                 "summary": "Remove blocked delivery windows",
-                "description": "Removes the blocked delivery windows set to your store's shipping policies.",
+                "description": "Removes the blocked delivery windows set to your store's shipping policies.\n\r\n\r> Note that, while most of our API endpoints return time fields in UTC, this endpoint returns time adjusted to the configured time zone of the account.",
                 "operationId": "RemoveBlockedDeliveryWindows",
                 "parameters": [{
                         "name": "accountName",
@@ -9376,6 +9235,343 @@
                 "deprecated": false
             }
         },
+        "/logistics/pvt/configuration/pickuppoints": {
+            "get": {
+                "tags": [
+                    "Pickup points"
+                ],
+                "summary": "List all pickup points",
+                "description": "Lists all of your store's pickup points.",
+                "operationId": "ListAllPickupPpoints",
+                "parameters": [
+                    {
+                        "name": "accountName",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the VTEX account. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "environment",
+                        "in": "path",
+                        "required": true,
+                        "description": "Environment to use. Used as part of the URL",
+                        "schema": {
+                            "type": "string",
+                            "default": "vtexcommercestable"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Type of the content being sent",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "application/json; charset=utf-8"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "application/json"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json; charset=utf-8": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "string",
+                                                "description": "Pickup point ID."
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "description": "Pickup point name."
+                                            },
+                                            "description": {
+                                                "type": "string",
+                                                "description": "Pickup point description."
+                                            },
+                                            "instructions": {
+                                                "type": "string",
+                                                "description": "Instructions."
+                                            },
+                                            "formatted_address": {
+                                                "type": "string",
+                                                "description": "Formated address."
+                                            },
+                                            "address": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "postalCode": {
+                                                        "type": "string",
+                                                        "description": "Postal code."
+                                                    },
+                                                    "country": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "acronym": {
+                                                                "type": "string",
+                                                                "description": "Three letter ISO code."
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "description": "Country name."
+                                                            }
+                                                        },
+                                                        "example": {
+                                                            "acronym": "BRA",
+                                                            "name": "Brazil"
+                                                        }
+                                                    },
+                                                    "city": {
+                                                        "type": "string",
+                                                        "description": "City."
+                                                    },
+                                                    "state": {
+                                                        "type": "string",
+                                                        "description": "State."
+                                                    },
+                                                    "neighborhood": {
+                                                        "type": "string",
+                                                        "description": "Neighborhood."
+                                                    },
+                                                    "street": {
+                                                        "type": "string",
+                                                        "description": "Street name."
+                                                    },
+                                                    "number": {
+                                                        "type": "string",
+                                                        "description": "Pickup point address number."
+                                                    },
+                                                    "complement": {
+                                                        "type": "string",
+                                                        "description": "Address complement."
+                                                    },
+                                                    "location": {
+                                                        "type": "object",
+                                                        "description": "Geolocation properties.",
+                                                        "properties": {
+                                                            "latitude": {
+                                                                "type": "number",
+                                                                "description": "Latitude."
+                                                            },
+                                                            "longitude": {
+                                                                "type": "number",
+                                                                "description": "Longitude."
+                                                            }
+                                                        },
+                                                        "example": {
+                                                            "latitude": -22.974477767944336,
+                                                            "longitude": -43.18672561645508
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "isActive": {
+                                                "type": "boolean",
+                                                "description": "Indicates whether pickup point is active."
+                                            },
+                                            "distance": {
+                                                "type": "number",
+                                                "description": "Distance."
+                                            },
+                                            "seller": {
+                                                "type": "string",
+                                                "description": "Seller corresponding to pickup point."
+                                            },
+                                            "businessHours": {
+                                                "type": "array",
+                                                "description": "Business hours information for each day of the week.",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "dayOfWeek": {
+                                                            "type": "integer",
+                                                            "description": "Day of the week, from `0` (sunday) to `6` (saturday)."
+                                                        },
+                                                        "openingTime": {
+                                                            "type": "string",
+                                                            "description": "Opening time in `hh:mm:ss`."
+                                                        },
+                                                        "closingTime": {
+                                                            "type": "string",
+                                                            "description": "Closing time in `hh:mm:ss`."
+                                                        }
+                                                    },
+                                                    "example": {
+                                                        "dayOfWeek": 1,
+                                                        "openingTime": "08:00:00",
+                                                        "closingTime": "20:00:00"
+                                                    }
+                                                }
+                                            },
+                                            "tagsLabel": {
+                                                "type": "array",
+                                                "description": "List of tags.",
+                                                "items": {
+                                                    "type": "string",
+                                                    "description": "Tag"
+                                                }
+                                            },
+                                            "pickupHolidays": {
+                                                "type": "array",
+                                                "description": "Holidays which apply for pickup point.",
+                                                "items": {
+                                                    "type": "string",
+                                                    "description": "Holliday date."
+                                                }
+                                            },
+                                            "isThirdPartyPickup": {
+                                                "type": "boolean",
+                                                "description": "Indicates whether pickup point is third party."
+                                            },
+                                            "accountOwnerName": {
+                                                "type": "string",
+                                                "description": "Account owner name."
+                                            },
+                                            "accountOwnerId": {
+                                                "type": "string",
+                                                "description": "Account owner ID."
+                                            },
+                                            "accountGroupId": {
+                                                "type": "string",
+                                                "description": "Account group ID."
+                                            },
+                                            "parentAccountName": {
+                                                "type": "string",
+                                                "description": "Parent account name."
+                                            },
+                                            "originalId": {
+                                                "type": "string",
+                                                "description": "Original ID."
+                                            }
+                                        },
+                                    "example": [
+                                        {
+                                            "id": "777",
+                                            "name": "RetireAqui",
+                                            "description": null,
+                                            "instructions": "",
+                                            "formatted_address": "undefined",
+                                            "address": {
+                                                "postalCode": "21515-001",
+                                                "country": {
+                                                    "acronym": "BRA",
+                                                    "name": "Brasil"
+                                                },
+                                                "city": "Rio de Janeiro",
+                                                "state": "RJ",
+                                                "neighborhood": "Barros Filho",
+                                                "street": "Avenida Brasil",
+                                                "number": "21000",
+                                                "complement": "",
+                                                "reference": "",
+                                                "location": {
+                                                    "latitude": -22.83468,
+                                                    "longitude": -43.36043
+                                                }
+                                            },
+                                            "isActive": true,
+                                            "distance": 1624907186176.0,
+                                            "seller": "coinshop",
+                                            "_sort": [
+                                                1.62490719E+12
+                                            ],
+                                            "businessHours": [
+                                                {
+                                                    "dayOfWeek": 1,
+                                                    "openingTime": "00:00:00",
+                                                    "closingTime": "23:59:00"
+                                                },
+                                                {
+                                                    "dayOfWeek": 2,
+                                                    "openingTime": "00:00:00",
+                                                    "closingTime": "23:59:00"
+                                                },
+                                                {
+                                                    "dayOfWeek": 3,
+                                                    "openingTime": "00:00:00",
+                                                    "closingTime": "23:59:00"
+                                                },
+                                                {
+                                                    "dayOfWeek": 4,
+                                                    "openingTime": "00:00:00",
+                                                    "closingTime": "23:59:00"
+                                                },
+                                                {
+                                                    "dayOfWeek": 5,
+                                                    "openingTime": "00:00:00",
+                                                    "closingTime": "23:59:00"
+                                                }
+                                            ],
+                                            "tagsLabel": [],
+                                            "pickupHolidays": [],
+                                            "isThirdPartyPickup": false,
+                                            "accountOwnerName": "coinshop",
+                                            "accountOwnerId": "c97ef6c8-491a-439f-927c-f9918644329f",
+                                            "accountGroupId": "814a304c-6fe9-4160-b81e-4c7799170993",
+                                            "parentAccountName": null,
+                                            "originalId": null
+                                        }
+                                    ]
+                                    },
+                                    "example": {
+                                        "id": "12345",
+                                        "name": "Loja Barra da Tijuca",
+                                        "description": "Loja Barra da Tijuca",
+                                        "instructions": "Loja Barra da Tijuca",
+                                        "formatted_address": "undefined",
+                                        "address": {
+                                            "postalCode": "22220070",
+                                            "country": {
+                                                "acronym": "BRA",
+                                                "name": "Brazil"
+                                            },
+                                            "city": "Rio de Janeiro",
+                                            "state": "RJ",
+                                            "neighborhood": "Catete",
+                                            "street": "Rua Artur Bernardes",
+                                            "number": "",
+                                            "complement": "",
+                                            "location": {
+                                                "latitude": -22.92860984802246,
+                                                "longitude": -22.92860984802246
+                                            }
+                                        },
+                                        "isActive": true,
+                                        "warehouseId": null,
+                                        "businessHours": [{
+                                            "dayOfWeek": 0,
+                                            "openingTime": "11:00:00",
+                                            "closingTime": "21:00:00"
+                                        }]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "deprecated": false
+            }
+        },
         "/logistics/pvt/configuration/pickuppoints/{pickupPointId}": {
             "put": {
                 "tags": [
@@ -11100,7 +11296,7 @@
                     "Scheduled Delivery"
                 ],
                 "summary": "Search capacity reservations in time range",
-                "description": "Get information on all capacity reservations made to scheduled delivery windows in a given time range.\n\r\n\rNote that the combined string `carrier@{capacityType}@{shippingPolicyId}` can be referred to as a \"resource\" in the API's messages.",
+                "description": "Get information on all capacity reservations made to scheduled delivery windows in a given time range.\n\r\n\r> Note that, while most of our API endpoints return time fields in UTC, this endpoint returns time adjusted to the configured time zone of the account.\n\r\n\r> Note that the combined string `carrier@{capacityType}@{shippingPolicyId}` can be referred to as a \"resource\" in the API's messages.",
                 "parameters": [
                     {
                         "name": "accountName",
@@ -11191,7 +11387,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "OK",
                         "content": {
                             "application/json": {
                                 "example": {
@@ -11240,7 +11436,7 @@
                     "Scheduled Delivery"
                 ],
                 "summary": "Get capacity reservation usage by window",
-                "description": "Retrieves capacity usage of a specific scheduled delivery reservation window.\n\r\n\rNote that the combined string `carrier@{capacityType}@{shippingPolicyId}` can be referred to as a \"resource\" in the API's messages.",
+                "description": "Retrieves capacity usage of a specific scheduled delivery reservation window.\n\r\n\r> Note that, while most of our API endpoints return time fields in UTC, this endpoint returns time adjusted to the configured time zone of the account.\n\r\n\r> Note that the combined string `carrier@{capacityType}@{shippingPolicyId}` can be referred to as a \"resource\" in the API's messages.",
                 "parameters": [
                     {
                         "name": "accountName",
@@ -11342,7 +11538,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "OK",
                         "content": {
                             "application/json": {
                                 "example": {
@@ -17462,7 +17658,8 @@
             }
         }
     },
-    "tags": [{
+    "tags": [
+        {
             "name": "Scheduled Delivery"
         },
         {
@@ -17496,8 +17693,10 @@
             "name": "Freight Values"
         }
     ],
-    "security": [{
+    "security": [
+        {
         "appKey": [],
         "appToken": []
-    }]
+        }
+    ]
 }
