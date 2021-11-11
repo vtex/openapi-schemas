@@ -138,8 +138,8 @@ To sync a new file, add a new step to the `Sync` job description, as exemplified
 Alternatively, you can add a new step to the `Sync_CLI` job description, as shown below.
 
 ```yaml
-          - name: Sync Template API  # Replace "Template" with the API name
-            run: rdme swagger 'VTEX_TEMPLATE.json' --key=${{ secrets.README_API_KEY }} --version=v2.1 --id=123456
+- name: Sync Template API  # Replace "Template" with the API name
+  run: rdme swagger 'VTEX_TEMPLATE.json' --key=${{ secrets.README_API_KEY }} --version=v2.1 --id=123456
 # Replace 'VTEX_Template.json' with the name of the API specification JSON file between ' '. The file must be on the root folder of the repository.
 # DON'T MODIFY the 'key' value, it is the Readme.io API key.
 # The 'version' is the Readme.io version to sync to.
