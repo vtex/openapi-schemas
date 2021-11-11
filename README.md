@@ -122,7 +122,7 @@ The `security` object we use at VTEX is:
 
 To sync schema files with our Developer Portal, you should add them to [`.github\workflows\readme-github-sync.yml`](https://github.com/vtex/openapi-schemas/blob/master/.github/workflows/readme-github-sync.yml).
 
-To sync a new file, add a new step to the `job` description, as exemplified below.
+To sync a new file, add a new step to the `Sync` job description, as exemplified below.
 
 ```yaml
 - name: Sync Template API #Replace "Template" with the API name
@@ -135,3 +135,13 @@ To sync a new file, add a new step to the `job` description, as exemplified belo
     readme-api-version: '2.1' # ReadMe version to sync to
 ```
 
+Alternatively, you can add a new step to the `Sync_CLI` job description, as shown below.
+
+```yaml
+          - name: Sync Template API  # Replace "Template" with the API name
+            run: rdme swagger 'VTEX_TEMPLATE.json' --key=${{ secrets.README_API_KEY }} --version=v2.1 --id=123456
+# Replace 'VTEX_Template.json' with the name of the API specification JSON file between ' '. The file must be on the root folder of the repository.
+# DON'T MODIFY the 'key' value, it is the Readme.io API key.
+# The 'version' is the Readme.io version to sync to.
+# Replace the 'id' value with the ID of the API on Readme.io. You can find it on the API Definitions tab on Readme.io's dashboard.
+```
