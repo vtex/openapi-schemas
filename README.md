@@ -120,9 +120,9 @@ The `security` object we use at VTEX is:
 
 ### Sync Automation
 
-To sync schema files with our Developer Portal, you should add them to [`.github\workflows\readme-github-sync.yml`](https://github.com/vtex/openapi-schemas/blob/master/.github/workflows/readme-github-sync.yml).
+> ⚠️ To sync schema files with our Developer Portal, you should first contact @brunoamui and ask for assistance.
 
-To sync a new file, add a new step to the `Sync` job description, as exemplified below.
+To sync a new file, open [`.github\workflows\readme-github-sync.yml`](https://github.com/vtex/openapi-schemas/blob/master/.github/workflows/readme-github-sync.yml) and add a new step to the `Sync` job description, as exemplified below.
 
 ```yaml
 - name: Sync Template API #Replace "Template" with the API name
