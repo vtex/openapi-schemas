@@ -16,10 +16,10 @@
         "/api/pricing-hub/prices?an={accountName}": {
             "post": {
                 "tags": [
-                    "Prices"
+                    "Pricing Hub Prices"
                 ],
                 "summary": "Get Prices",
-                "description": "This route will return the priced items that are passed to the API. It will select the pricing method that will be used and will fetch the price from the selected pricing method.",
+                "description": "This route retrieves and applies prices for the items that are passed in the request. Pricing Hub will select the pricing method that will be used for each item and will fetch their respective price from the selected pricing method.",
                 "parameters": [
                     {
                         "name": "accountName",
@@ -44,7 +44,8 @@
                     {
                         "name": "Accept",
                         "in": "header",
-                        "description": "Media type(s) that is/are acceptable for the response. Default value for payment provider protocol is application/json",
+                        "required": true,
+                        "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand",
                         "style": "simple",
                         "schema": {
                             "type": "string",
@@ -54,7 +55,7 @@
                     {
                         "name": "Content-Type",
                         "in": "header",
-                        "description": "The Media type of the body of the request. Default value for payment provider protocol is application/json",
+                        "description": "Describes the type of the content being sent",
                         "required": true,
                         "style": "simple",
                         "schema": {
@@ -106,7 +107,12 @@
                                         ]
                                     }
                                 ],
-                                "SalesChannel": "1"
+                                "UtmSource": "facebook",
+                                "UtmMedium": "social",
+                                "UtmCampaign": "summer",
+                                "UtmInternalCampaign": "sale",
+                                "SalesChannel": "1",
+                                "Email": "customer@email.com"
                             }
                         }
                     },
@@ -114,8 +120,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "",
-                        "headers": {},
+                        "description": "OK",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -125,15 +130,6 @@
                                     "Items": [
                                         {
                                             "index": 0,
-                                            "skuId": "13",
-                                            "price": null,
-                                            "costPrice": null,
-                                            "listPrice": null,
-                                            "priceTable": null,
-                                            "priceValidUnit": null
-                                        },
-                                        {
-                                            "index": 6,
                                             "skuId": "14",
                                             "price": 1875,
                                             "costPrice": 750,
@@ -142,7 +138,7 @@
                                             "priceValidUnit": "2022-03-24T14:57:19Z"
                                         },
                                         {
-                                            "index": 6,
+                                            "index": 0,
                                             "skuId": "14",
                                             "price": 200,
                                             "costPrice": 200,
@@ -162,54 +158,50 @@
     },
     "components": {
         "schemas": {
-            "Get Prices": {
-                "title": "Get Prices",
-                "required": [
-                    "Items",
-                    "SalesChannel"
-                ],
-                "type": "array",
-                "properties": {
-                    "items": {
-                        "type": "array",
-                        "default": {
-                            "items": [
-                                {
-                                    "index": 0,
-                                    "type": "number"
-                                },
-                                {
-                                    "skuId": "13",
-                                    "type": "string"
-                                },
-                                {
-                                    "quantity": 1,
-                                    "type": "number"
-                                },
-                                {
-                                    "brandId": "200000",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "description": "The items that are to be priced by pricing hub"
-                    }
-                }
-            },
             "GetPricesRequestObject": {
                 "required": [
                     "items",
-                    "salesChannel"
+                    "UtmSource",
+                    "UtmMedium",
+                    "UtmCampaign",
+                    "UtmInternalCampaign",
+                    "salesChannel",
+                    "email"
                 ],
                 "type": "object",
                 "properties": {
                     "items": {
                         "$ref": "#/components/schemas/items"
                     },
+                    "UtmSource": {
+                        "type": "string",
+                        "default": "facebook",
+                        "description": "Traffic source, indicates where the traffic originated from according to the `utm_source` value in the URL that led to the order. If there is no value, use `null`"
+                    },
+                    "UtmMedium": {
+                        "type": "string",
+                        "default": "social",
+                        "description": "Medium that indicates what type of traffic the customer originated from, represented by the `utm_medium` value in the URL that led to the order. If there is no value, use `null`"
+                    },
+                    "UtmCampaign": {
+                        "type": "string",
+                        "default": "summer",
+                        "description": "Campaign name, represented by the `utm_campaign` value in the URL that led to the order. If there is no value, use `null`"
+                    },
+                    "UtmInternalCampaign": {
+                        "type": "string",
+                        "default": "sale",
+                        "description": "Internal campaign name, represented by the `utmi_cp` value in the URL that led to the order. If there is no value, use `null`"
+                    },
                     "salesChannel": {
                         "type": "string",
                         "default": "1",
                         "description": "Represents Checkout's sales channel"
+                    },
+                    "email": {
+                        "type": "string",
+                        "default": "customer@email.com",
+                        "description": "The customer's email address. If there is no value, use an empty string"
                     }
                 },
                 "example": {
@@ -234,23 +226,24 @@
                     "itemsObject"
                 ],
                 "type": "array",
-                "description": "The items that are to be priced by pricing hub",
+                "description": "The list of items that are to be priced by Pricing Hub",
                 "items": {
                     "type": "object",
                     "title": "",
+                    "description": "Each item to be priced by Pricing Hub",
                     "required": [
                         "index",
                         "skuId",
                         "quantity",
                         "brandId",
                         "sellerId",
-                        "priceTablesId",
-                        "categoriesId"
+                        "priceTableIds",
+                        "categoriesIds"
                     ],
                     "properties": {
                         "index": {
-                            "description": "This is the index of the item at Checkout's cart. Has to be unique in the items array",
-                            "type": "number",
+                            "description": "This is the index of the item at Checkout's cart. It has to be unique in the items array",
+                            "type": "string",
                             "title": "index",
                             "default": 0
                         },
@@ -261,134 +254,47 @@
                             "default": "13"
                         },
                         "quantity": {
-                            "description": "This is the amount of items that will be priced. It is possible to have a volume discount for many repeated items. Hence, the price may not be the quantity times the unitary price",
-                            "type": "number",
+                            "description": "This is the amount of items that will be priced. It is possible to have a volume discount for many repeated items. Hence, the price may not be the quantity of the item multiplied by the unitary price",
+                            "type": "string",
                             "title": "quantity",
                             "default": 1
                         },
                         "brandId": {
-                            "description": "This is the brand id for the item",
+                            "description": "This is the brand ID for the item",
                             "type": "string",
                             "title": "brandId",
                             "default": "2000000"
                         },
                         "sellerId": {
-                            "description": "This is the seller id for the item",
+                            "description": "This is the seller ID for the item",
                             "type": "string",
                             "title": "sellerId",
                             "default": "1"
                         },
                         "priceTableIds": {
-                            "description": "This represents the price tables that will be used to compute the price.",
+                            "description": "IDs of the price tables that will be used to compute the price. More than one price table might be passed to the array. The final price rule might be more complex than the lowest or the highest price",
                             "type": "array",
                             "title": "priceTableIds",
                             "items": {
                                 "type": "string",
                                 "default": "1",
-                                "title": "priceTableId",
-                                "required": [
-                                    "priceTableId"
-                                ]
+                                "description": "ID of a price table that will be used to compute the price"
                             },
                             "default": []
                         },
                         "categoriesIds": {
-                            "description": "This represents the category ids that will be used to compute the price.",
+                            "description": "ID of the categories that will be used to compute the price",
                             "type": "array",
                             "items": {
                                 "type": "string",
                                 "default": "1",
-                                "title": "categoryId",
-                                "required": [
-                                    "categoryId"
-                                ]
+                                "description": "ID of a category that will be used to compute the price"
                             },
                             "title": "categoriesIds",
                             "default": [
                                 1
                             ]
                         }
-                    },
-                    "default": {
-                        "items": [
-                            {
-                                "index": 0,
-                                "description": "This is the index of the item at Checkout's cart. Has to be unique in the items array",
-                                "type": "number"
-                            },
-                            {
-                                "skuId": "13",
-                                "description": "This is the sku id of the item that will be priced",
-                                "type": "string"
-                            },
-                            {
-                                "quantity": 1,
-                                "description": "This is the amount of items that will be priced. It is possible to have a volume discount for many repeated items. Hence, the price may not be the quantity times the unitary price",
-                                "type": "number"
-                            },
-                            {
-                                "brandId": "200000",
-                                "description": "This is the brand id for the item",
-                                "type": "string"
-                            },
-                            {
-                                "sellerId": "1",
-                                "description": "This is the seller id for the item",
-                                "type": "string"
-                            },
-                            {
-                                "priceTableIds": [],
-                                "description": "This represents the price tables that will be used to compute the price. More than one price table might be passed to the array. The final price rule might be more complex than the lowest or the highest price",
-                                "type": "array of strings"
-                            },
-                            {
-                                "categorieIds": [
-                                    1
-                                ],
-                                "description": "This represents the category ids that will be used to compute the price",
-                                "type": "array of string"
-                            }
-                        ]
-                    }
-                }
-            },
-            "Item": {
-                "title": "Item",
-                "required": [
-                    "productId",
-                    "id",
-                    "refId",
-                    "name",
-                    "price",
-                    "quantity"
-                ],
-                "type": "object",
-                "properties": {
-                    "productId": {
-                        "type": "string",
-                        "default": "5"
-                    },
-                    "id": {
-                        "type": "string",
-                        "default": "5"
-                    },
-                    "refId": {
-                        "type": "string",
-                        "default": "12"
-                    },
-                    "name": {
-                        "type": "string",
-                        "default": "Insert name here"
-                    },
-                    "price": {
-                        "type": "integer",
-                        "format": "int32",
-                        "default": "50"
-                    },
-                    "quantity": {
-                        "type": "integer",
-                        "format": "int32",
-                        "default": 1
                     }
                 }
             },
@@ -404,63 +310,13 @@
                         "items": {
                             "$ref": "#/components/schemas/Item1"
                         },
-                        "description": "",
-                        "default": {
-                            "items": [
-                                {
-                                    "index": 0,
-                                    "type": "number"
-                                },
-                                {
-                                    "skuId": "13",
-                                    "type": "string"
-                                },
-                                {
-                                    "quantity": 1,
-                                    "type": "number"
-                                },
-                                {
-                                    "brandId": "200000",
-                                    "type": "string"
-                                }
-                            ],
-                            "salesChannel": "1"
-                        }
+                        "description": "List of items and their respective prices applied by Pricing Hub"
                     }
-                },
-                "example": {
-                    "items": [
-                        {
-                            "id": "589",
-                            "_self": {
-                                "href": "cards/589"
-                            }
-                        },
-                        {
-                            "id": "590",
-                            "_self": {
-                                "href": "cards/590"
-                            }
-                        },
-                        {
-                            "id": "591",
-                            "_self": {
-                                "href": "cards/591"
-                            }
-                        },
-                        {
-                            "id": "592",
-                            "_self": {
-                                "href": "cards/592"
-                            }
-                        }
-                    ]
                 }
             },
             "Item1": {
                 "title": "Item1",
                 "required": [
-                    "items",
                     "index",
                     "skuId",
                     "price",
@@ -469,53 +325,36 @@
                     "priceTable",
                     "priceValidUntil"
                 ],
-                "type": "array",
-                "properties": {
-                    "items": {
-                        "type": "array"
-                    },
-                    "index": {
-                        "type": "number"
-                    },
-                    "skuId": {
-                        "type": "string"
-                    },
-                    "price": {
-                        "type": "number"
-                    },
-                    "costPrice": {
-                        "type": "number"
-                    },
-                    "listPrice": {
-                        "type": "number"
-                    },
-                    "priceTable": {
-                        "type": "string"
-                    },
-                    "priceValidUntil": {
-                        "type": "string"
-                    }
-                },
-                "example": {
-                    "id": "589",
-                    "_self": {
-                        "href": "cards/589"
-                    }
-                }
-            },
-            "Self": {
-                "title": "Self",
-                "required": [
-                    "href"
-                ],
                 "type": "object",
                 "properties": {
-                    "href": {
-                        "type": "string"
+                    "index": {
+                        "type": "string",
+                        "description": "The same index referring to Checkout's cart that was passed to the API"
+                    },
+                    "skuId": {
+                        "type": "string",
+                        "description": "The same skuId that was passed to the API"
+                    },
+                    "price": {
+                        "type": "number",
+                        "description": "The price returned by the pricing API that was used by Pricing Hub. It is measured in cents, so 5000 means 50,00 in local currency"
+                    },
+                    "costPrice": {
+                        "type": "number",
+                        "description": "The cost price returned by the pricing API that was used by Pricing Hub. It is measured in cents, so 5000 means 50,00 in local currency."
+                    },
+                    "listPrice": {
+                        "type": "number",
+                        "description": "The list price returned by the pricing API that was used by Pricing Hub. It is measured in cents, so 5000 means 50,00 in local currency"
+                    },
+                    "priceTable": {
+                        "type": "string",
+                        "description": "The price table that was used to price the item"
+                    },
+                    "priceValidUntil": {
+                        "type": "string",
+                        "description": "The moment up until the price is valid. After that moment, it will be necessary to call the pricing API again. The format of the string is in RFC3339"
                     }
-                },
-                "example": {
-                    "href": "cards/589"
                 }
             }
         },
@@ -534,8 +373,7 @@
     },
     "tags": [
         {
-            "name": "Prices",
-            "description": ""
+            "name": "Pricing Hub Prices"
         }
     ],
     "security": [
@@ -543,15 +381,5 @@
             "appKey": [],
             "appToken": []
         }
-    ],
-    "x-explorer-enabled": true,
-    "x-proxy-enabled": true,
-    "x-samples-enabled": true,
-    "x-samples-languages": [
-        "curl",
-        "node",
-        "ruby",
-        "javascript",
-        "python"
     ]
 }
