@@ -1,7 +1,7 @@
 # openapi-schemas
-OpenAPI 3.0 JSON schemas. Files are automatically synced the VTEX Developer Portal [API Reference page](https://developers.vtex.com/reference) and can be imported to Postman following [these instructions](https://learning.postman.com/docs/postman/collections/working-with-openAPI/).
+This documentation comprises VTEX's public APIs as OpenAPI 3.0 JSON schemas. Files are automatically synced with VTEX's Developer Portal [API Reference page](https://developers.vtex.com/reference) and can be imported to Postman following [these instructions](https://learning.postman.com/docs/postman/collections/working-with-openAPI/).
 
-## VTEX APIs Here:
+## VTEX APIs
 - Antifraud Provider API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https://raw.githubusercontent.com/vtex/openapi-schemas/master/VTEX%2520-%2520Antifraud%2520Provider%2520API.json&label=OpenAPI)
 - Catalog API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Catalog%2520API.json&label=OpenAPI)
 - Checkout API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Checkout%2520API.json&label=OpenAPI)
@@ -32,42 +32,23 @@ OpenAPI 3.0 JSON schemas. Files are automatically synced the VTEX Developer Port
 - Tracking API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Tracking.json)
 - VTEX Do API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520VTEX%2520Do%2520API.json)
 
-## Schema files
+## Requisites
 
-- The files should follow the JSON OpenApi 3.0 format [Specification](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
-- Schema files shoud have a mnemonic file name that specifies the API being described
-- VTEX_TEMPLATE.json is an example of a simple api. It shows how to represent endpoints and parameters. Also all server and auth configuration are as they should be for VTEX APIs.
+Before contributing to this repository, read the following requisites.
 
-## Sync Automation
+- The files should follow the JSON [OpenAPI 3.0 Specification](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md).
+- Check our internal [OpenAPI Checklist](https://www.notion.so/vtexhandbook/OpenAPI-checklist-da49bac843dd44118fa2269ad77ceb87) to make sure you meet the required file structure. 
+- Schema files should have a self-explanatory name that specifies the described API.
+- Check [`VTEX_TEMPLATE.json`](https://github.com/vtex/openapi-schemas/blob/master/VTEX_TEMPLATE.json) to see an example of an API schema file. It shows how to represent endpoints and parameters and includes VTEX's default [`servers`](#servers) and [authorization](#authorization) information.
 
-To get schema files to sync with our developer docs, they should be described at `.github\workflows\readme-github-sync.yml`.
 
-Add this code to the action description to sync a new file:
+### Servers
 
-```yaml
-- name: Sync ____________ API #Replace with API title
-  uses: readmeio/github-readme-sync@1.0.1
-  with:
-    # The GITHUB_TOKEN secret
-    repo-token: '${{ secrets.GITHUB_TOKEN }}' #Do not change
-    # The path for your API spec file
-    api-file-path: # .json files should be in the root folder
-    # Your API key for your ReadMe project
-    readme-api-key: ${{ secrets.README_API_KEY }} #Do not change
-    # ID for the API Setting in ReadMe - you can get that from the dashboard
-    readme-api-id: # optional
-    # ReadMe version to sync API into
-    readme-api-version: # optional
-```
+OpenAPI describes the full endpoint for accessing the API as `{server URL}` + `{endpoint path}` + `{path parameters}`.
 
-# Important Schema Details:
+Example: an endpoint with `/api/getResults` as the path, `https://example.com` as the URL in the `server` object and no parameters will send requests to the `https://example.com/api/getResults` URL.
 
-## Server
-
-OpenApi describes the full endpoint for accessing the API as `{Server URL}` + `{endpoint Path}` + `{Path Parameters}`.
-So a endpoint with `/api/getResults` as path in a schema with `https://example.com` as the url in the `server` object and no parameters will tell clients to send requests to `https://example.com/api/getResults`
-
-Server Object Example: 
+Example - `servers` object: 
 
 ```json 
 "servers": [
@@ -90,17 +71,17 @@ Server Object Example:
     }
 ],
 ```
-The `servers` key contains an array of server objects. But `Readme.io`, our documentation system, will select the first one and use default values for the variables
+The `servers` key contains an array of objects. Readme.io, our documentation system, will select the first one and use the declared `default` values for the variables.
 
-## Authentication
+### Authentication
 
-### Security Scheme
+#### Security schemes
 
-_Security schemes_ describe autentication types that are available in this API. you can check the all the options available int the [Security Scheme Spec](http://spec.openapis.org/oas/v3.0.0#security-scheme-object) 
+Security schemes describe autentication types that are available in the API. You can check the all the available options in the [Security Scheme Specification](http://spec.openapis.org/oas/v3.0.0#security-scheme-object).
 
-**They should be inserted inside the _Components Object_** 
+They should be added inside the `components` object.
 
-the ones we use for VTEX appKey and appToken are:
+The security schemes we use for VTEX's `appKey` and `appToken` are:
 
 ```json 
 "securitySchemes": {
@@ -117,13 +98,15 @@ the ones we use for VTEX appKey and appToken are:
 }
 ```
 
-This tells the client that the request should have `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken` as variables in the request header
+This specifies that the request should have `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken` as variables in the request header.
 
-### Security Requirement
+#### Security requirement
 
-If defined inside the _Open API Object_ the security requirement will define the required security schemes for all endpoints. If defined inside a path object, it will define a per-endpoint security scheme. 
+If defined inside the Open API schema, the `security` object will define the required security schemes for all endpoints.
 
-The example we are currently using, defined inside the _Open API Object_, is:
+If defined inside an endpoint object, the `security` object will define the security scheme for that specific endpoint. 
+
+The `security` object we use at VTEX is:
 
 ```json 
 "security": [
@@ -134,7 +117,31 @@ The example we are currently using, defined inside the _Open API Object_, is:
     ]
 ```
 
-## Examples
 
-Example objects will be ignored by our documentation generator. If the desired outcome is to have the values as placeholders in the request parameters form, they should be inside the parameter schema object in the `default` key. 
+### Sync Automation
 
+> ⚠️ To sync schema files with our Developer Portal, you should first contact @brunoamui and ask for assistance.
+
+To sync a new file, open [`.github\workflows\readme-github-sync.yml`](https://github.com/vtex/openapi-schemas/blob/master/.github/workflows/readme-github-sync.yml) and add a new step to the `Sync` job description, as exemplified below.
+
+```yaml
+- name: Sync Template API #Replace "Template" with the API name
+  uses: readmeio/github-readme-sync@1.0.3
+  with:
+    repo-token: '${{ secrets.GITHUB_TOKEN }}' # DON'T MODIFY -- Allows us to get the contents of your spec file
+    readme-api-id: '123456' # ID of the API on Readme.io. You can find it on the API Definitions tab on Readme.io's dashboard
+    api-file-path: 'VTEX_TEMPLATE.json' # Name of the API specification JSON file. The file must be on the root folder of the repository
+    readme-api-key: ${{ secrets.README_API_KEY }} # DON'T MODIFY -- Readme.io API key 
+    readme-api-version: '2.1' # ReadMe version to sync to
+```
+
+Alternatively, you can add a new step to the `Sync_CLI` job description, as shown below.
+
+```yaml
+- name: Sync Template API  # Replace "Template" with the API name
+  run: rdme swagger 'VTEX_TEMPLATE.json' --key=${{ secrets.README_API_KEY }} --version=v2.1 --id=123456
+# Replace 'VTEX_Template.json' with the name of the API specification JSON file between ' '. The file must be on the root folder of the repository.
+# DON'T MODIFY the 'key' value, it is the Readme.io API key.
+# The 'version' is the Readme.io version to sync to.
+# Replace the 'id' value with the ID of the API on Readme.io. You can find it on the API Definitions tab on Readme.io's dashboard.
+```
