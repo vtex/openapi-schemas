@@ -1,0 +1,30 @@
+name: Run Spectral on Pull Requests
+
+on: pull_request
+
+jobs:
+  build:
+    name: Run Spectral
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the repository
+      - uses: actions/checkout@v2
+      
+      # Add comment to PR
+      - name: Comment a pull_request
+        uses: mb2dev/github-action-comment-pull-request@1.0.0
+        with:
+          message: "Thanks for your contribution. The .json file will be checked now with Spectral."
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}        
+      
+      # Get the name of changed files
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v11.7
+        with:
+          files: \.json$        
+
+      # Run Spectral on changed files
+      - uses: stoplightio/spectral-action@v0.8.0
+        with:
+          file_glob: ${{ steps.changed-files.outputs.all_modified_files }}
