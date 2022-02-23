@@ -35,6 +35,9 @@
                     },
                     {
                         "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/ttl"
                     }
                 ],
                 "requestBody": {
@@ -149,6 +152,9 @@
                     },
                     {
                         "$ref": "#/components/parameters/alternateKey"
+                    },
+                    {
+                        "$ref": "#/components/parameters/ttl"
                     }
                 ],
                 "requestBody": {
@@ -1353,6 +1359,45 @@
                 },
                 "deprecated": false
             }
+        },
+        "/api/profile-system/profiles/schema": {
+            "put": {
+                "tags": ["Schemas"],
+                "summary": "Create or update profile schema",
+                "description": "Create or update profile schema.\n\r\n\r> Each account has one profile schema. Updating it with this request will substitute the previous version.",
+                "operationId": "CreateOrUpdateProfileSchema",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/schema"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {}
+                            }
+                        }
+                    }
+                },
+                "deprecated": false
+            }
         }
     },
     "components": {
@@ -1455,7 +1500,160 @@
                     }
                 }
             },
-            "prospect": {}
+            "prospect": {},
+            "schema": {
+                "title": "Schema",
+                "type": "object",
+                "required": [
+                    "title",
+                    "type",
+                    "description",
+                    "required",
+                    "properties"
+                ],
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "description": "Schema title.",
+                        "example": "Client profile schema"
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "Schema type.",
+                        "example": "object"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Schema's human readable description.",
+                        "example": "This schema describes a b2c customer profile."
+                    },
+                    "required": {
+                        "type": "array",
+                        "description": "Schema required fields.",
+                        "items": {
+                            "type": "string",
+                            "description": "Key of a field that is rqeuired in the schema."
+                        },
+                        "example": [
+                            "firstName",
+                            "lastName",
+                            "email",
+                            "document",
+                            "documentType"
+                        ]
+                    },
+                    "properties": {
+                        "type": "object",
+                        "description": "Object describing each field in your desired schema. In this object, each property is a new object, describing the field according to: `type` (string); `sensitive` (boolean); `pii` (boolean) and; `items.type` (if field is array).",
+                        "properties": {
+                            "{fieldName}": {
+                                "type": "object",
+                                "description": "Schema of any given field described in the `properties` field.",
+                                "required": [
+                                    "type",
+                                    "sensitive",
+                                    "pii"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "description": "Schema property type.",
+                                        "example": "string"
+                                    },
+                                    "sensitive": {
+                                        "type": "boolean",
+                                        "description": "Indicates whether property is sensitive data.",
+                                        "example": true
+                                    },
+                                    "pii": {
+                                        "type": "boolean",
+                                        "description": "Indicates whether property is Personal Identifiable Information.",
+                                        "example": true
+                                    },
+                                    "items": {
+                                        "type": "object",
+                                        "description": "Object containing the type of the items if the field is an array. Typically, arrays will contain strings and will be used for fields such as `email`.",
+                                        "example": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "firstName": {
+                                        "type": "string",
+                                        "sensitive": true,
+                                        "pii": true
+                                    },
+                                    "lastName": {
+                                        "type": "string",
+                                        "sensitive": true,
+                                        "pii": true
+                                    },
+                                    "email": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "sensitive": true,
+                                        "pii": true
+                                    },
+                                    "document": {
+                                        "type": "string",
+                                        "sensitive": true,
+                                        "pii": true
+                                    },
+                                    "documentType": {
+                                        "type": "string",
+                                        "sensitive": false,
+                                        "pii": false
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "sensitive": true,
+                                        "pii": true
+                                    },
+                                    "gender": {
+                                        "type": "string",
+                                        "sensitive": true,
+                                        "pii": false
+                                    },
+                                    "birthdate": {
+                                        "type": "string",
+                                        "sensitive": true,
+                                        "pii": true
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "documentTTL": {
+                        "type": "integer",
+                        "description": "Document time to live, in days. After this many days from its creation or update, any document cerated from this schema will be deleted.",
+                        "example": 1825
+                    },
+                    "version": {
+                        "type": "integer",
+                        "description": "Schema version.",
+                        "example": 1
+                    },
+                    "v-indexed": {
+                        "type": "array",
+                        "description": "",
+                        "example": [
+                            "email",
+                            "document"
+                        ]
+                    },
+                    "v-unique": {
+                        "type": "array",
+                        "description": "",
+                        "example": [
+                            "email",
+                            "document"
+                        ]
+                    }
+                }
+            }
         },
         "parameters": {
             "Content-Type": {
@@ -1595,9 +1793,6 @@
     },
     "tags": [
         {
-            "name": "Schemas"
-        },
-        {
             "name": "Profiles"
         },
         {
@@ -1608,6 +1803,9 @@
         },
         {
             "name": "Purchase information"
+        },
+        {
+            "name": "Schemas"
         }
     ],
     "security": [
