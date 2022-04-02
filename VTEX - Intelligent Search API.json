@@ -1,0 +1,1343 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "version": "0.1.12",
+        "title": "Intelligent Search API",
+        "license": {
+            "name": "MIT"
+        }
+    },
+    "servers": [
+        {
+            "url": "https://{accountName}.myvtex.com/_v/api/intelligent-search",
+            "description": "VTEX IO Intelligent Search server URL.",
+            "variables": {
+                "accountName": {
+                    "default": "{accountName}",
+                    "description": "Your VTEX account name."
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/top_searches": {
+            "get": {
+                "summary": "Lists the 10 most searched terms.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/locale"
+                    }
+                ],
+                "tags": [
+                    "autocomplete"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "A list of the 10 most searched terms.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TopSearches"
+                                }
+                            }
+                        }
+                    },
+                    "5XX": {
+                        "description": "Server error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/autocomplete_suggestions": {
+            "get": {
+                "summary": "List of suggested terms and attributes similar to the search term.",
+                "tags": [
+                    "autocomplete"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#components/parameters/query"
+                    },
+                    {
+                        "$ref": "#/components/parameters/locale"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of suggested facets and terms.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AutocompleteSearchSuggestions"
+                                }
+                            }
+                        }
+                    },
+                    "5XX": {
+                        "description": "Server error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/correction_search": {
+            "get": {
+                "summary": "Try to correct a misspelled term.",
+                "tags": [
+                    "PLP"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#components/parameters/query"
+                    },
+                    {
+                        "$ref": "#/components/parameters/locale"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Object that indicates if the term was misspelled and suggests a possible correction.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Correction"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/banners/{facets}": {
+            "get": {
+                "summary": "List the banners registered for a given query.",
+                "description": "Check the [configuring banners documentation](https://help.vtex.com/en/tracks/vtex-intelligent-search--19wrbB7nEQcmwzDPl1l4Cb/4ViKEivLJtJsvpaW0aqIQ5) for a full explanation of the banner feature.",
+                "tags": [
+                    "PLP"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#components/parameters/query"
+                    },
+                    {
+                        "$ref": "#components/parameters/facetsPath"
+                    },
+                    {
+                        "$ref": "#/components/parameters/locale"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of banners for the given query",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Correction"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/search_suggestions": {
+            "get": {
+                "summary": "List of suggested terms similar to the search term.",
+                "tags": [
+                    "PLP"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#components/parameters/query"
+                    },
+                    {
+                        "$ref": "#/components/parameters/locale"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of suggested terms.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SearchSuggestions"
+                                }
+                            }
+                        }
+                    },
+                    "5XX": {
+                        "description": "Server error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/product_search/{facets}": {
+            "get": {
+                "summary": "List the products for a given query.",
+                "tags": [
+                    "PLP"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#components/parameters/facetsPath"
+                    },
+                    {
+                        "$ref": "#components/parameters/query"
+                    },
+                    {
+                        "in": "query",
+                        "name": "simulationBehavior",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "default",
+                                "skip",
+                                "only1P"
+                            ],
+                            "nullable": true,
+                            "default": "default"
+                        },
+                        "description": "Defines the simulation behavior.\n\n * `default` - Calls the simulation for every single seller.\n * `skip` - Never calls the simulation.\n * `only1P` - Only calls the simulation for first party sellers."
+                    },
+                    {
+                        "in": "query",
+                        "name": "count",
+                        "description": "Number of products per page.",
+                        "schema": {
+                            "type": "number",
+                            "nullable": true,
+                            "default": 24
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "page",
+                        "description": "Current search page.",
+                        "schema": {
+                            "type": "number",
+                            "nullable": true,
+                            "default": 1
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "sort",
+                        "description": "Defines the sort type. If null, the products will be sorted by relevance.",
+                        "schema": {
+                            "type": "string",
+                            "nullable": true,
+                            "enum": [
+                                "price:desc",
+                                "price:asc",
+                                "orders:desc",
+                                "name:desc",
+                                "name:asc",
+                                "release:desc",
+                                "discount:desc"
+                            ]
+                        }
+                    },
+                    {
+                        "$ref": "#components/parameters/locale"
+                    },
+                    {
+                        "$ref": "#components/parameters/hideUnavailableItems"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of products for the given query.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductSearch"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/facets/{facets}": {
+            "get": {
+                "summary": "List the possible facets for a given query.",
+                "tags": [
+                    "PLP"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#components/parameters/facetsPath"
+                    },
+                    {
+                        "$ref": "#components/parameters/query"
+                    },
+                    {
+                        "$ref": "#components/parameters/locale"
+                    },
+                    {
+                        "$ref": "#components/parameters/hideUnavailableItems"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of facets for the given query.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Facets"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "parameters": {
+            "query": {
+                "in": "query",
+                "name": "query",
+                "schema": {
+                    "type": "string"
+                }
+            },
+            "facetsPath": {
+                "in": "path",
+                "name": "facets",
+                "required": true,
+                "description": "# Format\n\nThe `facets` parameter follows the format : `/${facetKey1}/${facetValue1}/${facetKey2}/${facetValue2}/.../${facetKeyN}/${facetValueN}`.\n\nThe order in which the terms appear is not relevant to the search.\n\nYou can also repeat the same `facetKey` several times for different values. For example: `category-1/shoes/color/blue/color/red/color/yellow`\n\n# General filters\n\nThe `facets` parameter also allows the following general filters.\n\n| `facetKey`      | Description                                                                                      | Example                                                                  |\n| --------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |\n| `price`         | Filter the search by a price range. The facet value follows the format `${minPrice}:${maxPrice}` | `/color/blue/price/100:500?query=shirt`                                  |\n| `category-${n}` | Filter the search by a price range. The facet value follows the format `${minPrice}:${maxPrice}` | `category-1/clothing/category-2/shirts`                                  |\n| `region-id`     | Filter the search by a region id (aka regionalization). The value is the region id               | `/color/blue/region-id/v2.26219C7C3DE42BAAD11CFB92CD0BFE91?query=shirt`. |\n",
+                "example": "category-1/clothing/category-2/shirt/category-3/man",
+                "schema": {
+                    "nullable": true,
+                    "type": "string",
+                    "default": "/"
+                }
+            },
+            "locale": {
+                "in": "query",
+                "name": "locale",
+                "description": "Indicate the target language as a BCP 47 language code. The IS must have indexed the account in the target language.",
+                "example": "en-US",
+                "schema": {
+                    "type": "string",
+                    "nullable": true
+                }
+            },
+            "hideUnavailableItems": {
+                "in": "query",
+                "name": "hide-unavailable-items",
+                "description": "Whether the result should hide unavailable items (`true`), or not (`false`)",
+                "schema": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "fuzzy": {
+                "in": "query",
+                "name": "fuzzy",
+                "description": "Indicates how the search engine will correct misspelled words by using fuzzy logic. It can be a number representing the max number of misspelled letters, or the string `auto` suggesting that the search-engine should set this value by itself.",
+                "schema": {
+                    "type": "string"
+                }
+            },
+            "operator": {
+                "in": "query",
+                "name": "operator",
+                "description": "Indicates how the search-engine will deal with the fullText if there is more than one word. Set `and` if the returned products must have all the words in its metadata or `or` otherwise.",
+                "schema": {
+                    "type": "string",
+                    "enum": [
+                        "and",
+                        "or"
+                    ]
+                }
+            }
+        },
+        "schemas": {
+            "AutocompleteSearchSuggestions": {
+                "properties": {
+                    "searches": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "term": {
+                                    "type": "string",
+                                    "description": "Search term."
+                                },
+                                "count": {
+                                    "type": "number",
+                                    "description": "Number of times the term was searched."
+                                },
+                                "attributes": {
+                                    "type": "array",
+                                    "nullable": true,
+                                    "description": "List of facets in which the term can be searched.",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "key": {
+                                                "type": "string",
+                                                "description": "Facet key."
+                                            },
+                                            "value": {
+                                                "type": "string",
+                                                "description": "Facet value."
+                                            },
+                                            "labelKey": {
+                                                "type": "string",
+                                                "description": "Human-readable format of the facet key."
+                                            },
+                                            "labelValue": {
+                                                "type": "string",
+                                                "description": "Human-readable format of the facet value."
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "example": {
+                    "searches": [
+                        {
+                            "term": "tv",
+                            "count": 28861,
+                            "attributes": [
+                                {
+                                    "key": "departamento",
+                                    "value": "tvs-e-video",
+                                    "labelKey": "Departamento",
+                                    "labelValue": "TVs e Vídeo"
+                                },
+                                {
+                                    "key": "categoria",
+                                    "value": "tvs",
+                                    "labelKey": "Categoria",
+                                    "labelValue": "TVs"
+                                },
+                                {
+                                    "key": "subcategoria",
+                                    "value": "receptor-de-controle-de-acesso",
+                                    "labelKey": "Subcategoria",
+                                    "labelValue": "Receptor de Controle de Acesso"
+                                }
+                            ]
+                        },
+                        {
+                            "term": "smarth tv",
+                            "count": 2308
+                        },
+                        {
+                            "term": "painel para tv",
+                            "count": 975
+                        },
+                        {
+                            "term": "rack tv",
+                            "count": 589
+                        }
+                    ]
+                }
+            },
+            "TopSearches": {
+                "type": "object",
+                "properties": {
+                    "searches": {
+                        "type": "array",
+                        "minItems": 10,
+                        "maxItems": 10,
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "term": {
+                                    "type": "string",
+                                    "description": "Search term."
+                                },
+                                "count": {
+                                    "type": "number",
+                                    "description": "Number of times the term was searched."
+                                }
+                            }
+                        }
+                    }
+                },
+                "example": {
+                    "searches": [
+                        {
+                            "term": "home",
+                            "count": 14
+                        },
+                        {
+                            "term": "shirt",
+                            "count": 10
+                        },
+                        {
+                            "term": "top",
+                            "count": 9
+                        },
+                        {
+                            "term": "tops",
+                            "count": 6
+                        },
+                        {
+                            "term": "camera",
+                            "count": 5
+                        },
+                        {
+                            "term": "kit",
+                            "count": 5
+                        },
+                        {
+                            "term": "work shirt",
+                            "count": 2
+                        },
+                        {
+                            "term": "shirts",
+                            "count": 2
+                        },
+                        {
+                            "term": "clothing",
+                            "count": 2
+                        },
+                        {
+                            "term": "classic shoes",
+                            "count": 1
+                        }
+                    ]
+                }
+            },
+            "Correction": {
+                "properties": {
+                    "correction": {
+                        "type": "object",
+                        "properties": {
+                            "misspelled": {
+                                "type": "boolean",
+                                "description": "Whether the term was misspelled (`true`) or not (`false`)."
+                            },
+                            "correction": {
+                                "type": "boolean",
+                                "description": "Whether the API was able to suggest a correction (`true`) or not (`false`)."
+                            },
+                            "text": {
+                                "type": "string",
+                                "description": "The corrected term. If the API was not able to correct the term, it will show the original search term."
+                            },
+                            "highlighted": {
+                                "type": "string",
+                                "description": "The same as `text`, but it highlights the corrected word. Useful when there is more than one word."
+                            }
+                        }
+                    }
+                },
+                "example": {
+                    "correction": {
+                        "correction": true,
+                        "misspelled": true,
+                        "text": "mountain bike",
+                        "highlighted": "mountain <em>bike</em>"
+                    }
+                }
+            },
+            "Banners": {
+                "properties": {
+                    "banners": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "description": "Banner id."
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "description": "Banner name."
+                                },
+                                "area": {
+                                    "type": "string",
+                                    "description": "Banner area."
+                                },
+                                "html": {
+                                    "type": "string",
+                                    "description": "Banner HTML."
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "SearchSuggestions": {
+                "properties": {
+                    "searches": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "term": {
+                                    "type": "string",
+                                    "description": "Search term."
+                                },
+                                "count": {
+                                    "type": "number",
+                                    "description": "Number of times the term was searched."
+                                }
+                            }
+                        }
+                    }
+                },
+                "example": {
+                    "searches": [
+                        {
+                            "term": "mountain bike",
+                            "count": 66
+                        },
+                        {
+                            "term": "bike helmet",
+                            "count": 121
+                        },
+                        {
+                            "term": "electric bike",
+                            "count": 78
+                        },
+                        {
+                            "term": "bike rack",
+                            "count": 161
+                        },
+                        {
+                            "term": "road bike",
+                            "count": 28
+                        }
+                    ]
+                }
+            },
+            "ProductSearch": {
+                "example": {
+                    "products": [
+                        {
+                            "cacheId": "sp-2000003",
+                            "productId": "2000003",
+                            "description": "With this beautiful design piece you will never miss an appointment anymore. Yay.",
+                            "productName": "Top Wood Clock",
+                            "productReference": "clock120",
+                            "linkText": "wood-clock",
+                            "brand": "Sony",
+                            "brandId": 2000005,
+                            "link": "/wood-clock/p",
+                            "categories": [
+                                "/Home & Decor/"
+                            ],
+                            "categoryId": "40",
+                            "categoriesIds": [
+                                "/40/"
+                            ],
+                            "priceRange": {
+                                "sellingPrice": {
+                                    "highPrice": 197.99,
+                                    "lowPrice": 197.99
+                                },
+                                "listPrice": {
+                                    "highPrice": 197.99,
+                                    "lowPrice": 197.99
+                                }
+                            },
+                            "specificationGroups": [
+                                {
+                                    "originalName": "allSpecifications",
+                                    "name": "allSpecifications",
+                                    "specifications": [
+                                        {
+                                            "originalName": "sellerId",
+                                            "name": "sellerId",
+                                            "values": [
+                                                "1"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ],
+                            "skuSpecifications": [],
+                            "productClusters": [
+                                {
+                                    "id": "1970",
+                                    "name": "Summer"
+                                }
+                            ],
+                            "clusterHighlights": [
+                                {
+                                    "id": "1970",
+                                    "name": "Summer"
+                                }
+                            ],
+                            "properties": [
+                                {
+                                    "name": "sellerId",
+                                    "originalName": "sellerId",
+                                    "values": [
+                                        "1"
+                                    ]
+                                }
+                            ],
+                            "items": [
+                                {
+                                    "sellers": [
+                                        {
+                                            "sellerId": "1",
+                                            "sellerName": "VTEX",
+                                            "addToCartLink": "",
+                                            "sellerDefault": true,
+                                            "commertialOffer": {
+                                                "DeliverySlaSamplesPerRegion": {},
+                                                "DeliverySlaSamples": [],
+                                                "AvailableQuantity": 10000,
+                                                "discountHighlights": [],
+                                                "Installments": [
+                                                    {
+                                                        "Value": 197.99,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 197.99,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "American Express à vista",
+                                                        "PaymentSystemName": "American Express"
+                                                    },
+                                                    {
+                                                        "Value": 197.99,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 197.99,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "Visa à vista",
+                                                        "PaymentSystemName": "Visa"
+                                                    },
+                                                    {
+                                                        "Value": 98.99,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 197.99,
+                                                        "NumberOfInstallments": 2,
+                                                        "Name": "Visa 2 vezes sem juros",
+                                                        "PaymentSystemName": "Visa"
+                                                    },
+                                                    {
+                                                        "Value": 65.99,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 197.99,
+                                                        "NumberOfInstallments": 3,
+                                                        "Name": "Visa 3 vezes sem juros",
+                                                        "PaymentSystemName": "Visa"
+                                                    },
+                                                    {
+                                                        "Value": 49.49,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 197.99,
+                                                        "NumberOfInstallments": 4,
+                                                        "Name": "Visa 4 vezes sem juros",
+                                                        "PaymentSystemName": "Visa"
+                                                    },
+                                                    {
+                                                        "Value": 39.59,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 197.99,
+                                                        "NumberOfInstallments": 5,
+                                                        "Name": "Visa 5 vezes sem juros",
+                                                        "PaymentSystemName": "Visa"
+                                                    },
+                                                    {
+                                                        "Value": 32.99,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 197.99,
+                                                        "NumberOfInstallments": 6,
+                                                        "Name": "Visa 6 vezes sem juros",
+                                                        "PaymentSystemName": "Visa"
+                                                    },
+                                                    {
+                                                        "Value": 197.99,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 197.99,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "Diners à vista",
+                                                        "PaymentSystemName": "Diners"
+                                                    },
+                                                    {
+                                                        "Value": 100.48,
+                                                        "InterestRate": 100,
+                                                        "TotalValuePlusInterestRate": 200.96,
+                                                        "NumberOfInstallments": 2,
+                                                        "Name": "Diners 2 vezes com juros",
+                                                        "PaymentSystemName": "Diners"
+                                                    },
+                                                    {
+                                                        "Value": 197.99,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 197.99,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "Mastercard à vista",
+                                                        "PaymentSystemName": "Mastercard"
+                                                    },
+                                                    {
+                                                        "Value": 197.99,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 197.99,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "Boleto Bancário à vista",
+                                                        "PaymentSystemName": "Boleto Bancário"
+                                                    },
+                                                    {
+                                                        "Value": 197.99,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 197.99,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "Vale à vista",
+                                                        "PaymentSystemName": "Vale"
+                                                    },
+                                                    {
+                                                        "Value": 197.99,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 197.99,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "Promissory à vista",
+                                                        "PaymentSystemName": "Promissory"
+                                                    },
+                                                    {
+                                                        "Value": 197.99,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 197.99,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "Customer Credit à vista",
+                                                        "PaymentSystemName": "Customer Credit"
+                                                    },
+                                                    {
+                                                        "Value": 98.99,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 197.99,
+                                                        "NumberOfInstallments": 2,
+                                                        "Name": "Customer Credit 2 vezes sem juros",
+                                                        "PaymentSystemName": "Customer Credit"
+                                                    },
+                                                    {
+                                                        "Value": 67.97,
+                                                        "InterestRate": 100,
+                                                        "TotalValuePlusInterestRate": 203.91,
+                                                        "NumberOfInstallments": 3,
+                                                        "Name": "Customer Credit 3 vezes com juros",
+                                                        "PaymentSystemName": "Customer Credit"
+                                                    },
+                                                    {
+                                                        "Value": 197.99,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 197.99,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "Free à vista",
+                                                        "PaymentSystemName": "Free"
+                                                    }
+                                                ],
+                                                "Price": 197.99,
+                                                "ListPrice": 197.99,
+                                                "spotPrice": 197.99,
+                                                "taxPercentage": 0,
+                                                "PriceWithoutDiscount": 197.99,
+                                                "Tax": 0,
+                                                "GiftSkuIds": [],
+                                                "BuyTogether": [],
+                                                "ItemMetadataAttachment": [],
+                                                "RewardValue": 0,
+                                                "PriceValidUntil": "2023-04-01T13:13:20Z",
+                                                "GetInfoErrorMessage": null,
+                                                "CacheVersionUsedToCallCheckout": "",
+                                                "teasers": [
+                                                    {
+                                                        "name": "8% Boleto",
+                                                        "conditions": {
+                                                            "minimumQuantity": 0,
+                                                            "parameters": [
+                                                                {
+                                                                    "name": "PaymentMethodId",
+                                                                    "value": "6"
+                                                                }
+                                                            ]
+                                                        },
+                                                        "effects": {
+                                                            "parameters": [
+                                                                {
+                                                                    "name": "PercentualDiscount",
+                                                                    "value": "8.0"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "images": [
+                                        {
+                                            "imageId": "155484",
+                                            "cacheId": "155484",
+                                            "imageTag": "",
+                                            "imageLabel": "",
+                                            "imageText": "",
+                                            "imageUrl": "https://storecomponents.vtexassets.com/arquivos/ids/155484/Frame.jpg?v=636793817478300000"
+                                        },
+                                        {
+                                            "imageId": "155485",
+                                            "cacheId": "155485",
+                                            "imageTag": "",
+                                            "imageLabel": "",
+                                            "imageText": "",
+                                            "imageUrl": "https://storecomponents.vtexassets.com/arquivos/ids/155485/Frame-1.jpg?v=636793817642000000"
+                                        },
+                                        {
+                                            "imageId": "155486",
+                                            "cacheId": "155486",
+                                            "imageTag": "",
+                                            "imageLabel": "",
+                                            "imageText": "",
+                                            "imageUrl": "https://storecomponents.vtexassets.com/arquivos/ids/155486/Frame-2.jpg?v=636793817785530000"
+                                        }
+                                    ],
+                                    "itemId": "2000534",
+                                    "name": "1",
+                                    "nameComplete": "Top Wood Clock 1",
+                                    "complementName": "",
+                                    "referenceId": [
+                                        {
+                                            "Key": "RefId",
+                                            "Value": "16001"
+                                        }
+                                    ],
+                                    "measurementUnit": "un",
+                                    "unitMultiplier": 1,
+                                    "variations": [],
+                                    "ean": "16001",
+                                    "modalType": "",
+                                    "videos": [],
+                                    "attachments": [],
+                                    "isKit": false
+                                }
+                            ],
+                            "origin": "intelligent-search"
+                        },
+                        {
+                            "cacheId": "sp-2000214",
+                            "productId": "2000214",
+                            "description": "",
+                            "productName": "kevin1",
+                            "linkText": "kevin1-lkn",
+                            "brand": "Sony",
+                            "brandId": 2000005,
+                            "link": "/kevin1-lkn/p",
+                            "categories": [
+                                "/Home & Decor/"
+                            ],
+                            "categoryId": "40",
+                            "categoriesIds": [
+                                "/40/"
+                            ],
+                            "priceRange": {
+                                "sellingPrice": {
+                                    "highPrice": 10,
+                                    "lowPrice": 10
+                                },
+                                "listPrice": {
+                                    "highPrice": 10,
+                                    "lowPrice": 10
+                                }
+                            },
+                            "specificationGroups": [
+                                {
+                                    "originalName": "allSpecifications",
+                                    "name": "allSpecifications",
+                                    "specifications": [
+                                        {
+                                            "originalName": "sellerId",
+                                            "name": "sellerId",
+                                            "values": [
+                                                "1"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ],
+                            "skuSpecifications": [],
+                            "productClusters": [],
+                            "clusterHighlights": [],
+                            "properties": [
+                                {
+                                    "name": "sellerId",
+                                    "originalName": "sellerId",
+                                    "values": [
+                                        "1"
+                                    ]
+                                }
+                            ],
+                            "items": [
+                                {
+                                    "sellers": [
+                                        {
+                                            "sellerId": "1",
+                                            "sellerName": "VTEX",
+                                            "addToCartLink": "",
+                                            "sellerDefault": true,
+                                            "commertialOffer": {
+                                                "DeliverySlaSamplesPerRegion": {},
+                                                "DeliverySlaSamples": [],
+                                                "AvailableQuantity": 10000,
+                                                "discountHighlights": [],
+                                                "Installments": [
+                                                    {
+                                                        "Value": 10,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 10,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "American Express à vista",
+                                                        "PaymentSystemName": "American Express"
+                                                    },
+                                                    {
+                                                        "Value": 10,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 10,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "Visa à vista",
+                                                        "PaymentSystemName": "Visa"
+                                                    },
+                                                    {
+                                                        "Value": 10,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 10,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "Diners à vista",
+                                                        "PaymentSystemName": "Diners"
+                                                    },
+                                                    {
+                                                        "Value": 10,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 10,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "Mastercard à vista",
+                                                        "PaymentSystemName": "Mastercard"
+                                                    },
+                                                    {
+                                                        "Value": 10,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 10,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "Boleto Bancário à vista",
+                                                        "PaymentSystemName": "Boleto Bancário"
+                                                    },
+                                                    {
+                                                        "Value": 10,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 10,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "Vale à vista",
+                                                        "PaymentSystemName": "Vale"
+                                                    },
+                                                    {
+                                                        "Value": 10,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 10,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "Promissory à vista",
+                                                        "PaymentSystemName": "Promissory"
+                                                    },
+                                                    {
+                                                        "Value": 10,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 10,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "Customer Credit à vista",
+                                                        "PaymentSystemName": "Customer Credit"
+                                                    },
+                                                    {
+                                                        "Value": 5,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 10,
+                                                        "NumberOfInstallments": 2,
+                                                        "Name": "Customer Credit 2 vezes sem juros",
+                                                        "PaymentSystemName": "Customer Credit"
+                                                    },
+                                                    {
+                                                        "Value": 3.43,
+                                                        "InterestRate": 100,
+                                                        "TotalValuePlusInterestRate": 10.29,
+                                                        "NumberOfInstallments": 3,
+                                                        "Name": "Customer Credit 3 vezes com juros",
+                                                        "PaymentSystemName": "Customer Credit"
+                                                    },
+                                                    {
+                                                        "Value": 10,
+                                                        "InterestRate": 0,
+                                                        "TotalValuePlusInterestRate": 10,
+                                                        "NumberOfInstallments": 1,
+                                                        "Name": "Free à vista",
+                                                        "PaymentSystemName": "Free"
+                                                    }
+                                                ],
+                                                "Price": 10,
+                                                "ListPrice": 10,
+                                                "spotPrice": 10,
+                                                "taxPercentage": 0,
+                                                "PriceWithoutDiscount": 10,
+                                                "Tax": 0,
+                                                "GiftSkuIds": [],
+                                                "BuyTogether": [],
+                                                "ItemMetadataAttachment": [],
+                                                "RewardValue": 0,
+                                                "PriceValidUntil": "2023-04-01T13:13:20Z",
+                                                "GetInfoErrorMessage": null,
+                                                "CacheVersionUsedToCallCheckout": "",
+                                                "teasers": [
+                                                    {
+                                                        "name": "8% Boleto",
+                                                        "conditions": {
+                                                            "minimumQuantity": 0,
+                                                            "parameters": [
+                                                                {
+                                                                    "name": "PaymentMethodId",
+                                                                    "value": "6"
+                                                                }
+                                                            ]
+                                                        },
+                                                        "effects": {
+                                                            "parameters": [
+                                                                {
+                                                                    "name": "PercentualDiscount",
+                                                                    "value": "8.0"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "images": [
+                                        {
+                                            "imageId": "155675",
+                                            "cacheId": "155675",
+                                            "imageTag": "",
+                                            "imageLabel": "vtex",
+                                            "imageText": "vtex",
+                                            "imageUrl": "https://storecomponents.vtexassets.com/arquivos/ids/155675/vtex.jpg?v=637655270451200000"
+                                        }
+                                    ],
+                                    "itemId": "310124211",
+                                    "name": "kevin1sku",
+                                    "nameComplete": "kevin1sku",
+                                    "complementName": "",
+                                    "referenceId": [
+                                        {
+                                            "Key": "RefId",
+                                            "Value": "2983678w63478"
+                                        }
+                                    ],
+                                    "measurementUnit": "un",
+                                    "unitMultiplier": 1,
+                                    "variations": [],
+                                    "ean": "2398428937489",
+                                    "modalType": "",
+                                    "videos": [],
+                                    "attachments": [],
+                                    "isKit": false
+                                }
+                            ],
+                            "origin": "intelligent-search"
+                        }
+                    ],
+                    "recordsFiltered": 5,
+                    "correction": {
+                        "misspelled": false
+                    },
+                    "fuzzy": "0",
+                    "operator": "and",
+                    "translated": false
+                },
+                "type": "object",
+                "properties": {
+                    "recordsFiltered": {
+                        "type": "number",
+                        "description": "Total number of products."
+                    },
+                    "correction": {
+                        "type": "object",
+                        "properties": {
+                            "misspelled": {
+                                "type": "boolean",
+                                "description": "Whether the term is misspelled (`true`) or not (`false`)."
+                            }
+                        }
+                    },
+                    "fuzzy": {
+                        "type": "string",
+                        "description": "Indicates how the search engine corrected the misspelled word by using fuzzy logic. It can be a number representing the max number of misspelled letters, or the string `auto` suggesting that the search-engine should set this value by itself."
+                    },
+                    "operator": {
+                        "type": "string",
+                        "enum": [
+                            "and",
+                            "or"
+                        ],
+                        "description": "Indicates how the search-engine dealt with the fullText when there is more than one word.\n * `and` - It means that the products contains all the words in the query.\n * `or` - It means that the results will contain at least one word from the original search query. If `and` was not possible, `or` will be the fallback."
+                    },
+                    "products": {
+                        "type": "array",
+                        "description": "List of products",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "translated": {
+                        "type": "boolean",
+                        "description": "Whether the list of products was trasnlated by the IS (`true`) or not (`false`)."
+                    }
+                }
+            },
+            "Facets": {
+                "type": "object",
+                "properties": {
+                    "facets": {
+                        "type": "array",
+                        "description": "List of facets",
+                        "items": {
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "description": "Facet type\n - `TEXT` - The value is a simple text.\n - `PRICERANGE` - The value contains the property `range` representing the minimum and the maximum price for the query.\n",
+                                    "enum": [
+                                        "TEXT",
+                                        "PRICERANGE"
+                                    ]
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "description": "Human-readable format of the facet key."
+                                },
+                                "hidden": {
+                                    "type": "boolean",
+                                    "description": "Whether the client-side should hide the facet (`true`) or not (`false`)"
+                                },
+                                "quantity": {
+                                    "type": "number",
+                                    "description": "Number of possible values."
+                                },
+                                "values": {
+                                    "type": "array",
+                                    "description": "Possible values.",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "string",
+                                                "description": "Value id"
+                                            },
+                                            "quantity": {
+                                                "type": "number",
+                                                "description": "Number of resulting products."
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "description": "Human-readable format of the facet value"
+                                            },
+                                            "key": {
+                                                "type": "string",
+                                                "description": "Facet key."
+                                            },
+                                            "value": {
+                                                "type": "string",
+                                                "description": "Facet value."
+                                            },
+                                            "selected": {
+                                                "type": "boolean",
+                                                "description": "Whether the value is selected (`true`) or not (`false`)."
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "sampling": {
+                        "type": "boolean"
+                    },
+                    "breadcrumb": {
+                        "type": "array",
+                        "description": "Generated breadcrumb for the given query.",
+                        "items": {
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Human-readable format of the facet key."
+                                },
+                                "href": {
+                                    "type": "string",
+                                    "description": "Query link."
+                                }
+                            }
+                        }
+                    },
+                    "queryArgs": {
+                        "type": "object",
+                        "description": "Term and facets used in the query",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "Search term used in the query."
+                            },
+                            "selectedFacets": {
+                                "type": "array",
+                                "description": "Facets used in the query.",
+                                "items": {
+                                    "properties": {
+                                        "key": {
+                                            "type": "string",
+                                            "description": "facet key."
+                                        },
+                                        "value": {
+                                            "type": "string",
+                                            "description": "facet value."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "Error": {
+                "required": [
+                    "stack",
+                    "message"
+                ],
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "description": "Error message"
+                    },
+                    "stack": {
+                        "type": "string",
+                        "description": "Error stack trace"
+                    }
+                }
+            }
+        }
+    }
+}
