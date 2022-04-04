@@ -115,7 +115,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Success"
+                                    "$ref": "#/components/schemas/Success-Manifest"
                                 },
                                 "examples": {
                                     "response": {
@@ -173,7 +173,11 @@
                                                         }
                                                     ]
                                                 }
-                                            ]
+                                            ],
+                                            "autoSettleDelay": {
+                                                "minimum": "0",
+                                                "maximum": "720"
+                                            }
                                         }
                                     }
                                 }
@@ -293,7 +297,7 @@
                                         "type": "boolean",
                                         "title": "verificationOnly",
                                         "description": "Indicates whether this payment is just to validate the buyer's payment method information (for instance, validate the credit card information)",
-                                        "default": "",
+                                        "default": false,
                                         "pattern": "^(.*)$"
                                     },
                                     "transactionId": {
@@ -335,7 +339,7 @@
                                         "type": "number",
                                         "title": "value",
                                         "description": "Value amount of the payment",
-                                        "default": "",
+                                        "default": 0,
                                         "pattern": "^(.*)$"
                                     },
                                     "currency": {
@@ -349,7 +353,7 @@
                                         "type": "number",
                                         "title": "installments",
                                         "description": "Number of installments",
-                                        "default": "",
+                                        "default": 1,
                                         "pattern": "^(.*)$"
                                     },
                                     "installmentsInterestRate": {
@@ -552,7 +556,7 @@
                                                         "type": "boolean",
                                                         "title": "isCorporate",
                                                         "description": "Indicates whether or not the buyer is corporate",
-                                                        "default": "true",
+                                                        "default": true,
                                                         "pattern": "^(.*)$"
                                                     },
                                                     "corporateName": {
@@ -1351,9 +1355,9 @@
                 "tags": [
                     "Payment Flow"
                 ],
-                "summary": "Capture Payment",
-                "description": "Captures (settle) a payment that was previously approved.",
-                "operationId": "CapturePayment",
+                "summary": "Settle Payment",
+                "description": "Settles a payment that was previously approved.",
+                "operationId": "SettlePayment",
                 "parameters": [
                     {
                         "name": "X-VTEX-API-AppKey",
@@ -1415,10 +1419,8 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "$ref": "#/components/schemas/CapturePayment"
-                            },
-                            "example": {}
+                                "$ref": "#/components/schemas/SettlePayment"
+                            }
                         }
                     },
                     "required": true
@@ -1580,7 +1582,7 @@
                     "Payment Flow"
                 ],
                 "summary": "Refund Payment",
-                "description": "Refunds a payment that was previously captured (settled). You can expect partial refunds.",
+                "description": "Refunds a payment that was previously settled. You can expect partial refunds.",
                 "operationId": "RefundPayment",
                 "parameters": [
                     {
@@ -1643,10 +1645,8 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
                                 "$ref": "#/components/schemas/RefundPayment"
-                            },
-                            "example": {}
+                            }
                         }
                     },
                     "required": true
@@ -2398,6 +2398,145 @@
                     ]
                 }
             },
+            "Success-Manifest": {
+                "title": "Success-Manifest",
+                "required": [
+                    "paymentMethods",
+                    "customFields"
+                ],
+                "type": "object",
+                "properties": {
+                    "paymentMethods": {
+                        "type": "array",
+                        "description": "Describes each payment method supported by payment provider and exposed its respective metadata",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "name",
+                                "allowsSplit"
+                            ],
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Payment method name"
+                                },
+                                "allowsSplit": {
+                                    "type": "string",
+                                    "description": "Describes which transaction flow stage the connector should receive payment split data. Accepted values: `onAuthorize`, `onCapture`, `disabled`"
+                                }
+                            }
+                        }
+                    },
+                    "customFields": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "description": "Describes the customized fields supported by the connector",
+                            "required": [
+                                "name",
+                                "type"
+                            ],
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Custom field name"
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "description": "Custom field type. Accepted values: `text`, `select`"
+                                },
+                                "options": {
+                                    "type": "array",
+                                    "description": "In case of `select` type, the possible params are `text` and `value`",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "text": {
+                                                "type": "string",
+                                                "description": "Custom field description"
+                                            },
+                                            "value": {
+                                                "type": "string",
+                                                "description": "Custom field value"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "autoSettleDelay": {
+                        "type": "object",
+                        "description": "Describes the allowed delay value for the auto settle capture. Accepted values: `minimum` and `maximum` in whole hours (decimals are not allowed)",
+                        "properties": {
+                            "minimum": {
+                                "type": "string",
+                                "description": "Minimum amount of time to auto settle in hours"
+                            },
+                            "maximum": {
+                                "type": "string",
+                                "description": "Maximum amount of time to auto settle in hours"
+                            }
+                        }
+                    }
+                },
+                "example": {
+                    "paymentMethods": [
+                        {
+                            "name": "Visa",
+                            "allowsSplit": "onCapture"
+                        },
+                        {
+                            "name": "Pix",
+                            "allowsSplit": "disabled"
+                        },
+                        {
+                            "name": "Mastercard",
+                            "allowsSplit": "onCapture"
+                        },
+                        {
+                            "name": "American Express",
+                            "allowsSplit": "onCapture"
+                        },
+                        {
+                            "name": "BankInvoice",
+                            "allowsSplit": "onAuthorize"
+                        },
+                        {
+                            "name": "Privatelabels",
+                            "allowsSplit": "disabled"
+                        },
+                        {
+                            "name": "Promissories",
+                            "allowsSplit": "disabled"
+                        }
+                    ],
+                    "customFields": [
+                        {
+                            "name": "Merchant's custom field",
+                            "type": "text"
+                        },
+                        {
+                            "name": "Merchant's custom select field",
+                            "type": "select",
+                            "options": [
+                                {
+                                    "text": "Field option 1",
+                                    "value": "1"
+                                },
+                                {
+                                    "text": "Field option 2",
+                                    "value": "2"
+                                },
+                                {
+                                    "text": "Field option 3",
+                                    "value": "3"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
             "Success-Approved": {
                 "title": "Success-Approved",
                 "required": [
@@ -2485,8 +2624,7 @@
                 "title": "CancelPaymentRequest",
                 "required": [
                     "paymentId",
-                    "requestId",
-                    "authorizationId"
+                    "requestId"
                 ],
                 "type": "object",
                 "properties": {
@@ -2750,8 +2888,8 @@
                     "requestId": "LA4E20D3B4E07B7E871F5B5BC9F91"
                 }
             },
-            "CapturePayment": {
-                "title": "CapturePayment",
+            "SettlePayment": {
+                "title": "SettlePayment",
                 "required": [
                     "transactionId",
                     "requestId",
@@ -2776,7 +2914,7 @@
                     },
                     "value": {
                         "type": "number",
-                        "description": "The amount to be settled/captured"
+                        "description": "The amount to be settled"
                     },
                     "authorizationId": {
                         "type": "string",
@@ -2814,7 +2952,7 @@
                                     "description": "Recipient document type"
                                 },
                                 "document": {
-                                    "type": "number",
+                                    "type": "string",
                                     "description": "Recipient document number"
                                 },
                                 "role": {
@@ -2832,28 +2970,10 @@
                                 "amount": {
                                     "type": "number",
                                     "description": "Amount due to this recipient"
-                                }
-                            },
-                            "example": {
-                                "id": "2D00FEBB5D7A43D598A99CFC43ADF158",
-                                "method": "CreditCard",
-                                "name": "Visa",
-                                "value": 63.98,
-                                "installments": 3,
-                                "details": {
-                                    "bin": "507860",
-                                    "lastDigits": "2798",
-                                    "holder": "John Doe",
-                                    "address": {
-                                        "country": "BRA",
-                                        "street": "Rua Praia de Botafogo",
-                                        "number": "518",
-                                        "complement": "2o. andar",
-                                        "neighborhood": "Botafogo",
-                                        "postalCode": "22250-040",
-                                        "city": "Rio de Janeiro",
-                                        "state": "RJ"
-                                    }
+                                },
+                                "commissionAmount": {
+                                    "type": "number",
+                                    "description": "Amount of commission due to the marketplace"
                                 }
                             }
                         }
@@ -2864,19 +2984,46 @@
                     }
                 },
                 "example": {
-                    "transactionId": "{{transactionId}}"
+                    "transactionId": "D3AA1FC8372E430E8236649DB5EBD08E",
+                    "requestId": "2019-02-04T22:53:42-40000",
+                    "paymentId": "F5C1A4E20D3B4E07B7E871F5B5BC9F91",
+                    "value": 45.00,
+                    "authorizationId": "5784589",
+                    "tid": "5784589",
+                    "recipients": [
+                        {
+                            "id": "mystore",
+                            "name": "Company XPTO",
+                            "documentType": "CNPJ",
+                            "document": "05314972000174",
+                            "role": "marketplace",
+                            "chargeProcessingFee": true,
+                            "chargebackLiable": true,
+                            "amount": 7.2
+                        },
+                        {
+                            "id": "sellerA",
+                            "name": "Company ABC",
+                            "documentType": "CNPJ",
+                            "document": "24830098000172",
+                            "role": "seller",
+                            "chargeProcessingFee": false,
+                            "chargebackLiable": false,
+                            "amount": 37.8,
+                            "commissionAmount": 7.2
+                        }
+                    ]
                 }
             },
             "RefundPayment": {
                 "title": "RefundPayment",
                 "required": [
-                    "transactionId",
                     "requestId",
                     "settleId",
                     "paymentId",
+                    "tid",
                     "value",
-                    "authorizationId",
-                    "tid"
+                    "transactionId"
                 ],
                 "type": "object",
                 "properties": {
@@ -2932,7 +3079,7 @@
                                     "description": "Recipient document type"
                                 },
                                 "document": {
-                                    "type": "number",
+                                    "type": "string",
                                     "description": "Recipient document number"
                                 },
                                 "role": {
@@ -2951,28 +3098,6 @@
                                     "type": "number",
                                     "description": "Amount due to this recipient"
                                 }
-                            },
-                            "example": {
-                                "id": "2D00FEBB5D7A43D598A99CFC43ADF158",
-                                "method": "CreditCard",
-                                "name": "Visa",
-                                "value": 63.98,
-                                "installments": 3,
-                                "details": {
-                                    "bin": "507860",
-                                    "lastDigits": "2798",
-                                    "holder": "John Doe",
-                                    "address": {
-                                        "country": "BRA",
-                                        "street": "Rua Praia de Botafogo",
-                                        "number": "518",
-                                        "complement": "2o. andar",
-                                        "neighborhood": "Botafogo",
-                                        "postalCode": "22250-040",
-                                        "city": "Rio de Janeiro",
-                                        "state": "RJ"
-                                    }
-                                }
                             }
                         }
                     },
@@ -2982,7 +3107,30 @@
                     }
                 },
                 "example": {
-                    "transactionId": "{{transactionId}}"
+                    "requestId": "LA4E20D3B4E07B7E871F5B5BC9F91",
+                    "settleId": "Q5C1A4E20D3B4E07B7E871F5B5BC9F91",
+                    "paymentId": "F5C1A4E20D3B4E07B7E871F5B5BC9F91",
+                    "tid": "10022005181543584603",
+                    "value": 20.00,
+                    "transactionId": "D3AA1FC8372E430E8236649DB5EBD08E",
+                    "recipients": [
+                        {
+                            "id": "mystore",
+                            "name": "Company XPTO",
+                            "documentType": "CNPJ",
+                            "document": "05314972000174",
+                            "role": "marketplace",
+                            "amount": 3.2
+                        },
+                        {
+                            "id": "sellerA",
+                            "name": "Company ABC",
+                            "documentType": "CNPJ",
+                            "document": "24830098000172",
+                            "role": "seller",
+                            "amount": 16.8
+                        }
+                    ]
                 }
             },
             "InboundRequest_BETA_Request": {
