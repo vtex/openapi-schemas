@@ -1,0 +1,96 @@
+# OpenAPI Checklist
+
+- `servers`
+    - `{}`
+        - [ ]  `url`
+        - [ ]  `description`
+        - `variables`
+            - `accountName`
+                - [ ]  `"description": "Name of the VTEX account. Used as part of the URL"`
+                - [ ]  `"default": "apiexamples"`
+            - `environment`
+                - [ ]  `"description": "Environment to use. Used as part of the URL."`
+                - [ ]  `"default": "vtexcommercestable"`
+- `paths.{path}.{method}`
+    - [ ]  `tags`
+    - [ ]  `summary`
+    - [ ]  `description`
+    - [ ]  `operationId`
+    - `parameters`
+        - `{}`
+            - [ ]  `name`
+            - [ ]  `in`
+            - [ ]  `required` if `true`
+            - [ ]  `description`
+            - `schema`
+                - [ ]  `type`
+                - [ ]  `example`
+    - `requestBody`    (Unless the method is `GET`)
+        - `content.{Content-Type}.schema`
+            - [ ]  `title: ""`
+            - [ ]  `type`
+            - [ ]  `required[]`
+            - [ ]  `properties`
+                - `{scalarField}`
+                    - [ ]  `type`
+                    - [ ]  `description`
+                    - [ ]  `example`
+                    - [ ]  `default` (in case it applies)
+                - `{objectField}`
+                    - [ ]  `type: object`
+                    - [ ]  `description`
+                    - [ ]  `[required]`
+                    - `properties`
+                        - [ ]  `{fields}`
+                - `{arrayField}`
+                    - [ ]  `type: array`
+                    - [ ]  `description`
+                    - `items`
+                        - [ ]  `{fieldSchema}`
+    - `responses`
+        - `{status}`
+            - [ ]  `description: {status-code-name}`
+            - `content.{Content-Type}`
+                - `schema`
+                    - [ ]  `type`
+                    - `items` if `array`
+                        - [ ]  `type`
+                        - `properties` if `object`
+                            - `{scalarField}`
+                                - [ ]  `type`
+                                - [ ]  `description`
+                                - [ ]  `nullable: true` (in case `null` is a possible value)
+                            - `{objectField}`
+                                - [ ]  `type` (`object`)
+                                - [ ]  `description`
+                                - [ ]  `nullable: true` (in case `null` is a possible value)
+                                - `properties`
+                                    - [ ]  `{fields}`
+                            - `{arrayField}`
+                                - [ ]  `type` (`array`)
+                                - [ ]  `description`
+                                - [ ]  `nullable: true` (in case `null` is a possible value)
+                                - `items`
+                                    - [ ]  `{fieldSchema}`
+                    - `properties` if `object`
+                        - `{scalarField}`
+                            - [ ]  `type`
+                            - [ ]  `description`
+                            - [ ]  `nullable: true` (in case `null` is a possible value)
+                        - `{objectField}`
+                            - [ ]  `type`
+                            - [ ]  `description`
+                            - [ ]  `nullable: true` (in case `null` is a possible value)
+                            - `properties`
+                                - [ ]  `{fields}`
+                        - `{arrayField}`
+                            - [ ]  `type` (`array`)
+                            - [ ]  `description`
+                            - [ ]  `nullable: true` (in case `null` is a possible value)
+                            - `items`
+                                - [ ]  `{fieldSchema}`
+                - `example`
+                    - [ ]  `{responseBodyExample}`
+- `tags`
+    - `{}`
+        - [ ]  `name`
