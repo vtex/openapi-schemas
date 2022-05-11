@@ -17,4 +17,4 @@ In order to generate VTEX's public API docs we use the [OpenAPI v3](https://www.
 You must add the [@technical-writers](https://github.com/orgs/vtex-apps/teams/technical-writers/members) as your contribution's reviewers. By adding the team, we will indicate the right person to review your PR.
 
 ## Code of Conduct
-Please follow our [Code of Conduct](). Contributions outside the code will be denied.
+Please follow our [Code of Conduct](CODE_OF_CONDUCT.md). Contributions outside the code will be denied.
