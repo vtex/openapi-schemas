@@ -14,7 +14,7 @@ We encourage everyone to participate in the building of our documentation. We us
 We created a [OpenAPI checklist](https://github.com/vtex/openapi-schemas/blob/master/OpenAPI%20Checklist.md) that contains all fields that we consider required for our API documentation. Please read the checklist before contributing.
 
 ### Review
-You must add the [@technical-writers](https://github.com/orgs/vtex-apps/teams/technical-writers/members) to review your contribution. By adding the team, we will indicate the right person to review your PR.
+You must add the [@technical-writers](https://github.com/orgs/vtex-apps/teams/technical-writers/members) as your contribution's reviewers. By adding the team, we will indicate the right person to review your PR.
 
 ## Code of Conduct
 Please follow our [Code of Conduct](). Contributions outside the code will be denied.
