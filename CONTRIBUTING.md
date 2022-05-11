@@ -8,7 +8,7 @@ We encourage everyone to participate in the building of our documentation. We us
 - Improvement (make an endpoint's title or description even better)
 - Spelling and grammar accuracy (self-explanatory)
 
->ℹ️ You should create semantic commits and one PR for each API file to facilitate the technical writer's review.
+>ℹ️  You should create semantic commits and one PR for each API file to facilitate the technical writer's review.
 
 ### Style Guidelines
 We created a [OpenAPI checklist](https://github.com/vtex/openapi-schemas/blob/master/OpenAPI%20Checklist.md) that contains all fields that we consider required for our API documentation. Please read the checklist before contributing.
