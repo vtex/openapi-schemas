@@ -1,6 +1,12 @@
 # openapi-schemas
 This documentation comprises VTEX's public APIs as OpenAPI 3.0 JSON schemas. Files are automatically synced with VTEX's Developer Portal [API Reference page](https://developers.vtex.com/reference) and can be imported to Postman following [these instructions](https://learning.postman.com/docs/postman/collections/working-with-openAPI/).
 
+## Contributing with the documentation
+Please check our [Contributing Guide](CONTRIBUTING.md) for more information about how to contribute with this repository.
+
+## Code of Conduct
+Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
+
 ## VTEX APIs
 - Antifraud Provider API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https://raw.githubusercontent.com/vtex/openapi-schemas/master/VTEX%2520-%2520Antifraud%2520Provider%2520API.json&label=OpenAPI)
 - Catalog API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Catalog%2520API.json&label=OpenAPI)
