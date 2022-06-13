@@ -1450,10 +1450,10 @@
         "/config": {
             "get": {
                 "tags": [
-                    "Pricing Config"
+                    "Pricing Configuration"
                 ],
-                "summary": "Get Pricing Config",
-                "description": "Retrieves Pricing Module Configuration",
+                "summary": "Get Pricing Configuration",
+                "description": "Retrieves Pricing Configuration.",
                 "operationId": "GetPricingConfig",
                 "parameters": [
                     {
@@ -1481,7 +1481,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "OK",
                         "headers": {
                             "Access-Control-Allow-Credentials": {
                                 "content": {
@@ -1597,17 +1597,29 @@
                         "content": {
                             "application/json; charset=utf-8": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Default2"
+                                    "$ref": "#/components/schemas/PricingConfiguration"
                                 },
                                 "example": {
                                     "hasMigrated": true,
-                                    "migrationCurrentSKUIndex": 5200,
-                                    "migrationTotalSKU": 5200,
+                                    "migrationStatus": "Completed",
                                     "defaultMarkup": 100,
+                                    "priceVariation": {
+                                        "upperLimit": null,
+                                        "lowerLimit": null
+                                    },
                                     "minimumMarkups": {
                                         "1": 100,
                                         "2": 90
-                                    }
+                                    },
+                                    "tradePolicyConfigs": [],
+                                    "sellersToOverride": [],
+                                    "hasPriceInheritance": false,
+                                    "priceInheritance": "never",
+                                    "hasOptionalBasePrice": false,
+                                    "blockAccount": false,
+                                    "blockedRoutes": null,
+                                    "priceTableSelectionStrategy": "first",
+                                    "priceTableLimit": null
                                 }
                             }
                         }
@@ -1629,7 +1641,7 @@
         "/migration": {
             "get": {
                 "tags": [
-                    "Pricing Config"
+                    "Pricing Configuration"
                 ],
                 "summary": "Gets Pricing v2 Active Status",
                 "description": "Gets Pricing v2 Active Status",
@@ -2845,49 +2857,148 @@
                     "priceValidUntil": "2018-12-20T18:12:14Z"
                 }
             },
-            "Default2": {
-                "title": "Default2",
+            "PricingConfiguration": {
+                "title": "Pricing Configuration response",
                 "required": [
                     "hasMigrated",
-                    "migrationCurrentSKUIndex",
-                    "migrationTotalSKU",
                     "defaultMarkup",
                     "minimumMarkups"
                 ],
                 "type": "object",
                 "properties": {
                     "hasMigrated": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Defines if the account has migrated to Pricing V2.",
+                        "example": true
                     },
-                    "migrationCurrentSKUIndex": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "migrationTotalSKU": {
-                        "type": "integer",
-                        "format": "int32"
+                    "migrationStatus": {
+                        "type": "string",
+                        "description": "Pricing V2 migration status.",
+                        "example": "Completed"
                     },
                     "defaultMarkup": {
                         "type": "integer",
-                        "format": "int32"
+                        "format": "int32",
+                        "description": "Account default markup.",
+                        "example": 2
+                    },
+                    "priceVariation": {
+                        "type": "object",
+                        "description": "Price Variation object.",
+                        "properties": {
+                            "upperLimit": {
+                                "type": "integer",
+                                "description": "Upper variation limit.",
+                                "nullable": true,
+                                "example": 10
+                            },
+                            "lowerLimit": {
+                                "type": "integer",
+                                "description": "Lower variation limit.",
+                                "nullable": true,
+                                "example": 1
+                            }
+                        }
                     },
                     "minimumMarkups": {
                         "type": "object",
+                        "description": "Account minimum markup.",
                         "additionalProperties": {
                             "type": "integer",
                             "format": "int32"
                         }
+                    },
+                    "tradePolicyConfigs": {
+                        "type": "array",
+                        "description": "Trade Policy Configurations array.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "tradePolicyId": {
+                                    "type": "string",
+                                    "description": "Trade Policy ID.",
+                                    "example": "b2c"
+                                },
+                                "minimumMarkup": {
+                                    "type": "string",
+                                    "description": "Trade Policy Minimum Markup.",
+                                    "example": 80
+                                },
+                                "rulesShouldAffectListPrice": {
+                                    "type": "boolean",
+                                    "description": "Defines if the Price Rule should affect the list price too.",
+                                    "example": false
+                                }
+                            }
+                        }
+                    },
+                    "sellersToOverride": {
+                        "type": "array",
+                        "description": "Overrides prices from sellers."
+                    },
+                    "hasPriceInheritance": {
+                        "type": "boolean",
+                        "description": "Deprecated. Use the `priceInheritance` field instead.",
+                        "deprecated": true
+                    },
+                    "priceInheritance": {
+                        "type": "string",
+                        "description": "Condition of price inheritance from its parent account. This field can have three possible values: `never` if the store should never inherit prices, `nonexistent` if the store should only inherit prices in case of nonexistent prices for a given product, or `always` if the store should always inherit prices, regardless of its own prices.",
+                        "example": "nonexistent"
+                    },
+                    "hasOptionalBasePrice": {
+                        "type": "boolean",
+                        "description": "Defines if optional base price is allowed.",
+                        "example": false
+                    },
+                    "blockAccount": {
+                        "type": "boolean",
+                        "description": "Defines if access to the Pricing APIs is blocked for external requests.",
+                        "example": false
+                    },
+                    "blockedRoutes": {
+                        "type": "array",
+                        "description": "Array with all blocked routes.",
+                        "nullable": true,
+                        "items": {
+                            "type": "string",
+                            "description": "Blocked route."
+                        }
+                    },
+                    "priceTableSelectionStrategy": {
+                        "type": "string",
+                        "description": "The strategy used to get prices when there is more than one option. Possible values: `first`, `highest`, `lowest`. Default: `first`.",
+                        "default": "first",
+                        "example": "highest"
+                    },
+                    "priceTableLimit": {
+                        "type": "integer",
+                        "description": "Price Table Limit.",
+                        "nullable": true,
+                        "example": 100
                     }
                 },
                 "example": {
                     "hasMigrated": true,
-                    "migrationCurrentSKUIndex": 5200,
-                    "migrationTotalSKU": 5200,
+                    "migrationStatus": "Completed",
                     "defaultMarkup": 100,
+                    "priceVariation": {
+                        "upperLimit": null,
+                        "lowerLimit": null
+                    },
                     "minimumMarkups": {
                         "1": 100,
                         "2": 90
-                    }
+                    },
+                    "tradePolicyConfigs": [],
+                    "sellersToOverride": [],
+                    "hasPriceInheritance": false,
+                    "priceInheritance": "never",
+                    "hasOptionalBasePrice": false,
+                    "blockAccount": false,
+                    "blockedRoutes": null,
+                    "priceTableSelectionStrategy": "first",
+                    "priceTableLimit": null
                 }
             },
             "Default3": {
