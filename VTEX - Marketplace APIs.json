@@ -2934,12 +2934,12 @@
             }
         },
         "/{accountName}.{environment}.com.br/api/seller-register/pvt/sellers": {
-            "put": {
+            "post": {
                 "tags": [
                     "Sellers"
                 ],
                 "summary": "Configure Seller Account",
-                "description": "This endpoint is used by marketplace operators to configure the accounts of sellers that have already accepted the invitation to join their marketplaces. \n\nIf the marketplace uses the [Seller Invite](https://developers.vtex.com/vtex-rest-api/reference/seller-invite-1) feature, it should be called after the [Create Seller from Lead](https://developers.vtex.com/vtex-rest-api/reference/seller-invite-1#createsellerfromsellerlead) request.  \n\nFor marketplaces to [add sellers](https://help.vtex.com/tutorial/adicionar-seller-beta--6q4G4RNqVENr5YMJyindwL) without the Seller Invite feature, call this endpoint directly. \n\nThis call includes all of the information a seller needs to acitvate their account. Without going through this step, the seller's account will not function properly.",
+                "description": "This endpoint is used by marketplace operators to configure the accounts of sellers that have already accepted the invitation to join their marketplaces. \n\nFor marketplaces to [add sellers](https://help.vtex.com/tutorial/adding-a-seller-beta--6q4G4RNqVENr5YMJyindwL) without the Seller Invite feature, call this endpoint directly. \n\nThis call includes all of the information a seller needs to activate their account.",
                 "operationId": "UpsertSellerRequest",
                 "parameters": [
                     {
@@ -3039,10 +3039,6 @@
                                 "password": null,
                                 "catalogSystemEndpoint": "https://pedrostore.vtexcommercestable.com.br/api/catalog_system/",
                                 "trustPolicy": "Default",
-                                "integration": "internal-default",
-                                "offers": {
-                                    "pending": 0
-                                },
                                 "groups": [
                                     {
                                     "groups": [
@@ -3205,6 +3201,43 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "description": "array of objects",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                            "type": "array",
+                            "description": "array of objects",
+                            "title": "Request body",
+                            "items": {
+                                "type": "object",
+                                "required": [
+                                    "operation",
+                                    "path",
+                                    "value"
+                                ],
+                                "properties": {
+                                    "operation": {
+                                        "type": "string",
+                                        "description": "The action being performed, which is always going to be `replace`.",
+                                        "default": "replace"
+                                    },
+                                    "path": {
+                                        "type": "string",
+                                        "default": "/field",
+                                        "description": "The path in which the value is being updated. It follows the standardized format `/{field}`, where `{field}` is the path's name."
+                                    },
+                                    "value": {
+                                        "type": "boolean",
+                                        "default": false,
+                                        "description": "The value that is being updated. Notice that the type will depend on the path that is being updated."
+                                    }
+                                  }
+                             }
+                        }
+                    }
+                  }
+                },
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -3242,21 +3275,10 @@
                         }
                     },
                     {
-                        "name": "showSC",
-                        "in": "query",
-                        "description": "",
-                        "required": true,
-                        "style": "form",
-                        "explode": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
                         "name": "sc",
                         "in": "query",
-                        "description": "Sales channel (or [trade policy](https://help.vtex.com/en/tutorial/como-funciona-uma-politica-comercial--6Xef8PZiFm40kg2STrMkMV#master-data)) associated to the seller account created.",
-                        "required": true,
+                        "description": "Sales channel (or [trade policy](https://help.vtex.com/en/tutorial/how-trade-policies-work--6Xef8PZiFm40kg2STrMkMV)) associated to the seller account created.",
+                        "required": false,
                         "style": "form",
                         "explode": true,
                         "schema": {
@@ -6846,9 +6868,7 @@
                     "user",
                     "password",
                     "catalogSystemEndpoint",
-                    "trustPolicy",
-                    "integration",
-                    "offers"
+                    "trustPolicy"
                 ],
                 "type": "object",
                 "properties": {
@@ -6934,7 +6954,7 @@
                     },
                     "salesChannel": {
                         "type": "string",
-                        "description": "Sales channel (or [trade policy](https://help.vtex.com/en/tutorial/como-funciona-uma-politica-comercial--6Xef8PZiFm40kg2STrMkMV#master-data)) associated to the seller account created.",
+                        "description": "Sales channel (or [trade policy](https://help.vtex.com/en/tutorial/how-trade-policies-work--6Xef8PZiFm40kg2STrMkMV)) associated to the seller account created. If no value is specified, the system will automatically use the sales channel configured in the seller's [affiliate](https://help.vtex.com/en/tutorial/configuring-affiliates--tutorials_187) ID.",
                         "default": "1"
                     },
                     "isVtex": {
@@ -6996,37 +7016,12 @@
                       "description": " the marketplace must first allow VTEX to share clients’ email addresses with the seller. To do so, it is necessary to set 'AllowEmailSharing' as the value for the TrustPolicy field",
                       "default": "AllowEmailSharing"
                     },
-                    "integration": {
-                      "type": "string",
-                      "title": "Integration",
-                      "description": "If the integration is made by VTEX (internal-default), or an external hub.",
-                      "default": "internal-default"
-                    },
                     "score": {
                       "type": "number",
                       "title": "Score",
                       "description": "Score attributed to this seller.",
                       "default": 0.0
-                    },
-                    "offers": {
-                      "type": "object",
-                      "title": "Pending Offers",
-                      "description": "Offers sent by external sellers that are still waiting the marketplace's approval through the [Match Received SKUs](https://developers.vtex.com/vtex-rest-api/reference/match-received-skus) endpoint.",
-                      "default": {
-                        "pending": 0
-                      },
-                      "required": [
-                          "pending"
-                      ],
-                      "properties": {
-                          "pending": {
-                              "type": "integer",
-                              "title": "Pending Offers",
-                              "description": "Number of offers sent by external sellers that are still waiting the marketplace's approval through the [Match Received SKUs](https://developers.vtex.com/vtex-rest-api/reference/match-received-skus) endpoint.",
-                              "default": 0
-                          }
-                        }
-                     }
+                    }
                 },
                 "example": {
                         "id": "testeMARCUS123",
@@ -7073,7 +7068,6 @@
                         "exchangeReturnPolicy": "",
                         "deliveryPolicy": "",
                         "securityPrivacyPolicy": null,
-                        "integration": "internal-default",
                         "catalogSystemEndpoint": "https://pedrostore.vtexcommercestable.com.br/api/catalog_system/",
                         "fulfillmentSellerId": "",
                         "groups": [
@@ -7089,11 +7083,7 @@
                                     }
                              ]
                           }
-                        ],
-                        "offers":
-                                    {
-                                    "pending": 0
-                                    }
+                        ]
                     }
             },
             "SellerCommissionConfiguration": {
