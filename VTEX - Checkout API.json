@@ -29,7 +29,7 @@
                     "Shopping cart"
                 ],
                 "summary": "Cart simulation",
-                "description": "This endpoint is used to simulate a cart in VTEX Checkout.\r\n\r\nIt receives an **SKU ID**, the **quantity** of items in the cart, the ID of the **Seller** and the **country** in ISO ALPHA-3 Code (eg. BRA, USA, ARG).\r\n\r\nIt sends back all information about the cart, such as the selling price of each item, rates and benefits data, payment and logistics info.\r\n\r\nThis is useful whenever you need to know the avaiability of fulfilling an order for a specific cart setting, since the API response will let you know the updated price, inventory and shipping data.",
+                "description": "This endpoint is used to simulate a cart in VTEX Checkout.\r\n\r\nIt receives an **SKU ID**, the **quantity** of items in the cart, the ID of the **Seller** and the **country** in ISO ALPHA-3 Code (eg. BRA, USA, ARG).\r\n\r\nIt sends back all information about the cart, such as the selling price of each item, rates and benefits data, payment and logistics info.\r\n\r\nThis is useful whenever you need to know the availability of fulfilling an order for a specific cart setting, since the API response will let you know the updated price, inventory and shipping data.\r\n\r\n**Important**: The fields `sku id`, `quantity`, `seller` and `country` are just examples of content that you can simulate in your cart. You can add more fields to the request as per your need. Access the [orderForm](https://developers.vtex.com/vtex-rest-api/reference/checkout-api-overview) guide to check the available fields.",
                 "operationId": "CartSimulation",
                 "parameters": [
                     {
@@ -64,37 +64,552 @@
                             "type": "integer",
                             "default": 0
                         }
+                    },
+                    {
+                        "name": "sc",
+                        "in": "query",
+                        "description": "Trade Policy (Sales Channel) identification.",
+                        "required": false,
+                        "style": "form",
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
                     }
                 ],
                 "requestBody": {
-                    "description": "",
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/OrderFormSimulationRequest"
-                            },
-                            "example": {
-                                "items": [
-                                    {
-                                        "id": "{{skuId}}",
-                                        "quantity": 1,
-                                        "seller": "1"
-                                    }
+                                "type": "object",
+                                "required": [
+                                    "id",
+                                    "quantity",
+                                    "seller",
+                                    "country"
                                 ],
-                                "country": "{{countryCode-ISO-3-digits}}"
+                                "properties": {
+                                    "items": {
+                                        "type": "array",
+                                        "description": "Array containing information about the SKUs inside the cart to be simulated.",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "description": "The SKU ID.",
+                                                    "example": "1"
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "format": "int32",
+                                                    "description": "The quantity of items of this specific SKU in the cart to be simulated.",
+                                                    "example": 1
+                                                },
+                                                "seller": {
+                                                    "type": "string",
+                                                    "description": "The ID of the seller responsible for this SKU. This ID can be found in your VTEX Admin.",
+                                                    "example": "1"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "description": "Three letter ISO code of the country of the shipping address.",
+                                        "example": "BRA"
+                                    }
+                                }
                             }
                         }
-                    },
-                    "required": true
+                    }
                 },
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "OK",
                         "headers": {},
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object"
+                                    "type": "object",
+                                    "properties": {
+                                        "items":{
+                                            "type": "array",
+                                            "description": "Information on each item in the cart.",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "description": "ID of the item."
+                                                    },
+                                                    "requestIndex": {
+                                                        "type": "integer",
+                                                        "description": "Request index information."
+                                                    },
+                                                    "quantity": {
+                                                        "type": "integer",
+                                                        "description": "The quantity of the item the cart."
+                                                    },
+                                                    "seller": {
+                                                        "type": "string",
+                                                        "description": "The seller responsible for the SKU."
+                                                    },
+                                                    "sellerChain": {
+                                                        "type": "array",
+                                                        "description": "Sellers involved in the chain. The list should contain only one seller, unless it is a [Multilevel Omnichannel Inventory](https://help.vtex.com/en/tutorial/multilevel-omnichannel-inventory--7M1xyCZWUyCB7PcjNtOyw4) order.",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "Seller."
+                                                        }
+                                                    },
+                                                    "tax": {
+                                                        "type": "integer",
+                                                        "description": "Tax value in cents."
+                                                    },
+                                                    "priceValidUntil": {
+                                                        "type": "string",
+                                                        "description": "Price expiration date and time."
+                                                    },
+                                                    "price": {
+                                                        "type": "integer",
+                                                        "description": "Price in cents."
+                                                    },
+                                                    "listPrice": {
+                                                        "type": "integer",
+                                                        "description": "List price in cents."
+                                                    },
+                                                    "rewardValue": {
+                                                        "type": "integer",
+                                                        "description": "Reward value in cents."
+                                                    },
+                                                    "sellingPrice": {
+                                                        "type": "integer",
+                                                        "description": "Selling price in cents. Note that this field may be subject to rounding discrepancies. We recommend retrieving data from the `priceDefinition` data structure instead."
+                                                    },
+                                                    "offerings": {
+                                                        "type": "array",
+                                                        "description": "Array containing offering information."
+                                                    },
+                                                    "priceTags": {
+                                                        "type": "array",
+                                                        "description": "Array of price tags, each of which, modifies the price in some way, like discounts or rates that apply to the item in the context of the order."
+                                                    },
+                                                    "measurementUnit": {
+                                                        "type": "string",
+                                                        "description": "Measurement unit."
+                                                    },
+                                                    "unitMultiplier": {
+                                                        "type": "integer",
+                                                        "description": "Unit multiplier."
+                                                    },
+                                                    "parentItemIndex": {
+                                                        "type": "integer",
+                                                        "description": "Parent item index.",
+                                                        "nullable": true
+                                                    },
+                                                    "parentAssemblyBinding": {
+                                                        "type": "string",
+                                                        "description": "Parent assembly binding.",
+                                                        "nullable": true
+                                                    },
+                                                    "availability": {
+                                                        "type": "string",
+                                                        "description": "Availability."
+                                                    },
+                                                    "priceDefinition": {
+                                                        "type": "object",
+                                                        "description": "Price information for all units of a specific item.",
+                                                        "properties": {
+                                                            "calculatedSellingPrice": {
+                                                                "type": "integer",
+                                                                "description": "Item's calculated unitary selling price in cents."
+                                                            },
+                                                            "total": {
+                                                                "type": "integer",
+                                                                "description": "Total value for all units of the item in cents."
+                                                            },
+                                                            "sellingPrices": {
+                                                                "type": "array",
+                                                                "description": "Array of objects, each containing value (in cents) and quantity for the different rounding instances that can be combined to form the correctly rounded total.",
+                                                                "items": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "value": {
+                                                                            "type": "integer",
+                                                                            "description": "Value in cents for that specific rounding."
+                                                                        },
+                                                                        "quantity": {
+                                                                            "type": "integer",
+                                                                            "description": "Rounding quantity, meaning how many items are rounded to this value."
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "ratesAndBenefitsData": {
+                                            "type": "object",
+                                            "description": "Information on rates and benefits that apply to the order.",
+                                            "properties": {
+                                                "rateAndBenefitsIdentifiers": {
+                                                    "type": "array",
+                                                    "description": "List with rates and benefits identifiers."
+                                                },
+                                                "teaser": {
+                                                    "type": "array",
+                                                    "description": "List with rates and benefits teasers."
+                                                }
+                                            }
+                                        },
+                                        "paymentData": {
+                                            "type": "object",
+                                            "description": "Payment data information.",
+                                            "properties": {
+                                                "installmentOptions": {
+                                                    "type": "array",
+                                                    "description": "Installment options information.",
+                                                    "properties": {
+                                                        "paymentSystem": {
+                                                            "type": "integer",
+                                                            "description": "Payment system identification."
+                                                        },
+                                                        "bin": {
+                                                            "type": "string",
+                                                            "description": "Bin.",
+                                                            "nullable": true
+                                                        },
+                                                        "paymentName": {
+                                                            "type": "string",
+                                                            "description": "Payment name."
+                                                        },
+                                                        "paymentGroupName": {
+                                                            "type": "string",
+                                                            "description": "Payment group name."
+                                                        },
+                                                        "value": {
+                                                            "type": "integer",
+                                                            "description": "Total value assigned to this payment."
+                                                        },
+                                                        "installments": {
+                                                            "type": "array",
+                                                            "description": "Installments information.",
+                                                            "properties": {
+                                                                "count": {
+                                                                    "type": "integer",
+                                                                    "description": "Count information."
+                                                                },
+                                                                "hasInterestRate": {
+                                                                    "type": "boolean",
+                                                                    "description": "Indicates whether the payment has interest."
+                                                                },
+                                                                "interestRate": {
+                                                                    "type": "integer",
+                                                                    "description": "Interest rate value."
+                                                                },
+                                                                "value": {
+                                                                    "type": "integer",
+                                                                    "description": "Value of the order without the interest rate. The value is shown without separating cents."
+                                                                },
+                                                                "total": {
+                                                                    "type": "integer",
+                                                                    "description": "Total value of the order without separating cents. For example, $24.99 is represented `2499`."
+                                                                },
+                                                                "sellerMerchantInstallments": {
+                                                                    "type": "array",
+                                                                    "description": "Seller merchant installments information."
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "paymentSystems": {
+                                                    "type": "array",
+                                                    "description": "Information on payment systems.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "description": "Payment system ID."
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "description": "Payment system name."
+                                                            },
+                                                            "groupName": {
+                                                                "type": "string",
+                                                                "description": "Payment group name."
+                                                            },
+                                                            "validator": {
+                                                                "type": "object",
+                                                                "description": "Payment system validator.",
+                                                                "nullable": true
+                                                            },
+                                                            "stringId": {
+                                                                "type": "string",
+                                                                "description": "String ID."
+                                                            },
+                                                            "template": {
+                                                                "type": "string",
+                                                                "description": "Template."
+                                                            },
+                                                            "requiresDocument": {
+                                                                "type": "boolean",
+                                                                "description": "Indicates whether a document is required."
+                                                            },
+                                                            "displayDocument": {
+                                                                "type": "boolean",
+                                                                "description": "Indicates whether a document is shown."
+                                                            },
+                                                            "isCustom": {
+                                                                "type": "boolean",
+                                                                "description": "Indicates whether it is custom."
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "description": "Description."
+                                                            },
+                                                            "requiresAuthentication": {
+                                                                "type": "boolean",
+                                                                "description": "Indicates whether a authentication is required."
+                                                            },
+                                                            "dueDate": {
+                                                                "type": "string",
+                                                                "description": "Payment due date."
+                                                            },
+                                                            "availablePayments": {
+                                                                "type": "string",
+                                                                "description": "Availability of payment.",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "payments": {
+                                                    "type": "array",
+                                                    "description": "Information on each payment."
+                                                },
+                                                "giftCards": {
+                                                    "type": "array",
+                                                    "description": "Gift card information, if it applies to the order."
+                                                },
+                                                "giftCardMessages": {
+                                                    "type": "array",
+                                                    "description": "Array of gift card messages."
+                                                },
+                                                "availableAccounts": {
+                                                    "type": "array",
+                                                    "description": "Available accounts."
+                                                },
+                                                "availableTokens": {
+                                                    "type": "array",
+                                                    "description": "Available tokens."
+                                                },
+                                                "availableAssociations": {
+                                                    "type": "object",
+                                                    "description": "Available associations."
+                                                }
+                                            }
+                                        },
+                                        "selectableGifts": {
+                                            "type": "array",
+                                            "description": "Array containing the data of the item selected as a gift."
+                                        },
+                                        "marketingData": {
+                                            "type": "object",
+                                            "description": "Object containing promotion data such as coupon tracking information and internal or external UTMs.",
+                                            "nullable": true
+                                        },
+                                        "postalCode": {
+                                            "type": "string",
+                                            "description": "Postal Code.",
+                                            "nullable": true
+                                        },
+                                        "country": {
+                                            "type": "string",
+                                            "description": "Three letter ISO code of the country of the shipping address."
+                                        },
+                                        "logisticsInfo": {
+                                            "type": "array",
+                                            "description": "Array with logistics information on each item of the `items` array in the `orderForm`.",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "itemIndex": {
+                                                        "type": "integer",
+                                                        "description": "Index of item in items array."
+                                                    },
+                                                    "addressId": {
+                                                        "type": "string",
+                                                        "description": "Address ID.",
+                                                        "nullable": true
+                                                    },
+                                                    "selectedSla": {
+                                                        "type": "string",
+                                                        "description": "Selected SLA. For example, `\"normal\"` or `\"express\"`.",
+                                                        "nullable": true
+                                                    },
+                                                    "selectedDeliveryChannel": {
+                                                        "type": "string",
+                                                        "description": "Delivery channel selected by the customer. For example, `\"delivery\"` or `\"pickup-in-point\"`.",
+                                                        "nullable": true
+                                                    },
+                                                    "quantity": {
+                                                        "type": "integer",
+                                                        "description": "Quantity."
+                                                    },
+                                                    "shipsTo": {
+                                                        "type": "array",
+                                                        "description": "List of countries that the item may be shipped to."
+                                                    },
+                                                    "slas": {
+                                                        "type": "array",
+                                                        "description": "Information on available SLAs."
+                                                    },
+                                                    "deliveryChannels": {
+                                                        "type": "array",
+                                                        "description": "List of available delivery channels.",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string",
+                                                                    "description": "Delivery channel ID."
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "messages": {
+                                                        "type": "array",
+                                                        "description": "Array containing an object for each message generated by our servers while processing the request."
+                                                    },
+                                                    "purchaseConditions": {
+                                                        "type": "object",
+                                                        "description": "Purchase conditions information.",
+                                                        "properties": {
+                                                            "itemPurchaseConditions": {
+                                                                "type": "array",
+                                                                "description": "List of objects containing purchase condition information on each item in the order.",
+                                                                "items": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "string",
+                                                                            "description": "Item ID."
+                                                                        },
+                                                                        "seller": {
+                                                                            "type": "string",
+                                                                            "description": "Seller."
+                                                                        },
+                                                                        "sellerChain": {
+                                                                            "type": "array",
+                                                                            "description": "Sellers involved in the chain. The list should contain only one seller, unless it is a [Multilevel Omnichannel Inventory](https://help.vtex.com/en/tutorial/multilevel-omnichannel-inventory--7M1xyCZWUyCB7PcjNtOyw4) order."
+                                                                        },
+                                                                        "slas": {
+                                                                            "type": "array",
+                                                                            "description": "Information on available SLAs."
+                                                                        },
+                                                                        "price": {
+                                                                            "type": "integer",
+                                                                            "description": "Price in cents."
+                                                                        },
+                                                                        "listPrice": {
+                                                                            "type": "integer",
+                                                                            "description": "List price in cents."
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "pickupPoints": {
+                                                        "type": "array",
+                                                        "description": "Array containing pickup points information."
+                                                    },
+                                                    "subscriptionData": {
+                                                        "type": "object",
+                                                        "description": "Subscription information.",
+                                                        "nullable": true
+                                                    },
+                                                    "totals": {
+                                                        "type": "array",
+                                                        "description": "Information on order totals.",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string",
+                                                                    "description": "Total ID."
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "description": "Total name."
+                                                                },
+                                                                "value": {
+                                                                    "type": "integer",
+                                                                    "description": "Total value."
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "itemMetadata": {
+                                                        "type": "object",
+                                                        "description": "Item metadata.",
+                                                        "properties": {
+                                                            "items": {
+                                                                "type": "array",
+                                                                "description": "List of objects containing metadata on each item in the order.",
+                                                                "items": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "string",
+                                                                            "description": "Item ID."
+                                                                        },
+                                                                        "seller": {
+                                                                            "type": "string",
+                                                                            "description": "Seller."
+                                                                        },
+                                                                        "assemblyOptions": {
+                                                                            "type": "array",
+                                                                            "description": "Assembly options information.",
+                                                                            "properties": {
+                                                                                "id": {
+                                                                                    "type": "string",
+                                                                                    "description": "Item ID."
+                                                                                },
+                                                                                "name": {
+                                                                                    "type": "string",
+                                                                                    "description": "Item name."
+                                                                                },
+                                                                                "required": {
+                                                                                    "type": "boolean",
+                                                                                    "description": "Indicates whether the item is required."
+                                                                                },
+                                                                                "inputValues": {
+                                                                                    "type": "object",
+                                                                                    "description": "Input values information."
+                                                                                },
+                                                                                "composition": {
+                                                                                    "type": "string",
+                                                                                    "description": "Composition information.",
+                                                                                    "nullable": true
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 },
                                 "example": {
                                     "items": [
@@ -107,18 +622,28 @@
                                                 "1"
                                             ],
                                             "tax": 0,
-                                            "priceValidUntil": "2021-02-27T13:57:49.7009186Z",
-                                            "price": 15000,
-                                            "listPrice": 30000,
+                                            "priceValidUntil": "2023-07-12T11:49:01Z",
+                                            "price": 9999,
+                                            "listPrice": 9999,
                                             "rewardValue": 0,
-                                            "sellingPrice": 15000,
+                                            "sellingPrice": 2999700,
                                             "offerings": [],
                                             "priceTags": [],
                                             "measurementUnit": "un",
-                                            "unitMultiplier": 1.0,
+                                            "unitMultiplier": 300.0000,
                                             "parentItemIndex": null,
                                             "parentAssemblyBinding": null,
-                                            "availability": "available"
+                                            "availability": "available",
+                                            "priceDefinition": {
+                                                "calculatedSellingPrice": 2999700,
+                                                "total": 2999700,
+                                                "sellingPrices": [
+                                                    {
+                                                        "value": 2999700,
+                                                        "quantity": 1
+                                                    }
+                                                ]
+                                            }
                                         }
                                     ],
                                     "ratesAndBenefitsData": {
@@ -132,99 +657,22 @@
                                                 "bin": null,
                                                 "paymentName": "Visa",
                                                 "paymentGroupName": "creditCardPaymentGroup",
-                                                "value": 15000,
+                                                "value": 2999700,
                                                 "installments": [
                                                     {
                                                         "count": 1,
                                                         "hasInterestRate": false,
                                                         "interestRate": 0,
-                                                        "value": 15000,
-                                                        "total": 15000,
+                                                        "value": 2999700,
+                                                        "total": 2999700,
                                                         "sellerMerchantInstallments": [
                                                             {
                                                                 "id": "LOJADOBRENO",
                                                                 "count": 1,
                                                                 "hasInterestRate": false,
                                                                 "interestRate": 0,
-                                                                "value": 15000,
-                                                                "total": 15000
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        "count": 2,
-                                                        "hasInterestRate": false,
-                                                        "interestRate": 0,
-                                                        "value": 7500,
-                                                        "total": 15000,
-                                                        "sellerMerchantInstallments": [
-                                                            {
-                                                                "id": "LOJADOBRENO",
-                                                                "count": 2,
-                                                                "hasInterestRate": false,
-                                                                "interestRate": 0,
-                                                                "value": 7500,
-                                                                "total": 15000
-                                                            }
-                                                        ]
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                "paymentSystem": "4",
-                                                "bin": null,
-                                                "paymentName": "Mastercard",
-                                                "paymentGroupName": "creditCardPaymentGroup",
-                                                "value": 15000,
-                                                "installments": [
-                                                    {
-                                                        "count": 1,
-                                                        "hasInterestRate": false,
-                                                        "interestRate": 0,
-                                                        "value": 15000,
-                                                        "total": 15000,
-                                                        "sellerMerchantInstallments": [
-                                                            {
-                                                                "id": "LOJADOBRENO",
-                                                                "count": 1,
-                                                                "hasInterestRate": false,
-                                                                "interestRate": 0,
-                                                                "value": 15000,
-                                                                "total": 15000
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        "count": 2,
-                                                        "hasInterestRate": false,
-                                                        "interestRate": 0,
-                                                        "value": 7500,
-                                                        "total": 15000,
-                                                        "sellerMerchantInstallments": [
-                                                            {
-                                                                "id": "LOJADOBRENO",
-                                                                "count": 2,
-                                                                "hasInterestRate": false,
-                                                                "interestRate": 0,
-                                                                "value": 7500,
-                                                                "total": 15000
-                                                            }
-                                                        ]
-                                                    },
-                                                    {
-                                                        "count": 3,
-                                                        "hasInterestRate": false,
-                                                        "interestRate": 0,
-                                                        "value": 5000,
-                                                        "total": 15000,
-                                                        "sellerMerchantInstallments": [
-                                                            {
-                                                                "id": "LOJADOBRENO",
-                                                                "count": 3,
-                                                                "hasInterestRate": false,
-                                                                "interestRate": 0,
-                                                                "value": 5000,
-                                                                "total": 15000
+                                                                "value": 2999700,
+                                                                "total": 2999700
                                                             }
                                                         ]
                                                     }
@@ -235,48 +683,74 @@
                                                 "bin": null,
                                                 "paymentName": "Boleto Bancário",
                                                 "paymentGroupName": "bankInvoicePaymentGroup",
-                                                "value": 15000,
+                                                "value": 2999700,
                                                 "installments": [
                                                     {
                                                         "count": 1,
                                                         "hasInterestRate": false,
                                                         "interestRate": 0,
-                                                        "value": 15000,
-                                                        "total": 15000,
+                                                        "value": 2999700,
+                                                        "total": 2999700,
                                                         "sellerMerchantInstallments": [
                                                             {
                                                                 "id": "LOJADOBRENO",
                                                                 "count": 1,
                                                                 "hasInterestRate": false,
                                                                 "interestRate": 0,
-                                                                "value": 15000,
-                                                                "total": 15000
+                                                                "value": 2999700,
+                                                                "total": 2999700
                                                             }
                                                         ]
                                                     }
                                                 ]
                                             },
                                             {
-                                                "paymentSystem": "44",
+                                                "paymentSystem": "127",
                                                 "bin": null,
-                                                "paymentName": "Venda Direta Debito",
-                                                "paymentGroupName": "debitDirectSalePaymentGroup",
-                                                "value": 15000,
+                                                "paymentName": "MercadoPagoPro",
+                                                "paymentGroupName": "MercadoPagoProPaymentGroup",
+                                                "value":  2999700,
                                                 "installments": [
                                                     {
                                                         "count": 1,
                                                         "hasInterestRate": false,
                                                         "interestRate": 0,
-                                                        "value": 15000,
-                                                        "total": 15000,
+                                                        "value": 2999700,
+                                                        "total": 2999700,
                                                         "sellerMerchantInstallments": [
                                                             {
                                                                 "id": "LOJADOBRENO",
                                                                 "count": 1,
                                                                 "hasInterestRate": false,
                                                                 "interestRate": 0,
-                                                                "value": 15000,
-                                                                "total": 15000
+                                                                "value": 2999700,
+                                                                "total": 2999700
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "paymentSystem": "202",
+                                                "bin": null,
+                                                "paymentName": "Dinheiro",
+                                                "paymentGroupName": "custom202PaymentGroupPaymentGroup",
+                                                "value":  2999700,
+                                                "installments": [
+                                                    {
+                                                        "count": 1,
+                                                        "hasInterestRate": false,
+                                                        "interestRate": 0,
+                                                        "value": 2999700,
+                                                        "total": 2999700,
+                                                        "sellerMerchantInstallments": [
+                                                            {
+                                                                "id": "LOJADOBRENO",
+                                                                "count": 1,
+                                                                "hasInterestRate": false,
+                                                                "interestRate": 0,
+                                                                "value": 2999700,
+                                                                "total": 2999700
                                                             }
                                                         ]
                                                     }
@@ -285,6 +759,21 @@
                                         ],
                                         "paymentSystems": [
                                             {
+                                                "id": 202,
+                                                "name": "Dinheiro",
+                                                "groupName": "custom202PaymentGroupPaymentGroup",
+                                                "validator": null,
+                                                "stringId": "202",
+                                                "template": "custom202PaymentGroupPaymentGroup-template",
+                                                "requiresDocument": false,
+                                                "displayDocument": false,
+                                                "isCustom": true,
+                                                "description": "",
+                                                "requiresAuthentication": false,
+                                                "dueDate": "2022-07-22T11:39:36.37197Z",
+                                                "availablePayments": null
+                                            },
+                                            {
                                                 "id": 6,
                                                 "name": "Boleto Bancário",
                                                 "groupName": "bankInvoicePaymentGroup",
@@ -292,24 +781,11 @@
                                                 "stringId": "6",
                                                 "template": "bankInvoicePaymentGroup-template",
                                                 "requiresDocument": false,
+                                                "displayDocument": false,
                                                 "isCustom": false,
-                                                "description": null,
+                                                "description": "",
                                                 "requiresAuthentication": false,
-                                                "dueDate": "2020-03-05T13:57:49.664939Z",
-                                                "availablePayments": null
-                                            },
-                                            {
-                                                "id": 4,
-                                                "name": "Mastercard",
-                                                "groupName": "creditCardPaymentGroup",
-                                                "validator": null,
-                                                "stringId": "4",
-                                                "template": "creditCardPaymentGroup-template",
-                                                "requiresDocument": false,
-                                                "isCustom": false,
-                                                "description": null,
-                                                "requiresAuthentication": false,
-                                                "dueDate": "2020-03-05T13:57:49.664939Z",
+                                                "dueDate": "2022-07-19T11:39:36.37197Z",
                                                 "availablePayments": null
                                             },
                                             {
@@ -320,10 +796,26 @@
                                                 "stringId": "2",
                                                 "template": "creditCardPaymentGroup-template",
                                                 "requiresDocument": false,
+                                                "displayDocument": false,
                                                 "isCustom": false,
-                                                "description": null,
+                                                "description": "",
                                                 "requiresAuthentication": false,
-                                                "dueDate": "2020-03-05T13:57:49.664939Z",
+                                                "dueDate": "2022-07-19T11:39:36.37197Z",
+                                                "availablePayments": null
+                                            },
+                                            {
+                                                "id": 127,
+                                                "name": "MercadoPagoPro",
+                                                "groupName": "MercadoPagoProPaymentGroup",
+                                                "validator": null,
+                                                "stringId": "127",
+                                                "template": "MercadoPagoProPaymentGroup-template",
+                                                "requiresDocument": false,
+                                                "displayDocument": false,
+                                                "isCustom": false,
+                                                "description": "",
+                                                "requiresAuthentication": false,
+                                                "dueDate": "2022-07-19T11:39:36.37197Z",
                                                 "availablePayments": null
                                             }
                                         ],
@@ -331,11 +823,24 @@
                                         "giftCards": [],
                                         "giftCardMessages": [],
                                         "availableAccounts": [],
-                                        "availableTokens": []
+                                        "availableTokens": [],
+                                        "availableAssociations": {}
                                     },
                                     "selectableGifts": [],
-                                    "marketingData": null,
-                                    "postalCode": null,
+                                    "marketingData": {
+                                        "utmSource": "app",
+                                        "utmMedium": "CPC",
+                                        "utmCampaign": "Black friday",
+                                        "utmipage": "true",
+                                        "utmiPart": "true",
+                                        "utmiCampaign": "true",
+                                        "coupon": null,
+                                        "marketingTags": [
+                                            "tag1",
+                                            "tag2"
+                                        ]
+                                    },
+                                    "postalCode": "12345-000",
                                     "country": "BRA",
                                     "logisticsInfo": [
                                         {
@@ -368,8 +873,8 @@
                                                     "1"
                                                 ],
                                                 "slas": [],
-                                                "price": 15000,
-                                                "listPrice": 30000
+                                                "price": 9999,
+                                                "listPrice": 9999
                                             }
                                         ]
                                     },
@@ -379,10 +884,33 @@
                                         {
                                             "id": "Items",
                                             "name": "Total dos Itens",
-                                            "value": 15000
+                                            "value": 2999700
                                         }
                                     ],
-                                    "itemMetadata": null
+                                    "itemMetadata": {
+                                        "items": [
+                                            {
+                                                "id": "1",
+                                                "seller": "1",
+                                                "assemblyOptions": [
+                                                    {
+                                                        "id": "T-Shirt Customization",
+                                                        "name": "T-Shirt Customization",
+                                                        "required": false,
+                                                        "inputValues": {
+                                                            "T-Shirt Name": {
+                                                                "maximumNumberOfCharacters": 2,
+                                                                "domain": [
+                                                                    "[]"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "composition": null
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
                                 }
                             }
                         }
