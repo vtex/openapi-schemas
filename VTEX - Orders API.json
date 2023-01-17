@@ -1487,7 +1487,7 @@
             "get": {
                 "tags": ["Orders"],
                 "summary": "List orders",
-                "description": "Retrieves a list of orders according to the filters described below.\n\r\n\r> This should **not** be used for integrations. Use the [orders Feed or hook](https://developers.vtex.com/vtex-rest-api/docs/feed-v3-1) for this purpose.\n\r\n\rThis endpoint returns only orders that already have been indexed, which takes approximately four minutes. Because of this, the data retrieved may present inconsistencies. To get live up-to-date information and [build order integrations](https://developers.vtex.com/vtex-rest-api/docs/erp-integration-set-up-order-integration) use the [orders Feed or hook](https://developers.vtex.com/vtex-rest-api/docs/feed-v3-1).\n\r\n> 📘 Onboarding guide \r\n>\r\n> Check the new [Orders onboarding guide](https://developers.vtex.com/vtex-rest-api/docs/orders-overview). We created this guide to improve the onboarding experience for developers at VTEX. It assembles all documentation on our Developer Portal about Orders and is organized by focusing on the developer's journey.\r\n\r\n",
+                "description": "Retrieves a list of orders according to the filters described below. \r\n The limit of information retrieval is 30 pages, the default number of orders per page is 15 and it is possible to configure it up to 100 using the  `per_page` parameter. \r\n Be aware that as of October 3rd, 2018, this endpoint will not return the `items` property. \n\r\n\r> This should **not** be used for integrations. Use the [orders Feed or hook](https://developers.vtex.com/docs/guides/orders-feed) for this purpose.\n\r\n\rThis endpoint returns only orders that already have been indexed, which takes approximately four minutes. Because of this, the data retrieved may present inconsistencies. To get live up-to-date information and [build order integrations](https://developers.vtex.com/vtex-rest-api/docs/erp-integration-set-up-order-integration) use the [orders Feed or hook](https://developers.vtex.com/docs/guides/orders-feed).\n\r\n> 📘 Onboarding guide \r\n>\r\n> Check the new [Orders onboarding guide](https://developers.vtex.com/vtex-rest-api/docs/orders-overview). We created this guide to improve the onboarding experience for developers at VTEX. It assembles all documentation on our Developer Portal about Orders and is organized by focusing on the developer's journey.\r\n\r\n",
                 "operationId": "ListOrders",
                 "parameters": [
                     {
@@ -1513,6 +1513,44 @@
                         }
                     },
                     {
+                        "name": "orderBy",
+                        "in": "query",
+                        "description": "You can retrieve orders lists filtering by an `OrderField` combined with an `OrderType`. To do so, you have to concatenate them: `orderBy={{OrderField}},{{OrderType}}`. \r\n- `OrderField` values accepted: `creationDate`, `orderId`, `items`, `totalValue` and `origin`. \r\n- `OrderType` values accepted: `asc` and `desc`.",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "v502556llux-01,asc"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Define the number of pages you wish to retrieve, restricted to the limit of 30 pages.",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Quantity of orders for each page, the default value is 15 and it goes up to 100 orders per page. Be aware that the limit of retrieval ofthis endpoint is 30 pages.",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32",
+                            "example": 20
+                        }
+                    },
+                    {
                         "name": "f_creationDate",
                         "in": "query",
                         "description": "Concatened value sufix `{{creationDate}}` and range date in Timestamp format. To use the `utc` query parameter, to filter orders by time zone, you must also fill the `f_creationDate` date parameter.",
@@ -1534,6 +1572,247 @@
                         "schema": {
                             "type": "boolean",
                             "default": false
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "This parameter filters using Fulltext and accepts the values below. Be aware that the `+` caracter is not allowed in Fulltext Search. \r\n- Order Id \r\n- Client email \r\n- Client document \r\n- Client name",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "- OrderID: v212333lux-02 \r\n- Client email: taylor@email.com \r\n- Client document: 21133355524 \r\n- Client name: Taylor"
+                        }
+                    },
+                    {
+                        "name": "utc",
+                        "in": "query",
+                        "description": "Converts orders' time zone to the Universal Time Coordinated (UTC) format and shows the amount of orders set for that UTC, up to the limit of 30 pages. For it to work properly, you have to associate it with the `f_creationDate` parameter.",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32",
+                            "default": -0200
+                        }
+                    },
+                    {
+                        "name": "f_shippingEstimate",
+                        "in": "query",
+                        "description": "You can filter orders by shipping estimate time in days by concatenating the desired number of days with the sufix `.days`. For example: \r\n- Next 7 days: `7.days` \r\n- Tomorrow: `1.days` \r\n- Today: `0.days` \r\n- Late: `-1.days`",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "0.days"
+                        }
+                    },
+                    {
+                        "name": "f_invoicedDate",
+                        "in": "query",
+                        "description": "You can filter orders by invoiced date by concatenating the sufix `invoicedDate:` with the range date in Timestamp format. For example: \r\n- 1 Day: `invoicedDate:[2022-01-01T02:00:00.000Z TO 2022-01-02T01:59:59.999Z]`\r\n- 1 Month: `invoicedDate:[2022-01-01T02:00:00.000Z TO 2022-02-01T01:59:59.999Z]` \r\n- 1 Year: `invoicedDate:[2022-01-01T02:00:00.000Z TO 2022-01-01T01:59:59.999Z]`",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "invoicedDate:[2022-01-01T02:00:00.000Z TO 2022-01-02T01:59:59.999Z]"
+                        }
+                    },
+                    {
+                        "name": "f_creationDate",
+                        "in": "query",
+                        "description": "You can filter orders by creation date by concatenating the sufix `creationDate:` with the range date in Timestamp format. For example: \r\n- 1 Day: `creationDate:[2022-01-01T02:00:00.000Z TO 2022-01-02T01:59:59.999Z]`\r\n- 1 Month: `creationDate:[2022-01-01T02:00:00.000Z TO 2022-02-01T01:59:59.999Z]` \r\n- 1 Year: `creationDate:[2022-01-01T02:00:00.000Z TO 2022-01-01T01:59:59.999Z]`",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "creationDate:[2022-01-01T02:00:00.000Z TO 2022-01-02T01:59:59.999Z]"
+                        }
+                    },
+                    {
+                        "name": "f_authorizedDate",
+                        "in": "query",
+                        "description": "You can filter orders by creation date by concatenating the sufix `authorizedDate:` with the range date in Timestamp format. For example: \r\n- 1 Day: `authorizedDate:[2022-01-01T02:00:00.000Z TO 2022-01-02T01:59:59.999Z]`\r\n- 1 Month: `authorizedDate:[2022-01-01T02:00:00.000Z TO 2022-02-01T01:59:59.999Z]` \r\n- 1 Year: `authorizedDate:[2022-01-01T02:00:00.000Z TO 2022-01-01T01:59:59.999Z]`",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "creationDate:[2022-01-01T02:00:00.000Z TO 2022-01-02T01:59:59.999Z]"
+                        }
+                    },
+                    {
+                        "name": "f_UtmSource",
+                        "in": "query",
+                        "description": "You can filter orders by using a Universal Transverse Mercator (UTM) source.",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "christmas_campaign"
+                        }
+                    },
+                    {
+                        "name": "f_sellerNames",
+                        "in": "query",
+                        "description": "You can filter orders by using a seller's name.",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "SellerName"
+                        }
+                    },
+                    {
+                        "name": "f_callCenterOperatorName",
+                        "in": "query",
+                        "description": "You can filter orders by using a Call Center Operator's identification.",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "Operator%20Name"
+                        }
+                    },
+                    {
+                        "name": "f_salesChannel",
+                        "in": "query",
+                        "description": "You can filter orders by sales channel's ([or trade policy](https://help.vtex.com/en/tutorial/how-trade-policies-work--6Xef8PZiFm40kg2STrMkMV)) name.",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "Main"
+                        }
+                    },
+                    {
+                        "name": "salesChannelId",
+                        "in": "query",
+                        "description": "You can filter orders by sales channel's ([or trade policy](https://help.vtex.com/en/tutorial/how-trade-policies-work--6Xef8PZiFm40kg2STrMkMV)) ID.",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "1"
+                        }
+                    },
+                    {
+                        "name": "f_affiliateId",
+                        "in": "query",
+                        "description": "You can filter orders by affiliate ID.",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "WLM"
+                        }
+                    },
+                    {
+                        "name": "f_status",
+                        "in": "query",
+                        "description": "You can filter orders by the following [order status](https://help.vtex.com/en/tutorial/order-flow-and-status--tutorials_196): \r\n- `waiting-for-sellers-confirmation` \r\n- `payment-pending` \r\n- `payment-approved` \r\n- `ready-for-handling` \r\n- `handling` \r\n- `invoiced` \r\n- `canceled`",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "ready-for-handling"
+                        }
+                    },
+                    {
+                        "name": "f_status",
+                        "in": "query",
+                        "description": "You can filter orders by the following [order status](https://help.vtex.com/en/tutorial/order-flow-and-status--tutorials_196) descriptions: \r\n- `Aguardando+autorização+para+despachar` \r\n- `Pagamento+Pendente` \r\n- `Pagamento+Aprovado` \r\n- `Pronto+para+o+manuseio` \r\n- `Preparando+Entrega` \r\n- `Faturado` \r\n- `Cancelado`",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "Pronto+para+o+manuseio"
+                        }
+                    },
+                    {
+                        "name": "incompleteOrders",
+                        "in": "query",
+                        "description": "When set as `true`, you retrieve [incomplete orders](https://help.vtex.com/en/tutorial/understanding-incomplete-orders), when set as `false`, you retrieve orders that are not incomplete.",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    },
+                    {
+                        "name": "incompleteOrders",
+                        "in": "query",
+                        "description": "You can use this parameter to filter [incomplete orders](https://help.vtex.com/en/tutorial/understanding-incomplete-orders) by their situations, whether permanent (`perm`) or temporary (`temp`). When the situation is temporary, the order is still opened and has not being cancelled. To filter the total number of incomplete orders, use the value `all`.",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "all"
+                        }
+                    },
+                    {
+                        "name": "f_paymentNames",
+                        "in": "query",
+                        "description": "You can filter orders by payment type.",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "Visa"
+                        }
+                    },
+                    {
+                        "name": "f_RnB",
+                        "in": "query",
+                        "description": "You can filter orders by rates and benefits (promotions).",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "Free+Shipping"
+                        }
+                    },
+                    {
+                        "name": "searchField",
+                        "in": "query",
+                        "description": "You can search orders by using one of the following criterias: \r\n- SKU ID - `sku_Ids&sku_Ids` \r\n- Gift List ID - `listId&listId` \r\n- Transaction ID (TID) - `tid&tid` \r\n- PCI Connector's Transaction ID (TID) - `pci_tid&pci_tid` \r\n- Payment ID (PID) - `paymentId&paymentId` \r\n- Connector's NSU - `nsu&nsu`",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "\r\n- SKU ID: `25` \r\n- Gift List ID: `11223` \r\n- Transaction ID (TID): `54546300238810034995829230012` \r\n- PCI Connector's Transaction ID (TID): `7032909234899834298423209` \r\n- Payment ID (PID): `2` \r\n- Connector's NSU: `2437281`"
+                        }
+                    },
+                    {
+                        "name": "f_isInstore",
+                        "in": "query",
+                        "description": "When set as `true`, this parameter filters orders made via [inStore](https://help.vtex.com/en/tracks/what-is-instore--zav76TFEZlAjnyBVL5tRc), and when set as `false`, it filters orders that were not made via inStore.",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
                         }
                     }
                 ],
