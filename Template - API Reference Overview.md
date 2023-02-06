@@ -10,7 +10,7 @@ Describe your API in a brief paragraph. You may include:
 >ℹ️ Start here: check the new {xxxx} getting started guide. We created this guide to improve the onboarding experience for developers at VTEX. It assembles all documentation on our Developer Portal about {XXX} and is organized by focusing on the developer's journey.
 
 ## Endpoint requirements
-pointing out any sensitive information, like throttling, user permissions, etc. This can be added as a callout, instead of a heading, depending on the amount of information.
+You can point out any sensitive information like throttling, user permissions, etc. This can be added as a callout, instead of a heading, depending on the amount of information.
 
 
 ## Common parameters
