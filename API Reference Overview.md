@@ -3,8 +3,8 @@
 
 Describe your API in a brief paragraph. You may include:
 
-- What entities interact with the API (sellers, marketplaces, merchants in general, integrators, connectors, etc)
-- What actions it accomplishes
+- What players interact with the API (sellers, marketplaces, merchants in general, integrators, connectors, etc).
+- What actions it accomplishes.
 - Link to API Guides and Help documentation going over this product.
 
 >ℹ️ Start here: check the new {xxxx} getting started guide. We created this guide to improve the onboarding experience for developers at VTEX. It assembles all documentation on our Developer Portal about {XXX} and is organized by focusing on the developer's journey.
