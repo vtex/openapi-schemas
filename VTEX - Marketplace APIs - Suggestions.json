@@ -467,7 +467,7 @@
                     "SKU Approval Settings"
                 ],
                 "summary": "Get Seller's Approval Settings",
-                "description": "This endpoint retrieves the current Received SKUs approval settings applied to a specific seller. Its response includes: \n\n- `sellerId`: A string that identifies the seller in the marketplace. \n\n- `accountId`: Marketplace’s account ID. \n\n- `accountName`: Marketplace’s account name. \n\n- `mapping`: Mapping of SKU and product Specifications. \n\n- `matchFlux`: This field determines the type of approval configuration applied to SKUs received  from a seller. \n\nThe possible values include:  \n\n-`default`, where the Matcher reviews the SKU, and approves it based on its score. \n\n-`manual`, for manual approvals through the Received SKU UI and Match API. \n\n-`autoApprove`, for every SKU received from a given seller to be approved automatically, regardless of the Matcher Score.",
+                "description": "This endpoint retrieves the current [Received SKUs](https://help.vtex.com/en/tutorial/manual-sku-cataloging--tutorials_396) approval settings applied to a specific seller and will return a successful response only if the seller has SKUs in the following statuses: \n\n -Pending \n\n -Under review\n\n -Rejected\n\n -In processing",
                 "operationId": "Getselleraccountconfig",
                 "parameters": [
                     {
@@ -511,13 +511,33 @@
                         "schema": {
                             "type": "string",
                             "default": "application/json"
-                        }
+                            }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "headers": {}
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responseGetSellersApprovalSettings"
+                                },
+                                "example": {
+                                    "sellerId": "sellerexample",
+                                    "accountId": "d74dau71f-325a-4463-bd53-ae8b0453186ca",
+                                    "accountName": "marketplaceexample",
+                                    "mapping": {
+                                        "defaultColor": "white /black",
+                                        "searchColor": "color1, color2",
+                                        "color1": "black",
+                                        "color2": "white",
+                                        "color": "black",
+                                        "size": "EUR44"
+                                    },
+                                    "matchFlux": "default"
+                                }
+                            }
+                        }
                     }
                 },
                 "deprecated": false
@@ -2267,40 +2287,103 @@
                         }
                     }
                 }
-            }
-        },
-        "securitySchemes": {
-            "appKey": {
-                "type": "apiKey",
-                "in": "header",
-                "name": "X-VTEX-API-AppKey"
             },
-            "appToken": {
-                "type": "apiKey",
-                "in": "header",
-                "name": "X-VTEX-API-AppToken"
+            "responseGetSellersApprovalSettings": {
+                "title": "GetSellersApprovalSettings",
+                "type": "object",
+                "properties": {
+                    "sellerId": {
+                        "type": "string",
+                        "description": "A string that identifies the seller in the marketplace.",
+                        "example": "sellerexample"
+                    },
+                    "accountId": {
+                        "type": "string",
+                        "description": "Marketplace’s account ID.",
+                        "example": "d74daf1f-355a-4463-bdc7-ae8b045311c"
+                    },
+                    "accountName": {
+                        "type": "string",
+                        "description": "Marketplace’s account name.",
+                        "example": "marketplaceexample"
+                    },
+                    "mapping": {
+                        "type": "object",
+                        "default": {},
+                        "description": "SKU Mapping Information and Product [Specifications](https://developers.vtex.com/docs/guides/catalog-overview#configuring-initial-settings-mandatory).\n\n The properties included within `mapping` can change according to the product type, the `color` specification and its variations described in this example are just one of the possibilities. The values received in this call's payload for those properties depend on the seller's catalog architecture, and are not default. \n\nSee some examples of specifications: \n\n- Voltage \n\n- Power \n\n- Size \n\n- Height \n\n- Width",
+                        "properties": {
+                            "defaultColor": {
+                                "type": "string",
+                                "description": "The field will indicate the default color predefined by the seller in cases where specific product colors are not defined. This field is neither mandatory nor default, it will depend on the architecture of the seller's catalog. ",
+                                "example": "white /black"
+                            },
+                            "searchColor": {
+                                "type": "string",
+                                "description": "Field that provides the available colors to filter searches. This field is neither mandatory nor default, it will depend on the architecture of the seller's catalog.",
+                                "example":"color1, color2"
+                            },
+                            "color1": {
+                                "type": "string",
+                                "description": "`color1` available for search filter. This field is neither mandatory nor default, it will depend on the architecture of the seller's catalog.",
+                                "example":"black"
+                            },
+                            "color2": {
+                                "type": "string",
+                                "description": "`color2` available for search filter. This field is neither mandatory nor default, it will depend on the architecture of the seller's catalog.",
+                                "example":"white"
+                            },
+                            "color": {
+                                "type": "string",
+                                "description": "Indicates the predominant or main color of the product. This field is neither mandatory nor default, it will depend on the architecture of the seller's catalog.",
+                                "example":"black"
+                            },
+                            "size": {
+                                "type": "string",
+                                "description": "Indicates the size of the product.This field is neither mandatory nor default, it will depend on the architecture of the seller's catalog.",
+                                "example":"EUR44"
+                            }
+                        }
+                    },
+                    "matchFlux": {
+                        "type": "string",
+                        "description": "This field determines the type of [approval configuration applied to SKUs received from a seller](https://developers.vtex.com/docs/api-reference/marketplace-apis-suggestions#put-/suggestions/configuration/seller/-sellerId-). \n\nThe possible values include:  \n\n-`default`, where the Matcher reviews the SKU, and approves it based on its score. \n\n-`manual`, for manual approvals through the Received SKU UI and Match API. \n\n-`autoApprove`, for every SKU received from a given seller to be approved automatically, regardless of the Matcher Score.",
+                        "example":"default"
+                    }
+                }
+            },
+            "securitySchemes": {
+                "appKey": {
+                    "type": "apiKey",
+                    "in": "header",
+                    "name": "X-VTEX-API-AppKey"
+                },
+                "appToken": {
+                    "type": "apiKey",
+                    "in": "header",
+                    "name": "X-VTEX-API-AppToken"
+                }
             }
-        }
-    },
-    "tags": [
-        {
-            "name": "Get Suggestions",
-            "description": "Search and filter all suggestions using specific criteria"
         },
-        {
-            "name": "Manage Suggestions",
-            "description": "Send or delete SKU suggestions from the seller to marketplace"
-        },
-        {
-            "name": "Get Versions",
-            "description": "Search and filter all versions of suggestions, using specific criteria"
-        },
-        {
-            "name": "SKU Approval Settings"
-        },
-        {
-            "name": "Match Received SKUs",
-            "description": "Match SKU suggestions received in the marketplace"
-        }
-    ]
+        "tags": [
+            {
+                "name": "Get Suggestions",
+                "description": "Search and filter all suggestions using specific criteria"
+            },
+            {
+                "name": "Manage Suggestions",
+                "description": "Send or delete SKU suggestions from the seller to marketplace"
+            },
+            {
+                "name": "Get Versions",
+                "description": "Search and filter all versions of suggestions, using specific criteria"
+            },
+            {
+                "name": "SKU Approval Settings"
+            },
+            {
+                "name": "Match Received SKUs",
+                "description": "Match SKU suggestions received in the marketplace"
+            }
+        ]
+    }
 }
