@@ -461,6 +461,85 @@
                 "deprecated": false
             }
         },
+        "/suggestions/configuration/account/config": {
+            "get": {
+                "tags": [
+                    "SKU Approval Settings"
+                ],
+                "summary": "Get Account's Matcher Settings",
+                "description": "This endpoint only retrieves configuration information from matchers in the marketplace account. If the account has no matcher configured, the response will be `404 Not Found`. \n\nFor account approval configuration information, with response including specification information, see the [Get Account's Approval Settings](https://developers.vtex.com/docs/api-reference/marketplace-apis-suggestions#get-/suggestions/configuration) endpoint.",
+                "operationId": "Getmatchconfig",
+                "parameters": [
+                    {
+                        "name": "accountName",
+                        "in": "path",
+                        "required": true,
+                        "description": "Name of the VTEX account that belongs to the marketplace. All data extracted, and changes added will be posted into this account.",
+                        "schema": {
+                            "type": "string",
+                            "default": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Describes the type of the content being sent.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {},
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/responseGetAccountsMatcherSettings"
+                                },
+                                "example": {
+                                    "Score": {
+                                        "Approve": 85,
+                                        "Reject": 30
+                                    },
+                                    "Matchers": [
+                                        {
+                                            "MatcherId": "example-matcher",
+                                            "hook-base-address": "http://portal.vtexinternal.com.br/api/u90/hooks",
+                                            "IsActive": true,
+                                            "UpdatesNotificationEndpoint": null,
+                                            "Description": null
+                                        }
+                                    ],
+                                    "Rules": {
+                                        "Item": [],
+                                        "Product": []
+                                    },
+                                    "SpecificationsMapping": [],
+                                    "MatchFlux": "Default"
+                                }
+                            }
+                        }
+                    }
+                },
+                "deprecated": false
+            }
+        },
         "/suggestions/configuration/seller/{sellerId}": {
             "get": {
                 "tags": [
@@ -511,7 +590,7 @@
                         "schema": {
                             "type": "string",
                             "default": "application/json"
-                            }
+                        }
                     }
                 ],
                 "responses": {
@@ -1635,6 +1714,70 @@
                     }
                 }
             },
+            "responseGetAccountsMatcherSettings": {
+                "title": "GetAccountsMatcherSettings",
+                "description": "Response with information on current matcher scoring configuration, rules, specifications mapping and matchFlux.",
+                "type": "object",
+                "properties": {
+                    "Score": {
+                        "description": "Matcher rates received SKUs by comparing the data sent by sellers to existing fields in the marketplace. The calculation of these scores determines whether the product has been: `Approved` or `Denied`.",
+                        "type": "object",
+                        "properties": {
+                            "Approve": {
+                                "type": "integer",
+                                "description": "Minimum approval score set by the marketplace."
+                            },
+                            "Reject": {
+                                "type": "integer",
+                                "description": "Bounce score set by marketplace."
+                            }
+                        }
+                    },
+                    "Matchers": {
+                        "description": "Array of objects that presents a list of matchers configured in the marketplace. If the marketplace has more than one matcher configured in the account, an array will be displayed for each matcher.",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "MatcherId": {
+                                    "type": "string",
+                                    "description": "The Matcher Id."
+                                },
+                                "hook-base-address": {
+                                    "type": "string",
+                                    "description": "The base address of the Matcher hook."
+                                },
+                                "IsActive": {
+                                    "type": "boolean",
+                                    "description": "Indicates if Matcher is active or not."
+                                }
+                            }
+                        }
+                    },
+                    "Rules": {
+                        "description": "Arrays object that contains the rules defined for product approval.",
+                        "type": "object",
+                        "properties": {
+                            "Item": {
+                                "type": "array",
+                                "description": "A list of rules for items."
+                            },
+                            "Product": {
+                                "type": "array",
+                                "description": "A list of rules for products."
+                            }
+                        }
+                    },
+                    "SpecificationsMapping": {
+                        "type": "array",
+                        "description": "List of specifications mapping."
+                    },
+                    "MatchFlux": {
+                        "type": "string",
+                        "description": "This field determines the type of approval configuration applied to SKUs received from a seller. \n\nThe possible values include: \n\n-`default`, where the Matcher reviews the SKU, and approves it based on its score. \n\n-`manual`, for manual approvals through the Received SKU UI, or Match API. \n\n-`autoApprove`, for every SKU received from a given seller to be approved automatically, regardless of their Matcher Score."
+                    }
+                }
+            },
             "SaveautoapproveforaccountsellerRequest": {
                 "title": "SaveautoapproveforaccountsellerRequest",
                 "required": [
@@ -2320,34 +2463,34 @@
                             "searchColor": {
                                 "type": "string",
                                 "description": "Field that provides the available colors to filter searches. This field is neither mandatory nor default, it will depend on the architecture of the seller's catalog.",
-                                "example":"color1, color2"
+                                "example": "color1, color2"
                             },
                             "color1": {
                                 "type": "string",
                                 "description": "`color1` available for search filter. This field is neither mandatory nor default, it will depend on the architecture of the seller's catalog.",
-                                "example":"black"
+                                "example": "black"
                             },
                             "color2": {
                                 "type": "string",
                                 "description": "`color2` available for search filter. This field is neither mandatory nor default, it will depend on the architecture of the seller's catalog.",
-                                "example":"white"
+                                "example": "white"
                             },
                             "color": {
                                 "type": "string",
                                 "description": "Indicates the predominant or main color of the product. This field is neither mandatory nor default, it will depend on the architecture of the seller's catalog.",
-                                "example":"black"
+                                "example": "black"
                             },
                             "size": {
                                 "type": "string",
                                 "description": "Indicates the size of the product.This field is neither mandatory nor default, it will depend on the architecture of the seller's catalog.",
-                                "example":"EUR44"
+                                "example": "EUR44"
                             }
                         }
                     },
                     "matchFlux": {
                         "type": "string",
                         "description": "This field determines the type of [approval configuration applied to SKUs received from a seller](https://developers.vtex.com/docs/api-reference/marketplace-apis-suggestions#put-/suggestions/configuration/seller/-sellerId-). \n\nThe possible values include:  \n\n-`default`, where the Matcher reviews the SKU, and approves it based on its score. \n\n-`manual`, for manual approvals through the Received SKU UI and Match API. \n\n-`autoApprove`, for every SKU received from a given seller to be approved automatically, regardless of the Matcher Score.",
-                        "example":"default"
+                        "example": "default"
                     }
                 }
             },
