@@ -467,7 +467,7 @@
                     "SKU Approval Settings"
                 ],
                 "summary": "Get Account's Matcher Settings",
-                "description": "This endpoint only retrieves configuration information from matchers in the marketplace account. If the account has no matcher configured, the response will be `404 Not Found`. \n\nFor account approval configuration information, with response including specification information, see the [Get Account's Approval Settings](https://developers.vtex.com/docs/api-reference/marketplace-apis-suggestions#get-/suggestions/configuration) endpoint.",
+                "description": "This endpoint will be used by the marketplace to query the matcher's current approval settings on their incoming SKUs module. If the account has no matcher configured, the response will be `404 Not Found`. \n\nFor account approval configuration information, with response including specification information, see [Get Account Approval Settings](https://developers.vtex.com/docs/api-reference/marketplace-apis- suggestions#get-/suggestions /configuration) terminal. \n\nThe [VTEX matcher](https://help.vtex.com/pt/tutorial/entendendo-a-punctuacao-do-vtex-matcher--tutorials_424) is a tool used by marketplaces to evaluate SKUs corresponding to information from an advertisement of the seller, with those of items already present in the marketplace catalog.",
                 "operationId": "Getmatchconfig",
                 "parameters": [
                     {
@@ -513,25 +513,26 @@
                                     "$ref": "#/components/schemas/responseGetAccountsMatcherSettings"
                                 },
                                 "example": {
-                                    "Score": {
-                                        "Approve": 85,
-                                        "Reject": 30
+                                    "score": {
+                                        "approve": 85,
+                                        "pending": 31,
+                                        "reject": 30
                                     },
-                                    "Matchers": [
+                                    "matchers": [
                                         {
-                                            "MatcherId": "example-matcher",
+                                            "matcherId": "example-matcher",
                                             "hook-base-address": "http://portal.vtexinternal.com.br/api/u90/hooks",
-                                            "IsActive": true,
-                                            "UpdatesNotificationEndpoint": null,
-                                            "Description": null
+                                            "isActive": true,
+                                            "updatesNotificationEndpoint": null,
+                                            "description": null
                                         }
                                     ],
-                                    "Rules": {
-                                        "Item": [],
-                                        "Product": []
+                                    "rules": {
+                                        "item": [],
+                                        "product": []
                                     },
-                                    "SpecificationsMapping": [],
-                                    "MatchFlux": "Default"
+                                    "specificationsMapping": [],
+                                    "matchFlux": "Default"
                                 }
                             }
                         }
@@ -1716,30 +1717,37 @@
             },
             "responseGetAccountsMatcherSettings": {
                 "title": "GetAccountsMatcherSettings",
-                "description": "Response with information on current matcher scoring configuration, rules, specifications mapping and matchFlux.",
+                "description": "Response from Get Account's Matcher Settings endpoint with information about current matcher score setting, rules, spec mapping, and matchFlux.",
                 "type": "object",
                 "properties": {
-                    "Score": {
-                        "description": "Matcher rates received SKUs by comparing the data sent by sellers to existing fields in the marketplace. The calculation of these scores determines whether the product has been: `Approved` or `Denied`.",
+                    "score": {
+                        "description": "[Matcher](https://help.vtex.com/pt/tutorial/entendendo-a-pontuacao-do-vtex-matcher--tutorials_424) rates received SKUs by comparing the data sent by sellers to existing fields in the marketplace. The calculation of these scores determines whether the product has been: `Approved`, `Pending` or `Denied`.",
                         "type": "object",
                         "properties": {
-                            "Approve": {
+                            "approve": {
                                 "type": "integer",
-                                "description": "Minimum approval score set by the marketplace."
+                                "description": "Minimum approval score set by the marketplace.",
+                                "default": "80"
                             },
-                            "Reject": {
+                            "pending": {
                                 "type": "integer",
-                                "description": "Bounce score set by marketplace."
+                                "description": "Minimum value for the ad to be pending.",
+                                "default": "31"
+                            },
+                            "reject": {
+                                "type": "integer",
+                                "description": "Bounce score set by marketplace.",
+                                "default": "30"
                             }
                         }
                     },
-                    "Matchers": {
-                        "description": "Array of objects that presents a list of matchers configured in the marketplace. If the marketplace has more than one matcher configured in the account, an array will be displayed for each matcher.",
+                    "matchers": {
+                        "description": "Array of objects that presents a list of matchers configured in the marketplace. If the marketplace has more than one matcher configured in the account, an array will be displayed for each matcher.\n\n By default, the VTEX Matcher is set up automatically in VTEX account.",
                         "type": "array",
                         "items": {
                             "type": "object",
                             "properties": {
-                                "MatcherId": {
+                                "matcherId": {
                                     "type": "string",
                                     "description": "The Matcher Id."
                                 },
@@ -1747,34 +1755,35 @@
                                     "type": "string",
                                     "description": "The base address of the Matcher hook."
                                 },
-                                "IsActive": {
+                                "isActive": {
                                     "type": "boolean",
-                                    "description": "Indicates if Matcher is active or not."
+                                    "description": "Indicates if Matcher is active or not. `TRUE` = Matcher is active or `FALSE` = Matcher is inactive.",
+                                    "default": true
                                 }
                             }
                         }
                     },
-                    "Rules": {
+                    "rules": {
                         "description": "Arrays object that contains the rules defined for product approval.",
                         "type": "object",
                         "properties": {
-                            "Item": {
+                            "item": {
                                 "type": "array",
                                 "description": "A list of rules for items."
                             },
-                            "Product": {
+                            "product": {
                                 "type": "array",
                                 "description": "A list of rules for products."
                             }
                         }
                     },
-                    "SpecificationsMapping": {
+                    "specificationsMapping": {
                         "type": "array",
-                        "description": "List of specifications mapping."
+                        "description": "This field will show a list of which product specs and SKU are configured to be mapped."
                     },
-                    "MatchFlux": {
+                    "matchFlux": {
                         "type": "string",
-                        "description": "This field determines the type of approval configuration applied to SKUs received from a seller. \n\nThe possible values include: \n\n-`default`, where the Matcher reviews the SKU, and approves it based on its score. \n\n-`manual`, for manual approvals through the Received SKU UI, or Match API. \n\n-`autoApprove`, for every SKU received from a given seller to be approved automatically, regardless of their Matcher Score."
+                        "description": "This field shows what type of approval setting is being applied to SKUs received from a seller. \n\nPossible values include: \n\n-`default`: where Matcher reviews the SKU and approves it based on its score. \n\n-`manual`: for manual approvals via incoming SKU UI or mailing API. \n\n-`autoApprove`: so that every SKU received from a given seller is automatically approved, regardless of its Matcher Score."
                     }
                 }
             },
