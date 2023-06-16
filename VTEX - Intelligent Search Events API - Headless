@@ -22,7 +22,7 @@
         "/event": {
             "post": {
                 "summary": "Save Events",
-                "description": "",
+                "description": "Creates search events to integrate with VTEX Intelligent Search using a headless implementation. \r\n\r\n >⚠️ **This API applies only to Headless scenarios**. It doesn't apply to stores using VTEX's storefront solution, natively integrated with Intelligent Search.",
                 "parameters": [],
                 "requestBody": {
                     "content": {
@@ -58,6 +58,11 @@
                                     {
                                         "$ref": "#/components/schemas/Query"
                                     }
+                                ],
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/UserIdentification"
+                                    }
                                 ]
                             }
                         }
@@ -76,22 +81,12 @@
     },
     "components": {
         "schemas": {
-            "SessionPing": {
-                "type": "object",
+            "UserContextIdentification": {
+                "required": [
+                    "anonymous",
+                    "session"
+                ],
                 "properties": {
-                    "type": {
-                        "type": "string",
-                        "title": "type",
-                        "description": "Type of event, which can be one of the following: page.cart, page.empty_cart, search.query, page.confirmation, session.ping, search.click.",
-                        "example": "session.ping"
-                    },
-                    "userAgent": {
-                        "type": "string",
-                        "title": "userAgent",
-                        "description": "Identifies whether the request came from a mobile or desktop application. It's used as a filter in the search report.",
-                        "default": "desktop",
-                        "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0"
-                    },
                     "anonymous": {
                         "type": "string",
                         "title": "anonymous",
@@ -104,29 +99,42 @@
                         "description": "Identifier related to the current navigation, according to the [nanoid](https://github.com/ai/nanoid) pattern. It is a cookie that lasts for 30 minutes, changing if the user opens another tab in private navigation mode.",
                         "example": "zZlNhqz1vFJP6iPG5Oqtt"
                     }
+                }
+            },
+            "SessionPing": {
+                "properties": {
+                    "required": [
+                        "type",
+                        "agent"
+                    ],
+                    "type": {
+                        "type": "string",
+                        "title": "type",
+                        "description": "Type of event, which can be one of the following: `page.cart`, `page.empty_cart`, `search.query`, `page.confirmation`, `session.ping`, `search.click`.",
+                        "example": "session.ping"
+                    },
+                    "agent": {
+                        "type": "string",
+                        "title": "agent",
+                        "description": "Identifies whether the request came from a mobile or desktop application. It's used as a filter in the search report.",
+                        "default": "desktop",
+                        "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0"
+                    }
                 },
                 "example": {
                     "type": "session.ping",
-                    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+                    "agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
                     "anonymous": "1ce47e50-3f10-4556-95d3-57d4881c03a4",
                     "session": "ee15a2ad-d2f1-4a29-995e-e514b468385e"
                 }
             },
             "PageCart": {
                 "type": "object",
+                "required": [
+                    "type",
+                    "products"
+                ],
                 "properties": {
-                    "anonymous": {
-                        "type": "string",
-                        "title": "anonymous",
-                        "description": "Identifier related to related to the user, according to the [nanoid](https://github.com/ai/nanoid) pattern. This information is kept in storage for one year.",
-                        "example": "Om1TNluGvgmSgU5OOTvkkd"
-                    },
-                    "session": {
-                        "type": "string",
-                        "title": "session",
-                        "description": "Identifier related to the current navigation, according to the [nanoid](https://github.com/ai/nanoid) pattern. It is a cookie that lasts for 30 minutes, changing if the user opens another tab in private navigation mode.",
-                        "example": "zZlNhqz1vFJP6iPG5Oqtt"
-                    },
                     "products": {
                         "type": "array",
                         "title": "products",
@@ -139,26 +147,18 @@
                     "type": {
                         "type": "string",
                         "title": "type",
-                        "description": "Type of event, which can be one of the following: page.cart, page.empty_cart, search.query, page.confirmation, session.ping, search.click.",
+                        "description": "Type of event, which can be one of the following: `page.cart`, `page.empty_cart`, `search.query`, `page.confirmation`, `session.ping`, `search.click`.",
                         "example": "page.cart"
                     }
                 }
             },
             "PageEmptyCart": {
                 "type": "object",
+                "required": [
+                    "type",
+                    "products"
+                ],
                 "properties": {
-                    "anonymous": {
-                        "type": "string",
-                        "title": "anonymous",
-                        "description": "Identifier related to related to the user, according to the [nanoid](https://github.com/ai/nanoid) pattern. This information is kept in storage for one year.",
-                        "example": "Om1TNluGvgmSgU5OOTvkkd"
-                    },
-                    "session": {
-                        "type": "string",
-                        "title": "session",
-                        "description": "Identifier related to the current navigation, according to the [nanoid](https://github.com/ai/nanoid) pattern. It is a cookie that lasts for 30 minutes, changing if the user opens another tab in private navigation mode.",
-                        "example": "zZlNhqz1vFJP6iPG5Oqtt"
-                    },
                     "products": {
                         "type": "array",
                         "title": "products",
@@ -176,13 +176,18 @@
                     "type": {
                         "type": "string",
                         "title": "type",
-                        "description": "Type of event, which can be one of the following: page.cart, page.empty_cart, search.query, page.confirmation, session.ping, search.click.",
+                        "description": "Type of event, which can be one of the following: `page.cart`, `page.empty_cart`, `search.query`, `page.confirmation`, `session.ping`, `search.click`.",
                         "example": "page.empty_cart"
                     }
                 }
             },
             "PageConfirmation": {
                 "type": "object",
+                "required": [
+                    "type",
+                    "order",
+                    "products"
+                ],
                 "properties": {
                     "products": {
                         "type": "array",
@@ -208,18 +213,24 @@
                     "type": {
                         "type": "string",
                         "title": "type",
-                        "description": "Type of event, which can be one of the following: page.cart, page.empty_cart, search.query, page.confirmation, session.ping, search.click.",
+                        "description": "Type of event, which can be one of the following: `page.cart`, `page.empty_cart`, `search.query`, `page.confirmation`, `session.ping`, `search.click`.",
                         "example": "page.confirmation"
                     }
                 }
             },
             "Click": {
                 "type": "object",
+                "required": [
+                    "type",
+                    "productId",
+                    "position",
+                    "text"
+                ],
                 "properties": {
                     "type": {
                         "type": "string",
                         "title": "type",
-                        "description": "Type of event, which can be one of the following: page.cart, page.empty_cart, search.query, page.confirmation, session.ping, search.click.",
+                        "description": "Type of event, which can be one of the following: `page.cart`, `page.empty_cart`, `search.query`, `page.confirmation`, `session.ping`, `search.click`.",
                         "example": "search.click"
                     },
                     "productId": {
@@ -242,24 +253,12 @@
                         "description": "The query used in the search.",
                         "example": "tv"
                     },
-                    "userAgent": {
+                    "agent": {
                         "type": "string",
-                        "title": "userAgent",
+                        "title": "agent",
                         "description": "Identifies whether the request came from a mobile or desktop application. It's used as a filter in the search report.",
                         "default": "desktop",
                         "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0"
-                    },
-                    "anonymous": {
-                        "type": "string",
-                        "title": "anonymous",
-                        "description": "Identifier related to related to the user, according to the [nanoid](https://github.com/ai/nanoid) pattern. This information is kept in storage for one year.",
-                        "example": "Om1TNluGvgmSgU5OOTvkkd"
-                    },
-                    "session": {
-                        "type": "string",
-                        "title": "session",
-                        "description": "Identifier related to the current navigation, according to the [nanoid](https://github.com/ai/nanoid) pattern. It is a cookie that lasts for 30 minutes, changing if the user opens another tab in private navigation mode.",
-                        "example": "zZlNhqz1vFJP6iPG5Oqtt"
                     }
                 },
                 "example": {
@@ -268,26 +267,21 @@
                     "position": 1,
                     "url": "https://example.com/s?q=pneu&sort=score_desc&page=0",
                     "text": "pneu",
-                    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+                    "agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
                     "anonymous": "1ce47e50-3f10-4556-95d3-57d4881c03a4",
                     "session": "51a53ce3-096d-4740-a6d0-3cf86085ba13"
                 }
             },
             "Query": {
                 "type": "object",
+                "required": [
+                    "type",
+                    "misspelled",
+                    "text",
+                    "match",
+                    "operator"
+                ],
                 "properties": {
-                    "session": {
-                        "type": "string",
-                        "title": "session",
-                        "description": "Identifier related to the current navigation, according to the [nanoid](https://github.com/ai/nanoid) pattern. It is a cookie that lasts for 30 minutes, changing if the user opens another tab in private navigation mode.",
-                        "example": "zZlNhqz1vFJP6iPG5Oqtt"
-                    },
-                    "anonymous": {
-                        "type": "string",
-                        "title": "anonymous",
-                        "description": "Identifier related to related to the user, according to the [nanoid](https://github.com/ai/nanoid) pattern. This information is kept in storage for one year.",
-                        "example": "Om1TNluGvgmSgU5OOTvkkd"
-                    },
                     "url": {
                         "type": "string",
                         "title": "url",
@@ -304,7 +298,7 @@
                     "type": {
                         "type": "string",
                         "title": "type",
-                        "description": "Type of event, which can be one of the following: page.cart, page.empty_cart, search.query, page.confirmation, session.ping, search.click.",
+                        "description": "Type of event, which can be one of the following: `page.cart`, `page.empty_cart`, `search.query`, `page.confirmation`, `session.ping`, `search.click`.",
                         "example": "search.query"
                     },
                     "text": {
@@ -346,6 +340,10 @@
             },
             "CartProduct": {
                 "type": "object",
+                "required": [
+                    "productId",
+                    "quantity"
+                ],
                 "properties": {
                     "productId": {
                         "type": "string",
@@ -356,10 +354,6 @@
                         "description": "The quantity of the product."
                     }
                 },
-                "required": [
-                    "productId",
-                    "quantity"
-                ],
                 "example": {
                     "productId": "ABC123",
                     "quantity": 2
@@ -367,6 +361,11 @@
             },
             "OrderProduct": {
                 "type": "object",
+                "required": [
+                    "productId",
+                    "price",
+                    "quantity"
+                ],
                 "properties": {
                     "productId": {
                         "type": "string",
@@ -382,10 +381,6 @@
                         "default": 1
                     }
                 },
-                "required": [
-                    "productId",
-                    "price"
-                ],
                 "example": {
                     "productId": "ABC123",
                     "price": 9.99,
