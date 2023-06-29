@@ -7929,7 +7929,7 @@
                     "Cart attachments"
                 ],
                 "summary": "Get client profile by email",
-                "description": "Retrieve a client's profile information by providing an email address.\n\r\n\rIf the response body fields are empty, the following situations may have occurred:\n\r\n\r1. There is no client registered with the email address provided in your store, or;\n\r2. Client profile is invalid or incomplete. For more information, see [SmartCheckout - Customer information automatic fill-in](https://help.vtex.com/en/tutorial/smartcheckout-customer-information-automatic-fill-in--2Nuu3xAFzdhIzJIldAdtan).\r\n\r\n>⚠️ The authentication of this endpoint can change depending on the customer context. If you are consulting information from a customer with a complete profile on the store, the response will return the customer's data masked. You can only access the customer data with an authenticated request.",
+                "description": "Retrieve a client's profile information by providing an email address.\n\r\n\rIf the response body fields are empty, the following situations may have occurred:\n\r\n\r1. There is no client registered with the email address provided in your store, or;\n\r2. Client profile is invalid or incomplete. However, you can use the query parameter `ensureComplete=false` to get incomplete profiles. For more information, see [SmartCheckout - Customer information automatic fill-in](https://help.vtex.com/en/tutorial/smartcheckout-customer-information-automatic-fill-in--2Nuu3xAFzdhIzJIldAdtan).\r\n\r\n>⚠️ The authentication of this endpoint can change depending on the customer context. If you are consulting information from a customer with a complete profile on the store, the response will return the customer's data masked. You can only access the customer data with an authenticated request.",
                 "operationId": "GetClientProfileByEmail",
                 "security": [],
                 "parameters": [
@@ -7963,7 +7963,19 @@
                         "style": "form",
                         "schema": {
                             "type": "string",
-                            "default": "clark.kent@examplemail.com"
+                            "example": "clark.kent@examplemail.com"
+                        }
+                    },
+                    {
+                        "name": "ensureComplete",
+                        "in": "query",
+                        "description": "Indicates whether the returned profiles must be complete or not.",
+                        "required": false,
+                        "style": "form",
+                        "schema": {
+                            "type": "boolean",
+                            "example": false,
+                            "default": true
                         }
                     }
                 ],
@@ -8469,7 +8481,12 @@
                                                 "receiverName": {
                                                     "type": "string",
                                                     "description": "Name of the person who is going to receive the order.",
-                                                    "example": "receiver-name"
+                                                    "example": "receiver name"
+                                                },
+                                                "addressId": {
+                                                    "type": "string",
+                                                    "description": "Address ID.",
+                                                    "example": "c3701fc4c61b4d1b91f67e81415db44d"
                                                 },
                                                 "postalCode": {
                                                     "type": "string",
@@ -8519,7 +8536,8 @@
                                                 "geoCoordinates": {
                                                     "type": "array",
                                                     "description": "Array containing two floats with geocoordinates, first longitude, then latitude.",
-                                                    "default": [-47.924747467041016,-15.832582473754883],
+                                                    "default": [-47.924747467041016,
+                                                    -15.832582473754883],
                                                     "items": {
                                                         "type": "number",
                                                         "example": -47.924747467041016
@@ -8537,17 +8555,17 @@
                                                 "itemIndex": {
                                                     "type": "integer",
                                                     "description": "Index of item in items array",
-                                                    "default": 0
+                                                    "example": 0
                                                 },
                                                 "selectedDeliveryChannel": {
                                                     "type": "string",
                                                     "description": "Delivery channel selected by the customer. For example, `\"delivery\"` or `\"pickup-in-point\"`.",
-                                                    "default": "delivery"
+                                                    "example": "delivery"
                                                 },
                                                 "selectedSla": {
                                                     "type": "string",
                                                     "description": "Selected SLA. For example, `\"normal\"` or `\"express\"`.",
-                                                    "default": "normal"
+                                                    "example": "normal"
                                                 }
                                             }
                                         }
@@ -8560,10 +8578,1242 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "OK",
                         "headers": {},
                         "content": {
                             "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "orderFormId": {
+                                            "type": "string",
+                                            "description": "ID of the `orderForm` corresponding to a specific cart."
+                                        },
+                                        "salesChannel": {
+                                            "type": "string",
+                                            "description": "Attribute created by the seller, in their VTEX store configuration."
+                                        },
+                                        "loggedIn": {
+                                            "type": "boolean",
+                                            "description": "Indicates whether the user is logged into the store."
+                                        },
+                                        "isCheckedIn": {
+                                            "type": "boolean",
+                                            "description": "Indicates whether order is checked in."
+                                        },
+                                        "storeId": {
+                                            "type": "string",
+                                            "description": "ID of the store.",
+                                            "nullable": true
+                                        },
+                                        "checkedInPickupPointId": {
+                                            "type": "string",
+                                            "description": "Checked in pickuppoint identification.",
+                                            "nullable": true
+                                        },
+                                        "allowManualPrice": {
+                                            "type": "boolean",
+                                            "description": "Permission to modify item price manually."
+                                        },
+                                        "canEditData": {
+                                            "type": "boolean",
+                                            "description": "Data can be edited."
+                                        },
+                                        "userProfileId": {
+                                            "type": "string",
+                                            "description": "Unique ID associated with the customer profile.",
+                                            "nullable": true
+                                        },
+                                        "userType": {
+                                            "type": "string",
+                                            "description": "User type.",
+                                            "nullable": true
+                                        },
+                                        "ignoreProfileData": {
+                                            "type": "boolean",
+                                            "description": "Ignore customer profile data."
+                                        },
+                                        "value": {
+                                            "type": "integer",
+                                            "description": "Total value of the order without separating cents. For example, $24.99 is represented `2499`."
+                                        },
+                                        "messages": {
+                                            "type": "array",
+                                            "description": "Array containing an object for each message generated by our servers while processing the request."
+                                        },
+                                        "items": {
+                                            "type": "array",
+                                            "description": "Information on each item in the order.",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "uniqueId": {
+                                                        "type": "string",
+                                                        "description": "Unique ID."
+                                                    },
+                                                    "id": {
+                                                        "type": "string",
+                                                        "description": "ID of the item."
+                                                    },
+                                                    "productId": {
+                                                        "type": "string",
+                                                        "description": "Product ID."
+                                                    },
+                                                    "productRefId": {
+                                                        "type": "string",
+                                                        "description": "Product Ref ID."
+                                                    },
+                                                    "refId": {
+                                                        "type": "string",
+                                                        "description": "Ref ID."
+                                                    },
+                                                    "ean": {
+                                                        "type": "string",
+                                                        "description": "European Article Number.",
+                                                        "nullable": true
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "description": "Product name."
+                                                    },
+                                                    "skuName": {
+                                                        "type": "string",
+                                                        "description": "SKU name."
+                                                    },
+                                                    "modalType": {
+                                                        "type": "string",
+                                                        "description": "Modal type.",
+                                                        "nullable": true
+                                                    },
+                                                    "parentItemIndex": {
+                                                        "type": "integer",
+                                                        "description": "Parent item index.",
+                                                        "nullable": true
+                                                    },
+                                                    "parentAssemblyBinding": {
+                                                        "type": "string",
+                                                        "description": "Parent assembly binding.",
+                                                        "nullable": true
+                                                    },
+                                                    "priceValidUntil": {
+                                                        "type": "string",
+                                                        "description": "Price expiration date and time."
+                                                    },
+                                                    "tax": {
+                                                        "type": "integer",
+                                                        "description": "Tax value in cents."
+                                                    },
+                                                    "price": {
+                                                        "type": "integer",
+                                                        "description": "Price in cents."
+                                                    },
+                                                    "listPrice": {
+                                                        "type": "integer",
+                                                        "description": "List price in cents."
+                                                    },
+                                                    "manualPrice": {
+                                                        "type": "integer",
+                                                        "description": "Manual price in cents.",
+                                                        "nullable": true
+                                                    },
+                                                    "manualPriceAppliedBy": {
+                                                        "type": "string",
+                                                        "description": "User that applied the manual price, if that is the case.",
+                                                        "nullable": true
+                                                    },
+                                                    "sellingPrice": {
+                                                        "type": "integer",
+                                                        "description": "Selling price in cents. Note that this field may be subject to rounding discrepancies. We recommend retrieving data from the `priceDefinition` data structure instead."
+                                                    },
+                                                    "rewardValue": {
+                                                        "type": "integer",
+                                                        "description": "Reward value in cents."
+                                                    },
+                                                    "isGift": {
+                                                        "type": "boolean",
+                                                        "description": "Indicates whether item is a gift."
+                                                    },
+                                                    "additionalInfo": {
+                                                        "type": "object",
+                                                        "description": "Additional information.",
+                                                        "properties": {
+                                                            "dimension": {
+                                                                "type": "string",
+                                                                "description": "Dimension.",
+                                                                "nullable": true
+                                                            },
+                                                            "brandName": {
+                                                                "type": "string",
+                                                                "description": "Brand name."
+                                                            },
+                                                            "brandId": {
+                                                                "type": "string",
+                                                                "description": "Brand ID."
+                                                            },
+                                                            "offeringInfo": {
+                                                                "type": "string",
+                                                                "description": "Offering information.",
+                                                                "nullable": true
+                                                            },
+                                                            "offeringType": {
+                                                                "type": "string",
+                                                                "description": "Offering type.",
+                                                                "nullable": true
+                                                            },
+                                                            "offeringTypeId": {
+                                                                "type": "string",
+                                                                "description": "Offering type ID.",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "preSaleDate": {
+                                                        "type": "string",
+                                                        "description": "Presale date.",
+                                                        "nullable": true
+                                                    },
+                                                    "productCategoryIds": {
+                                                        "type": "string",
+                                                        "description": "Product category IDs."
+                                                    },
+                                                    "productCategories": {
+                                                        "type": "object",
+                                                        "description": "Object, where each field is an ID from `productCategoryIds`.",
+                                                        "properties": {
+                                                            "{ID}": {
+                                                                "type": "string",
+                                                                "description": "Product category corresponding to the ID in the field key."
+                                                            }
+                                                        }
+                                                    },
+                                                    "quantity": {
+                                                        "type": "integer",
+                                                        "description": "Quantity."
+                                                    },
+                                                    "seller": {
+                                                        "type": "string",
+                                                        "description": "Seller."
+                                                    },
+                                                    "sellerChain": {
+                                                        "type": "array",
+                                                        "description": "Sellers involved in the chain. The list should contain only one seller, unless it is a [Multilevel Omnichannel Inventory](https://help.vtex.com/en/tutorial/multilevel-omnichannel-inventory--7M1xyCZWUyCB7PcjNtOyw4) order.",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "Seller."
+                                                        }
+                                                    },
+                                                    "imageUrl": {
+                                                        "type": "string",
+                                                        "description": "Image URL."
+                                                    },
+                                                    "detailUrl": {
+                                                        "type": "string",
+                                                        "description": "Detail URL."
+                                                    },
+                                                    "bundleItems": {
+                                                        "type": "array",
+                                                        "description": "Information on services sold along with the SKU. Example: a gift package.",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "type": {
+                                                                    "type": "string",
+                                                                    "description": "Service type."
+                                                                },
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "description": "Service identifier."
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "description": "Service name."
+                                                                },
+                                                                "price": {
+                                                                    "type": "integer",
+                                                                    "description": "Service price in cents."
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "attachments": {
+                                                        "type": "array",
+                                                        "description": "Array containing information on attachments.",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "priceTags": {
+                                                        "type": "array",
+                                                        "description": "Array of price tags, each of which, modifies the price in some way, like discounts or rates that apply to the item in the context of the order.",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "identifier": {
+                                                                    "type": "string",
+                                                                    "description": "Price tag identifier."
+                                                                },
+                                                                "isPercentual": {
+                                                                    "type": "boolean",
+                                                                    "description": "Indicates whether price tag value is applied through a percentage."
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "description": "Price tag name."
+                                                                },
+                                                                "rawValue": {
+                                                                    "type": "integer",
+                                                                    "description": "Price tag raw value."
+                                                                },
+                                                                "value": {
+                                                                    "type": "integer",
+                                                                    "description": "Price tag value."
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "availability": {
+                                                        "type": "string",
+                                                        "description": "Availability."
+                                                    },
+                                                    "measurementUnit": {
+                                                        "type": "string",
+                                                        "description": "Measurement unit."
+                                                    },
+                                                    "unitMultiplier": {
+                                                        "type": "integer",
+                                                        "description": "Unit multiplier."
+                                                    },
+                                                    "manufacturerCode": {
+                                                        "type": "string",
+                                                        "description": "Manufacturer code.",
+                                                        "nullable": true
+                                                    },
+                                                    "priceDefinition": {
+                                                        "type": "object",
+                                                        "description": "Price information for all units of a specific item.",
+                                                        "properties": {
+                                                            "calculatedSellingPrice": {
+                                                                "type": "integer",
+                                                                "description": "Item's calculated unitary selling price in cents."
+                                                            },
+                                                            "total": {
+                                                                "type": "integer",
+                                                                "description": "Total value for all units of the item in cents."
+                                                            },
+                                                            "sellingPrices": {
+                                                                "type": "array",
+                                                                "description": "Array of objects, each containing value (in cents) and quantity for the different rounding instances that can be combined to form the correctly rounded total.",
+                                                                "items": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "value": {
+                                                                            "type": "integer",
+                                                                            "description": "Value in cents for that specific rounding."
+                                                                        },
+                                                                        "quantity": {
+                                                                            "type": "integer",
+                                                                            "description": "Rounding quantity, meaning how many items are rounded to this value."
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "selectableGifts": {
+                                            "type": "array",
+                                            "description": "Array containing the data of the item selected as a gift."
+                                        },
+                                        "totalizers": {
+                                            "type": "array",
+                                            "description": "Array containing an object for each totalizer for the purchase. Totalizers contain the sum of values for a specific part of the order (e.g. Total item value, Total shipping value)."
+                                        },
+                                        "shippingData": {
+                                            "type": "object",
+                                            "description": "Shipping information pertinent to the order.",
+                                            "properties": {
+                                                "address": {
+                                                    "type": "object",
+                                                    "description": "Address information.",
+                                                    "properties": {
+                                                        "addressType": {
+                                                            "type": "string",
+                                                            "description": "Type of address. For example, `Residential` or `Pickup`."
+                                                        },
+                                                        "receiverName": {
+                                                            "type": "string",
+                                                            "description": "Name of the person who is going to receive the order."
+                                                        },
+                                                        "addressId": {
+                                                            "type": "string",
+                                                            "description": "Address ID."
+                                                        },
+                                                        "isDisposable": {
+                                                            "type": "boolean",
+                                                            "description": "Indicates whether address is disposable."
+                                                        },
+                                                        "postalCode": {
+                                                            "type": "string",
+                                                            "description": "Postal code."
+                                                        },
+                                                        "city": {
+                                                            "type": "string",
+                                                            "description": "City of the shipping address."
+                                                        },
+                                                        "state": {
+                                                            "type": "string",
+                                                            "description": "State of the shipping address."
+                                                        },
+                                                        "country": {
+                                                            "type": "string",
+                                                            "description": "Three letter ISO code of the country of the shipping address."
+                                                        },
+                                                        "street": {
+                                                            "type": "string",
+                                                            "description": "Street of the shipping address."
+                                                        },
+                                                        "number": {
+                                                            "type": "string",
+                                                            "description": "Number of the building, house or apartment in the shipping address."
+                                                        },
+                                                        "neighborhood": {
+                                                            "type": "string",
+                                                            "description": "Neighborhood of the shipping address."
+                                                        },
+                                                        "complement": {
+                                                            "type": "string",
+                                                            "description": "Complement to the shipping address, in case it applies.",
+                                                            "nullable": true
+                                                        },
+                                                        "reference": {
+                                                            "type": "string",
+                                                            "description": "Complement that might help locate the shipping address more precisely in case of delivery.",
+                                                            "nullable": true
+                                                        },
+                                                        "geoCoordinates": {
+                                                            "type": "array",
+                                                            "description": "Array containing two floats with geocoordinates, first longitude, then latitude.",
+                                                            "items": {
+                                                                "type": "number"
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "logisticsInfo": {
+                                                    "type": "array",
+                                                    "description": "Array with logistics information. Each object in this array corresponds to an object in the `items` array, based on the respective `itemIndex`.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "itemIndex": {
+                                                                "type": "integer",
+                                                                "description": "Index corresponding to the position of the object in the `items` array."
+                                                            },
+                                                            "selectedSla": {
+                                                                "type": "string",
+                                                                "description": "SLA selected by the customer.",
+                                                                "nullable": true
+                                                            },
+                                                            "selectedDeliveryChannel": {
+                                                                "type": "string",
+                                                                "description": "Delivery channel selected by the customer.",
+                                                                "nullable": true
+                                                            },
+                                                            "addressId": {
+                                                                "type": "string",
+                                                                "description": "Address ID."
+                                                            },
+                                                            "slas": {
+                                                                "type": "array",
+                                                                "description": "Information on available SLAs.",
+                                                                "items": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "string",
+                                                                            "description": "SLA ID."
+                                                                        },
+                                                                        "deliveryChannel": {
+                                                                            "type": "string",
+                                                                            "description": "Delivery channel."
+                                                                        },
+                                                                        "name": {
+                                                                            "type": "string",
+                                                                            "description": "SLA name."
+                                                                        },
+                                                                        "deliveryIds": {
+                                                                            "type": "array",
+                                                                            "description": "Information on each delivery ID.",
+                                                                            "items": {
+                                                                                "type": "object",
+                                                                                "properties": {
+                                                                                    "courierId": {
+                                                                                        "type": "string",
+                                                                                        "description": "Courier ID."
+                                                                                    },
+                                                                                    "warehouseId": {
+                                                                                        "type": "string",
+                                                                                        "description": "Warehouse ID."
+                                                                                    },
+                                                                                    "dockId": {
+                                                                                        "type": "string",
+                                                                                        "description": "Warehouse ID."
+                                                                                    },
+                                                                                    "courierName": {
+                                                                                        "type": "string",
+                                                                                        "description": "Courier name."
+                                                                                    },
+                                                                                    "quantity": {
+                                                                                        "type": "integer",
+                                                                                        "description": "Quantity."
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        "shippingEstimate": {
+                                                                            "type": "string",
+                                                                            "description": "Shipping estimate. For instance, Three business days will be represented `3bd`."
+                                                                        },
+                                                                        "shippingEstimateDate": {
+                                                                            "type": "string",
+                                                                            "description": "Shipping estimate date.",
+                                                                            "nullable": true
+                                                                        },
+                                                                        "lockTTL": {
+                                                                            "type": "string",
+                                                                            "description": "Estimate date of delivery.",
+                                                                            "nullable": true
+                                                                        },
+                                                                        "availableDeliveryWindows": {
+                                                                            "type": "object",
+                                                                            "description": "This object contains information about the delivery window available to the shopper.",
+                                                                            "properties": {
+                                                                                "startDateUtc": {
+                                                                                    "type": "string",
+                                                                                    "description": "Delivery window starting day and time in UTC."
+                                                                                },
+                                                                                "endDateUtc": {
+                                                                                    "type": "string",
+                                                                                    "description": "Delivery window ending day and time in UTC."
+                                                                                },
+                                                                                "price": {
+                                                                                    "type": "integer",
+                                                                                    "description": "Delivery window price."
+                                                                                },
+                                                                                "lisPrice": {
+                                                                                    "type": "integer",
+                                                                                    "description": "Delivery window list price."
+                                                                                },
+                                                                                "tax": {
+                                                                                    "type": "integer",
+                                                                                    "description": "Delivery window tax."
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        "deliveryWindow": {
+                                                                            "type": "object",
+                                                                            "description": "In case of scheduled delivery, this object will contain information on the delivery window selected by the shopper.",
+                                                                            "properties": {
+                                                                                "startDateUtc": {
+                                                                                    "type": "string",
+                                                                                    "description": "Delivery window starting day and time in UTC."
+                                                                                },
+                                                                                "endDateUtc": {
+                                                                                    "type": "string",
+                                                                                    "description": "Delivery window ending day and time in UTC."
+                                                                                },
+                                                                                "price": {
+                                                                                    "type": "integer",
+                                                                                    "description": "Delivery window price."
+                                                                                },
+                                                                                "lisPrice": {
+                                                                                    "type": "integer",
+                                                                                    "description": "Delivery window list price."
+                                                                                },
+                                                                                "tax": {
+                                                                                    "type": "integer",
+                                                                                    "description": "Delivery window tax."
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        "price": {
+                                                                            "type": "integer",
+                                                                            "description": "Price in cents."
+                                                                        },
+                                                                        "listPrice": {
+                                                                            "type": "integer",
+                                                                            "description": "List price in cents."
+                                                                        },
+                                                                        "tax": {
+                                                                            "type": "integer",
+                                                                            "description": "Tax in cents."
+                                                                        },
+                                                                        "pickupStoreInfo": {
+                                                                            "type": "object",
+                                                                            "description": "Information on the pickup store.",
+                                                                            "properties": {
+                                                                                "isPickupStore": {
+                                                                                    "type": "boolean",
+                                                                                    "description": "Indicates whether it is the pickup store."
+                                                                                },
+                                                                                "friendlyName": {
+                                                                                    "type": "string",
+                                                                                    "description": "Friendly name.",
+                                                                                    "nullable": true
+                                                                                },
+                                                                                "address": {
+                                                                                    "type": "object",
+                                                                                    "description": "Address information.",
+                                                                                    "nullable": true,
+                                                                                    "properties": {
+                                                                                        "addressType": {
+                                                                                            "type": "string",
+                                                                                            "description": "Type of address. For example, `Residential` or `Pickup`."
+                                                                                        },
+                                                                                        "receiverName": {
+                                                                                            "type": "string",
+                                                                                            "description": "Name of the person who is going to receive the order."
+                                                                                        },
+                                                                                        "addressId": {
+                                                                                            "type": "string",
+                                                                                            "description": "Address ID."
+                                                                                        },
+                                                                                        "isDisposable": {
+                                                                                            "type": "boolean",
+                                                                                            "description": "Indicates whether address is disposable."
+                                                                                        },
+                                                                                        "postalCode": {
+                                                                                            "type": "string",
+                                                                                            "description": "Postal code."
+                                                                                        },
+                                                                                        "city": {
+                                                                                            "type": "string",
+                                                                                            "description": "City of the shipping address."
+                                                                                        },
+                                                                                        "state": {
+                                                                                            "type": "string",
+                                                                                            "description": "State of the shipping address."
+                                                                                        },
+                                                                                        "country": {
+                                                                                            "type": "string",
+                                                                                            "description": "Three letter ISO code of the country of the shipping address."
+                                                                                        },
+                                                                                        "street": {
+                                                                                            "type": "string",
+                                                                                            "description": "Street of the shipping address."
+                                                                                        },
+                                                                                        "number": {
+                                                                                            "type": "string",
+                                                                                            "description": "Number of the building, house or apartment in the shipping address."
+                                                                                        },
+                                                                                        "neighborhood": {
+                                                                                            "type": "string",
+                                                                                            "description": "Neighborhood of the shipping address."
+                                                                                        },
+                                                                                        "complement": {
+                                                                                            "type": "string",
+                                                                                            "description": "Complement to the shipping address, in case it applies.",
+                                                                                            "nullable": true
+                                                                                        },
+                                                                                        "reference": {
+                                                                                            "type": "string",
+                                                                                            "description": "Complement that might help locate the shipping address more precisely in case of delivery.",
+                                                                                            "nullable": true
+                                                                                        },
+                                                                                        "geoCoordinates": {
+                                                                                            "type": "array",
+                                                                                            "description": "Array containing two floats with geocoordinates, first longitude, then latitude.",
+                                                                                            "items": {
+                                                                                                "type": "number"
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                },
+                                                                                "additionalInfo": {
+                                                                                    "type": "string",
+                                                                                    "description": "Additional information.",
+                                                                                    "nullable": true
+                                                                                },
+                                                                                "dockId": {
+                                                                                    "type": "string",
+                                                                                    "description": "Corresponding dock ID.",
+                                                                                    "nullable": true
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        "pickupPointId": {
+                                                                            "type": "string",
+                                                                            "description": "Pickup point ID.",
+                                                                            "nullable": true
+                                                                        },
+                                                                        "pickupDistance": {
+                                                                            "type": "integer",
+                                                                            "description": "Pickup point distance."
+                                                                        },
+                                                                        "polygonName": {
+                                                                            "type": "string",
+                                                                            "description": "Polygon name.",
+                                                                            "nullable": true
+                                                                        },
+                                                                        "transitTime": {
+                                                                            "type": "string",
+                                                                            "description": "Transit time. For instance, \"three business days\" is represented `3bd`."
+                                                                        }
+                                                                    }
+                                                                }
+                                                            },
+                                                            "shipsTo": {
+                                                                "type": "array",
+                                                                "description": "List of countries that the item may be shipped to.",
+                                                                "items": {
+                                                                    "type": "string",
+                                                                    "description": "Three letter country code."
+                                                                }
+                                                            },
+                                                            "itemId": {
+                                                                "type": "string",
+                                                                "description": "Item ID."
+                                                            },
+                                                            "deliveryChannels": {
+                                                                "type": "array",
+                                                                "description": "List of available delivery channels.",
+                                                                "items": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "string",
+                                                                            "description": "Delivery channel ID."
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "selectedAddresses": {
+                                                    "type": "array",
+                                                    "description": "Array with information on the selected addresses for the order.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "addressType": {
+                                                                "type": "string",
+                                                                "description": "Type of address. For example, `Residential` or `Pickup`."
+                                                            },
+                                                            "receiverName": {
+                                                                "type": "string",
+                                                                "description": "Name of the person who is going to receive the order."
+                                                            },
+                                                            "addressId": {
+                                                                "type": "string",
+                                                                "description": "Address ID."
+                                                            },
+                                                            "isDisposable": {
+                                                                "type": "boolean",
+                                                                "description": "Indicates whether address is disposable."
+                                                            },
+                                                            "postalCode": {
+                                                                "type": "string",
+                                                                "description": "Postal code."
+                                                            },
+                                                            "city": {
+                                                                "type": "string",
+                                                                "description": "City of the shipping address."
+                                                            },
+                                                            "state": {
+                                                                "type": "string",
+                                                                "description": "State of the shipping address."
+                                                            },
+                                                            "country": {
+                                                                "type": "string",
+                                                                "description": "Three letter ISO code of the country of the shipping address."
+                                                            },
+                                                            "street": {
+                                                                "type": "string",
+                                                                "description": "Street of the shipping address."
+                                                            },
+                                                            "number": {
+                                                                "type": "string",
+                                                                "description": "Number of the building, house or apartment in the shipping address."
+                                                            },
+                                                            "neighborhood": {
+                                                                "type": "string",
+                                                                "description": "Neighborhood of the shipping address."
+                                                            },
+                                                            "complement": {
+                                                                "type": "string",
+                                                                "description": "Complement to the shipping address, in case it applies.",
+                                                                "nullable": true
+                                                            },
+                                                            "reference": {
+                                                                "type": "string",
+                                                                "description": "Complement that might help locate the shipping address more precisely in case of delivery.",
+                                                                "nullable": true
+                                                            },
+                                                            "geoCoordinates": {
+                                                                "type": "array",
+                                                                "description": "Array containing two floats with geocoordinates, first longitude, then latitude.",
+                                                                "items": {
+                                                                    "type": "number"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "availableAddresses": {
+                                                    "type": "array",
+                                                    "description": "Information on each available address.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "addressType": {
+                                                                "type": "string",
+                                                                "description": "Address type."
+                                                            },
+                                                            "receiverName": {
+                                                                "type": "string",
+                                                                "description": "Name of the receiver."
+                                                            },
+                                                            "addressId": {
+                                                                "type": "string",
+                                                                "description": "Address ID."
+                                                            },
+                                                            "isDisposable": {
+                                                                "type": "boolean",
+                                                                "description": "Indicates whether address is disposable."
+                                                            },
+                                                            "city": {
+                                                                "type": "string",
+                                                                "description": "City of the address."
+                                                            },
+                                                            "state": {
+                                                                "type": "string",
+                                                                "description": "State of the address."
+                                                            },
+                                                            "country": {
+                                                                "type": "string",
+                                                                "description": "Country of the address. ISO three-letter code."
+                                                            },
+                                                            "street": {
+                                                                "type": "string",
+                                                                "description": "Street of the address."
+                                                            },
+                                                            "number": {
+                                                                "type": "string",
+                                                                "description": "Number of the address."
+                                                            },
+                                                            "neighborhood": {
+                                                                "type": "string",
+                                                                "description": "Neighborhood of the address."
+                                                            },
+                                                            "complement": {
+                                                                "type": "string",
+                                                                "description": "Complement to the address.",
+                                                                "nullable": true
+                                                            },
+                                                            "reference": {
+                                                                "type": "string",
+                                                                "description": "Reference that may help in the location of the address.",
+                                                                "nullable": true
+                                                            },
+                                                            "geoCoordinates": {
+                                                                "type": "array",
+                                                                "description": "Array containing two floats with geocoordinates, first longitude, then latitude.",
+                                                                "items": {
+                                                                    "type": "number",
+                                                                    "description": "Items information."
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "pickupPoints": {
+                                                    "type": "array",
+                                                    "description": "Array containing pickup points information."
+                                                }
+                                            }
+                                        },
+                                        "clientProfileData": {
+                                            "type": "object",
+                                            "description": "Customer's profile information.",
+                                            "properties": {
+                                                "email": {
+                                                    "type": "string",
+                                                    "description": "Email address."
+                                                },
+                                                "firstName": {
+                                                    "type": "string",
+                                                    "description": "First name."
+                                                },
+                                                "lastName": {
+                                                    "type": "string",
+                                                    "description": "Last name."
+                                                },
+                                                "documentType": {
+                                                    "type": "string",
+                                                    "description": "Type of the document informed by the customer."
+                                                },
+                                                "document": {
+                                                    "type": "string",
+                                                    "description": "Document informed by the customer."
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "description": "Phone number."
+                                                },
+                                                "corporateName": {
+                                                    "type": "string",
+                                                    "description": "Company name, if the customer is a legal entity.",
+                                                    "nullable": true
+                                                },
+                                                "tradeName": {
+                                                    "type": "string",
+                                                    "description": "Trade name, if the customer is a legal entity.",
+                                                    "nullable": true
+                                                },
+                                                "corporateDocument": {
+                                                    "type": "string",
+                                                    "description": "Corporate document, if the customer is a legal entity.",
+                                                    "nullable": true
+                                                },
+                                                "stateInscription": {
+                                                    "type": "string",
+                                                    "description": "State inscription, if the customer is a legal entity.",
+                                                    "nullable": true
+                                                },
+                                                "corporatePhone": {
+                                                    "type": "string",
+                                                    "description": "Corporate phone number, if the customer is a legal entity.",
+                                                    "nullable": true
+                                                },
+                                                "isCorporate": {
+                                                    "type": "boolean",
+                                                    "description": "Indicates whether the customer is a legal entity."
+                                                },
+                                                "profileCompleteOnLoading": {
+                                                    "type": "boolean",
+                                                    "description": "Indicates whether profile is complete on loading."
+                                                },
+                                                "profileErrorOnLoading": {
+                                                    "type": "boolean",
+                                                    "description": "Indicates whether profile presents error on loading.",
+                                                    "nullable": true
+                                                },
+                                                "customerClass": {
+                                                    "type": "string",
+                                                    "description": "Customer class.",
+                                                    "nullable": true
+                                                }
+                                            }
+                                        },
+                                        "paymentData": {
+                                            "type": "object",
+                                            "description": "Payment data information.",
+                                            "properties": {
+                                                "updateStatus": {
+                                                    "type": "string",
+                                                    "description": "Indicate whether this object's information is up to date according to the order's items. An order can not be placed if `\"outdated\"`"
+                                                    },
+                                                "installmentOptions": {
+                                                    "type": "array",
+                                                    "description": "Installment options information.",
+                                                    "properties": {
+                                                        "paymentSystem": {
+                                                            "type": "integer",
+                                                            "description": "Payment system identification."
+                                                        },
+                                                        "bin": {
+                                                            "type": "string",
+                                                            "description": "Bin.",
+                                                            "nullable": true
+                                                        },
+                                                        "paymentName": {
+                                                            "type": "string",
+                                                            "description": "Payment name."
+                                                        },
+                                                        "paymentGroupName": {
+                                                            "type": "string",
+                                                            "description": "Payment group name."
+                                                        },
+                                                        "value": {
+                                                            "type": "integer",
+                                                            "description": "Total value assigned to this payment."
+                                                        },
+                                                        "installments": {
+                                                            "type": "array",
+                                                            "description": "Installments information.",
+                                                            "properties": {
+                                                                "count": {
+                                                                    "type": "integer",
+                                                                    "description": "Count information."
+                                                                },
+                                                                "hasInterestRate": {
+                                                                    "type": "boolean",
+                                                                    "description": "Indicates whether the payment has interest."
+                                                                },
+                                                                "interestRate": {
+                                                                    "type": "integer",
+                                                                    "description": "Interest rate value."
+                                                                },
+                                                                "value": {
+                                                                    "type": "integer",
+                                                                    "description": "Value of the order without the interest rate. The value is shown without separating cents."
+                                                                },
+                                                                "total": {
+                                                                    "type": "integer",
+                                                                    "description": "Total value of the order without separating cents. For example, $24.99 is represented `2499`."
+                                                                },
+                                                                "sellerMerchantInstallments": {
+                                                                    "type": "array",
+                                                                    "description": "Seller merchant installments information."
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "paymentSystems": {
+                                                    "type": "array",
+                                                    "description": "Information on payment systems.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "description": "Payment system ID."
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "description": "Payment system name."
+                                                            },
+                                                            "groupName": {
+                                                                "type": "string",
+                                                                "description": "Payment group name."
+                                                            },
+                                                            "validator": {
+                                                                "type": "object",
+                                                                "description": "Payment system validator.",
+                                                                "nullable": true
+                                                            },
+                                                            "stringId": {
+                                                                "type": "string",
+                                                                "description": "String ID."
+                                                            },
+                                                            "template": {
+                                                                "type": "string",
+                                                                "description": "Template."
+                                                            },
+                                                            "requiresDocument": {
+                                                                "type": "boolean",
+                                                                "description": "Indicates whether a document is required."
+                                                            },
+                                                            "displayDocument": {
+                                                                "type": "boolean",
+                                                                "description": "Indicates whether a document is shown."
+                                                            },
+                                                            "isCustom": {
+                                                                "type": "boolean",
+                                                                "description": "Indicates whether it is custom."
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "description": "Description."
+                                                            },
+                                                            "requiresAuthentication": {
+                                                                "type": "boolean",
+                                                                "description": "Indicates whether a authentication is required."
+                                                            },
+                                                            "dueDate": {
+                                                                "type": "string",
+                                                                "description": "Payment due date."
+                                                            },
+                                                            "availablePayments": {
+                                                                "type": "string",
+                                                                "description": "Availability of payment.",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "payments": {
+                                                    "type": "array",
+                                                    "description": "Information on each payment."
+                                                },
+                                                "giftCards": {
+                                                    "type": "array",
+                                                    "description": "Gift card information, if it applies to the order."
+                                                },
+                                                "giftCardMessages": {
+                                                    "type": "array",
+                                                    "description": "Array of gift card messages."
+                                                },
+                                                "availableAccounts": {
+                                                    "type": "array",
+                                                    "description": "Available accounts."
+                                                },
+                                                "availableTokens": {
+                                                    "type": "array",
+                                                    "description": "Available tokens."
+                                                },
+                                                "availableAssociations": {
+                                                    "type": "object",
+                                                    "description": "Available associations."
+                                                }
+                                            }
+                                        },
+                                        "marketingData": {
+                                            "type": "object",
+                                            "description": "Object containing promotion data such as coupon tracking information and internal or external UTMs.",
+                                            "nullable": true
+                                        },
+                                        "sellers": {
+                                            "type": "array",
+                                            "description": "Information on each seller.",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "description": "Seller ID."
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "description": "Seller name."
+                                                    },
+                                                    "logo": {
+                                                        "type": "string",
+                                                        "description": "Seller logo.",
+                                                        "nullable": true
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "clientPreferencesData": {
+                                            "type": "object",
+                                            "description": "Object containing preferences from the client who placed the order.",
+                                            "properties": {
+                                                "locale": {
+                                                    "type": "string",
+                                                    "description": "Client's locale. Examples: `pt-BR` and `en-US`."
+                                                },
+                                                "optinNewsLetter": {
+                                                    "type": "boolean",
+                                                    "description": "`true` if the client opted to receive newsletter from the store."
+                                                }
+                                            }
+                                        },
+                                        "commercialConditionData": {
+                                            "type": "object",
+                                            "description": "Object containing commercial condition information.",
+                                            "nullable": true
+                                        },
+                                        "storePreferencesData": {
+                                            "type": "object",
+                                            "description": "Object containing data from the store's configuration (stored in VTEX's License Manager).",
+                                            "properties": {
+                                                "countryCode": {
+                                                    "type": "string",
+                                                    "description": "Three letters ISO code of the country (ISO 3166 ALPHA-3)."
+                                                },
+                                                "saveUserData": {
+                                                    "type": "boolean",
+                                                    "description": "Defines whether the customer want the store to keep their personal and payment data saved."
+                                                },
+                                                "timeZone": {
+                                                    "type": "string",
+                                                    "description": "Time zone from where the order was made."
+                                                },
+                                                "currencyCode": {
+                                                    "type": "string",
+                                                    "description": "Currency code in ISO 4217. For example, `BRL`."
+                                                },
+                                                "currencyLocale": {
+                                                    "type": "integer",
+                                                    "format": "int32",
+                                                    "description": "Currency Locale Code in LCID in decimal."
+                                                },
+                                                "currencySymbol": {
+                                                    "type": "string",
+                                                    "description": "Currency symbol."
+                                                },
+                                                "CurrencyFormatInfo": {
+                                                    "description": "Object with currency format details.",
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "CurrencyDecimalDigits": {
+                                                            "type": "integer",
+                                                            "format": "int32",
+                                                            "description": "Quantity of currency decimal digits."
+                                                        },
+                                                        "CurrencyDecimalSeparator": {
+                                                            "type": "string",
+                                                            "description": "Defines what currency decimal separator will be applied."
+                                                        },
+                                                        "CurrencyGroupSeparator": {
+                                                            "type": "string",
+                                                            "description": "Defines what currency group separator will be applied."
+                                                        },
+                                                        "CurrencyGroupSize": {
+                                                            "type": "integer",
+                                                            "format": "int32",
+                                                            "description": "Defines how many characters will be grouped."
+                                                        },
+                                                        "StartsWithCurrencySymbol": {
+                                                            "type": "boolean",
+                                                            "description": "Defines if all prices will be initiated with the currency symbol (`true`) or not (`false`)."
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "giftRegistryData": {
+                                            "type": "object",
+                                            "description": "Gift registry list information.",
+                                            "nullable": true
+                                        },
+                                        "openTextField": {
+                                            "type": "string",
+                                            "description": "Optional field meant to hold additional information about the order. We recommend using this field for text, not data formats such as `JSON` even if escaped. For that purpose, see [Creating customizable fields](https://developers.vtex.com/vtex-rest-api/docs/creating-customizable-fields-in-the-cart-with-checkout-api-1).",
+                                            "nullable": true
+                                        },
+                                        "invoiceData": {
+                                            "type": "object",
+                                            "description": "Object containing information pertinent to the order's invoice.",
+                                            "nullable": true
+                                        },
+                                        "customData": {
+                                            "type": "object",
+                                            "description": "Customer additional information.",
+                                            "nullable": true
+                                        },
+                                        "itemMetadata": {
+                                            "type": "object",
+                                            "description": "Item metadata.",
+                                            "nullable": true
+                                        },
+                                        "hooksData": {
+                                            "type": "object",
+                                            "description": "Hooks information.",
+                                            "nullable": true
+                                        },
+                                        "ratesAndBenefitsData": {
+                                            "type": "object",
+                                            "description": "Information on rates and benefits that apply to the order.",
+                                            "nullable": true
+                                        },
+                                        "subscriptionData": {
+                                            "type": "object",
+                                            "description": "Subscription information.",
+                                            "nullable": true
+                                        },
+                                        "itemsOrdination": {
+                                            "type": "object",
+                                            "description": "Object containing information about the ordering of items within the orderForm.",
+                                            "nullable": true
+                                        }
+                                    }
+                                },
                                 "example": {
                                     "orderFormId": "2f586e50342a4f87b7e0654c56299e88",
                                     "salesChannel": "1",
@@ -8622,8 +9872,20 @@
                                                         "shippingEstimate": "3bd",
                                                         "shippingEstimateDate": null,
                                                         "lockTTL": null,
-                                                        "availableDeliveryWindows": [],
-                                                        "deliveryWindow": null,
+                                                        "availableDeliveryWindows": {
+                                                                "startDateUtc": "2017-03-27T00:00:00+00:00",
+                                                                "endDateUtc": "2017-03-27T00:00:00+00:00",
+                                                                "price": 0,
+                                                                "lisPrice": 0,
+                                                                "tax": 0
+                                                        },
+                                                        "deliveryWindow": {
+                                                            "startDateUtc": "2014-04-21T09:00:00+00:00",
+                                                            "endDateUtc": "2014-04-21T12:00:00+00:00",
+                                                            "price": 0,
+                                                            "listprice": 1000,
+                                                            "tax": 0
+                                                        },
                                                         "price": 250,
                                                         "listPrice": 250,
                                                         "tax": 0,
@@ -8632,7 +9894,7 @@
                                                             "friendlyName": "VTEX SP",
                                                             "address": {
                                                                 "addressType": "pickup",
-                                                                "receiverName": null,
+                                                                "receiverName": "Clark Kent",
                                                                 "addressId": "VTEXSP",
                                                                 "isDisposable": true,
                                                                 "postalCode": "04538-132",
@@ -8653,7 +9915,7 @@
                                                             "dockId": "1"
                                                         },
                                                         "pickupPointId": "1_VTEXSP",
-                                                        "pickupDistance": 15.848081588745117,
+                                                        "pickupDistance": 15,
                                                         "polygonName": null,
                                                         "transitTime": "3bd"
                                                     }
@@ -8747,7 +10009,23 @@
                                         ],
                                         "pickupPoints": []
                                     },
-                                    "clientProfileData": null,
+                                    "clientProfileData": {
+                                        "email": "clark.kent@example.com",
+                                        "firstName": "Clark",
+                                        "lastName": "Kent",
+                                        "document": "12345678900",
+                                        "documentType": "cpf",
+                                        "phone": "+5521998765432",
+                                        "corporateName": null,
+                                        "tradeName": null,
+                                        "corporateDocument": null,
+                                        "stateInscription": null,
+                                        "corporatePhone": null,
+                                        "isCorporate": false,
+                                        "profileCompleteOnLoading": false,
+                                        "profileErrorOnLoading": null,
+                                        "customerClass": null
+                                    },
                                     "paymentData": {
                                         "updateStatus": "updated",
                                         "installmentOptions": [],
@@ -8762,7 +10040,7 @@
                                     "sellers": [],
                                     "clientPreferencesData": {
                                         "locale": "pt-BR",
-                                        "optinNewsLetter": null
+                                        "optinNewsLetter": false
                                     },
                                     "commercialConditionData": null,
                                     "storePreferencesData": {

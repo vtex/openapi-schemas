@@ -1,0 +1,43 @@
+name: Convert to Postman
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  convert-to-postman:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18
+
+      - name: Process JSON files
+        run: |
+          for file in *.json; do
+            echo "Processing $file"
+            npx @apideck/portman -l "$file" -o "./PostmanCollections/$file"
+          done
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "${{ github.event.pull_request.user.email }}"
+          git config --local user.name "${{ github.event.pull_request.user.login }}"
+
+      - name: Commit changes
+        run: |
+          git add PostmanCollections/*
+          git commit -m "Update generated files by portman"
+          git pull --rebase origin "${{ github.head_ref }}"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          branch: ${{ github.head_ref }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
