@@ -22,31 +22,35 @@ jobs:
         id: get-changed-files
         uses: tj-actions/changed-files@v36
         with:
+          separator: ','
           files: |
             **.json
 
       - name: Process changed JSON files
         run: |
-          for file in ${{ steps.get-changed-files.outputs.all_changed_files }}; do
+          FILES="${{ steps.get-changed-files.outputs.all_changed_files }}"
+
+          IFS=","
+          for file in $FILES; do
             echo "Processing $file"
             npx @apideck/portman -l "$file" -o "./PostmanCollections/$file"
           done
 
       - name: Configure Git
-        if: ${{ steps.get-changed-files.outputs.any_changed }}
+        if: ${{ steps.get-changed-files.outputs.any_changed == 'true' }}
         run: |
           git config --local user.email "${{ github.event.pull_request.user.email }}"
           git config --local user.name "${{ github.event.pull_request.user.login }}"
 
       - name: Commit changes
-        if: ${{ steps.get-changed-files.outputs.any_changed }}
+        if: ${{ steps.get-changed-files.outputs.any_changed == 'true' }}
         run: |
           git add PostmanCollections/*
           git commit -m "Update generated files by portman"
           git pull --rebase origin "${{ github.head_ref }}"
 
       - name: Push changes
-        if: ${{ steps.get-changed-files.outputs.any_changed }}
+        if: ${{ steps.get-changed-files.outputs.any_changed == 'true' }}
         uses: ad-m/github-push-action@v0.6.0
         with:
           branch: ${{ github.head_ref }}
