@@ -2,13 +2,13 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Pricing API",
-        "description": "Pricing (v2) is the VTEX module responsible for the SKU`s price list. At this module we have the base price of each SKU, some optional fixed prices by trade policy, and some rules that can be applied to generate dynamically different final prices accordingly with purchase context and Trade Policy. The variables used in this collection are:\n\n**{{account}}** = You VTEX account name.\n\n**{{tradePolicyId}}** = Current Trade Policy ID.\n\n**{{itemId}}** = SKU ID.\n\n**{{X-VTEX-API-AppKey}}** and **{{X-VTEX-API-AppToken}}** = Credentials.\n\nYou can get more information about how to use this module and its business logic at [VTEX Help](http://help.vtex.com).\n\n\n--------------\n\n\n# Rate Limits\n\n#### Limits per route\n\n- `GET`:  routes are not rate limited at the moment\n\n- `PUT or POST`: `40 requests/second/account` in any **price insert/update route** with 1000 *Burst Credits*\n\n- `DELETE`: `16 requests/second/account` in any **price deletion route**, with 300 *Burst Credits*.\n\n\n#### What are Burst Credits?\n\nIn case the account exceeds the limit frequency for a  `Rate Limiter` (for instance, when one account makes `41 requests/second` in any `price insert/update route`), we decrease from the *Burst Credit* count the exceeding (in this example, *1 Credit*).\n\nIn the event of the *Burst Credits* reaching **0 (zero)**, the request is blocked with a `Status 429` response.\n\nThe credits fill up over time when the route is not being used, in the same rate as the route's `Rate Limiter`. In our example, for each second not sending a **PUT or POST request**, we increase *40 Burst Credits* to this `Rate Limiter`\n\n\n#### New Response Headers\n\nIn the response headers of any request to Pricing v2 there are some new headers indicating the current status of the Rate Limiting.\nThis information may be useful to evaluate the ideal frequency to send requests to a route, and when to send a new request in the event of reaching a Rate Limit.\n\n- `Ratelimit-Limit` - Total *Burst Credits* offered to a route\n- `Ratelimit-Remaining` - How many *Burst Credits* are still available to use\n- `Ratelimit-Reset` - How long (in seconds) it will take to the *Burst Credits* to fill up completely (It will fill up to the `Ratelimit-Limit`)\n- `Retry-After` - Indicates how many seconds you will need to wait until the `Rate Limiter` accepts a new request to this route again. If this header response exists, this means your current request has been rate limited and has not been processed.\n\n#### How to integrate with Pricing v2 considering our Rate Limits\n\nIntegrate considering the limits of **requests/route/account** specified in the [*Limits per route*](#rate-limits) section, avoiding to surpass this frequency.\n\nIf you happen to be Rate Limited, wait the time in seconds specified in `Retry-After` before making another request to the service, and reduce the rate of requests per second that your integration is making.",
+        "description": "\r\n> Check the new [Pricing onboarding guide](https://developers.vtex.com/vtex-rest-api/docs/pricing-overview). We created this guide to improve the onboarding experience for developers at VTEX. It assembles all documentation on our Developer Portal about Pricing and is organized by focusing on the developer's journey.\r\n\r\nPricing is the VTEX module responsible for the SKU's price list. At this module we have the base price of each SKU, some optional fixed prices by trade policy, and some rules that can be applied to generate dynamically different final prices according to the purchase context and the trade policy. The variables used in this collection are:\n\n`{{accountName}}` = You VTEX account name.\n\n`{{tradePolicyId}}` = Current Trade Policy ID.\n\n`{{itemId}}` = SKU ID.\n\n`{{X-VTEX-API-AppKey}}` and `{{X-VTEX-API-AppToken}}` = Credentials used in Authentication.\n\nYou can get more information about how to use this module and its business logic at our [Pricing onboarding guide](https://developers.vtex.com/vtex-rest-api/docs/pricing-overview).\n\n## Rate Limits per route\nThe rate limits per route revolve around the following values:\n\n\n| Operation | Rate                             | Burst credits  |\n|-----------|----------------------------------|----------------|\n| GET       | No rate limits                   | No rate limits |\n| POST/PUT  |- 2000 per minute<br>- 33 per second | 500            |\n| DELETE    | - 1000 per minute<br>-16 per second | 300            |\n\n### What are Burst Credits?\nIn case the account exceeds the limit frequency for a Rate Limiter (for instance, when one account makes 41 requests/second in any price insert/update route), we decrease from the Burst Credit count the exceeding (in this example, 1 Credit).\n\nIn the event of the Burst Credits reaching 0 (zero), the request is blocked with a Status 429 response.\n\nThe credits fill up over time when the route is not being used, in the same rate as the route's Rate Limiter. In our example, for each second not sending a PUT or POST request, we increase 40 Burst Credits to this Rate Limiter\n\n### Response Headers for rate limits\nIn the response headers of any request to the Pricing API, there are some headers indicating the current status of the Rate Limiting. This information may be useful to evaluate the ideal frequency to send requests to a route, and when to send a new request in the event of reaching a Rate Limit.\n\n- `Ratelimit-Limit`: Total Burst Credits offered to a route\n- `Ratelimit-Remaining`: How many Burst Credits are still available to use\n- `Ratelimit-Reset`: How long (in seconds) it will take for Burst Credits to fill up completely (it will fill up to the *Ratelimit-Limit*)\n- `Retry-After`: Indicates how many seconds you will need to wait until the Rate Limiter accepts a new request to this route again. If this header response exists, this means your current request has been rate limited and has not been processed.\n\n\n### How to integrate with Pricing v2 considering our Rate Limits\nIntegrate considering the limits of requests/route/account specified in the [Rate Limits per route](#rate-limits-per-route) section, avoiding to surpass this frequency.\n\nIf you happen to be Rate Limited, please await the time in seconds specified in `Retry-After` before making another request to the service, and reduce the rate of requests per second that your integration is making.",
         "contact": {},
         "version": "1.0"
     },
     "servers": [
         {
-            "url": "https://api.vtex.com/{accountName}/pricing",
+            "url": "https://api.vtex.com/{accountName}",
             "description": "VTEX server url",
             "variables": {
                 "accountName": {
@@ -19,7 +19,7 @@
         }
     ],
     "paths": {
-        "/prices/{itemId}": {
+        "/pricing/prices/{itemId}": {
             "get": {
                 "tags": [
                     "Prices and Fixed Prices"
@@ -155,7 +155,7 @@
                     "Prices and Fixed Prices"
                 ],
                 "summary": "Create or Update Base Price or Fixed Prices",
-                "description": "Creates or updates an SKU Base Price or Fixed Prices. The **base price** is the basic selling price of a product, it comprises the cost price and the markup wanted in the sale of the product. The **fixed price** is an optional price of the SKU for a specific trade policy with a specific minimum quantity to be activated.\r\n\r\n <p> You may optionally set a list price. Additionally, you may set either a cost price or a markup value. By defining either one of them, the other will be calculated to conform to the formula <code>costPrice * (1 + markup) = basePrice</code>.</p> ## Request body example\r\n\r\n```json\r\n{\r\n    \"markup\": 30,\r\n    \"basePrice\": 100,\r\n    \"listPrice\": 35,\r\n    \"fixedPrices\": [\r\n        {\r\n            \"tradePolicyId\": \"1\",\r\n            \"value\": 31,\r\n            \"listPrice\": 32,\r\n            \"minQuantity\": 1,\r\n            \"dateRange\": {\r\n                \"from\": \"2022-05-21T22:00:00Z\",\r\n                \"to\": \"2023-05-28T22:00:00Z\"\r\n            }\r\n        },\r\n        {\r\n            \"tradePolicyId\": \"1\",\r\n            \"value\": 31.5,\r\n            \"listPrice\": 33,\r\n            \"minQuantity\": 2\r\n        }\r\n    ]\r\n}\r\n```",
+                "description": "Creates or updates an SKU Base Price or Fixed Prices. The **base price** is the basic selling price of a product, it comprises the cost price and the markup wanted in the sale of the product. The **fixed price** is an optional price of the SKU for a specific trade policy with a specific minimum quantity to be activated.\r\n\r\n <p> You may optionally set a list price. Additionally, you may set either a cost price or a markup value. By defining either one of them, the other will be calculated to conform to the formula <code>costPrice * (1 + markup) = basePrice</code>.</p> <h2>Request body example</h2>\r\n\r\n```json\r\n{\r\n    \"markup\": 30,\r\n    \"basePrice\": 100,\r\n    \"listPrice\": 35,\r\n    \"fixedPrices\": [\r\n        {\r\n            \"tradePolicyId\": \"1\",\r\n            \"value\": 31,\r\n            \"listPrice\": 32,\r\n            \"minQuantity\": 1,\r\n            \"dateRange\": {\r\n                \"from\": \"2022-05-21T22:00:00Z\",\r\n                \"to\": \"2023-05-28T22:00:00Z\"\r\n            }\r\n        },\r\n        {\r\n            \"tradePolicyId\": \"1\",\r\n            \"value\": 31.5,\r\n            \"listPrice\": 33,\r\n            \"minQuantity\": 2\r\n        }\r\n    ]\r\n}\r\n```",
                 "operationId": "CreateUpdatePriceOrFixedPrice",
                 "parameters": [
                     {
@@ -303,7 +303,7 @@
                 }
             }
         },
-        "/prices/{itemId}/fixed": {
+        "/pricing/prices/{itemId}/fixed": {
             "get": {
                 "tags": [
                     "Prices and Fixed Prices"
@@ -386,7 +386,7 @@
                 "deprecated": false
             }
         },
-        "/prices/{itemId}/fixed/{priceTableId}": {
+        "/pricing/prices/{itemId}/fixed/{priceTableId}": {
             "post": {
                 "tags": [
                     "Prices and Fixed Prices"
@@ -657,7 +657,7 @@
                 "deprecated": false
             }
         },
-        "/prices/{itemId}/computed/{priceTableId}": {
+        "/pricing/prices/{itemId}/computed/{priceTableId}": {
             "get": {
                 "tags": [
                     "Prices and Fixed Prices"
@@ -779,7 +779,7 @@
                 ]
             }
         },
-        "/config": {
+        "/pricing/config": {
             "get": {
                 "tags": [
                     "Pricing Configuration"
@@ -970,7 +970,7 @@
                 ]
             }
         },
-        "/migration": {
+        "/pricing/migration": {
             "get": {
                 "tags": [
                     "Pricing Configuration"
@@ -1155,7 +1155,7 @@
                 ]
             }
         },
-        "/pipeline/catalog/{priceTableId}": {
+        "/pricing/pipeline/catalog/{priceTableId}": {
             "get": {
                 "tags": [
                     "Price Tables"
@@ -1566,7 +1566,7 @@
                 }
             }
         },
-        "/pipeline/catalog": {
+        "/pricing/pipeline/catalog": {
             "get": {
                 "tags": [
                     "Price Tables"
@@ -1759,7 +1759,7 @@
                 ]
             }
         },
-        "/tables": {
+        "/pricing/tables": {
             "get": {
                 "tags": [
                     "Price Tables"
