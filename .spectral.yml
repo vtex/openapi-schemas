@@ -54,4 +54,61 @@ rules:
       function: pattern
       functionOptions:
         match: "^[A-Z].*$"
+
+  should-contain-$ref-response-request:
+    description: "Use $ref to avoid repeating information about the request and response bodies."
+    severity: warn
+    given: "$.paths..(responses || requestBody).*.content.*.schema.*"
+    then:
+      function: "$ref"
+      functionOptions:
+        match: truthy
         
+  should-contain-$ref-parameters:
+    description: "Use $ref to avoid repeating information about the patameters."
+    severity: warn
+    given: "$.paths..parameters.*"
+    then:
+      function: "$ref"
+      functionOptions:
+        match: truthy
+
+  no-empty-descriptions:
+    description: No empty descriptions allowed.
+    severity: error
+    given: "$..*[?(@property === 'description')]"
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: "^(?!\\s*$).+"
+        
+  avoid-empty-titles:
+    description: There can be no empty titles. Removing this title field from the property solves this issue.
+    severity: error
+    given: "$..[?(@.title='')]~"
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: "example"
+
+  parameters-description:
+    description: All parameters must be a description field.
+    given: "$.paths.*.*.parameters[*]"
+    then:
+      field: "description"
+      function: truthy
+
+  request-properties-description:
+    description: All request body properties must be a description field.
+    given: "$.paths.*.*.requestBody.properties.*"
+    then:
+      field: "description"
+      function: truthy
+      
+  response-properties-description:
+    description: All response body properties must be a description field.
+    given: "$.paths.*.*.responses.*.properties.*"
+    then:
+      field: "description"
+      function: truthy
+
