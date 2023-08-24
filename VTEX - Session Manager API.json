@@ -29,7 +29,7 @@
                     "Sessions"
                 ],
                 "summary": "Create new session",
-                "description": "Creates a new session and returns a session token and a segment token. Also stores `vtex_session` and `vtex_segment` cookies, with the same values returned in the response.\n\r\n\rAll parameters in the body that are not within the public namespace will be ignored. Query string items will automatically be added to the public namespace.\n\r\n\r>⚠️ The sessions API uses the `vtex_session` and `vtex_segment` cookies to store the data required to identify the user and the session. These cookies are stored in the user's browser when the session is created and sent automatically in every request to that domain. You will have to reproduce that by sending these cookies as headers in other requests to Session Manager API in order for it to work outside of a browser environment.",
+                "description": "Creates a new session and returns a session token and a segment token. Also stores `vtex_session` and `vtex_segment` cookies, with the same values returned in the response.\n\r\n\rAll parameters in the body that are not within the public namespace will be ignored. Query string items will automatically be added to the public namespace.\n\r\n\rNo authentication is required.\n\r\n\r>⚠️ The Session Manager API uses the `vtex_session` and `vtex_segment` cookies to store the data required to identify the user and the session. These cookies are stored in the user's browser when the session is created and sent automatically in every request to that domain. You will have to reproduce that by sending these cookies as headers in other requests to Session Manager API in order for it to work outside of a browser environment.",
                 "operationId": "Createnewsession",
                 "parameters": [],
                 "requestBody": {
@@ -87,28 +87,34 @@
                     "Sessions"
                 ],
                 "summary": "Get Session",
-                "description": "Items are the keys of the values you wish to get. It follows the format `namespace1.key1,namespace2.key2`. So if you wish to recover the data sent on the previous request, it should be `public.country,public.postalCode`.\n\r\n\r> The sessions API uses the `vtex_session` cookie to store the data required to identify the user and the session. This cookie is stored in the user's browser when the session is created and sent automatically in every request to that domain. You will have to reproduce that in order for it to work outside of a browser environment.\n\r\n\r> If you want to retrieve all keys from Session Manager, you can use the wildcard operator (`*`) in your request (i.e. `?items=*`).",
+                "description": "Retrieves information from a previously created sesssion.\n\r\n\r>⚠️ The Session Manager API uses the `vtex_session` and `vtex_segment` cookies to store the data required to identify the user and the session. These cookies are stored in the user's browser when the session is created and sent automatically in every request to that domain. You will have to reproduce that by sending these cookies as headers to Session Manager API in order for it to work outside of a browser environment.",
                 "operationId": "GetSession",
                 "parameters": [
                     {
                         "name": "items",
                         "in": "query",
-                        "description": "Items are the keys of the values you wish to get. It follows the format `namespace1.key1,namespace2.key2`",
+                        "description": "Items are the keys of the values you wish to get. They follow the format `namespace1.key1,namespace2.key2`.\n\r\n\rIf you wish to recover the data sent on [Create new session](https://developers.vtex.com/docs/api-reference/session-manager-api#post-/api/sessions), it should be `public.{key}`, replacing `{key}` with the name of the custom property you created. Following the example request presented in [Create new session](https://developers.vtex.com/docs/api-reference/session-manager-api#post-/api/sessions), it would be `public.country,public.postalCode`.\n\r\n\rIf you want to retrieve all keys from Session Manager, you can use the wildcard operator (`*`) as a value for this query parameter.",
                         "required": true,
                         "style": "form",
                         "explode": true,
                         "schema": {
                             "type": "string",
-                            "example": "namespace1.key1,namespace2.key2"
+                            "example": "*"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "OK",
                         "headers": {}
                     }
                 },
+                "security": [
+                    {
+                        "vtex_session": [],
+                        "vtex_segment": []
+                    }
+                ],
                 "deprecated": false
             },
             "patch": {
@@ -166,6 +172,20 @@
         }
     },
     "components": {
+        "securitySchemes": {
+            "vtex_session": {
+                "type": "apiKey",
+                "in": "cookie",
+                "name": "vtex_session",
+                "description": "Token that identifies the user's individual session. Obtained [when a new session is created](https://developers.vtex.com/docs/api-reference/session-manager-api#post-/api/sessions)."
+            },
+            "vtex_segment": {
+                "type": "apiKey",
+                "in": "cookie",
+                "name": "vtex_segment",
+                "description": "Token that identifies the user's segment, shared with other users with similar navigation parameters. Obtained [when a new session is created](https://developers.vtex.com/docs/api-reference/session-manager-api#post-/api/sessions)."
+            }
+        },
         "schemas": {
             "CreatenewsessionRequest": {
                 "title": "CreatenewsessionRequest",
