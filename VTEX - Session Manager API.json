@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Session Manager API",
-        "description": "Session Manager tracks the current browsing sessions of all customers on the VTEX platform. Important session information is automatically captured and stored in a secure and easily accessible location. This includes data such as relevant cookies, query strings, authentication credentials, current profile and pricing information, if applicable. Session Manager API allows developers to retrieve and manage information about sessions.\r\n\r\nFor more information, read the [Session Manager guide](https://developers.vtex.com/docs/guides/session-manager).\r\n\r\n## Index\r\n\r\n### Sessions\r\n\r\n- `POST` [Create new session](https://developers.vtex.com/docs/api-reference/session-manager-api#post-/api/sessions)\r\n- `GET` [Get Session](https://developers.vtex.com/docs/api-reference/session-manager-api#get-/api/sessions)\r\n- `PATCH` [Edit session](https://developers.vtex.com/docs/api-reference/session-manager-api#patch-/api/sessions)\r\n\r\n### Segment\r\n\r\n- `GET` [Get Segment](https://developers.vtex.com/docs/api-reference/session-manager-api#get-/api/segments)",
+        "description": "Session Manager tracks the current browsing sessions of all customers on the VTEX platform. Important session information is automatically captured and stored in a secure and easily accessible location. This includes data such as relevant cookies, query strings, authentication credentials, current profile and pricing information, if applicable. Session Manager API allows developers to retrieve and manage information about sessions. No authentication is required.\r\n\r\nFor more information, read the [Session Manager guide](https://developers.vtex.com/docs/guides/session-manager).\r\n\r\n## Index\r\n\r\n### Sessions\r\n\r\n- `POST` [Create new session](https://developers.vtex.com/docs/api-reference/session-manager-api#post-/api/sessions)\r\n- `GET` [Get Session](https://developers.vtex.com/docs/api-reference/session-manager-api#get-/api/sessions)\r\n- `PATCH` [Edit session](https://developers.vtex.com/docs/api-reference/session-manager-api#patch-/api/sessions)\r\n\r\n### Segment\r\n\r\n- `GET` [Get Segment](https://developers.vtex.com/docs/api-reference/session-manager-api#get-/api/segments)",
         "contact": {},
         "version": "1.0"
     },
@@ -29,7 +29,7 @@
                     "Sessions"
                 ],
                 "summary": "Create new session",
-                "description": "The response should contain a session cookie. Further `POST` or `PATCH` requests will edit the existing session rather than creating a new one. All parameters in the body that are not within the public namespace will be ignored. Query string items will automatically be added to the public namespace. Cookies relevant to the session manager execution are also recorded.\n\r\n\r> The sessions API uses the `vtex_session` cookie to store the data required to identify the user and the session. This cookie is stored in the user's browser when the session is created and sent automatically in every request to that domain. You will have to reproduce that in order for it to work outside of a browser environment.",
+                "description": "Creates a new session and returns a session token and a segment token. Also stores `vtex_session` and `vtex_segment` cookies, with the same values returned in the response.\n\r\n\rAll parameters in the body that are not within the public namespace will be ignored. Query string items will automatically be added to the public namespace.\n\r\n\r>⚠️ The sessions API uses the `vtex_session` and `vtex_segment` cookies to store the data required to identify the user and the session. These cookies are stored in the user's browser when the session is created and sent automatically in every request to that domain. You will have to reproduce that by sending these cookies as headers in other requests to Session Manager API in order for it to work outside of a browser environment.",
                 "operationId": "Createnewsession",
                 "parameters": [],
                 "requestBody": {
@@ -55,8 +55,29 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "",
-                        "headers": {}
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Object containing session token and segment token.",
+                                    "properties": {
+                                        "sessionToken": {
+                                            "type": "string",
+                                            "description": "Token that identifies the user's individual session."
+                                        },
+                                        "segmentToken": {
+                                            "type": "string",
+                                            "description": "Token that identifies the user's segment, shared with other users with similar navigation parameters."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "sessionToken": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjM5MEI4MTM1RDUzQ0MwMUY0RjA4N0YwMzA2RjhDODMzNzBDMjY4M0UiLCJ0eXAiOiJqd3QifQ.eyJhY2NvdW50LmlkIjoiYThiMjdmYjQtNjUxNi00Y2MwLTgyYjYtYTVmMmIwMTFlNmUyIiwiaWQiOiIyNmQyY2I2Yy0yMTNlLTQ5MzYtOWUyYS0xZDFlMjk5ZWMzM2IiLCJ2ZXJzaW9uIjoyLCJzdWIiOiJzZXNzaW9uIiwiYWNjb3VudCI6InNlc3Npb24iLCJleHAiOjE2OTM1Nzg5NzYsImlhdCI6MTY5Mjg4Nzc3NiwiaXNzIjoidG9rZW4tZW1pdHRlciIsImp0aSI6IjhiYWU2NzdmLWE0NTAtNGI0OC05YTBkLTViMzAwYjNiY2NkOCJ9.Ak1bn2xEA1A5dVN4qR6RI8vnZpSpLXyVxFCthMoVjmWn0HlP5BqMHEMYApDj8TPPhyxT0hGT0vkmvMQa2Mprrw",
+                                    "segmentToken": "eyJjYW1wYWlnbnMiOm51bGwsImNoYW5uZWwiOiIxIiwicHJpY2VUYWJsZXMiOm51bGwsInJlZ2lvbklkIjpudWxsLCJ1dG1fY2FtcGFpZ24iOm51bGwsInV0bV9zb3VyY2UiOm51bGwsInV0bWlfY2FtcGFpZ24iOm51bGwsImN1cnJlbmN5Q29kZSI6IkJSTCIsImN1cnJlbmN5U3ltYm9sIjoiUiQiLCJjb3VudHJ5Q29kZSI6IkJSQSIsImN1bHR1cmVJbmZvIjoiZW4tVVMiLCJjaGFubmVsUHJpdmFjeSI6InB1YmxpYyJ9"
+                                }
+                            }
+                        }
                     }
                 },
                 "deprecated": false
@@ -144,36 +165,7 @@
             }
         }
     },
-    "security": [
-        {
-            "appKey": [],
-            "appToken": []
-        },
-        {
-            "VtexIdclientAutCookie": []
-        }
-    ],
     "components": {
-        "securitySchemes": {
-            "appKey": {
-                "type": "apiKey",
-                "in": "header",
-                "name": "X-VTEX-API-AppKey",
-                "description": "Unique identifier of the [application key](https://developers.vtex.com/docs/guides/authentication-overview#application-keys)."
-            },
-            "appToken": {
-                "type": "apiKey",
-                "in": "header",
-                "name": "X-VTEX-API-AppToken",
-                "description": "Secret token of the [application key](https://developers.vtex.com/docs/guides/authentication-overview#application-keys)."
-            },
-            "VtexIdclientAutCookie": {
-                "type": "apiKey",
-                "in": "header",
-                "name": "VtexIdclientAutCookie",
-                "description": "[User token](https://developers.vtex.com/docs/guides/authentication-overview#user-token), valid for 24 hours."
-            }
-        },
         "schemas": {
             "CreatenewsessionRequest": {
                 "title": "CreatenewsessionRequest",
@@ -205,11 +197,16 @@
                 ],
                 "type": "object",
                 "properties": {
-                    "country": {
-                        "$ref": "#/components/schemas/Country"
-                    },
-                    "postalCode": {
-                        "$ref": "#/components/schemas/PostalCode"
+                    "additionalProperties": {
+                        "type": "object",
+                        "description": "Custom property.",
+                        "properties": {
+                            "value": {
+                                "type": 
+                                "string",
+                                "description": "Value of the custom property."
+                            }
+                        }
                     }
                 },
                 "example": {
