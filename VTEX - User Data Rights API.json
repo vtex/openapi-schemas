@@ -1,0 +1,222 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "User Data Rights API",
+        "description": "According to data protection policies, such as [GDPR and LGPD](https://vtex.com/us-en/privacy-and-agreements/vtex-commitment/), companies using customer personal data are required to delete collected information upon the customer's request. User Data Rights API allows stores using the [PII data architecture](https://developers.vtex.com/docs/guides/pii-data-architecture) to erase user data collected by Checkout, Orders, VTEX ID and Profile System, without depending on the VTEX Support flow described in the [Erasing customer data](https://help.vtex.com/en/tutorial/erasing-customer-data--1R9Fn7A06Ifj4R9YD4JTKU) guide.\r\n\r\n>⚠️ This API is currently in closed alpha testing stage, which means that only specific customers can access it now. Do not share this documentation with people outside of your company. If you do not have access yet, please refer to the [Erasing customer data](https://help.vtex.com/en/tutorial/erasing-customer-data--1R9Fn7A06Ifj4R9YD4JTKU) guide instead.\r\n\r\n## Index\r\n\r\n- `POST` [Delete user data](https://developers.vtex.com/docs/api-reference/user-data-rights-api#post-/api/user-rights/createAndProcessDeleteUserData)",
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "http://api.vtexinternal.com",
+            "description": "VTEX server URL."
+        }
+    ],
+    "paths": {
+        "/api/user-rights/createAndProcessDeleteUserData": {
+            "post": {
+                "tags": [
+                    "User Data Rights"
+                ],
+                "summary": "Delete client data",
+                "description": "Erases a given user's data collected from your store's customers by Checkout, Orders, VTEX ID and Profile System.\r\n\r\n>⚠️ This API is currently in closed alpha testing stage, which means that only specific customers can access it now. Do not share this documentation with people outside of your company. If you do not have access yet, please refer to the [Erasing customer data](https://help.vtex.com/en/tutorial/erasing-customer-data--1R9Fn7A06Ifj4R9YD4JTKU) guide instead.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/an"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "description": "Email of the client whose data will be deleted.",
+                                        "example": "john@mail.com"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "uuid": {
+                                            "type": "string",
+                                            "description": "User data rights request unique identifier in [UUID](https://www.uuidtools.com/what-is-uuid) format."
+                                        },
+                                        "requestType": {
+                                            "type": "string",
+                                            "description": "Type of user data rights request."
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "description": "Client email."
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "description": "Status of the user data rights request."
+                                        },
+                                        "dataResponse": {
+                                            "type": "string",
+                                            "description": "Escaped JSON containing information about the status of data deletion on each VTEX system that stores client data."
+                                        },
+                                        "requestTime": {
+                                            "type": "string",
+                                            "description": "Date of the user data rights request in [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html)format."
+                                        },
+                                        "applications": {
+                                            "type": "array",
+                                            "description": "Array containing an object for each VTEX application that stores client data.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Object containing information about user data status in each VTEX application that stores client data.",
+                                                "properties": {
+                                                    "application": {
+                                                        "type": "string",
+                                                        "description": "Abbreviated name of the application, which can be `chk` (Checkout), `orders` (Order Management System), `profileSystemV2` (PII Profile System) or `vid` (VTEX ID)."
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "description": "Status of client data in the given application."
+                                                    },
+                                                    "errorDetail": {
+                                                        "type": "string",
+                                                        "description": "In case of error, this field contains an explanatory error message. Otherwise, this field is an empty string."
+                                                    },
+                                                    "updateAt": {
+                                                        "type": "string",
+                                                        "description": "Date of the latest update in client data in the given application, in UTC format."
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "uuid": "3e2f53dc-b099-4dc8-9727-581b2a97f39c",
+                                    "requestType": "Removal",
+                                    "email": "pedido2@vtexchallenge.com",
+                                    "status": "Completed",
+                                    "dataResponse": "{\r\n  \"VTEX  Checkout\": [],\r\n  \"orders\": {\r\n    \"dataStatus\": {\r\n      \"status\": \"anonymized\",\r\n      \"reason\": \"Sensitive information was anonymized rather than deleted to preserve the store metrics.\",\r\n      \"evidence\": \"Anonymized [0] orders\",\r\n      \"dryRun\": true\r\n    },\r\n    \"orders\": []\r\n  },\r\n  \"Profile System PII API\": {},\r\n  \"VTEX ID\": {\r\n    \"type\": \"https://tools.ietf.org/html/rfc7231#section-6.5.4\",\r\n    \"title\": \"Not Found\",\r\n    \"status\": 404,\r\n    \"traceId\": \"00-65d5abf9263b07eb185beee49e2075dc-b67b373e2e93dcf8-00\"\r\n  }\r\n}",
+                                    "requestTime": "2023-09-05T17:19:33.1969022-03:00",
+                                    "applications": [
+                                        {
+                                            "application": "chk",
+                                            "status": "Deleted",
+                                            "errorDetail": "",
+                                            "updateAt": "2023-09-05T20:20:23"
+                                        },
+                                        {
+                                            "application": "orders",
+                                            "status": "Deleted",
+                                            "errorDetail": "",
+                                            "updateAt": "2023-09-05T20:20:25"
+                                        },
+                                        {
+                                            "application": "profileSystemV2",
+                                            "status": "Deleted",
+                                            "errorDetail": "",
+                                            "updateAt": "2023-09-05T20:20:26"
+                                        },
+                                        {
+                                            "application": "vid",
+                                            "status": "Deleted",
+                                            "errorDetail": "",
+                                            "updateAt": "2023-09-05T20:20:29"
+                                        }
+                                    ]
+                                }
+                                
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "parameters": {
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "an": {
+                "name": "an",
+                "in": "query",
+                "description": "Name of your VTEX account.",
+                "required": false,
+                "style": "form",
+                "schema": {
+                    "type": "string",
+                    "example": "mystore"
+                }
+            }
+        },
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [application key](https://developers.vtex.com/docs/guides/authentication-overview#application-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [application key](https://developers.vtex.com/docs/guides/authentication-overview#application-keys)."
+            },
+            "VtexIdclientAutCookie": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "VtexIdclientAutCookie",
+                "description": "[User token](https://developers.vtex.com/docs/guides/authentication-overview#user-token), valid for 24 hours."
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "User Data Rights"
+        }
+    ],
+    "security": [
+        {
+            "appKey": [],
+            "appToken": []
+        },
+        {
+            "VtexIdclientAutCookie": []
+        }
+    ]
+}
