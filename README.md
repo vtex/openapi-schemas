@@ -74,16 +74,16 @@ Example - `servers` object:
 "servers": [
     {
         "url": "https://{accountName}.{environment}.com.br",
-        "description": "VTEX server url",
+        "description": "VTEX server URL.",
         "variables": {
             "accountName": {
-                "default": "apiexamples",
-                "description": "Your VTEX account name"
+                "description": "Name of the VTEX account. Used as part of the URL.",
+                "default": "apiexamples"
             },
             "environment": {
+                "description": "Environment to use. Used as part of the URL.",
                 "enum": [
-                    "vtexcommercestable",
-                    "myvtex"
+                    "vtexcommercestable"
                 ],
                 "default": "vtexcommercestable"
             }
