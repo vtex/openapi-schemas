@@ -1,39 +1,132 @@
 extends: ["spectral:oas"]
 
 rules:
+  path-params: off
+  operation-operationId: off
   oas3-examples-value-or-externalValue: off
   oas3-unused-component: off
-  operation-operationId: off
-  e-mail-in-description:
+  info-contact: off
+  write-email-not-e-mail:
     description: Should use email instead of e-mail in descriptions
-    severity: warn
+    severity: error
     given: "$..*[?(@property === 'description')]"	
     then:
       function: pattern
       functionOptions:
         notMatch: "\\be-mail\\b"
 
-  should-include-operation-summary:
+  must-include-operation-summary:
     description: Operation summary should be included
-    severity: warn
+    severity: error
     given: "$.paths.*[?( @property === 'get' || @property === 'put' || @property === 'post' || @property === 'delete' || @property === 'options' || @property === 'head' || @property === 'patch' || @property === 'trace' )]"
     then:
       - field: "summary"
         function: truthy        
 
-  should-include-response-examples:
+  must-include-response-examples:
     description: At least one example should be included for each API response
-    severity: warn
+    severity: error
     given: "$.paths..responses.*.content.*"
     then:
       - field: "example"
         function: truthy
 
-  avoid-empty-titles:
-    description: There can be no empty titles. Removing this title field from the property solves this issue.
+  must-include-response-schemas:
+    description: Each API response must contain a schema
     severity: error
-    given: "$..[?(@.title='')]~"
+    given: "$.paths..responses.*.content.*"
+    then:
+      - field: "schema"
+        function: truthy
+
+  no-empty-titles:
+    description: There can be no empty titles in schemas. Removing this title field from the property will solve this issue.
+    severity: error
+    given: "$..[?(@.title=='')]~"
     then:
       function: pattern
       functionOptions:
-        notMatch: "example"
+        match: "example"
+
+  must-end-field-descriptions-with-period:
+    description: All field descriptions must end with a period (".").
+    severity: error
+    given: "$..*['properties']..['description']"
+    then:
+      function: pattern
+      functionOptions:
+        match: "^.*[.]$"
+
+  summaries-should-be-in-sentence-case:
+    description: All endpoint summaries should use sentence case (capitalize only the first letter).
+    severity: warn
+    given: "$..*[?( @property === 'summary')]"
+    then:
+      function: pattern
+      functionOptions:
+        match: "^[A-Z][a-z ]*$"
+
+  no-empty-descriptions:
+    description: No empty descriptions allowed.
+    severity: error
+    given: "$..*[?(@property === 'description')]"
+    then:
+      function: pattern
+      functionOptions:
+        match: "^(?!\\s*$).+"
+
+  parameters-description:
+    description: Each parameter must contain a description.
+    severity: error
+    given: "$.paths.*.*.parameters[*]"
+    then:
+      field: "description"
+      function: truthy
+
+  properties-description:
+    description: Each request or response body property must contain a description.
+    severity: error
+    given: "$..properties.*"
+    then:
+      field: "description"
+      function: truthy
+
+  properties-type:
+    description: Each request or response body property must contain a type.
+    severity: error
+    given: "$..properties.*"
+    then:
+      field: "type"
+      function: truthy
+
+  items-description:
+    description: Each request or response body array "items" property must contain a description.
+    severity: error
+    given: "$..items"
+    then:
+      field: "description"
+      function: truthy
+
+  items-type:
+    description: Each request or response body array "items" property must contain a type.
+    severity: error
+    given: "$..items"
+    then:
+      field: "type"
+      function: truthy
+
+  request-body-properties-example:
+    description: Each request body property must contain an example.
+    severity: error
+    given: "$..requestBody..*[?(@.type=='string' || @.type=='integer' || @.type=='boolean')]"
+    then:
+      field: "example"
+      function: truthy
+
+  request-body-objects-arrays-example:
+    description: In the request body, objects and arrays should not contain examples, only scalar fields.
+    severity: error
+    given: "$..requestBody..*[?(@.type=='object' || @.type=='array')]"
+    then:
+      field: "example"
+      function: falsy
