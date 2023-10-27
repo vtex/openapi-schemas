@@ -10,6 +10,7 @@ Follow this template to write a markdown overview description of each API refere
 >        "description": "{{Add your description here}}",
 >        "contact": {},
 >        "version": "1.0"
+>    }
 >```
 
 Describe your API in a brief paragraph. You may include:
