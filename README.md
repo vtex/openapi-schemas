@@ -57,10 +57,9 @@ Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
 Before contributing to this repository, read the following requisites.
 
 - The files should follow the JSON [OpenAPI 3.0 Specification](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md).
-- Check our internal [OpenAPI Checklist](https://www.notion.so/vtexhandbook/OpenAPI-checklist-da49bac843dd44118fa2269ad77ceb87) to make sure you meet the required file structure. 
+- Check our internal [OpenAPI Specification guidelines](https://www.notion.so/vtexhandbook/OpenAPI-Specification-guidelines-e3a681454798496292d6648e184a156e#344d2fc637c146ffa2ed61a119aa39ee) to make sure you meet the required file structure. 
 - Schema files should have a self-explanatory name that specifies the described API.
-- Check [`VTEX_TEMPLATE.json`](https://github.com/vtex/openapi-schemas/blob/master/VTEX_TEMPLATE.json) to see an example of an API schema file. It shows how to represent endpoints and parameters and includes VTEX's default [`servers`](#servers) and [authorization](#authorization) information.
-
+- Check [`templates/VTEX - Template openAPI.jsonc`](https://github.com/vtex/openapi-schemas/blob/master/templates/VTEX%20-%20Template%20openAPI.jsonc) to see an example of an API schema file. It shows how to represent endpoints and parameters and includes VTEX's default [`servers`](#servers) and [authorization](#authorization) information.
 
 ### Servers
 
@@ -91,7 +90,7 @@ Example - `servers` object:
     }
 ],
 ```
-The `servers` key contains an array of objects. Readme.io, our documentation system, will select the first one and use the declared `default` values for the variables.
+The `servers` key contains an array of objects.
 
 ### Authentication
 
@@ -101,28 +100,34 @@ Security schemes describe autentication types that are available in the API. You
 
 They should be added inside the `components` object.
 
-The security schemes we use for VTEX's `appKey` and `appToken` are:
+The security schemes we use are:
 
 ```json 
 "securitySchemes": {
     "appKey": {
         "type": "apiKey",
         "in": "header",
-        "name": "X-VTEX-API-AppKey"
+        "name": "X-VTEX-API-AppKey",
+        "description": "Unique identifier of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys)."
     },
     "appToken": {
         "type": "apiKey",
         "in": "header",
-        "name": "X-VTEX-API-AppToken"
+        "name": "X-VTEX-API-AppToken",
+        "description": "Secret token of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys)."
+    },
+    "VtexIdclientAutCookie": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "VtexIdclientAutCookie",
+        "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
     }
 }
 ```
 
-This specifies that the request should have `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken` as variables in the request header.
-
 #### Security requirement
 
-If defined inside the Open API schema, the `security` object will define the required security schemes for all endpoints.
+If defined inside the Open API schema, the `security` object will define the required security schemes for all endpoints. This specifies that requests should have the `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken` pair or `VtexIdClientAutCookie` as part of the request header.
 
 If defined inside an endpoint object, the `security` object will define the security scheme for that specific endpoint. 
 
@@ -133,35 +138,13 @@ The `security` object we use at VTEX is:
         {
             "appKey": [],
             "appToken": []
+        },
+        {
+            "VtexIdclientAutCookie": []
         }
     ]
 ```
 
+### Adding a new file
 
-### Sync Automation
-
-> ⚠️ To sync schema files with our Developer Portal, you should first contact @brunoamui and ask for assistance.
-
-To sync a new file, open [`.github\workflows\readme-github-sync.yml`](https://github.com/vtex/openapi-schemas/blob/master/.github/workflows/readme-github-sync.yml) and add a new step to the `Sync` job description, as exemplified below.
-
-```yaml
-- name: Sync Template API #Replace "Template" with the API name
-  uses: readmeio/github-readme-sync@1.0.3
-  with:
-    repo-token: '${{ secrets.GITHUB_TOKEN }}' # DON'T MODIFY -- Allows us to get the contents of your spec file
-    readme-api-id: '123456' # ID of the API on Readme.io. You can find it on the API Definitions tab on Readme.io's dashboard
-    api-file-path: 'VTEX_TEMPLATE.json' # Name of the API specification JSON file. The file must be on the root folder of the repository
-    readme-api-key: ${{ secrets.README_API_KEY }} # DON'T MODIFY -- Readme.io API key 
-    readme-api-version: '2.1' # ReadMe version to sync to
-```
-
-Alternatively, you can add a new step to the `Sync_CLI` job description, as shown below.
-
-```yaml
-- name: Sync Template API  # Replace "Template" with the API name
-  run: rdme swagger 'VTEX_TEMPLATE.json' --key=${{ secrets.README_API_KEY }} --version=v2.1 --id=123456
-# Replace 'VTEX_Template.json' with the name of the API specification JSON file between ' '. The file must be on the root folder of the repository.
-# DON'T MODIFY the 'key' value, it is the Readme.io API key.
-# The 'version' is the Readme.io version to sync to.
-# Replace the 'id' value with the ID of the API on Readme.io. You can find it on the API Definitions tab on Readme.io's dashboard.
-```
+After creating a file for a new API reference in this repository, read [this step-by-step](https://github.com/vtexdocs/dev-portal-content#how-to-publish-a-new-api-reference-and-add-it-to-navigation)https://github.com/vtexdocs/dev-portal-content#how-to-publish-a-new-api-reference-and-add-it-to-navigation to publish it on our Developer Portal.
