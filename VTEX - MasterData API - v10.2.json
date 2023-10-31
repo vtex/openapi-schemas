@@ -1017,7 +1017,7 @@
                     "Scroll"
                 ],
                 "summary": "Scroll documents",
-                "description": "Scrolls through documents according to the query parameter filters.\n\r\n\r> Avoid sending too many requests with wildcards (`*`) in the search parameters or that use the `keyword` parameter. This may lead to this endpoint being temporarily blocked for your account. If this happens you will receive an error with status code `429`.\n\r\n\rUse all the features of `search` API to perform filters.\r\n\r\nIn the first request, the `X-VTEX-MD-TOKEN` token will be obtained in the header. This token must be passed to the next request in the query string `_token` parameter. The token has a timeout of 10 minutes, which refreshes after each request.\r\n\r\n**ATTENTION:** To inform the number of documents per request, use the query string parameter `_size`, which has the maximum value of 1000.\r\n\r\nAfter the token is obtained it is no longer necessary to send the filter or document size per page parameters. You only need to resend the token until the document collection is empty.\r\n\r\n### First request example:\r\n```\r\n/dataentities/CL/scroll?isCluster=true&_size=250&_fields=email,firstName\r\n```\r\n\r\nAfter the first request, retrieve the token in the header `X-VTEX-MD-TOKEN` and make the next requests.\r\n\r\n### Example of subsequent requests:\r\n```\r\n/dataentities/CL/scroll?_token=tokenvalueexample\r\n```",
+                "description": "Returns a list of documents according to the query parameter filters.\n\r\n\rIt is possible to use all the query params described in the [Search documents](https://developers.vtex.com/docs/api-reference/masterdata-api#get-/api/dataentities/-acronym-/search?endpoint=get-/api/dataentities/-acronym-/search) endpoint to perform filters.\r\n\r\n>⚠️ Avoid sending too many requests with wildcards (`*`) in the search parameters or that use the `keyword` parameter. This may lead to this endpoint being temporarily blocked for your account. If this happens, you will receive an error with status code `429`.\r\n\r\n>⚠️ To inform the number of documents per request, use the query string parameter `_size`, which has the maximum value of 1000.\r\n\r\nIn the first request, the `X-VTEX-MD-TOKEN` token will be obtained in the header. This token must be passed to the next request in the query string `_token` parameter. The token has a timeout of 10 minutes, which refreshes after each request.\r\n\r\nAfter the token is obtained, it is no longer necessary to send the filter or document size per page parameters. You only need to resend the token until the document collection is empty.\r\n\r\n### First request example:\r\n```\r\n/dataentities/CL/scroll?isCluster=true&_size=250&_fields=email,firstName\r\n```\r\n\r\nAfter the first request, retrieve the token in the header `X-VTEX-MD-TOKEN` and make the next requests.\r\n\r\n### Example of subsequent requests:\r\n```\r\n/dataentities/CL/scroll?_token=tokenvalueexample\r\n```",
                 "operationId": "Scrolldocuments",
                 "parameters": [
                     {
@@ -1027,32 +1027,129 @@
                         "$ref": "#/components/parameters/Accept"
                     },
                     {
-                        "name": "acronym",
-                        "in": "path",
-                        "description": "Identifies the kind of data",
-                        "required": true,
-                        "style": "simple",
+                        "$ref": "#/components/parameters/acronym"
+                    },
+                    {
+                        "name": "_fields",
+                        "in": "query",
+                        "description": "Fields that will be returned by document. Separate field names with commas.",
+                        "required": false,
+                        "style": "form",
                         "schema": {
                             "type": "string",
-                            "default": "{{acronym}}"
+                            "example": "email,firstName,document"
+                        }
+                    },
+                    {
+                        "name": "_where",
+                        "in": "query",
+                        "description": "Specification of filters.",
+                        "required": false,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "firstName is not null"
+                        }
+                    },
+                    {
+                        "name": "_keyword",
+                        "in": "query",
+                        "description": "String to search across fields.",
+                        "required": false,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "jane"
+                        }
+                    },
+                    {
+                        "name": "_sort",
+                        "in": "query",
+                        "description": "Inform a field name plus `ASC` to sort results by this field value in ascending order or `DESC` to sort by descending order.",
+                        "required": false,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "firstName ASC"
+                        }
+                    },
+                    {
+                        "name": "_size",
+                        "in": "query",
+                        "description": "Maximum amount of documents returned per request. The maximum value you can set is `1000`.",
+                        "required": false,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "10"
+                        }
+                    },
+                    {
+                        "name": "_token",
+                        "in": "query",
+                        "description": "Value of the `X-VTEX-MD-TOKEN` token obtained in the header of the first request, necessary only on subsequent requests to continue scrolling through documents.",
+                        "required": false,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "123456"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
-                        "headers": {}
-                    },
-                    "429": {
-                        "description": "Too Many Requests",
+                        "description": "OK",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "description": "Wildcard queries temporarily blocked due to excessive usage. Consider adjusting your code to remove them or reduce the rate of search requests with wildcards (*). This temporary block may also be due to excessive use of requests with the parameter `keyword`."
+                                    "type": "array",
+                                    "description": "List of documents.",
+                                    "items": {
+                                        "type": "object",
+                                        "description": "Object representing each document.",
+                                        "properties": {
+                                            "additionalProperties": {
+                                                "type": "string",
+                                                "description": "Custom properties."
+                                            },
+                                            "id": {
+                                                "type": "string",
+                                                "description": "Unique identifier of the document."
+                                            },
+                                            "accountId": {
+                                                "type": "string",
+                                                "description": "Unique identifier of the account."
+                                            },
+                                            "accountName": {
+                                                "type": "string",
+                                                "description": "Account name."
+                                            },
+                                            "dataEntityId": {
+                                                "type": "string",
+                                                "description": "Two-letter string that identifies the data entity."
+                                            }
+                                        }
+                                    }
                                 },
-                                "example": {}
+                                "example": [
+                                    {
+                                        "id": "2f5dde81-1613-11ea-82ee-12f868feb457",
+                                        "accountId": "a8b27fb4-6516-4cc0-82b6-a5f2b011e6e2",
+                                        "accountName": "apiexamples",
+                                        "dataEntityId": "AS"
+                                    },
+                                    {
+                                        "id": "3b3a3fc9-164b-11ea-82ee-121449f60ecb",
+                                        "accountId": "a8b27fb4-6516-4cc0-82b6-a5f2b011e6e2",
+                                        "accountName": "apiexamples",
+                                        "dataEntityId": "AS"
+                                    }
+                                ]
                             }
                         }
+                    },
+                    "429": {
+                        "description": "Too Many Requests. Wildcard queries temporarily blocked due to excessive usage. Consider adjusting your code to remove them or reduce the rate of search requests with wildcards (*). This temporary block may also be due to excessive use of requests with the parameter `keyword`."
                     }
                 },
                 "deprecated": false
@@ -1064,7 +1161,7 @@
                     "Search"
                 ],
                 "summary": "Search documents",
-                "description": "Use this endpoint to search Master Data v1 documents with highly customizable filters.\r\n\r\n## Headers\r\n\r\n| Name |  |\r\n| -------- | -------- |\r\n| Content-Type | application/json |\r\n| Accept | application/vnd.vtex.ds.v10+json |\r\n| x-vtex-api-appKey | App Key |\r\n| x-vtex-api-appToken | App Token |\r\n| REST-Range | Defines the collection of documents to be returned. A range within the collection limited by 100 documents per query. |\r\n\r\n\r\n## Querystring\r\n\r\n> Learn more about [Master Data v1 search queries](https://developers.vtex.com/vtex-rest-api/docs/how-the-queries-in-master-data-v1-work).\r\n\r\n| Attribute | What it does |\r\n| -------- | -------- |\r\n| _fields | Fields that will be returned by document |\r\n| _where | Specification of filters |\r\n| _keyword | Search in all fields marked as searchable |\r\n| _sort | Sort order |\r\n\r\n## How to fill the querystring attributes\r\n\r\n1. _fields: Use the field names separated by commas. Ex. `_fields=email,firstName,document`.\r\n2. _where: See the query examples below to learn how to use filters.\r\n3. _keyword: Enter the value you want to query. Use quotes for a partial query. Ex. `_keyword=Maria` or `_keyword=*Maria*`\r\n4. _sort: Use `ASC` value to sort ascending or `DESC` value to sort descending. Ex. `_sort=firstName ASC`.\r\n5. If you want to fetch all fields use the `_all` parameter in the list of response fields. Ex: `_fields=_all`\r\n\r\n\r\n## Query Examples:\r\n\r\n\r\n### Simple filter\r\n\r\n```\r\n/dataentities/CL/search?email=my@email.com\r\n```\r\n\r\n### Complex filter\r\n\r\n```\r\n/dataentities/CL/search?_where=(firstName=Jon OR lastName=Smith) OR (createdIn between 2001-01-01 AND 2016-01-01)\r\n```\r\n\r\n### Filter by range\r\n\r\n#### Date Range\r\n\r\n```\r\n/dataentities/CL/search?_where=createdIn between 2001-01-01 AND 2016-01-01\r\n```\r\n\r\n#### Range numeric fields\r\n\r\n```\r\n/dataentities/CL/search?_where=age between 18 AND 25\r\n```\r\n\r\n### Partial filter\r\n\r\n```\r\n/dataentities/CL/search?firstName=*Maria*\r\n```\r\n\r\n### Filter for null values\r\n\r\n```\r\n/dataentities/CL/search?_where=firstName is null\r\n```\r\n\r\n### Filter for non-null values\r\n\r\n```\r\n/dataentities/CL/search?_where=firstName is not null\r\n```\r\n\r\n### Filter for difference\r\n```\r\n/dataentities/CL/search?_where=firstName<>maria\r\n```\r\n\r\n### Filter greater than or less than\r\n```\r\n/dataentities/CL/search?_where=number>5\r\n/dataentities/CL/search?_where=date<2001-01-01\r\n```\n\r\n\r> Avoid sending too many requests with wildcards (`*`) in the search parameters or that use the `keyword` parameter. This may lead to this endpoint being temporarily blocked for your account. If this happens you will receive an error with status code `503`.",
+                "description": "Use this endpoint to search Master Data v1 documents with highly customizable filters.\r\n\r\n> Learn more about [Master Data v1 search queries](https://developers.vtex.com/vtex-rest-api/docs/how-the-queries-in-master-data-v1-work).\r\n\r\n## Query Examples\r\n\r\n\r\n### Simple filter\r\n\r\n```\r\n/dataentities/CL/search?email=my@email.com\r\n```\r\n\r\n### Complex filter\r\n\r\n```\r\n/dataentities/CL/search?_where=(firstName=Jon OR lastName=Smith) OR (createdIn between 2001-01-01 AND 2016-01-01)\r\n```\r\n\r\n### Filter by range\r\n\r\n#### Date Range\r\n\r\n```\r\n/dataentities/CL/search?_where=createdIn between 2001-01-01 AND 2016-01-01\r\n```\r\n\r\n#### Range numeric fields\r\n\r\n```\r\n/dataentities/CL/search?_where=age between 18 AND 25\r\n```\r\n\r\n### Partial filter\r\n\r\n```\r\n/dataentities/CL/search?firstName=*Maria*\r\n```\r\n\r\n### Filter for null values\r\n\r\n```\r\n/dataentities/CL/search?_where=firstName is null\r\n```\r\n\r\n### Filter for non-null values\r\n\r\n```\r\n/dataentities/CL/search?_where=firstName is not null\r\n```\r\n\r\n### Filter for difference\r\n```\r\n/dataentities/CL/search?_where=firstName<>maria\r\n```\r\n\r\n### Filter greater than or less than\r\n```\r\n/dataentities/CL/search?_where=number>5\r\n/dataentities/CL/search?_where=date<2001-01-01\r\n```\n\r\n\r> Avoid sending too many requests with wildcards (`*`) in the search parameters or that use the `keyword` parameter. This may lead to this endpoint being temporarily blocked for your account. If this happens you will receive an error with status code `503`.",
                 "operationId": "Searchdocuments",
                 "parameters": [
                     {
@@ -1076,96 +1173,116 @@
                     {
                         "name": "REST-Range",
                         "in": "header",
-                        "description": "Range of documents to show",
+                        "description": "Defines the collection of documents to be returned. A range within the collection limited by 100 documents per query.",
                         "required": true,
                         "style": "simple",
                         "schema": {
                             "type": "string",
-                            "default": "resources=0-10"
+                            "example": "resources=0-10"
                         }
                     },
                     {
-                        "name": "acronym",
-                        "in": "path",
-                        "description": "Identifies the kind of data",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "default": "{{acronym}}"
-                        }
+                        "$ref": "#/components/parameters/acronym"
                     },
                     {
                         "name": "_fields",
                         "in": "query",
-                        "description": "Fields that will be returned by document",
+                        "description": "Fields that will be returned by document. Separate field names with commas. If you want to fetch all fields, use `_all` as the value of this field.",
                         "required": false,
                         "style": "form",
                         "schema": {
                             "type": "string",
-                            "default": "email,firstName,document"
+                            "example": "email,firstName,document"
                         }
                     },
                     {
                         "name": "_where",
                         "in": "query",
-                        "description": "Specification of filters. As seen below",
+                        "description": "Specification of filters.",
                         "required": false,
                         "style": "form",
                         "schema": {
                             "type": "string",
-                            "default": "firstName is not null"
-                        }
-                    },
-                    {
-                        "name": "_schema",
-                        "in": "query",
-                        "description": "Enter with the name of the schema to filter documents by compatibility of the schema.",
-                        "required": false,
-                        "style": "form",
-                        "schema": {
-                            "type": "string",
-                            "default": "{{schema}}"
+                            "example": "firstName is not null"
                         }
                     },
                     {
                         "name": "_keyword",
                         "in": "query",
-                        "description": "String to search",
+                        "description": "String to search across fields.",
                         "required": false,
                         "style": "form",
                         "schema": {
                             "type": "string",
-                            "default": "String to search"
+                            "example": "jane"
                         }
                     },
                     {
                         "name": "_sort",
                         "in": "query",
-                        "description": "Use ASC value to sort ascending or DESC value to sort descending. ",
+                        "description": "Inform a field name plus `ASC` to sort results by this field value in ascending order or `DESC` to sort by descending order.",
                         "required": false,
                         "style": "form",
                         "schema": {
                             "type": "string",
-                            "default": "firstName ASC"
+                            "example": "firstName ASC"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "headers": {}
-                    },
-                    "503": {
-                        "description": "Service Unavailable",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "description": "Wildcard queries temporarily blocked due to excessive usage. Consider adjusting your code to remove them or reduce the rate of search requests with wildcards (*). This temporary block may also be due to excessive use of requests with the parameter `keyword`."
+                                    "type": "array",
+                                    "description": "List of documents.",
+                                    "items": {
+                                        "type": "object",
+                                        "description": "Object representing each document.",
+                                        "properties": {
+                                            "additionalProperties": {
+                                                "type": "string",
+                                                "description": "Custom properties."
+                                            },
+                                            "id": {
+                                                "type": "string",
+                                                "description": "Unique identifier of the document."
+                                            },
+                                            "accountId": {
+                                                "type": "string",
+                                                "description": "Unique identifier of the account."
+                                            },
+                                            "accountName": {
+                                                "type": "string",
+                                                "description": "Account name."
+                                            },
+                                            "dataEntityId": {
+                                                "type": "string",
+                                                "description": "Two-letter string that identifies the data entity."
+                                            }
+                                        }
+                                    }
                                 },
-                                "example": {}
+                                "example": [
+                                    {
+                                        "id": "2f5dde81-1613-11ea-82ee-12f868feb457",
+                                        "accountId": "a8b27fb4-6516-4cc0-82b6-a5f2b011e6e2",
+                                        "accountName": "apiexamples",
+                                        "dataEntityId": "AS"
+                                    },
+                                    {
+                                        "id": "3b3a3fc9-164b-11ea-82ee-121449f60ecb",
+                                        "accountId": "a8b27fb4-6516-4cc0-82b6-a5f2b011e6e2",
+                                        "accountName": "apiexamples",
+                                        "dataEntityId": "AS"
+                                    }
+                                ]
                             }
                         }
+                    },
+                    "503": {
+                        "description": "Service Unavailable. Wildcard queries temporarily blocked due to excessive usage. Consider adjusting your code to remove them or reduce the rate of search requests with wildcards (*). This temporary block may also be due to excessive use of requests with the parameter `keyword`."
                     }
                 },
                 "deprecated": false
@@ -1177,7 +1294,7 @@
                     "Attachments"
                 ],
                 "summary": "Retrieve attachment",
-                "description": "Use this API to retrieve a file.\r\n\r\nBe sure to include the file extension in the name. Like in this example:\r\n```\r\n/dataentities/CL/documents/123/file/attachments/image.png\r\n```",
+                "description": "Retrieves a file that had been previously saved in a field of type `File`.\r\n\r\n>⚠️ Make sure to include the file extension in the name, like in this example: `/api/dataentities/CL/documents/123/file/attachments/image.png`.",
                 "operationId": "Retrieveattachment",
                 "parameters": [
                     {
@@ -1190,36 +1307,28 @@
                         "$ref": "#/components/parameters/acronym"
                     },
                     {
-                        "name": "id",
-                        "in": "path",
-                        "description": "Id of the document",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "default": "{{id}}"
-                        }
+                        "$ref": "#/components/parameters/id"
                     },
                     {
                         "name": "field",
                         "in": "path",
-                        "description": "Field to attach the file to, as described in admin",
+                        "description": "Name of the field where the file is saved, as it appears on VTEX Admin.",
                         "required": true,
                         "style": "simple",
                         "schema": {
                             "type": "string",
-                            "default": "{{field}}"
+                            "example": "image"
                         }
                     },
                     {
                         "name": "file-name",
                         "in": "path",
-                        "description": "",
+                        "description": "File name and extension.",
                         "required": true,
                         "style": "simple",
                         "schema": {
                             "type": "string",
-                            "default": "{{file-name}}"
+                            "default": "image.png"
                         }
                     }
                 ],
@@ -1238,7 +1347,7 @@
                     "Attachments"
                 ],
                 "summary": "Save attachment",
-                "description": "This API allows you to save a file in a field of type `File`.\n\r\n\rWhen using in javascript, you must add the header `content-type` with value `multipart/form-data;`\n\r\n\rYou can upload more than one file. Just add a new field in the `form-data` with type `File`.",
+                "description": "Saves a file in a field of type `File`. Learn more about [Data entity field types](https://help.vtex.com/en/tutorial/creating-data-entity--tutorials_1265#understanding-the-types).`\n\r\n\r> You can upload more than one file. Just add a new field in the `form-data` with type `File`.",
                 "operationId": "Saveattachment",
                 "parameters": [
                     {
@@ -1256,12 +1365,12 @@
                     {
                         "name": "field",
                         "in": "path",
-                        "description": "Field to attach the file to, as described in VTEX Admin.",
+                        "description": "Name of the field to attach the file to, as it appears in VTEX Admin.",
                         "required": true,
                         "style": "simple",
                         "schema": {
                             "type": "string",
-                            "default": "{{field}}"
+                            "default": "image"
                         }
                     }
                 ],
@@ -1277,10 +1386,11 @@
                                 "properties": {
                                     "file": {
                                         "type": "array",
+                                        "description": "Files to be uploaded.",
                                         "items": {
                                             "type": "string",
                                             "format": "binary",
-                                            "description": "File to be uploaded"
+                                            "description": "File to be uploaded."
                                         }
                                     }
                                 }
@@ -1605,7 +1715,7 @@
             "Content-Type-img": {
                 "name": "Content-Type",
                 "in": "header",
-                "description": "Type of the content being sent. In case of images, the content-type header is filled with `image/jpg`.",
+                "description": "Type of the content being sent. If you are uploading an image, use `image/jpg`. When using JavaScript, use `multipart/form-data.",
                 "required": true,
                 "style": "simple",
                 "schema": {
