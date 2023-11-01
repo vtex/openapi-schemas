@@ -1,5 +1,5 @@
 # openapi-schemas
-This documentation comprises VTEX's public APIs as OpenAPI 3.0 JSON schemas. Files are automatically synced with VTEX's Developer Portal [API Reference page](https://developers.vtex.com/reference) and can be imported to Postman following [these instructions](https://learning.postman.com/docs/postman/collections/working-with-openAPI/).
+This documentation comprises VTEX's public APIs as OpenAPI 3.0 JSON schemas. Files are automatically synced with VTEX's Developer Portal [API Reference page](https://developers.vtex.com/docs/api-reference) and can be imported to Postman following [these instructions](https://learning.postman.com/docs/postman/collections/working-with-openAPI/).
 
 ## Contributing with the documentation
 Please check our [Contributing Guide](CONTRIBUTING.md) for more information about how to contribute with this repository.
@@ -150,4 +150,4 @@ The `security` object we use at VTEX is:
 
 ### Adding a new file
 
-After creating a file for a new API reference in this repository, read [this step-by-step](https://github.com/vtexdocs/dev-portal-content#how-to-publish-a-new-api-reference-and-add-it-to-navigation)https://github.com/vtexdocs/dev-portal-content#how-to-publish-a-new-api-reference-and-add-it-to-navigation to publish it on our Developer Portal.
+After creating a file for a new API reference in this repository, read [this step-by-step](https://github.com/vtexdocs/dev-portal-content#how-to-publish-a-new-api-reference-and-add-it-to-navigation) to publish it on our Developer Portal.
