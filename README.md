@@ -150,4 +150,4 @@ The `security` object we use at VTEX is:
 
 ### Adding a new file
 
-After creating a file for a new API reference in this repository, read [this step-by-step](https://github.com/vtexdocs/dev-portal-content#how-to-publish-a-new-api-reference-and-add-it-to-navigation)https://github.com/vtexdocs/dev-portal-content#how-to-publish-a-new-api-reference-and-add-it-to-navigation to publish it on our Developer Portal.
+After creating a file for a new API reference in this repository, read [this step-by-step](https://github.com/vtexdocs/dev-portal-content#how-to-publish-a-new-api-reference-and-add-it-to-navigation) to publish it on our Developer Portal.
