@@ -1,5 +1,5 @@
 # openapi-schemas
-This documentation comprises VTEX's public APIs as OpenAPI 3.0 JSON schemas. Files are automatically synced with VTEX's Developer Portal [API Reference page](https://developers.vtex.com/reference) and can be imported to Postman following [these instructions](https://learning.postman.com/docs/postman/collections/working-with-openAPI/).
+This documentation comprises VTEX's public APIs as OpenAPI 3.0 JSON schemas. Files are automatically synced with VTEX's Developer Portal [API Reference page](https://developers.vtex.com/docs/api-reference) and can be imported to Postman following [these instructions](https://learning.postman.com/docs/postman/collections/working-with-openAPI/).
 
 ## Contributing with the documentation
 Please check our [Contributing Guide](CONTRIBUTING.md) for more information about how to contribute with this repository.
