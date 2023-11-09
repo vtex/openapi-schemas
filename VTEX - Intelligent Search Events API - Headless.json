@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "VTEX Intelligent Search Events API - Headless",
-        "description": "Intelligent Search Events API is responsible for collecting the search events to improve your search results, such as page interactions and conversion, in a headless implementation. Some of the features improved by this collection are the possibility to sort the products by clicks or record the top search in the autocomplete.\r\n\r\n>⚠️ **This API applies only to Headless scenarios**. It doesn't apply to stores using Store Framework, since they are already integrated with all Intelligent Search features.\r\n\r\n## Building the request body\r\n\r\nIn the following sections, we detail the required structure for the request body to save events using this API.\r\n\r\n### User identification\r\n\r\nTo identify the user, there are two required identifiers according to the [nanoid](https://github.com/ai/nanoid) pattern: `session` and `anonymous`. Read the API reference for more information on each field.\r\n\r\n> ⚠️ The `session` and `anonymous` identifiers need to be sent in every request.\r\n\r\n### Event type\r\n\r\nTo identify the events that occur in our search, the `type` field is required in the request. The most common event types are the following:\r\n\r\n| Event type | Value | Description |\r\n| - | - | - |\r\n| Session Ping | `session.ping` | Sends an ACK to the API to renew the session server-side. It should be sent every 1 minute. |\r\n| Page Cart | `page.cart` | Sends an event every time the shopper enters the cart page. Each interaction should include all products inside the shopping cart at that time. In case a product is removed, sent the updated card. |\r\n| Empty Cart | `page.empty_cart` | Sends an event if there are no products in the shopping cart at that time. | \r\n| Page Confirmation |`page.confirmation` | Sends a confirmation informing the products that were bought. |\r\n| Search Click | `search.click` |  Sends an event every time a shopper clicks on a product from a search page. |\r\n| Search Query | `search.query` | Should send a query event every time the shopper makes a full-text search. |\r\n\r\n### Finding search query information\r\n\r\nSearch query information is possible to find in the Intelligent Search GraphQL response. To retrieve the information above, add operator, fuzzy, and correction attributes in the GraphQL query. Example:\r\n\r\n```graphql\r\nquery {\r\n  productSearch(fullText: \"id:43534\") {\r\n    products {\r\n      productId\r\n      productName\r\n      ...\r\n    }\r\n    operator\r\n    fuzzy\r\n    correction{ \r\n      misspelled\r\n    }\r\n  }\r\n}\r\n```\r\n\r\n### Optional fields\r\n\r\nInformation to identify where the context of that request came from: `agent` and `URL`. Read the API reference for more information on each field.\r\n\r\n### Request body examples\r\n\r\nThe body is built by combining the user information, the event type, and add the optional fields. Below there is an example for each type of event.\r\n\r\n#### Session Ping\r\n\r\n```json\r\n{\r\n\t\"session\":\"zZlNhqz1vFJP6iPG5Oqdf\",\r\n\t\"anonymous\":\"Om1TNluGvgmSgU5OOTvdfg\",\r\n\t\"url\":\"https://example.com/search/?query=zapatilha\",\r\n\t\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\r\n\t\"type\":\"session.ping\"\r\n}\r\n``` \r\n\r\n#### Page Cart \r\n\r\n```json\r\n{\r\n  \"session\":\"zZlNhqz1vFJP6iPG5Oqtt\",\r\n  \"anonymous\":\"Om1TNluGvgmSgU5OOTvkkd\",\r\n  \"products\": [\r\n    {\r\n      \"productId\": \"ABC123\",\r\n      \"quantity\": 2\r\n    },\r\n    {\r\n      \"productId\": \"XYZ789\",\r\n      \"quantity\": 1\r\n    }\r\n  ],\r\n  \"type\": \"page.cart\"\r\n}\r\n```\r\n\r\n#### Empty Cart \r\n\r\n```json\r\n{\r\n  \"session\":\"zZlNhqz1vFJP6iPG5Oqtt\",\r\n  \"anonymous\":\"Om1TNluGvgmSgU5OOTvkkd\",\r\n  \"products\": [],\r\n  \"type\": \"page.empty_cart\"\r\n}\r\n```\r\n\r\n#### Page Confirmation\r\n\r\n```json\r\n{\r\n  \"session\":\"zZlNhqz1vFJP6iPG5Oqtt\",\r\n  \"anonymous\":\"Om1TNluGvgmSgU5OOTvkkd\",\r\n  \"products\": [\r\n    {\r\n      \"productId\": \"ABC123\",\r\n      \"price\": 9.99,\r\n      \"quantity\": 3\r\n    },\r\n    {\r\n      \"productId\": \"XYZ789\",\r\n      \"price\": 5.99,\r\n      \"quantity\": 2\r\n    }\r\n  ],\r\n  \"order\": \"123ABC\",\r\n  \"type\": \"page.confirmation\"\r\n}\r\n```\r\n\r\n#### Search Click\r\n\r\n```json\r\n{\r\n\t\"type\": \"search.click\",\r\n\t\"productId\": \"12345\",\r\n\t\"position\": 1,\r\n\t\"url\": \"https://example.com/s?q=pneu&sort=score_desc&page=0\",\r\n\t\"text\": \"pneu\",\r\n\t\"agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36\",\r\n\t\"anonymous\": \"1ce47e50-3f10-4556-95d3-57d4881c03a4\",\r\n\t\"session\": \"51a53ce3-096d-4740-a6d0-3cf86085ba13\"\r\n}\r\n```\r\n\r\n#### Query Type\r\n\r\n```json\r\n{\r\n\t\"session\":\"zZlNhqz1vFJP6iPG5Oqtt\",\r\n\t\"anonymous\":\"Om1TNluGvgmSgU5OOTvkkd\",\r\n\t\"url\":\"https://example.com/search/?query=zapatilha\",\r\n\t\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\r\n\t\"type\":\"search.query\",\r\n\t\"text\":\"zapatilha\",\r\n\t\"misspelled\":true,\r\n\t\"match\":392,\r\n\t\"operator\":\"and\"\r\n}\r\n```\r\n",
+        "description": "Intelligent Search Events API is responsible for collecting the search events to improve your search results, such as page interactions and conversion, in a headless implementation. Some of the features improved by this collection are the possibility to sort the products by clicks or record the top search in the autocomplete.\r\n\r\n>⚠️ **This API applies only to Headless scenarios**. It doesn't apply to stores using Store Framework, since they are already integrated with all Intelligent Search features.\r\n\r\n## Building the request body\r\n\r\nIn the following sections, we detail the required structure for the request body of the `POST`[Save events](https://developers.vtex.com/docs/api-reference/intelligent-search-events-api-headless#post-/event) endpoint.\r\n\r\n### User identification\r\n\r\nTo identify the user, there are two required identifiers according to the [nanoid](https://github.com/ai/nanoid) pattern: `session` and `anonymous`. Read the API reference for more information on each field.\r\n\r\n> ⚠️ The `session` and `anonymous` identifiers need to be sent in every request.\r\n\r\n### Event type\r\n\r\nTo identify the events that occur in our search, the `type` field is required in the request. The most common event types are the following:\r\n\r\n| Event type | Value | Description |\r\n| - | - | - |\r\n| Session Ping | `session.ping` | Sends an ACK to the API to renew the session server-side. It should be sent every 1 minute. |\r\n| Page Cart | `page.cart` | Sends an event every time the shopper enters the cart page. Each interaction should include all products inside the shopping cart at that time. In case a product is removed, sent the updated card. |\r\n| Empty Cart | `page.empty_cart` | Sends an event if there are no products in the shopping cart at that time. | \r\n| Page Confirmation |`page.confirmation` | Sends a confirmation informing the products that were bought. |\r\n| Search Click | `search.click` |  Sends an event every time a shopper clicks on a product from a search page. |\r\n| Search Query | `search.query` | Sends a query event every time the shopper makes a full-text search. |\r\n\r\n### Finding search query information\r\n\r\nSearch query information is possible to find in the Intelligent Search GraphQL response. To retrieve the information above, add operator, fuzzy, and correction attributes in the GraphQL query. Example:\r\n\r\n```graphql\r\nquery {\r\n  productSearch(fullText: \"id:43534\") {\r\n    products {\r\n      productId\r\n      productName\r\n      ...\r\n    }\r\n    operator\r\n    fuzzy\r\n    correction{ \r\n      misspelled\r\n    }\r\n  }\r\n}\r\n```\r\n\r\n### Optional fields\r\n\r\nInformation to identify where the context of that request came from: `agent` and `URL`. Read the API reference for more information on each field.\r\n\r\n### Request body examples\r\n\r\nThe body is built by combining the user information, the event type, and add the optional fields. Below there is an example for each type of event.\r\n\r\n#### Session Ping\r\n\r\n```json\r\n{\r\n\t\"session\":\"zZlNhqz1vFJP6iPG5Oqdf\",\r\n\t\"anonymous\":\"Om1TNluGvgmSgU5OOTvdfg\",\r\n\t\"url\":\"https://example.com/search/?query=zapatilha\",\r\n\t\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\r\n\t\"type\":\"session.ping\"\r\n}\r\n``` \r\n\r\n#### Page Cart \r\n\r\n```json\r\n{\r\n  \"session\":\"zZlNhqz1vFJP6iPG5Oqtt\",\r\n  \"anonymous\":\"Om1TNluGvgmSgU5OOTvkkd\",\r\n  \"products\": [\r\n    {\r\n      \"productId\": \"ABC123\",\r\n      \"quantity\": 2\r\n    },\r\n    {\r\n      \"productId\": \"XYZ789\",\r\n      \"quantity\": 1\r\n    }\r\n  ],\r\n  \"type\": \"page.cart\"\r\n}\r\n```\r\n\r\n#### Empty Cart \r\n\r\n```json\r\n{\r\n  \"session\":\"zZlNhqz1vFJP6iPG5Oqtt\",\r\n  \"anonymous\":\"Om1TNluGvgmSgU5OOTvkkd\",\r\n  \"products\": [],\r\n  \"type\": \"page.empty_cart\"\r\n}\r\n```\r\n\r\n#### Page Confirmation\r\n\r\n```json\r\n{\r\n  \"session\":\"zZlNhqz1vFJP6iPG5Oqtt\",\r\n  \"anonymous\":\"Om1TNluGvgmSgU5OOTvkkd\",\r\n  \"products\": [\r\n    {\r\n      \"productId\": \"ABC123\",\r\n      \"price\": 9.99,\r\n      \"quantity\": 3\r\n    },\r\n    {\r\n      \"productId\": \"XYZ789\",\r\n      \"price\": 5.99,\r\n      \"quantity\": 2\r\n    }\r\n  ],\r\n  \"order\": \"123ABC\",\r\n  \"type\": \"page.confirmation\"\r\n}\r\n```\r\n\r\n#### Search Click\r\n\r\n```json\r\n{\r\n\t\"type\": \"search.click\",\r\n\t\"productId\": \"12345\",\r\n\t\"position\": 1,\r\n\t\"url\": \"https://example.com/s?q=pneu&sort=score_desc&page=0\",\r\n\t\"text\": \"pneu\",\r\n\t\"agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36\",\r\n\t\"anonymous\": \"1ce47e50-3f10-4556-95d3-57d4881c03a4\",\r\n\t\"session\": \"51a53ce3-096d-4740-a6d0-3cf86085ba13\"\r\n}\r\n```\r\n\r\n#### Search Query\r\n\r\n```json\r\n{\r\n\t\"session\":\"zZlNhqz1vFJP6iPG5Oqtt\",\r\n\t\"anonymous\":\"Om1TNluGvgmSgU5OOTvkkd\",\r\n\t\"url\":\"https://example.com/search/?query=zapatilha\",\r\n\t\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\r\n\t\"type\":\"search.query\",\r\n\t\"text\":\"zapatilha\",\r\n\t\"misspelled\":true,\r\n\t\"match\":392,\r\n\t\"operator\":\"and\"\r\n}\r\n```\r\n",
         "contact": {},
         "version": "1.0"
     },
@@ -21,7 +21,7 @@
     "paths": {
         "/event": {
             "post": {
-                "summary": "Save Events",
+                "summary": "Save events",
                 "description": "Creates search events to integrate with VTEX Intelligent Search using a headless implementation. \r\n\r\n >⚠️ **This API applies only to Headless scenarios**. It doesn't apply to stores using VTEX's storefront solution, natively integrated with Intelligent Search.",
                 "parameters": [
                     {
@@ -38,17 +38,6 @@
                 "requestBody": {
                     "content": {
                         "application/json": {
-                            "example": {
-                                "session": "zZlNhqz1vFJP6iPG5Oqtt",
-                                "anonymous": "Om1TNluGvgmSgU5OOTvkkd",
-                                "url": "https://example.com/search/?query=zapatilha",
-                                "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0",
-                                "type": "search.query",
-                                "text": "zapatilha",
-                                "misspelled": true,
-                                "match": 392,
-                                "operator": "and"
-                            },
                             "schema": {
                                 "oneOf": [
                                     {
@@ -69,12 +58,92 @@
                                     {
                                         "$ref": "#/components/schemas/Query"
                                     }
-                                ],
-                                "allOf": [
-                                    {
-                                        "$ref": "#/components/schemas/UserIdentification"
-                                    }
                                 ]
+                            },
+                            "examples": {
+                                "Session Ping": {
+                                    "value": {
+                                        "session": "zZlNhqz1vFJP6iPG5Oqtt",
+                                        "anonymous": "Om1TNluGvgmSgU5OOTvkkd",
+                                        "url": "https://example.com/search/?query=zapatilha",
+                                        "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0",
+                                        "type": "search.query",
+                                        "text": "zapatilha",
+                                        "misspelled": true,
+                                        "match": 392,
+                                        "operator": "and"
+                                    }
+                                },
+                                "Page Cart": {
+                                    "value": {
+                                        "session": "zZlNhqz1vFJP6iPG5Oqtt",
+                                        "anonymous": "Om1TNluGvgmSgU5OOTvkkd",
+                                        "products": [
+                                            {
+                                                "productId": "ABC123",
+                                                "quantity": 2
+                                            },
+                                            {
+                                                "productId": "XYZ789",
+                                                "quantity": 1
+                                            }
+                                        ],
+                                        "type": "page.cart"
+                                    }
+                                },
+                                "Empty Cart": {
+                                    "value": {
+                                        "session": "zZlNhqz1vFJP6iPG5Oqtt",
+                                        "anonymous": "Om1TNluGvgmSgU5OOTvkkd",
+                                        "products": [],
+                                        "type": "page.empty_cart"
+                                    }
+                                },
+                                "Page Confirmation": {
+                                    "value": {
+                                        "session": "zZlNhqz1vFJP6iPG5Oqtt",
+                                        "anonymous": "Om1TNluGvgmSgU5OOTvkkd",
+                                        "products": [
+                                            {
+                                                "productId": "ABC123",
+                                                "price": 9.99,
+                                                "quantity": 3
+                                            },
+                                            {
+                                                "productId": "XYZ789",
+                                                "price": 5.99,
+                                                "quantity": 2
+                                            }
+                                        ],
+                                        "order": "123ABC",
+                                        "type": "page.confirmation"
+                                    }
+                                },
+                                "Search Click": {
+                                    "value": {
+                                        "type": "search.click",
+                                        "productId": "12345",
+                                        "position": 1,
+                                        "url": "https://example.com/s?q=pneu&sort=score_desc&page=0",
+                                        "text": "pneu",
+                                        "agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+                                        "anonymous": "1ce47e50-3f10-4556-95d3-57d4881c03a4",
+                                        "session": "51a53ce3-096d-4740-a6d0-3cf86085ba13"
+                                    }
+                                },
+                                "Search Query": {
+                                    "value": {
+                                        "session": "zZlNhqz1vFJP6iPG5Oqtt",
+                                        "anonymous": "Om1TNluGvgmSgU5OOTvkkd",
+                                        "url": "https://example.com/search/?query=zapatilha",
+                                        "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0",
+                                        "type": "search.query",
+                                        "text": "zapatilha",
+                                        "misspelled": true,
+                                        "match": 392,
+                                        "operator": "and"
+                                    }
+                                }
                             }
                         }
                     }
@@ -113,12 +182,22 @@
                 }
             },
             "SessionPing": {
+                "title": "SessionPing",
+                "description": "Sends an ACK to the API to renew the session server-side. It should be sent every 1 minute.",
                 "type": "object",
                 "required": [
+                    "session",
+                    "anonymous",
                     "type",
                     "agent"
                 ],
                 "properties": {
+                    "session": {
+                        "$ref": "#/components/schemas/UserIdentification/properties/session"
+                    },
+                    "anonymous": {
+                        "$ref": "#/components/schemas/UserIdentification/properties/anonymous"
+                    },
                     "type": {
                         "type": "string",
                         "title": "type",
@@ -132,31 +211,29 @@
                         "default": "desktop",
                         "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0"
                     }
-                },
-                "example": {
-                    "type": "session.ping",
-                    "agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-                    "anonymous": "1ce47e50-3f10-4556-95d3-57d4881c03a4",
-                    "session": "ee15a2ad-d2f1-4a29-995e-e514b468385e"
                 }
             },
             "PageCart": {
+                "title": "PageCart",
+                "description": "Sends an event every time the shopper enters the cart page. Each interaction should include all products inside the shopping cart at that time. In case a product is removed, sent the updated card.",
                 "type": "object",
                 "required": [
+                    "session",
+                    "anonymous",
                     "type",
                     "products"
                 ],
                 "properties": {
+                    "session": {
+                        "$ref": "#/components/schemas/UserIdentification/properties/session"
+                    },
+                    "anonymous": {
+                        "$ref": "#/components/schemas/UserIdentification/properties/anonymous"
+                    },
                     "products": {
                         "type": "array",
                         "title": "products",
                         "description": "Array of objects containing products. If the event type is `page.cart`, the array contains all the products in the cart, with their ID and quantity.  Each interaction should include all products inside the shopping cart at that time. In case a product is removed, sent the updated card. If there are no products in the cart (page.`empty_cart`), the array is empty. If the event type is `page.confirmation`, the array contains all the products that were purchased, with their ID, price and quantity.",
-                        "example": [
-                            {
-                                "productId": "ABC123",
-                                "quantity": 2
-                            }
-                        ],
                         "items": {
                             "$ref": "#/components/schemas/CartProduct"
                         }
@@ -167,35 +244,29 @@
                         "description": "Type of event, which can be one of the following: `page.cart`, `page.empty_cart`, `search.query`, `page.confirmation`, `session.ping`, `search.click`.",
                         "example": "page.cart"
                     }
-                },
-                "example": {
-                    "session": "zZlNhqz1vFJP6iPG5Oqtt",
-                    "anonymous": "Om1TNluGvgmSgU5OOTvkkd",
-                    "products": [
-                        {
-                            "productId": "ABC123",
-                            "quantity": 2
-                        },
-                        {
-                            "productId": "XYZ789",
-                            "quantity": 1
-                        }
-                    ],
-                    "type": "page.cart"
                 }
             },
             "PageEmptyCart": {
+                "title": "Empty Cart",
+                "description": "Sends an event if there are no products in the shopping cart at that time.",
                 "type": "object",
                 "required": [
+                    "session",
+                    "anonymous",
                     "type",
                     "products"
                 ],
                 "properties": {
+                    "session": {
+                        "$ref": "#/components/schemas/UserIdentification/properties/session"
+                    },
+                    "anonymous": {
+                        "$ref": "#/components/schemas/UserIdentification/properties/anonymous"
+                    },
                     "products": {
                         "type": "array",
                         "title": "products",
                         "description": "Array of objects containing products. If the event type is `page.cart`, the array contains all the products in the cart, with their ID and quantity.  Each interaction should include all products inside the shopping cart at that time. In case a product is removed, sent the updated card. If there are no products in the cart (page.`empty_cart`), the array is empty. If the event type is `page.confirmation`, the array contains all the products that were purchased, with their ID, price and quantity.",
-                        "example": [],
                         "items": {
                             "$ref": "#/components/schemas/CartProduct"
                         }
@@ -206,33 +277,30 @@
                         "description": "Type of event, which can be one of the following: `page.cart`, `page.empty_cart`, `search.query`, `page.confirmation`, `session.ping`, `search.click`.",
                         "example": "page.empty_cart"
                     }
-                },
-                "example": {
-                    "session": "zZlNhqz1vFJP6iPG5Oqtt",
-                    "anonymous": "Om1TNluGvgmSgU5OOTvkkd",
-                    "products": [],
-                    "type": "page.empty_cart"
                 }
             },
             "PageConfirmation": {
+                "title": "Page Confirmation",
+                "description": "Sends a confirmation informing the products that were bought.",
                 "type": "object",
                 "required": [
+                    "session",
+                    "anonymous",
                     "type",
                     "order",
                     "products"
                 ],
                 "properties": {
+                    "session": {
+                        "$ref": "#/components/schemas/UserIdentification/properties/session"
+                    },
+                    "anonymous": {
+                        "$ref": "#/components/schemas/UserIdentification/properties/anonymous"
+                    },
                     "products": {
                         "type": "array",
                         "title": "products",
                         "description": "Array of objects containing products. If the event type is `page.cart`, the array contains all the products in the cart, with their ID and quantity.  Each interaction should include all products inside the shopping cart at that time. In case a product is removed, sent the updated card. If there are no products in the cart (page.`empty_cart`), the array is empty. If the event type is `page.confirmation`, the array contains all the products that were purchased, with their ID, price and quantity.",
-                        "example": [
-                            {
-                                "productId": "ABC123",
-                                "price": 9.99,
-                                "quantity": 3
-                            }
-                        ],
                         "items": {
                             "$ref": "#/components/schemas/OrderProduct"
                         }
@@ -249,33 +317,19 @@
                         "description": "Type of event, which can be one of the following: `page.cart`, `page.empty_cart`, `search.query`, `page.confirmation`, `session.ping`, `search.click`.",
                         "example": "page.confirmation"
                     }
-                },
-                "example": {
-                    "session": "zZlNhqz1vFJP6iPG5Oqtt",
-                    "anonymous": "Om1TNluGvgmSgU5OOTvkkd",
-                    "products": [
-                        {
-                            "productId": "ABC123",
-                            "price": 9.99,
-                            "quantity": 3
-                        },
-                        {
-                            "productId": "XYZ789",
-                            "price": 5.99,
-                            "quantity": 2
-                        }
-                    ],
-                    "order": "123ABC",
-                    "type": "page.confirmation"
                 }
             },
             "Click": {
+                "title": "Search Click",
+                "description": "Sends an event every time a shopper clicks on a product from a search page.",
                 "type": "object",
                 "required": [
                     "type",
                     "productId",
                     "position",
-                    "text"
+                    "text",
+                    "anonymous",
+                    "session"
                 ],
                 "properties": {
                     "type": {
@@ -286,11 +340,13 @@
                     },
                     "productId": {
                         "type": "string",
-                        "description": "The unique identifier of the clicked product."
+                        "description": "Unique identifier of the clicked product.",
+                        "example": "12345"
                     },
                     "position": {
                         "type": "integer",
-                        "description": "Position of the clicked product on the search results page."
+                        "description": "Position of the clicked product on the search results page.",
+                        "example": 1
                     },
                     "url": {
                         "type": "string",
@@ -301,7 +357,7 @@
                     "text": {
                         "type": "string",
                         "title": "text",
-                        "description": "The query used in the search.",
+                        "description": "Query used in the search.",
                         "example": "tv"
                     },
                     "agent": {
@@ -310,22 +366,22 @@
                         "description": "Identifies whether the request came from a mobile or desktop application. It's used as a filter in the search report.",
                         "default": "desktop",
                         "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0"
+                    },
+                    "anonymous": {
+                        "$ref": "#/components/schemas/UserIdentification/properties/anonymous"
+                    },
+                    "session": {
+                        "$ref": "#/components/schemas/UserIdentification/properties/session"
                     }
-                },
-                "example": {
-                    "type": "search.click",
-                    "productId": "12345",
-                    "position": 1,
-                    "url": "https://example.com/s?q=pneu&sort=score_desc&page=0",
-                    "text": "pneu",
-                    "agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-                    "anonymous": "1ce47e50-3f10-4556-95d3-57d4881c03a4",
-                    "session": "51a53ce3-096d-4740-a6d0-3cf86085ba13"
                 }
             },
             "Query": {
+                "title": "Search Query",
+                "description": "Sends a query event every time the shopper makes a full-text search.",
                 "type": "object",
                 "required": [
+                    "session",
+                    "anonymous",
                     "type",
                     "misspelled",
                     "text",
@@ -333,6 +389,12 @@
                     "operator"
                 ],
                 "properties": {
+                    "session": {
+                        "$ref": "#/components/schemas/UserIdentification/properties/session"
+                    },
+                    "anonymous": {
+                        "$ref": "#/components/schemas/UserIdentification/properties/anonymous"
+                    },
                     "url": {
                         "type": "string",
                         "title": "url",
@@ -355,7 +417,7 @@
                     "text": {
                         "type": "string",
                         "title": "text",
-                        "description": "The query used in the search.",
+                        "description": "Query used in the search.",
                         "example": "tv"
                     },
                     "misspelled": {
@@ -376,21 +438,11 @@
                         "description": "Identifies the type of operator used on the search. The possible values are: `and`, `or`. Find more details in [this Elastic Search guide](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-match-query.html).",
                         "example": "and"
                     }
-                },
-                "example": {
-                    "session": "zZlNhqz1vFJP6iPG5Oqtt",
-                    "anonymous": "Om1TNluGvgmSgU5OOTvkkd",
-                    "url": "https://example.com/search/?query=zapatilha",
-                    "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0",
-                    "type": "search.query",
-                    "text": "zapatilha",
-                    "misspelled": true,
-                    "match": 392,
-                    "operator": "and"
                 }
             },
             "CartProduct": {
                 "type": "object",
+                "description": "Product information.",
                 "required": [
                     "productId",
                     "quantity"
@@ -398,20 +450,19 @@
                 "properties": {
                     "productId": {
                         "type": "string",
-                        "description": "The unique identifier of the product."
+                        "description": "Unique identifier of the product.", 
+                        "example": "ABC123"
                     },
                     "quantity": {
                         "type": "number",
-                        "description": "The quantity of the product."
+                        "description": "Quantity of the product.",
+                        "example": 2
                     }
-                },
-                "example": {
-                    "productId": "ABC123",
-                    "quantity": 2
                 }
             },
             "OrderProduct": {
                 "type": "object",
+                "description": "Product information.",
                 "required": [
                     "productId",
                     "price",
@@ -420,22 +471,19 @@
                 "properties": {
                     "productId": {
                         "type": "string",
-                        "description": "The unique identifier of the product."
+                        "description": "Unique identifier of the product.",
+                        "example": "ABC123"
                     },
                     "price": {
                         "type": "number",
-                        "description": "The price of the product."
+                        "description": "Price of the product.",
+                        "example": 9.99
                     },
                     "quantity": {
                         "type": "number",
-                        "description": "The quantity of the product.",
-                        "default": 1
+                        "description": "Quantity of the product.",
+                        "example": 3
                     }
-                },
-                "example": {
-                    "productId": "ABC123",
-                    "price": 9.99,
-                    "quantity": 3
                 }
             }
         }
