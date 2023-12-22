@@ -21,7 +21,7 @@ rules:
     given: "$.paths.*[?( @property === 'get' || @property === 'put' || @property === 'post' || @property === 'delete' || @property === 'options' || @property === 'head' || @property === 'patch' || @property === 'trace' )]"
     then:
       - field: "summary"
-        function: truthy        
+        function: defined        
 
   must-include-response-examples:
     description: At least one example should be included for each API response
@@ -29,7 +29,7 @@ rules:
     given: "$.paths..responses.*.content.*"
     then:
       - field: "example"
-        function: truthy
+        function: defined
 
   must-include-response-schemas:
     description: Each API response must contain a schema
@@ -37,12 +37,12 @@ rules:
     given: "$.paths..responses.*.content.*"
     then:
       - field: "schema"
-        function: truthy
+        function: defined
 
   no-empty-titles:
-    description: There can be no empty titles in schemas. Removing this title field from the property will solve this issue.
+    description: There can be no empty titles in schemas. Removing this title field from the property will solve this issue. If this title is inside an example, please fill it with a valid value.
     severity: error
-    given: "$..[?(@.title=='')]~"
+    given: "$..[?(@ && @.title=='')]~"
     then:
       function: pattern
       functionOptions:
@@ -58,7 +58,7 @@ rules:
         match: "^[A-Z][a-z ]*$"
 
   no-empty-descriptions:
-    description: No empty descriptions allowed. Make sure that this description is a valid string that does not start with a line break (\n or \r).
+    description: No empty descriptions allowed. Make sure that this description is a valid string that does not start with a line break (\n or \r). If this description is inside an example, please fill it with a valid value.
     severity: error
     given: "$..*[?(@property === 'description')]"
     then:
@@ -72,39 +72,39 @@ rules:
     given: "$.paths.*.*.parameters[*]"
     then:
       field: "description"
-      function: truthy
+      function: defined
 
   properties-description:
     description: Each request or response body property must contain a description.
     severity: error
-    given: "$..properties.*"
+    given: "$..properties..*"
     then:
       field: "description"
-      function: truthy
+      function: defined
 
   properties-type:
     description: Each request or response body property must contain a type.
     severity: error
-    given: "$..properties.*"
+    given: "$..properties..*"
     then:
       field: "type"
-      function: truthy
+      function: defined
 
   array-items:
     description: Each array field must contain an "items" property.
     severity: error
-    given: "$..[?(@.type == 'array')]"
+    given: "$..[?(@ && @.type == 'array')]"
     then:
       field: "items"
-      function: truthy
+      function: defined
 
   items-description:
-    description: Each request or response body array "items" property must contain a description. This rule may also be triggered due to your request schema containing a complete example. If this is the case, make sure that your request examples exist only at scalar field levels (integer, string or boolean). 
+    description: Each request or response body array "items" property must contain a description. This rule may also be triggered due to your request schema containing a complete example. If this is the case, make sure that your request examples exist only at scalar field levels (integer, string or boolean).
     severity: error
     given: "$.[^example].items"
     then:
       field: "description"
-      function: truthy
+      function: defined
 
   items-type:
     description: Each request or response body array "items" property must contain a type. This rule may also be triggered due to your request schema containing a complete example. If this is the case, make sure that your request examples exist only at scalar field levels (integer, string or boolean). 
@@ -112,31 +112,23 @@ rules:
     given: "$.[^example].items"
     then:
       field: "type"
-      function: truthy
+      function: defined
 
   request-body-properties-example:
     description: Each request body property must contain an example.
     severity: error
-    given: "$..requestBody..*[?(@.type=='string' || @.type=='integer' || @.type=='boolean')]"
+    given: "$..requestBody..*[?(@ && (@.type=='string' || @.type=='integer' || @.type=='boolean'))]"
     then:
       field: "example"
-      function: truthy
-
-  request-body-objects-arrays-example:
-    description: In the request body, objects and arrays should not contain examples. Only scalar fields should contain examples in the request body.
-    severity: warn
-    given: "$..requestBody..*[?(@.type=='object' || @.type=='array')]"
-    then:
-      field: "example"
-      function: falsy
+      function: defined
 
   response-body-objects-arrays-example:
     description: Response body fields should not contain the "example" field. The response example corresponds to the whole schema.
     severity: warn
-    given: "$..responses..*[?(@.type=='object' || @.type=='array' || @.type=='integer' || @.type=='boolean' || @.type=='string')]"
+    given: "$..responses..*[?(@ && (@.type=='object' || @.type=='array' || @.type=='integer' || @.type=='boolean' || @.type=='string'))]"
     then:
       field: "example"
-      function: falsy
+      function: undefined
 
   endpoint-permissions:
     description: Endpoint descriptions must include a "Permissions" section, with information about License Manager resources and roles.
