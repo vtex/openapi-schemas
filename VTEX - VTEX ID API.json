@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "VTEX ID",
-        "description": "VTEX ID API provides endpoints to manage user authentication in your VTEX store. Check the [Authentication](https://developers.vtex.com/docs/guides/authentication) guide for more information.\r\n\r\n## Index\r\n\r\n- `POST` [Generate authentication token](https://developers.vtex.com/docs/api-reference/vtex-id-api#post-/api/vtexid/apptoken/login)\r\n- `GET` [Check authenticated user](https://developers.vtex.com/docs/api-reference/vtex-id-api#get-/api/vtexid/pub/authenticated/user)\r\n- `POST` [Enable or disable repeated passwords](https://developers.vtex.com/docs/api-reference/vtex-id-api#get-/api/vtexid/pub/providers/setup/password/webstore/password)\r\n- `POST` [Expire user password](https://developers.vtex.com/docs/api-reference/vtex-id-api#post-/api/vtexid/password/expire)",
+        "description": "VTEX ID API provides endpoints to manage user authentication in your VTEX store. Check the [Authentication](https://developers.vtex.com/docs/guides/authentication) guide for more information.\r\n\r\n## Index\r\n\r\n- `POST` [Generate authentication token](https://developers.vtex.com/docs/api-reference/vtex-id-api#post-/api/vtexid/apptoken/login)\r\n- `POST` [Check authenticated user](https://developers.vtex.com/docs/api-reference/vtex-id-api#post-/api/vtexid/credential/validate)\r\n- `POST` [Enable or disable repeated passwords](https://developers.vtex.com/docs/api-reference/vtex-id-api#get-/api/vtexid/pub/providers/setup/password/webstore/password)\r\n- `POST` [Expire user password](https://developers.vtex.com/docs/api-reference/vtex-id-api#post-/api/vtexid/password/expire)",
         "version": "1.0"
     },
     "servers": [
@@ -14,7 +14,7 @@
                     "description": "Name of the VTEX account. Used as part of the URL.",
                     "default": "apiexamples"
                 },
-                 "environment": {
+                "environment": {
                     "description": "Environment to use. Used as part of the URL.",
                     "enum": [
                         "vtexcommercestable"
@@ -160,13 +160,13 @@
                 }
             }
         },
-        "/api/vtexid/pub/authenticated/user": {
-            "get": {
+        "/api/vtexid/credential/validate": {
+            "post": {
                 "tags": [
                     "Authentication"
                 ],
                 "summary": "Check authenticated user",
-                "description": "Retrieves information about the user who is currently authenticated in your store, given an user token. If the user is not authenticated, the response for this API will be `200 (OK)` with a `null` response body or `401 (Unauthorized)`.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Retrieves information about the user who is currently authenticated in your store, given an user token. If the user is not authenticated, the response for this API will be `401 (Unauthorized)`.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -175,22 +175,32 @@
                         "$ref": "#/components/parameters/Accept"
                     },
                     {
-                        "$ref": "#/components/parameters/accountName"
+                        "$ref": "#/components/parameters/an"
                     },
                     {
                         "$ref": "#/components/parameters/environment"
-                    },
-                    {
-                        "name": "authToken",
-                        "in": "query",
-                        "description": "Value of the `VtexIdclientAutCookie`, [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours.",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-                        }
                     }
                 ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "description": "Request body object.",
+                                "required": [
+                                    "token"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "description": "Value of the `VtexIdclientAutCookie`, [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours.",
+                                        "type": "string",
+                                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -199,7 +209,11 @@
                                 "schema": {
                                     "type": "object",
                                     "properties": {
-                                        "userId": {
+                                        "authStatus": {
+                                            "type": "string",
+                                            "description": "Authentication status."
+                                        },
+                                        "id": {
                                             "type": "string",
                                             "description": "Unique identifier of the user within VTEX services."
                                         },
@@ -207,16 +221,47 @@
                                             "type": "string",
                                             "description": "User email."
                                         },
-                                        "userType": {
+                                        "account": {
                                             "type": "string",
-                                            "description": "Type of user. Field meant for VTEX internal use only."
+                                            "description": "VTEX account name."
+                                        },
+                                        "audience": {
+                                            "type": "string",
+                                            "description": "Type of user."
+                                        },
+                                        "tokenType": {
+                                            "type": "string",
+                                            "description": "Type of token."
                                         }
                                     }
                                 },
                                 "example": {
-                                    "userId": "1f936e42-79b3-4e5b-91d2-da9a8af0b215",
-                                    "user": "email@email.com",
-                                    "userType": "F"
+                                    "authStatus": "Success",
+                                    "id": "1f6c17e5-06f9-44a9-a459-b3686e03fa9d",
+                                    "user": "john@mail.com",
+                                    "account": "apiexamples",
+                                    "audience": "admin",
+                                    "tokenType": "user"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Response body object.",
+                                    "properties": {
+                                        "authStatus": {
+                                            "type": "string",
+                                            "description": "Authentication status."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "authStatus": "WrongCredentials"
                                 }
                             }
                         }
@@ -241,9 +286,6 @@
                     },
                     {
                         "$ref": "#/components/parameters/accountName"
-                    },
-                    {
-                        "$ref": "#/components/parameters/environment"
                     }
                 ],
                 "requestBody": {
