@@ -4957,7 +4957,7 @@
                                         "Status": {
                                             "type": "integer",
                                             "format": "int32",
-                                            "description": "Reservation status."
+                                            "description": "Reservation status, meaning:\r\n\r\n- `0`: `NotCommitted`\r\n\r\n- `1`: `Authorized`\r\n\r\n- `2`: `Confirmed`\r\n\r\n- `3`: `Canceled_AbortedCommitted`\r\n\r\n- `4`: `Canceled_AuthorizationExpired`\r\n\r\n- `5`: `Canceled_Manually`"
                                         },
                                         "SlaRequest": {
                                             "type": "array",
@@ -5091,7 +5091,7 @@
                                                         "description": "SLA total time in the format `DD.HH:MM:SS`."
                                                     },
                                                     "deliveryWindows": {
-                                                        "type": "array",
+                                                        "type": "object",
                                                         "items": {
                                                             "type": "object",
                                                             "description": "Delivery window details.",
@@ -5144,8 +5144,12 @@
                                                                 "nullable": true
                                                             },
                                                             "point": {
-                                                                "type": "string",
-                                                                "description": "Delivery point.",
+                                                                "type": "array",
+                                                                "description": "Location delivery point coordinates.",
+                                                                "items": {
+                                                                    "type": "number",
+                                                                    "description": "Location coordinates, first longitude, then latitude."
+                                                                },
                                                                 "nullable": true
                                                             },
                                                             "inStore": {                                                                
@@ -5314,7 +5318,8 @@
                         "required": true,
                         "style": "simple",
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "example": "00-1336411707838-01"
                         }
                     }
                 ],
@@ -5328,387 +5333,436 @@
                                     "properties": {
                                         "LastUpdateDateUtc": {
                                             "type": "string",
-                                            "description": "Date of the last update in UTC."
+                                            "description": "Last update date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."
                                         },
                                         "SalesChannel": {
                                             "type": "string",
-                                            "description": "Sales channel."
+                                            "description": "Sales channel ([trade policy](https://help.vtex.com/en/tutorial/how-trade-policies-work--6Xef8PZiFm40kg2STrMkMV)) valid for the reservation."
                                         },
                                         "LockId": {
                                             "type": "string",
-                                            "description": "Lock ID."
+                                            "description": "Reservation ID."
                                         },
                                         "ReservationDateUtc": {
                                             "type": "string",
-                                            "description": "Reservation date in UTC."
+                                            "description": "Reservation date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."
                                         },
                                         "MaximumConfirmationDateUtc": {
                                             "type": "string",
-                                            "description": "Maximum confirmation date in UTC."
+                                            "description": "Maximum confirmation date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."
                                         },
                                         "Status": {
                                             "type": "integer",
                                             "format": "int32",
-                                            "description": "Reservation status, being:\r\n\r\n- `0`: `NotCommitted`\r\n\r\n- `1`: `Authorized`\r\n\r\n- `2`: `Confirmed`\r\n\r\n- `3`: `Canceled_AbortedCommitted`\r\n\r\n- `4`: `Canceled_AuthorizationExpired`\r\n\r\n- `5`: `Canceled_Manually`."
+                                            "description": "Reservation status, meaning:\r\n\r\n- `0`: `NotCommitted`\r\n\r\n- `1`: `Authorized`\r\n\r\n- `2`: `Confirmed`\r\n\r\n- `3`: `Canceled_AbortedCommitted`\r\n\r\n- `4`: `Canceled_AuthorizationExpired`\r\n\r\n- `5`: `Canceled_Manually`"
                                         },
                                         "SlaRequest": {
                                             "type": "array",
-                                            "description": "Information on SLA request.",
+                                            "description": "SLA (Service Level Agreement) request information.",
                                             "items": {
                                                 "type": "object",
+                                                "description": "SLA details.",
                                                 "properties": {
-                                                    "item": {
-                                                        "title": "Item1",
-                                                        "required": [
-                                                            "id",
-                                                            "groupItemId",
-                                                            "quantity",
-                                                            "price",
-                                                            "modal",
-                                                            "additionalHandlingTime",
-                                                            "dimension",
-                                                            "kitItem",
-                                                            "unlimitedQuantity"
-                                                        ],
+                                                    "item": {                                                        
                                                         "type": "object",
+                                                        "description": "Information about the reserved item.",
                                                         "properties": {
                                                             "id": {
-                                                                "type": "string"
+                                                                "type": "string",
+                                                                "description": "SKU ID."
                                                             },
                                                             "groupItemId": {
                                                                 "type": "string",
+                                                                "description": "Group item ID.",
                                                                 "nullable": true
                                                             },
                                                             "quantity": {
                                                                 "type": "integer",
-                                                                "format": "int32"
+                                                                "format": "int32",
+                                                                "description": "Item quantity."
                                                             },
                                                             "price": {
-                                                                "type": "number"
+                                                                "type": "number",
+                                                                "description": "Item price."
                                                             },
                                                             "modal": {
                                                                 "type": "string",
+                                                                "description": "Type of [modal](https://help.vtex.com/en/tutorial/how-the-modal-works--tutorials_125), a special freight.",
+                                                                "enum": [
+                                                                    "CHEMICALS",
+                                                                    "ELECTRONICS",
+                                                                    "FURNITURE",
+                                                                    "GLASS",
+                                                                    "LIQUID",
+                                                                    "MATTRESSES",
+                                                                    "REFRIGERATED",
+                                                                    "TIRES",
+                                                                    "WHITE_GOODS",
+                                                                    "FIREARMS"
+                                                                 ],
                                                                 "nullable": true
                                                             },
                                                             "additionalHandlingTime": {
-                                                                "type": "string"
+                                                                "type": "string",
+                                                                "description": "Additional handling time in the format `DD.HH:MM:SS`."
                                                             },
                                                             "dimension": {
-                                                                "title": "Dimension1",
-                                                                "required": [
-                                                                    "weight",
-                                                                    "height",
-                                                                    "width",
-                                                                    "length",
-                                                                    "maxSumDimension"
-                                                                ],
                                                                 "type": "object",
+                                                                "description": "Item dimensions.",
                                                                 "properties": {
                                                                     "weight": {
-                                                                        "type": "number"
+                                                                        "type": "number",
+                                                                        "description": "Item weight."
                                                                     },
                                                                     "height": {
-                                                                        "type": "number"
+                                                                        "type": "number",
+                                                                        "description": "Item height."
                                                                     },
                                                                     "width": {
-                                                                        "type": "number"
+                                                                        "type": "number",
+                                                                        "description": "Item width."
                                                                     },
                                                                     "length": {
-                                                                        "type": "number"
+                                                                        "type": "number",
+                                                                        "description": "Item length."
                                                                     },
                                                                     "maxSumDimension": {
-                                                                        "type": "number"
+                                                                        "type": "number",
+                                                                        "description": "Maximum sum of dimensions."
                                                                     }
-                                                                },
-                                                                "example": {
-                                                                    "weight": 800,
-                                                                    "height": 10,
-                                                                    "width": 12,
-                                                                    "length": 35,
-                                                                    "maxSumDimension": 0
                                                                 }
                                                             },
                                                             "kitItem": {
                                                                 "type": "array",
+                                                                "nullable": true,
                                                                 "items": {
-                                                                    "type": "string"
+                                                                    "type": "string",
+                                                                    "description": "Kit SKU ID."
                                                                 },
                                                                 "description": "[Kit](https://help.vtex.com/en/tutorial/what-is-a-kit--5ov5s3eHM4AqAAgqWwoc28) item information."
                                                             },
                                                             "unlimitedQuantity": {
-                                                                "type": "boolean"
-                                                            }
-                                                        },
-                                                        "example": {
-                                                            "id": "2390059",
-                                                            "groupItemId": null,
-                                                            "quantity": 1,
-                                                            "price": 0,
-                                                            "modal": null,
-                                                            "additionalHandlingTime": "00:00:00",
-                                                            "dimension": {
-                                                                "weight": 800,
-                                                                "height": 10,
-                                                                "width": 12,
-                                                                "length": 35,
-                                                                "maxSumDimension": 0
+                                                                "type": "boolean",
+                                                                "description": "When set as `false`, every sold unit decreases the item's available quantity. When set as `true`, the SKU from the warehouse is always available for sale — no matter how many units are sold, the SKU available quantity never decreases, and the SKU is never out of stock."
+                                                            },                                                            
+                                                            "dockId": {
+                                                                "type": "string",
+                                                                "description": "[Loading dock](https://help.vtex.com/en/tutorial/loading-dock--5DY8xHEjOLYDVL41Urd5qj) ID."
                                                             },
-                                                            "kitItem": [],
-                                                            "unlimitedQuantity": false
+                                                            "wareHouseId": {
+                                                                "type": "string",
+                                                                "description": "[Warehouse](https://help.vtex.com/en/tutorial/warehouse--6oIxvsVDTtGpO7y6zwhGpb) ID."
+                                                            },
+                                                            "provider": {
+                                                                "type": "string",
+                                                                "description": "SLA request provider.",
+                                                                "nullable": true
+                                                            }
                                                         }
                                                     },
                                                     "slaType": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "description": "SLA (Service Level Agreement) type."
                                                     },
                                                     "slaTypeName": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "description": "SLA name."
                                                     },
                                                     "freightTableName": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "description": "[Shipping rate template](https://help.vtex.com/en/tutorial/shipping-rate-template--tutorials_127) name."
                                                     },
                                                     "freightTableId": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "description": "Shipping rate template ID."
                                                     },
                                                     "listPrice": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "description": "List price."
                                                     },
                                                     "promotionalPrice": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "description": "Promotion price."
+                                                    },
+                                                    "timeToPresale": {
+                                                        "type": "string",
+                                                        "description": "Time to presale in the format `D.HH:MM:SS`."
                                                     },
                                                     "transitTime": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "description": "Transit time in the format `DD.HH:MM:SS`."
                                                     },
                                                     "dockTime": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "description": "[Loading dock](https://help.vtex.com/en/tutorial/loading-dock--5DY8xHEjOLYDVL41Urd5qj) processing time in the format `D.HH:MM:SS`. When it was not configured, it returns `00:00:00`."
                                                     },
                                                     "timeToDockPlusDockTime": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "description": "Time spent in loading dock plus `dockTime` in the format `D.HH:MM:SS`."
                                                     },
                                                     "totalTime": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "description": "SLA total time in the format `DD.HH:MM:SS`."
                                                     },
                                                     "deliveryWindows": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    },
-                                                    "wareHouseId": {
-                                                        "type": "string"
-                                                    },
-                                                    "dockId": {
-                                                        "type": "string"
-                                                    },
-                                                    "wmsEndPoint": {
-                                                        "type": "string"
-                                                    },
-                                                    "location": {
-                                                        "title": "Location1",
-                                                        "required": [
-                                                            "zipCode",
-                                                            "country",
-                                                            "deliveryPointId",
-                                                            "point",
-                                                            "inStore"
-                                                        ],
                                                         "type": "object",
-                                                        "properties": {
-                                                            "zipCode": {
-                                                                "type": "string"
-                                                            },
-                                                            "country": {
-                                                                "type": "string"
-                                                            },
-                                                            "deliveryPointId": {
-                                                                "type": "string",
-                                                                "nullable": true
-                                                            },
-                                                            "point": {
-                                                                "type": "string",
-                                                                "nullable": true
-                                                            },
-                                                            "inStore": {
-                                                                "title": "InStore1",
-                                                                "required": [
-                                                                    "IsCheckedIn",
-                                                                    "StoreId"
-                                                                ],
-                                                                "type": "object",
-                                                                "properties": {
-                                                                    "IsCheckedIn": {
-                                                                        "type": "boolean"
-                                                                    },
-                                                                    "StoreId": {
-                                                                        "type": "string"
-                                                                    }
+                                                        "items": {
+                                                            "type": "object",
+                                                            "description": "Delivery window details.",
+                                                            "properties": {
+                                                                "startDateUtc": {
+                                                                    "type": "string",
+                                                                    "description": "Delivery window starting date and time, in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."
                                                                 },
-                                                                "example": {
-                                                                    "IsCheckedIn": false,
-                                                                    "StoreId": "180082"
+                                                                "endDateUtc": {
+                                                                    "type": "string",
+                                                                    "description": "Delivery window ending date and time, in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."
+                                                                },
+                                                                "listPrice": {
+                                                                    "type": "number",
+                                                                    "description": "List price."
                                                                 }
                                                             }
                                                         },
-                                                        "example": {
-                                                            "zipCode": "22220070",
-                                                            "country": "BRA",
-                                                            "deliveryPointId": null,
-                                                            "point": null,
-                                                            "inStore": {
-                                                                "IsCheckedIn": false,
-                                                                "StoreId": "180082"
+                                                        "description": "[Delivery windows](https://help.vtex.com/en/tutorial/managing-delivery-capacity--2y217FQZCjD0I1n62yxVcz).",
+                                                        "nullable": true
+                                                    },
+                                                    "wareHouseId": {
+                                                        "type": "string",
+                                                        "description": "[Warehouse](https://help.vtex.com/en/tutorial/warehouse--6oIxvsVDTtGpO7y6zwhGpb) ID."
+                                                    },
+                                                    "kitReservation": {
+                                                        "type": "string",
+                                                        "description": "Kit reservation.",
+                                                        "nullable": true
+                                                    },
+                                                    "dockId": {
+                                                        "type": "string",
+                                                        "description": "[Loading dock](https://help.vtex.com/en/tutorial/loading-dock--5DY8xHEjOLYDVL41Urd5qj) ID."
+                                                    },
+                                                    "wmsEndPoint": {
+                                                        "type": "string",
+                                                        "description": "Warehouse Management System (WMS) fulfillment endpoint.",
+                                                        "nullable": true
+                                                    },
+                                                    "location": {
+                                                        "type": "object",
+                                                        "description": "Shipping location information.",
+                                                        "properties": {
+                                                            "zipCode": {
+                                                                "type": "string",
+                                                                "description": "Shipping address postal code."
+                                                            },
+                                                            "country": {
+                                                                "type": "string",
+                                                                "description": "Three-digit country code of the shipping address, in [ISO 3166 ALPHA-3](https://www.iban.com/country-codes) format."
+                                                            },
+                                                            "point": {
+                                                                "type": "array",
+                                                                "description": "Location delivery point coordinates.",
+                                                                "items": {
+                                                                    "type": "number",
+                                                                    "description": "Location coordinates, first longitude, then latitude."
+                                                                },
+                                                                "nullable": true
+                                                            },
+                                                            "inStore": {                                                                
+                                                                "type": "object",
+                                                                "description": "Information related to [VTEX Sales App](https://help.vtex.com/en/tracks/instore-getting-started-and-setting-up--zav76TFEZlAjnyBVL5tRc).",
+                                                                "properties": {
+                                                                    "IsCheckedIn": {
+                                                                        "type": "boolean",
+                                                                        "description": "This field is set as `true` when the order was placed via [VTEX Sales App](https://help.vtex.com/en/tracks/instore-getting-started-and-setting-up--zav76TFEZlAjnyBVL5tRc) and `false` when it was not."
+                                                                    },
+                                                                    "StoreId": {
+                                                                        "type": "string",
+                                                                        "description": "ID of purchases made in the GoCommerce context.",
+                                                                        "nullable": true
+                                                                    }
+                                                                }
                                                             }
                                                         }
                                                     },
                                                     "pickupStoreInfo": {
                                                         "type": "string",
+                                                        "description": "Detailed information about a [pickup point](https://help.vtex.com/en/tutorial/pickup-points--2fljn6wLjn8M4lJHA6HP3R).",
                                                         "nullable": true
+                                                    },
+                                                    "deliveryOnWeekends": {
+                                                        "type": "boolean",
+                                                        "description": "Defines if the delivery on weekends configuration is active (`true`) or not (`false`).",
+                                                        "nullable": true
+                                                    },
+                                                    "weekendAndHolidays": {
+                                                        "type": "object",
+                                                        "description": "Delivery on weekends and holidays information.",
+                                                        "properties": {
+                                                            "saturday": {
+                                                                "type": "boolean",
+                                                                "description": "Defines if the delivery on Saturday configuration is active (`true`) or not (`false`)."
+                                                            },
+                                                            "sunday": {
+                                                                "type": "boolean",
+                                                                "description": "Defines if the delivery on Sunday configuration is active (`true`) or not (`false`)."
+                                                            },
+                                                            "holiday": {
+                                                                "type": "boolean",
+                                                                "description": "Defines if the delivery on [holiday](https://help.vtex.com/en/tutorial/registering-holidays--2ItOthSEAoyAmcwsuiO6Yk) configuration is active (`true`) or not (`false`)."
+                                                            }
+                                                        }
+                                                    },
+                                                    "estimateDate": {
+                                                        "type": "string",
+                                                        "description": "Delivery estimate date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."
+                                                    },
+                                                    "deliveryChannel": {
+                                                        "type": "string",
+                                                        "description": "Delivery channel."
+                                                    },
+                                                    "totalTimePlusCarrierSchedule": {
+                                                        "type": "string",
+                                                        "description": "Total shipping time plus carrier schedule, in the format `DD.HH:MM:SS`."
+                                                    },
+                                                    "polygonName": {
+                                                        "type": "string",
+                                                        "description": "[Polygon](https://help.vtex.com/en/tutorial/registering-geolocation--tutorials_138) name."
+                                                    },
+                                                    "distanceLevel": {
+                                                        "type": "string",
+                                                        "description": "SLA distance level.",
+                                                        "nullable": true
+                                                    },
+                                                    "accountCarrier": {
+                                                        "type": "string",
+                                                        "description": "Account carrier."
+                                                    },
+                                                    "dateOfSupplyUtc": {
+                                                        "type": "string",
+                                                        "description": "Supply date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`.",
+                                                        "nullable": true
+                                                    },
+                                                    "supplyLotId": {
+                                                        "type": "string",
+                                                        "description": "Supply lot ID.",
+                                                        "nullable": true
+                                                    },
+                                                    "isExternal": {
+                                                        "type": "boolean",
+                                                        "description": "Defines if the SLA request is external (`true`) or not (`false`)."
                                                     }
                                                 }
                                             }
-                                        },
-                                        "PickupPointItemOptions": {
-                                            "type": "string",
-                                            "description": "Pickup point item options."
                                         },
                                         "CanceledDateUtc": {
                                             "type": "string",
-                                            "description": "Canceled date in UTC."
+                                            "description": "Reservation canceled date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."
                                         },
                                         "AuthorizedDateUtc": {
                                             "type": "string",
-                                            "description": "Authorized date in UTC."
+                                            "description": "Authorized date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."
                                         },
                                         "ConfirmedDateUtc": {
                                             "type": "string",
-                                            "description": "Confirmed date in UTC."
+                                            "description": "Confirmed date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."
                                         },
                                         "Errors": {
                                             "type": "array",
-                                            "description": "Information on errors, if there are any.",
+                                            "description": "Error details, if there are any.",
                                             "items": {
-                                                "type": "string"
-                                            }
+                                                "type": "string",
+                                                "description": "Error message.",
+                                                "nullable": true
+                                            },
+                                            "nullable": true
                                         },
                                         "IsSucess": {
-                                            "type": "boolean"
+                                            "type": "boolean",
+                                            "description": "Defines if the reservation was successful (`true`) or not (`false`)."
                                         }
-                                    },
-                                    "example": {
-                                        "LastUpdateDateUtc": "2016-04-15T19:59:20.0397988+00:00",
-                                        "SalesChannel": "2",
-                                        "LockId": "3bfe679d-c0a8-475a-b315-706f84a9deb4",
-                                        "ReservationDateUtc": "2016-04-15T19:59:20.0397988+00:00",
-                                        "MaximumConfirmationDateUtc": "2016-04-15T20:09:20.0397988+00:00",
-                                        "Status": 1,
-                                        "SlaRequest": [
-                                            {
-                                                "item": {
-                                                    "id": "2390059",
-                                                    "groupItemId": null,
-                                                    "quantity": 1,
-                                                    "price": 0,
-                                                    "modal": null,
-                                                    "additionalHandlingTime": "00:00:00",
-                                                    "dimension": {
-                                                        "weight": 800,
-                                                        "height": 10,
-                                                        "width": 12,
-                                                        "length": 35,
-                                                        "maxSumDimension": 0
-                                                    },
-                                                    "kitItem": [],
-                                                    "unlimitedQuantity": false
-                                                },
-                                                "slaType": "Normal",
-                                                "slaTypeName": "Normal",
-                                                "freightTableName": "Correios PAC",
-                                                "freightTableId": "11cc4b6",
-                                                "listPrice": 10.5,
-                                                "promotionalPrice": 10.5,
-                                                "transitTime": "2.00:00:00",
-                                                "dockTime": "00:00:00",
-                                                "timeToDockPlusDockTime": "1.00:00:00",
-                                                "totalTime": "3.00:00:00",
-                                                "deliveryWindows": null,
-                                                "wareHouseId": "1937054",
-                                                "dockId": "1_1_1",
-                                                "wmsEndPoint": "",
-                                                "location": {
-                                                    "zipCode": "22220070",
-                                                    "country": "BRA",
-                                                    "deliveryPointId": null,
-                                                    "point": null,
-                                                    "inStore": {
-                                                        "IsCheckedIn": false,
-                                                        "StoreId": "180082"
-                                                    }
-                                                },
-                                                "pickupStoreInfo": null
-                                            }
-                                        ],
-                                        "PickupPointItemOptions": "PUP 1",
-                                        "CanceledDateUtc": "0001-01-01T00:00:00+00:00",
-                                        "AuthorizedDateUtc": "2016-04-15T19:59:20.0397988+00:00",
-                                        "ConfirmedDateUtc": "0001-01-01T00:00:00+00:00",
-                                        "Errors": [],
-                                        "IsSucess": true
                                     }
                                 },
                                 "example": {
-                                    "LastUpdateDateUtc": "2016-04-15T19:59:40.9832533+00:00",
-                                    "SalesChannel": "2",
-                                    "LockId": "621a9121-06c9-4731-96d1-edf8c5c23877",
-                                    "ReservationDateUtc": "2016-04-15T19:59:40.9832533+00:00",
-                                    "MaximumConfirmationDateUtc": "2016-04-15T20:09:40.9832533+00:00",
-                                    "Status": 1,
+                                    "LastUpdateDateUtc": "2024-05-01T17:14:51.5898912+00:00",
+                                    "SalesChannel": "1",
+                                    "LockId": "00-1336411707838-01",
+                                    "ReservationDateUtc": "2024-05-01T17:14:40.4900134+00:00",
+                                    "MaximumConfirmationDateUtc": "2024-06-13T17:14:40.4900134+00:00",
+                                    "Status": 2,
                                     "SlaRequest": [
                                         {
                                             "item": {
-                                                "id": "2390059",
+                                                "id": "229",
                                                 "groupItemId": null,
                                                 "quantity": 1,
-                                                "price": 0,
-                                                "modal": null,
+                                                "price": 5.0,
+                                                "modal": "FURNITURE",
                                                 "additionalHandlingTime": "00:00:00",
                                                 "dimension": {
-                                                    "weight": 800,
-                                                    "height": 10,
-                                                    "width": 12,
-                                                    "length": 35,
-                                                    "maxSumDimension": 0
+                                                    "weight": 186.3700,
+                                                    "height": 23.5000,
+                                                    "width": 165.0000,
+                                                    "length": 67.5000,
+                                                    "maxSumDimension": 300.000
                                                 },
                                                 "kitItem": [],
-                                                "unlimitedQuantity": false
+                                                "unlimitedQuantity": false,
+                                                "dockId": "dk_temp",
+                                                "warehouseId": "wh_temp",
+                                                "provider": null
                                             },
-                                            "slaType": "Normal",
-                                            "slaTypeName": "Normal",
+                                            "slaType": "delivery",
+                                            "slaTypeName": "Normal delivery",
                                             "freightTableName": "Correios PAC",
                                             "freightTableId": "11cc4b6",
-                                            "listPrice": 10.5,
-                                            "promotionalPrice": 10.5,
-                                            "transitTime": "2.00:00:00",
+                                            "listPrice": 10.35,
+                                            "promotionalPrice": 10.35,
+                                            "timeToPresale": "00:00:00",
+                                            "transitTime": "1.00:00:00",
                                             "dockTime": "00:00:00",
-                                            "timeToDockPlusDockTime": "1.00:00:00",
-                                            "totalTime": "3.00:00:00",
-                                            "deliveryWindows": null,
-                                            "wareHouseId": "1937054",
-                                            "dockId": "1_1_1",
-                                            "wmsEndPoint": "",
+                                            "timeToDockPlusDockTime": "00:00:00",
+                                            "totalTime": "1.00:00:00",
+                                            "deliveryWindows": {
+                                                "startDateUtc": "2024-02-25T09:00:00+00:00",
+                                                "endDateUtc": "2024-02-25T12:00:00+00:00",
+                                                "listPrice": 0.0
+                                            },
+                                            "wareHouseId": "wh_temp",
+                                            "kitReservation": null,
+                                            "dockId": "dk_temp",
+                                            "wmsEndPoint": null,
                                             "location": {
-                                                "zipCode": "22220070",
+                                                "zipCode": "58039210",
                                                 "country": "BRA",
-                                                "deliveryPointId": null,
-                                                "point": null,
+                                                "point": [
+                                                    -34.829391479492188,
+                                                    -7.1152286529541016
+                                                ],
                                                 "inStore": {
-                                                    "IsCheckedIn": false,
-                                                    "StoreId": "180082"
+                                                    "isCheckedIn": false,
+                                                    "storeId": "180082"
                                                 }
                                             },
-                                            "pickupStoreInfo": null
+                                            "pickupStoreInfo": null,
+                                            "deliveryOnWeekends": true,
+                                            "weekendAndHolidays": {
+                                                "saturday": true,
+                                                "sunday": true,
+                                                "holiday": true
+                                            },
+                                            "estimateDate": "2024-05-02T17:14:51.5742729+00:00",
+                                            "deliveryChannel": "delivery",
+                                            "totalTimePlusCarrierSchedule": "1.00:00:00",
+                                            "polygonName": "centerlRio",
+                                            "distanceLevel": null,
+                                            "accountCarrier": "recorrenciaqa",
+                                            "dateOfSupplyUtc": null,
+                                            "supplyLotId": null,
+                                            "isExternal": false
                                         }
                                     ],
-                                    "PickupPointItemOptions": "PUP 1",
                                     "CanceledDateUtc": "0001-01-01T00:00:00+00:00",
-                                    "AuthorizedDateUtc": "2016-04-15T19:59:40.9832533+00:00",
-                                    "ConfirmedDateUtc": "0001-01-01T00:00:00+00:00",
+                                    "AuthorizedDateUtc": "2024-05-01T17:14:40.4900134+00:00",
+                                    "ConfirmedDateUtc": "2024-05-01T17:14:51.5898912+00:00",
                                     "Errors": [],
                                     "IsSucess": true
                                 }
@@ -8811,160 +8865,7 @@
                 }
             }
         },
-        "schemas": {            
-            "MaxDimension": {
-                "title": "MaxDimension",
-                "required": [
-                    "weight",
-                    "height",
-                    "width",
-                    "length",
-                    "maxSumDimension"
-                ],
-                "type": "object",
-                "properties": {
-                    "weight": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "height": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "width": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "length": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "maxSumDimension": {
-                        "type": "integer",
-                        "format": "int32"
-                    }
-                },
-                "example": {
-                    "weight": 0,
-                    "height": 0,
-                    "width": 0,
-                    "length": 0,
-                    "maxSumDimension": 0
-                }
-            },
-            "MaxDimension1": {
-                "title": "MaxDimension1",
-                "required": [
-                    "maxSumDimension",
-                    "height",
-                    "length"
-                ],
-                "type": "object",
-                "properties": {
-                    "maxSumDimension": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "height": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "length": {
-                        "type": "string",
-                        "nullable": true
-                    }
-                },
-                "example": {
-                    "maxSumDimension": null,
-                    "height": null,
-                    "length": null
-                }
-            },
-            "DayOfWeekForDelivery": {
-                "title": "DayOfWeekForDelivery",
-                "required": [
-                    "dayOfWeek",
-                    "deliveryRanges"
-                ],
-                "type": "object",
-                "properties": {
-                    "dayOfWeek": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "deliveryRanges": {
-                        "type": "array",
-                        "items": {
-                            "title": "DeliveryRange",
-                            "required": [
-                                "startTime",
-                                "endTime",
-                                "listPrice"
-                            ],
-                            "type": "object",
-                            "properties": {
-                                "startTime": {
-                                    "type": "string"
-                                },
-                                "endTime": {
-                                    "type": "string"
-                                },
-                                "listPrice": {
-                                    "type": "integer",
-                                    "format": "int32"
-                                }
-                            },
-                            "example": {
-                                "startTime": "08:00:00",
-                                "endTime": "12:00:00",
-                                "listPrice": 10
-                            }
-                        },
-                        "description": ""
-                    }
-                },
-                "example": {
-                    "dayOfWeek": 0,
-                    "deliveryRanges": [
-                        {
-                            "startTime": "08:00:00",
-                            "endTime": "12:00:00",
-                            "listPrice": 10
-                        },
-                        {
-                            "startTime": "12:01:00",
-                            "endTime": "18:00:00",
-                            "listPrice": 10
-                        }
-                    ]
-                }
-            },
-            "DeliveryRange": {
-                "title": "DeliveryRange",
-                "required": [
-                    "startTime",
-                    "endTime",
-                    "listPrice"
-                ],
-                "type": "object",
-                "properties": {
-                    "startTime": {
-                        "type": "string"
-                    },
-                    "endTime": {
-                        "type": "string"
-                    },
-                    "listPrice": {
-                        "type": "integer",
-                        "format": "int32"
-                    }
-                },
-                "example": {
-                    "startTime": "08:00:00",
-                    "endTime": "12:00:00",
-                    "listPrice": 10
-                }
-            },
+        "schemas": {
             "allcarrier": {
                 "title": "allcarrier",
                 "required": [
@@ -10576,405 +10477,6 @@
                 "example": {
                     "IsCheckedIn": false,
                     "StoreId": null
-                }
-            },
-            "CreateReservation": {
-                "required": [
-                    "LastUpdateDateUtc",
-                    "SalesChannel",
-                    "LockId",
-                    "ReservationDateUtc",
-                    "MaximumConfirmationDateUtc",
-                    "Status",
-                    "SlaRequest",
-                    "PickupPointItemOptions",
-                    "CanceledDateUtc",
-                    "AuthorizedDateUtc",
-                    "ConfirmedDateUtc",
-                    "Errors",
-                    "IsSucess"
-                ],
-                "type": "object",
-                "properties": {
-                    "LastUpdateDateUtc": {
-                        "type": "string"
-                    },
-                    "SalesChannel": {
-                        "type": "string"
-                    },
-                    "LockId": {
-                        "type": "string"
-                    },
-                    "ReservationDateUtc": {
-                        "type": "string"
-                    },
-                    "MaximumConfirmationDateUtc": {
-                        "type": "string"
-                    },
-                    "Status": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "SlaRequest": {
-                        "type": "array",
-                        "items": {
-                            "title": "SlaRequest",
-                            "required": [
-                                "item",
-                                "slaType",
-                                "slaTypeName",
-                                "freightTableName",
-                                "freightTableId",
-                                "listPrice",
-                                "promotionalPrice",
-                                "transitTime",
-                                "dockTime",
-                                "timeToDockPlusDockTime",
-                                "totalTime",
-                                "deliveryWindows",
-                                "wareHouseId",
-                                "dockId",
-                                "wmsEndPoint",
-                                "location",
-                                "pickupStoreInfo"
-                            ],
-                            "type": "object",
-                            "properties": {
-                                "item": {
-                                    "title": "Item1",
-                                    "required": [
-                                        "id",
-                                        "groupItemId",
-                                        "quantity",
-                                        "price",
-                                        "modal",
-                                        "additionalHandlingTime",
-                                        "dimension",
-                                        "kitItem",
-                                        "unlimitedQuantity"
-                                    ],
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {
-                                            "type": "string"
-                                        },
-                                        "groupItemId": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "quantity": {
-                                            "type": "integer",
-                                            "format": "int32"
-                                        },
-                                        "price": {
-                                            "type": "number"
-                                        },
-                                        "modal": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "additionalHandlingTime": {
-                                            "type": "string"
-                                        },
-                                        "dimension": {
-                                            "title": "Dimension1",
-                                            "required": [
-                                                "weight",
-                                                "height",
-                                                "width",
-                                                "length",
-                                                "maxSumDimension"
-                                            ],
-                                            "type": "object",
-                                            "properties": {
-                                                "weight": {
-                                                    "type": "number"
-                                                },
-                                                "height": {
-                                                    "type": "number"
-                                                },
-                                                "width": {
-                                                    "type": "number"
-                                                },
-                                                "length": {
-                                                    "type": "number"
-                                                },
-                                                "maxSumDimension": {
-                                                    "type": "number"
-                                                }
-                                            },
-                                            "example": {
-                                                "weight": 800,
-                                                "height": 10,
-                                                "width": 12,
-                                                "length": 35,
-                                                "maxSumDimension": 0
-                                            }
-                                        },
-                                        "kitItem": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            },
-                                            "description": ""
-                                        },
-                                        "unlimitedQuantity": {
-                                            "type": "boolean"
-                                        }
-                                    },
-                                    "example": {
-                                        "id": "2390059",
-                                        "groupItemId": null,
-                                        "quantity": 1,
-                                        "price": 0,
-                                        "modal": null,
-                                        "additionalHandlingTime": "00:00:00",
-                                        "dimension": {
-                                            "weight": 800,
-                                            "height": 10,
-                                            "width": 12,
-                                            "length": 35,
-                                            "maxSumDimension": 0
-                                        },
-                                        "kitItem": [],
-                                        "unlimitedQuantity": false
-                                    }
-                                },
-                                "slaType": {
-                                    "type": "string"
-                                },
-                                "slaTypeName": {
-                                    "type": "string"
-                                },
-                                "freightTableName": {
-                                    "type": "string"
-                                },
-                                "freightTableId": {
-                                    "type": "string"
-                                },
-                                "listPrice": {
-                                    "type": "number"
-                                },
-                                "promotionalPrice": {
-                                    "type": "number"
-                                },
-                                "transitTime": {
-                                    "type": "string"
-                                },
-                                "dockTime": {
-                                    "type": "string"
-                                },
-                                "timeToDockPlusDockTime": {
-                                    "type": "string"
-                                },
-                                "totalTime": {
-                                    "type": "string"
-                                },
-                                "deliveryWindows": {
-                                    "type": "string",
-                                    "nullable": true
-                                },
-                                "wareHouseId": {
-                                    "type": "string"
-                                },
-                                "dockId": {
-                                    "type": "string"
-                                },
-                                "wmsEndPoint": {
-                                    "type": "string"
-                                },
-                                "location": {
-                                    "title": "Location1",
-                                    "required": [
-                                        "zipCode",
-                                        "country",
-                                        "deliveryPointId",
-                                        "point",
-                                        "inStore"
-                                    ],
-                                    "type": "object",
-                                    "properties": {
-                                        "zipCode": {
-                                            "type": "string"
-                                        },
-                                        "country": {
-                                            "type": "string"
-                                        },
-                                        "deliveryPointId": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "point": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "inStore": {
-                                            "title": "InStore1",
-                                            "required": [
-                                                "IsCheckedIn",
-                                                "StoreId"
-                                            ],
-                                            "type": "object",
-                                            "properties": {
-                                                "IsCheckedIn": {
-                                                    "type": "boolean"
-                                                },
-                                                "StoreId": {
-                                                    "type": "string"
-                                                }
-                                            },
-                                            "example": {
-                                                "IsCheckedIn": false,
-                                                "StoreId": "180082"
-                                            }
-                                        }
-                                    },
-                                    "example": {
-                                        "zipCode": "22220070",
-                                        "country": "BRA",
-                                        "deliveryPointId": null,
-                                        "point": null,
-                                        "inStore": {
-                                            "IsCheckedIn": false,
-                                            "StoreId": "180082"
-                                        }
-                                    }
-                                },
-                                "pickupStoreInfo": {
-                                    "type": "string",
-                                    "nullable": true
-                                }
-                            },
-                            "example": {
-                                "item": {
-                                    "id": "2390059",
-                                    "groupItemId": null,
-                                    "quantity": 1,
-                                    "price": 0,
-                                    "modal": null,
-                                    "additionalHandlingTime": "00:00:00",
-                                    "dimension": {
-                                        "weight": 800,
-                                        "height": 10,
-                                        "width": 12,
-                                        "length": 35,
-                                        "maxSumDimension": 0
-                                    },
-                                    "kitItem": [],
-                                    "unlimitedQuantity": false
-                                },
-                                "slaType": "Normal",
-                                "slaTypeName": "Normal",
-                                "freightTableName": "Correios PAC",
-                                "freightTableId": "11cc4b6",
-                                "listPrice": 10.5,
-                                "promotionalPrice": 10.5,
-                                "transitTime": "2.00:00:00",
-                                "dockTime": "00:00:00",
-                                "timeToDockPlusDockTime": "1.00:00:00",
-                                "totalTime": "3.00:00:00",
-                                "deliveryWindows": null,
-                                "wareHouseId": "1937054",
-                                "dockId": "1_1_1",
-                                "wmsEndPoint": "",
-                                "location": {
-                                    "zipCode": "22220070",
-                                    "country": "BRA",
-                                    "deliveryPointId": null,
-                                    "point": null,
-                                    "inStore": {
-                                        "IsCheckedIn": false,
-                                        "StoreId": "180082"
-                                    }
-                                },
-                                "pickupStoreInfo": null
-                            }
-                        },
-                        "description": ""
-                    },
-                    "PickupPointItemOptions": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "CanceledDateUtc": {
-                        "type": "string"
-                    },
-                    "AuthorizedDateUtc": {
-                        "type": "string"
-                    },
-                    "ConfirmedDateUtc": {
-                        "type": "string"
-                    },
-                    "Errors": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "description": ""
-                    },
-                    "IsSucess": {
-                        "type": "boolean"
-                    }
-                },
-                "example": {
-                    "LastUpdateDateUtc": "2016-04-15T19:59:20.0397988+00:00",
-                    "SalesChannel": "2",
-                    "LockId": "3bfe679d-c0a8-475a-b315-706f84a9deb4",
-                    "ReservationDateUtc": "2016-04-15T19:59:20.0397988+00:00",
-                    "MaximumConfirmationDateUtc": "2016-04-15T20:09:20.0397988+00:00",
-                    "Status": 1,
-                    "SlaRequest": [
-                        {
-                            "item": {
-                                "id": "2390059",
-                                "groupItemId": null,
-                                "quantity": 1,
-                                "price": 0,
-                                "modal": null,
-                                "additionalHandlingTime": "00:00:00",
-                                "dimension": {
-                                    "weight": 800,
-                                    "height": 10,
-                                    "width": 12,
-                                    "length": 35,
-                                    "maxSumDimension": 0
-                                },
-                                "kitItem": [],
-                                "unlimitedQuantity": false
-                            },
-                            "slaType": "Normal",
-                            "slaTypeName": "Normal",
-                            "freightTableName": "Correios PAC",
-                            "freightTableId": "11cc4b6",
-                            "listPrice": 10.5,
-                            "promotionalPrice": 10.5,
-                            "transitTime": "2.00:00:00",
-                            "dockTime": "00:00:00",
-                            "timeToDockPlusDockTime": "1.00:00:00",
-                            "totalTime": "3.00:00:00",
-                            "deliveryWindows": null,
-                            "wareHouseId": "1937054",
-                            "dockId": "1_1_1",
-                            "wmsEndPoint": "",
-                            "location": {
-                                "zipCode": "22220070",
-                                "country": "BRA",
-                                "deliveryPointId": null,
-                                "point": null,
-                                "inStore": {
-                                    "IsCheckedIn": false,
-                                    "StoreId": "180082"
-                                }
-                            },
-                            "pickupStoreInfo": null
-                        }
-                    ],
-                    "PickupPointItemOptions": null,
-                    "CanceledDateUtc": "0001-01-01T00:00:00+00:00",
-                    "AuthorizedDateUtc": "2016-04-15T19:59:20.0397988+00:00",
-                    "ConfirmedDateUtc": "0001-01-01T00:00:00+00:00",
-                    "Errors": [],
-                    "IsSucess": true
                 }
             },
             "SlaRequest": {
@@ -12742,119 +12244,6 @@
                             "closingTime": "21:00:00"
                         }
                     ]
-                }
-            },
-            "Address4": {
-                "title": "Address4",
-                "required": [
-                    "postalCode",
-                    "country",
-                    "city",
-                    "state",
-                    "neighborhood",
-                    "street",
-                    "number",
-                    "complement",
-                    "location"
-                ],
-                "type": "object",
-                "properties": {
-                    "postalCode": {
-                        "type": "string"
-                    },
-                    "country": {
-                        "title": "Country",
-                        "required": [
-                            "acronym",
-                            "name"
-                        ],
-                        "type": "object",
-                        "properties": {
-                            "acronym": {
-                                "type": "string"
-                            },
-                            "name": {
-                                "type": "string"
-                            }
-                        },
-                        "example": {
-                            "acronym": "BRA",
-                            "name": "Brazil"
-                        }
-                    },
-                    "city": {
-                        "type": "string"
-                    },
-                    "state": {
-                        "type": "string"
-                    },
-                    "neighborhood": {
-                        "type": "string"
-                    },
-                    "street": {
-                        "type": "string"
-                    },
-                    "number": {
-                        "type": "string"
-                    },
-                    "complement": {
-                        "type": "string"
-                    },
-                    "location": {
-                        "title": "Location5",
-                        "required": [
-                            "latitude",
-                            "longitude"
-                        ],
-                        "type": "object",
-                        "properties": {
-                            "latitude": {
-                                "type": "number"
-                            },
-                            "longitude": {
-                                "type": "number"
-                            }
-                        },
-                        "example": {
-                            "latitude": -22.974477767944336,
-                            "longitude": -43.18672561645508
-                        }
-                    }
-                },
-                "example": {
-                    "postalCode": "22220070",
-                    "country": {
-                        "acronym": "BRA",
-                        "name": "Brazil"
-                    },
-                    "city": "Rio de Janeiro",
-                    "state": "RJ",
-                    "neighborhood": "Catete",
-                    "street": "Rua Artur Bernardes",
-                    "number": "100",
-                    "complement": "apartment",
-                    "location": {
-                        "latitude": -22.92860984802246,
-                        "longitude": -22.92860984802246
-                    }
-                }
-            },
-            "GeoShape": {
-                "title": "GeoShape",
-                "required": [
-                    "coordinates"
-                ],
-                "type": "object",
-                "properties": {
-                    "coordinates": {
-                        "type": "array",
-                        "items": {
-                            "type": "array",
-                            "items": {
-                                "type": "number"
-                            }
-                        }
-                    }
                 }
             }
         },
