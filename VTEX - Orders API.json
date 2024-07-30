@@ -5248,7 +5248,79 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/FeedConfigurationRequest"
+                                "type": "object",
+                                "required": [
+                                    "filter",
+                                    "queue"
+                                ],
+                                "properties": {
+                                    "filter": {
+                                        "type": "object",
+                                        "description": "Object with type and status that will filter feed orders.",
+                                        "required": [
+                                            "type"
+                                        ],
+                                        "properties": {
+                                            "type": {
+                                                "type": "string",
+                                                "description": "Determines what orders appear in the feed and how they are filtered. There are two possible values:\n\r\n\r-`FromWorkflow`: the feed will receive order updates only when order’s statuses change and orders can be filtered by status, using the `status` field described below.\n\r\n\r-`FromOrders`: the feed gets updates whenever any change is made to an order. in this case, orders can be filtered by any property, according to JSONata expressions passed in the `expression` field described below.",
+                                                "example": "FromWorkflow"
+                                            },
+                                            "status": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                },
+                                                "description": "List of order statuses that should be included in the feed. This should only be used in case `type` is set to `FromWorkflow`. The status event will be removed, if it can't deliver a message more than 100 times, 4 days progressively. \r\n\r\n**Status available to filter** \r\n\r\n- order-created \n\r\n- on-order-completed \n\r\n- on-order-completed-ffm \n\r\n- payment-pending \n\r\n- waiting-for-order-authorization \n\r\n- approve-payment \n\r\n- payment-approved \n\r\n- request-cancel \n\r\n- waiting-for-seller-decision \n\r\n- waiting-ffmt-authorization \n\r\n- waiting-for-authorization \n\r\n- waiting-for-manual-authorization \n\r\n- authorize-fulfillment \n\r\n- order-create-error \n\r\n- order-creation-error \n\r\n- window-to-cancel \n\r\n- window-to-change-seller \n\r\n- waiting-for-mkt-authorization \n\r\n- waiting-seller-handling \n\r\n- ready-for-handling \n\r\n- start-handling \n\r\n- handling \n\r\n- invoice-after-cancellation-deny \n\r\n- order-accepted \n\r\n- invoice \n\r\n- invoiced \n\r\n- replaced \n\r\n- cancellation-requested \n\r\n- cancel \n\r\n- canceled.",
+                                                "example": [
+                                                    "order-created",
+                                                    "on-order-completed",
+                                                    "payment-pending",
+                                                    "waiting-for-order-authorization",
+                                                    "approve-payment",
+                                                    "payment-approved",
+                                                    "request-cancel",
+                                                    "waiting-for-seller-decision",
+                                                    "authorize-fulfillment",
+                                                    "order-create-error",
+                                                    "order-creation-error",
+                                                    "window-to-cancel",
+                                                    "canceled"
+                                                ]
+                                            },
+                                            "expression": {
+                                                "type": "string",
+                                                "description": "JSONata query expression that defines what conditions must be met for an order to be included in the feed. This should only be used in case `type` is set to `FromOrders`.",
+                                                "example": "value > 100"
+                                            },
+                                            "disableSingleFire": {
+                                                "type": "boolean",
+                                                "description": "Sets a limit to how many times a specific order shows on the feed, after it first meets filtering conditions. Using the `FromOrders` type configuration with JSONata filtering expressions might cause orders to appear more than once on a feed, whenever changes are made to that order. If this field is `false` orders will appear in the feed only once.",
+                                                "example": false
+                                            }
+                                        }
+                                    },
+                                    "queue": {
+                                        "type": "object",
+                                        "description": "Object with information about timeout and message retention.",
+                                        "required": [
+                                            "visibilityTimeoutInSeconds",
+                                            "MessageRetentionPeriodInSeconds"
+                                        ],
+                                        "properties": {
+                                            "visibilityTimeoutInSeconds": {
+                                                "type": "integer",
+                                                "description": "Period of time for which an item becomes invisible after it has been [retrieved](https://developers.vtex.com/vtex-rest-api/reference/feed-v3#getfeedorderstatus1). Measured in seconds.",
+                                                "example": 250
+                                            },
+                                            "MessageRetentionPeriodInSeconds": {
+                                                "type": "integer",
+                                                "description": "Maximum life span of an order update in the feed. When a feed item is on the feed for this period of time, it is removed from the feed. Measured in seconds.",
+                                                "example": 3456000
+                                            }
+                                        }
+                                    }
+                                }
                             },
                             "example": {
                                 "filter": {
@@ -15438,48 +15510,6 @@
                     }
                 }
             },
-            "FeedConfigurationRequest": {
-                "title": "FeedConfigurationRequest",
-                "required": ["filter", "queue"],
-                "type": "object",
-                "properties": {
-                    "filter": {
-                        "$ref": "#/components/schemas/FeedFilter"
-                    },
-                    "queue": {
-                        "$ref": "#/components/schemas/Queue"
-                    }
-                }
-            },
-            "FeedFilter": {
-                "title": "Filter",
-                "description": "Object with type and status that will filter feed orders.",
-                "required": ["type"],
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "description": "Determines what orders appear in the feed and how they are filtered. There are two possible values:\n\r\n\r-`FromWorkflow`: the feed will receive order updates only when order’s statuses change and orders can be filtered by status, using the `status` field described below.\n\r\n\r-`FromOrders`: the feed gets updates whenever any change is made to an order. in this case, orders can be filtered by any property, according to JSONata expressions passed in the `expression` field described below.",
-                        "example": "FromWorkflow"
-                    },
-                    "status": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "description": "List of order statuses that should be included in the feed. This should only be used in case `type` is set to `FromWorkflow`. The status event will be removed, if it can't deliver a message more than 100 times, 4 days progressively. \r\n\r\n**Status available to filter** \r\n\r\n- order-created \n\r\n- on-order-completed \n\r\n- on-order-completed-ffm \n\r\n- payment-pending \n\r\n- waiting-for-order-authorization \n\r\n- approve-payment \n\r\n- payment-approved \n\r\n- request-cancel \n\r\n- waiting-for-seller-decision \n\r\n- waiting-ffmt-authorization \n\r\n- waiting-for-authorization \n\r\n- waiting-for-manual-authorization \n\r\n- authorize-fulfillment \n\r\n- order-create-error \n\r\n- order-creation-error \n\r\n- window-to-cancel \n\r\n- window-to-change-seller \n\r\n- waiting-for-mkt-authorization \n\r\n- waiting-seller-handling \n\r\n- ready-for-handling \n\r\n- start-handling \n\r\n- handling \n\r\n- invoice-after-cancellation-deny \n\r\n- order-accepted \n\r\n- invoice \n\r\n- invoiced \n\r\n- replaced \n\r\n- cancellation-requested \n\r\n- cancel \n\r\n- canceled."
-                    },
-                    "expression": {
-                        "type": "string",
-                        "description": "JSONata query expression that defines what conditions must be met for an order to be included in the feed. This should only be used in case `type` is set to `FromOrders`."
-                    },
-                    "disableSingleFire": {
-                        "type": "boolean",
-                        "description": "Sets a limit to how many times a specific order shows on the feed, after it first meets filtering conditions. Using the `FromOrders` type configuration with JSONata filtering expressions might cause orders to appear more than once on a feed, whenever changes are made to that order. If this field is `false` orders will appear in the feed only once.",
-                        "example": false
-                    }
-                }
-            },
             "HookFilter": {
                 "title": "Filter",
                 "required": ["type"],
@@ -15505,27 +15535,6 @@
                         "type": "boolean",
                         "description": "Sets a limit to how many times a specific order shows on the hook, after it first meets filtering conditions. Using the `FromOrders` type configuration with JSONata filtering expressions might cause orders to appear more than once on a feed, whenever changes are made to that order. If this field is `false` orders will appear in the hook only once. Send this field if you want to filter `FromOrders`.",
                         "example": false
-                    }
-                }
-            },
-            "Queue": {
-                "title": "Queue",
-                "description": "Object with information about timeout and message retention.",
-                "required": [
-                    "visibilityTimeoutInSeconds",
-                    "MessageRetentionPeriodInSeconds"
-                ],
-                "type": "object",
-                "properties": {
-                    "visibilityTimeoutInSeconds": {
-                        "type": "integer",
-                        "description": "Period of time for which an item becomes invisible after it has been [retrieved](https://developers.vtex.com/vtex-rest-api/reference/feed-v3#getfeedorderstatus1). Measured in seconds.",
-                        "example": 250
-                    },
-                    "MessageRetentionPeriodInSeconds": {
-                        "type": "integer",
-                        "description": "Maximum life span of an order update in the feed. When a feed item is on the feed for this period of time, it is removed from the feed. Measured in seconds.",
-                        "example": 3456000
                     }
                 }
             },
