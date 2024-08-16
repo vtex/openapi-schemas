@@ -61,7 +61,7 @@ Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
 Before contributing to this repository, read the following requisites.
 
 - The files should follow the JSON [OpenAPI 3.0 Specification](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md).
-- Check our internal [OpenAPI Specification guidelines](https://www.notion.so/vtexhandbook/OpenAPI-Specification-guidelines-e3a681454798496292d6648e184a156e#344d2fc637c146ffa2ed61a119aa39ee) to make sure you meet the required file structure. 
+- Check our internal [OpenAPI Specification guidelines](https://www.notion.so/vtexhandbook/OpenAPI-Specification-guidelines-e3a681454798496292d6648e184a156e#344d2fc637c146ffa2ed61a119aa39ee) to make sure you meet the required file structure.
 - Schema files should have a self-explanatory name that specifies the described API.
 - Check [`templates/VTEX - Template openAPI.jsonc`](https://github.com/vtex/openapi-schemas/blob/master/templates/VTEX%20-%20Template%20openAPI.jsonc) to see an example of an API schema file. It shows how to represent endpoints and parameters and includes VTEX's default [`servers`](#servers) and [authorization](#authorization) information.
 
@@ -71,9 +71,9 @@ OpenAPI describes the full endpoint for accessing the API as `{server URL}` + `{
 
 Example: an endpoint with `/api/getResults` as the path, `https://example.com` as the URL in the `server` object and no parameters will send requests to the `https://example.com/api/getResults` URL.
 
-Example - `servers` object: 
+Example - `servers` object:
 
-```json 
+```json
 "servers": [
     {
         "url": "https://{accountName}.{environment}.com.br",
@@ -94,6 +94,7 @@ Example - `servers` object:
     }
 ],
 ```
+
 The `servers` key contains an array of objects.
 
 ### Authentication
@@ -106,7 +107,7 @@ They should be added inside the `components` object.
 
 The security schemes we use are:
 
-```json 
+```json
 "securitySchemes": {
     "appKey": {
         "type": "apiKey",
@@ -137,7 +138,7 @@ If defined inside an endpoint object, the `security` object will define the secu
 
 The `security` object we use at VTEX is:
 
-```json 
+```json
 "security": [
         {
             "appKey": [],
