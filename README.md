@@ -134,7 +134,7 @@ The security schemes we use are:
 
 If defined inside the Open API schema, the `security` object will define the required security schemes for all endpoints. This specifies that requests should have the `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken` pair or `VtexIdClientAutCookie` as part of the request header.
 
-If defined inside an endpoint object, the `security` object will define the security scheme for that specific endpoint. 
+If defined inside an endpoint object, the `security` object will define the security scheme for that specific endpoint.
 
 The `security` object we use at VTEX is:
 
