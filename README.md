@@ -1,13 +1,17 @@
 # openapi-schemas
+
 This documentation comprises VTEX's public APIs as OpenAPI 3.0 JSON schemas. Files are automatically synced with VTEX's Developer Portal [API Reference page](https://developers.vtex.com/docs/api-reference) and can be imported to Postman following [these instructions](https://learning.postman.com/docs/postman/collections/working-with-openAPI/).
 
 ## Contributing with the documentation
+
 Please check our [Contributing Guide](CONTRIBUTING.md) for more information about how to contribute with this repository.
 
 ## Code of Conduct
+
 Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
 
 ## VTEX APIs
+
 - Antifraud Provider API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https://raw.githubusercontent.com/vtex/openapi-schemas/master/VTEX%2520-%2520Antifraud%2520Provider%2520API.json&label=OpenAPI)
 - Catalog API Seller Portal ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Catalog%2520API%2520Seller%2520Portal.json&label=OpenAPI)
 - Catalog API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Catalog%2520API.json&label=OpenAPI)
@@ -46,7 +50,7 @@ Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
 - SKU Bindings API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520SKU%2520Bindings%2520API.json)
 - Search API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Search%2520API.json)
 - Session Manager API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Session%2520Manager%2520API.json)
-- Subscriptions (v3) ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Subscriptions%2520API%2520%28v2%29.json)
+- Subscriptions API (v3) ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Subscriptions%2520API%2520%28v3%29.json)
 - VTEX Tracking API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520Tracking.json)
 - VTEX DO API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520VTEX%2520Do%2520API.json)
 - VTEX ID API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?label=OpenAPI&specUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fvtex%2Fopenapi-schemas%2Fmaster%2FVTEX%2520-%2520VTEX%2520ID%2520API.json)
@@ -57,7 +61,7 @@ Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
 Before contributing to this repository, read the following requisites.
 
 - The files should follow the JSON [OpenAPI 3.0 Specification](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md).
-- Check our internal [OpenAPI Specification guidelines](https://www.notion.so/vtexhandbook/OpenAPI-Specification-guidelines-e3a681454798496292d6648e184a156e#344d2fc637c146ffa2ed61a119aa39ee) to make sure you meet the required file structure. 
+- Check our internal [OpenAPI Specification guidelines](https://www.notion.so/vtexhandbook/OpenAPI-Specification-guidelines-e3a681454798496292d6648e184a156e#344d2fc637c146ffa2ed61a119aa39ee) to make sure you meet the required file structure.
 - Schema files should have a self-explanatory name that specifies the described API.
 - Check [`templates/VTEX - Template openAPI.jsonc`](https://github.com/vtex/openapi-schemas/blob/master/templates/VTEX%20-%20Template%20openAPI.jsonc) to see an example of an API schema file. It shows how to represent endpoints and parameters and includes VTEX's default [`servers`](#servers) and [authorization](#authorization) information.
 
@@ -67,9 +71,9 @@ OpenAPI describes the full endpoint for accessing the API as `{server URL}` + `{
 
 Example: an endpoint with `/api/getResults` as the path, `https://example.com` as the URL in the `server` object and no parameters will send requests to the `https://example.com/api/getResults` URL.
 
-Example - `servers` object: 
+Example - `servers` object:
 
-```json 
+```json
 "servers": [
     {
         "url": "https://{accountName}.{environment}.com.br",
@@ -90,6 +94,7 @@ Example - `servers` object:
     }
 ],
 ```
+
 The `servers` key contains an array of objects.
 
 ### Authentication
@@ -102,7 +107,7 @@ They should be added inside the `components` object.
 
 The security schemes we use are:
 
-```json 
+```json
 "securitySchemes": {
     "appKey": {
         "type": "apiKey",
@@ -129,11 +134,11 @@ The security schemes we use are:
 
 If defined inside the Open API schema, the `security` object will define the required security schemes for all endpoints. This specifies that requests should have the `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken` pair or `VtexIdClientAutCookie` as part of the request header.
 
-If defined inside an endpoint object, the `security` object will define the security scheme for that specific endpoint. 
+If defined inside an endpoint object, the `security` object will define the security scheme for that specific endpoint.
 
 The `security` object we use at VTEX is:
 
-```json 
+```json
 "security": [
         {
             "appKey": [],
