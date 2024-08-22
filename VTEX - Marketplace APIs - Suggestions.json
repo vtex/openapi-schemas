@@ -220,7 +220,6 @@
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "headers": {},
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -232,7 +231,38 @@
                                         },
                                         "Matchers": {
                                             "type": "array",
-                                            "description": "All Matchers configured on the marketplace, and their respective details."
+                                            "description": "All Matchers configured on the marketplace, and their respective details.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Details of a single matcher configured in the marketplace.",
+                                                "properties": {
+                                                    "MatcherId": {
+                                                        "type": "string",
+                                                        "description": "Identifies the matching entity, either VTEX's matcher or an external matcher.",
+                                                        "example": "vtex-matcher"
+                                                    },
+                                                    "hook-base-address": {
+                                                        "type": "string",
+                                                        "description": "The base address for the Matcher's API endpoint.",
+                                                        "example": "http://portal.vtexinternal.com/api/hooks"
+                                                    },
+                                                    "IsActive": {
+                                                        "type": "boolean",
+                                                        "description": "Indicates whether the matcher is active or not.",
+                                                        "example": true
+                                                    },
+                                                    "UpdatesNotificationEndpoint": {
+                                                        "type": "string",
+                                                        "description": "Endpoint for receiving notifications about updates from the matcher.",
+                                                        "example": null
+                                                    },
+                                                    "Description": {
+                                                        "type": "string",
+                                                        "description": "Description or notes about the matcher.",
+                                                        "example": null
+                                                    }
+                                                }
+                                            }
                                         },
                                         "Rules": {
                                             "type": "object",
@@ -240,7 +270,23 @@
                                         },
                                         "SpecificationsMapping": {
                                             "type": "array",
-                                            "description": "Mapping of product and SKU specifications, per seller."
+                                            "description": "Mapping of product and SKU specifications between the marketplace and the seller.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Mapping details for a single specification.",
+                                                "properties": {
+                                                    "fieldName": {
+                                                        "type": "string",
+                                                        "description": "Name of the specification field in the seller's catalog.",
+                                                        "example": "Color"
+                                                    },
+                                                    "marketplaceField": {
+                                                        "type": "string",
+                                                        "description": "Corresponding name of the specification field in the marketplace's catalog.",
+                                                        "example": "Color"
+                                                    }
+                                                }
+                                            }
                                         },
                                         "MatchFlux": {
                                             "type": "string",
@@ -1389,9 +1435,7 @@
                                     "weight": 1,
                                     "images": [
                                         {
-                                            "imagem1.jpg": {
-                                                "imagem1.jpg": "https://imageurl.example"
-                                            }
+                                            "imagem1.jpg": "https://imageurl.example"
                                         }
                                     ],
                                     "unitMultiplier": 1,
@@ -1412,7 +1456,16 @@
                             "application/json":{
                                 "schema":{
                                     "$ref":"#/components/schemas/responseMatchMultiple"
-                                }
+                                },
+                                "example": [
+                                    {
+                                        "matchId": "06272023010821403",
+                                        "matcherId": "vtex-matcher",
+                                        "sellerId": "test858",
+                                        "itemID": "81",
+                                        "isSuccess": false
+                                    }
+                                ]
                             }
                         }
                     }
@@ -1559,7 +1612,8 @@
                         "items": {
                             "type": "string",
                             "description": "Each item in the array represents a specification that is mapped to either a product or SKU."
-                        }
+                        },
+                        "example": []
                     },
                     "MatchFlux": {
                         "type": "string",
@@ -1583,7 +1637,7 @@
                         }
                     ],
                     "SpecificationsMapping": [],
-                    "MatchFlux": "AutoApprove"
+                    "MatchFlux": "autoApprove"
                 }
             },
             "Score": {
@@ -2325,6 +2379,7 @@
                     "Packaging"
                 ],
                 "type": "object",
+                "description": "Object representing the specifications of a product, including details related to its packaging and other relevant attributes.",
                 "properties": {
                     "Packaging": {
                         "type": "string",
@@ -2421,7 +2476,7 @@
                         },
                         "sellerId": {
                             "type": "string",
-                            "description": "Unique identifier of the seller who owns the SKU being matched."
+                            "description":"Unique identifier of the seller who owns the SKU being matched."
                         },
                         "itemId": {
                             "type": "string",
@@ -2432,16 +2487,7 @@
                             "description": "Indicates whether the match operation was successful. A value of `true` means the operation succeeded, while `false` indicates a failure."
                         }
                     }
-                },
-                "example":[
-                    {
-                        "matchId":"06272023010821403",
-                        "matcherId":"vtex-matcher",
-                        "sellerId":"test858",
-                        "itemID":"81",
-                        "isSuccess":false
-                    }
-                ]
+                }
             },
             "responseGetSellersApprovalSettings": {
                 "type": "object",
@@ -2498,6 +2544,7 @@
             },
             "responseSaveAccountsApprovalSettings": {
                 "type": "object",
+                "description": "Response object for the Save Accounts Approval Settings endpoint.",
                 "properties": {
                     "Score": {
                         "type": "object",
@@ -2511,35 +2558,35 @@
                                 "type": "integer",
                                 "description": "Score to reject SKUs sent by sellers."
                             }
-                        },
-                        "example": {
-                            "Approve": 80,
-                            "Reject": 30
                         }
                     },
                     "Matchers": {
                         "type": "array",
                         "description": "[Matchers](https://help.vtex.com/en/tutorial/understanding-vtex-matcher-scoring) configurations for approving and rejecting [received SKUs](https://help.vtex.com/en/tutorial/cataloging-received-skus--tutorials_396) sent by sellers.",
-                        "properties": {
-                            "MatcherId": {
-                                "type": "string",
-                                "description": "Identifies the matching entity. It can be either [VTEX's matcher](https://help.vtex.com/en/tutorial/understanding-vtex-matcher-scoring), or an external matcher."
-                            },
-                            "hook-base-address": {
-                                "type": "string",
-                                "description": "The given Matcher's URL."
-                            },
-                            "IsActive": {
-                                "type": "boolean",
-                                "description": "Whether the matcher is active in the account (`true`), or not (`false`)."
-                            },
-                            "UpdatesNotificationEndpoint": {
-                                "type": "string",
-                                "description": "The [received SKUs](https://help.vtex.com/en/tutorial/cataloging-received-skus--tutorials_396) module calls this endpoint for matcher's suggestions updates."
-                            },
-                            "Description": {
-                                "type": "string",
-                                "description": "The note inserted on the request body."
+                        "items": {
+                            "type":"object",
+                            "description":"Details of a matcher used for scoring and managing SKU approvals and rejections.",
+                            "properties": {
+                                "MatcherId": {
+                                    "type": "string",
+                                    "description": "Identifies the matching entity. It can be either [VTEX's matcher](https://help.vtex.com/en/tutorial/understanding-vtex-matcher-scoring), or an external matcher."
+                                },
+                                "hook-base-address": {
+                                    "type": "string",
+                                    "description": "The given Matcher's URL."
+                                },
+                                "IsActive": {
+                                    "type": "boolean",
+                                    "description": "Whether the matcher is active in the account (`true`), or not (`false`)."
+                                },
+                                "UpdatesNotificationEndpoint": {
+                                    "type": "string",
+                                    "description": "The [received SKUs](https://help.vtex.com/en/tutorial/cataloging-received-skus--tutorials_396) module calls this endpoint for matcher's suggestions updates."
+                                },
+                                "Description": {
+                                    "type": "string",
+                                    "description": "The note inserted on the request body."
+                                }
                             }
                         }
                     },
@@ -2568,14 +2615,18 @@
                     "SpecificationsMapping": {
                         "type": "array",
                         "description": "This attribute maps product and SKU's specifications between the marketplace and the seller.",
-                        "properties": {
-                            "SellerId": {
-                                "type": "string",
-                                "description": "The Seller ID."
-                            },
-                            "Mapping": {
-                                "type": "object",
-                                "description": "The attributes and values mapped between the marketplace and the seller."
+                        "items": {
+                            "type": "object",
+                            "description": "Object representing a single specification mapping between the marketplace and the seller.",
+                            "properties": {
+                                "SellerId": {
+                                    "type": "string",
+                                    "description": "The Seller ID."
+                                },
+                                "Mapping": {
+                                    "type": "object",
+                                    "description": "The attributes and values mapped between the marketplace and the seller."
+                                }
                             }
                         }
                     },
