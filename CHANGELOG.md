@@ -7,5 +7,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  
 ## [Unreleased] - yyyy-mm-dd
  
-Here we write upgrading notes for users. It is a team effort to make them as
-straightforward as possible.
+Here we write upgrading notes for users. It is a team effort to make them as straightforward as possible.
