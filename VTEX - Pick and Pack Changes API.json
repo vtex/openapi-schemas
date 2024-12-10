@@ -1,38 +1,48 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "Changes API",
-        "description": "The **Changes API** is a RESTful service for managing order modifications in a VTEX environment. The API supports actions like updating deadlines, adding items, modifying quantities, rejecting or replacing items, and updating item details. Authentication is required and is based on a cookie from the user’s VTEX account. The cookie, VtexIdclientAutCookie_accountName, must be included in the request headers for authentication. If the cookie is not provided, the API will reject the request. JSON is used for data exchange, ensuring structured and reliable communication.",
+        "title": "Pick and Pack Changes API",
+        "description": "The Pick and Pack Changes API manages order modifications in a Pick an Pack order. This API supports actions like updating deadlines, adding items, modifying quantities, rejecting or replacing items, and updating item details.",
         "contact": {},
         "version": "1.0"
     },
     "servers": [
         {
-            "url": "http://example.com/.myvtex.com/vtex_pickandpack",
-            "variables": {}
+            "url": "https://{accountName}.{environment}.com.br/vtex_pickandpack",
+            "description": "VTEX server URL.",
+            "variables": {
+                "accountName": {
+                    "description": "Name of the VTEX account. Used as part of the URL.",
+                    "default": "apiexamples"
+                },
+                "environment": {
+                    "description": "Environment to use. Used as part of the URL.",
+                    "enum": [
+                        "vtexcommercestable"
+                    ],
+                    "default": "vtexcommercestable"
+                }
+            }
         }
     ],
     "paths": {
         "/orders/{orderId}/deadline": {
             "put": {
-                "tags": ["Misc"],
-                "summary": "Update Deadline",
+                "summary": "Update deadline",
                 "description": "Updates the deadline for an order. The min and max fields specify the deadline window, while the description provides additional information.\n\n| Field Name       | Type     | Description                                       |\n|-------------------|----------|---------------------------------------------------|\n| `UpdateDeadline*` | `object` | Contains deadline details.                        |\n| ├ `min*`          | `string` | Earliest deadline in ISO 8601 format.            |\n| ├ `max*`          | `string` | Latest deadline in ISO 8601 format.              |\n| ├ `description`  | `string` | Description of the reason or purpose.            |",
-                "operationId": "UpdateDeadline",
                 "parameters": [
                     {
-                        "name": "orderId",
-                        "in": "path",
-                        "description": "",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string"
-                        }
+                        "$ref": "#/components/parameters/orderId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
                     }
+                    
                 ],
                 "requestBody": {
-                    "description": "",
                     "content": {
                         "application/json": {
                             "schema": {
@@ -41,12 +51,10 @@
                                         "$ref": "#/components/schemas/UpdateDeadlineRequest"
                                     },
                                     {
-                                        "example": {
-                                            "UpdateDeadline": {
-                                                "description": "Extend deadline due to delayed shipment",
-                                                "max": "2024-12-24T23:03:02Z",
-                                                "min": "2024-12-23T23:03:02Z"
-                                            }
+                                    "example": {
+                                            "description": "Extend deadline due to delayed shipment",
+                                            "max": "2024-12-24T23:03:02Z",
+                                            "min": "2024-12-23T23:03:02Z"
                                         }
                                     }
                                 ]
@@ -64,8 +72,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "",
-                        "headers": {}
+                        "description": "OK"
                     }
                 },
                 "deprecated": false
@@ -133,10 +140,38 @@
             }
         }
     },
+    "security": [
+        {
+            "appKey": [],
+            "appToken": []
+        },
+        {
+            "VtexIdclientAutCookie": []
+        }
+    ],
     "components": {
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys)."
+            },
+            "VtexIdclientAutCookie": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "VtexIdclientAutCookie",
+                "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
+            }
+        },
         "schemas": {
             "UpdateDeadlineRequest": {
-                "title": "UpdateDeadlineRequest",
                 "required": ["UpdateDeadline"],
                 "type": "object",
                 "properties": {
@@ -504,12 +539,41 @@
                     }
                 }
             }
+        },
+        "parameters": {
+            "orderId": {
+                "name": "orderId",
+                "in": "path",
+                "description": "Unique identifier of the order.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "v71021948str-01"
+                }
+            },
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            }
         }
-    },
-    "tags": [
-        {
-            "name": "Misc",
-            "description": ""
-        }
-    ]
+    }
 }
