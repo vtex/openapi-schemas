@@ -53,9 +53,33 @@
                     "200": {
                         "description": "OK",
                         "content": {
-                            "application/json":{
-                                "schema":{
-                                    
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UpdateDeadlineResponse"
+                                },
+                                "example": {
+                                    "order": {
+                                        "currentDeadline": {
+                                            "max": "2024-12-24T23:03:02Z",
+                                            "min": "2024-12-23T23:03:02Z"
+                                        },
+                                        "deadlineChanges": [
+                                            {
+                                                "current": true,
+                                                "description": "Extend deadline due to delayed shipment",
+                                                "handled": true,
+                                                "max": "2024-12-24T23:03:02.000Z",
+                                                "min": "2024-12-23T23:03:02.000Z",
+                                                "oldDates": {
+                                                    "max": "2024-12-04T17:20:48.088Z",
+                                                    "min": "2024-12-04T17:20:48.088Z"
+                                                },
+                                                "updatedAt": "2024-12-03T17:35:59.786Z"
+                                            }
+                                        ],
+                                        "orderId": "1481050515517-01"
+                                    },
+                                    "success": true
                                 }
                             }
                         }
@@ -222,11 +246,11 @@
                     },
                     "max": {
                         "type": "string",
-                        "description": "Latest deadline in ISO 8601 format."
+                        "description": "Latest deadline date in ISO 8601 format."
                     },
                     "min": {
                         "type": "string",
-                        "description": "Earliest deadline in ISO 8601 format."
+                        "description": "Earliest deadline date in ISO 8601 format."
                     }
                 },
                 "example": {
@@ -237,8 +261,88 @@
                     }
                 }
             },
+            "UpdateDeadlineResponse": {
+                "type": "object",
+                "properties": {
+                    "order": {
+                        "description": "Object with current deadline information.",
+                        "type": "object",
+                        "properties": {
+                            "currentDeadline": {
+                                "description": "Current deadline information.",
+                                "type": "object",
+                                "properties": {
+                                    "max": {
+                                        "description": "Latest deadline date in ISO 8601 format.",
+                                        "type": "string"
+                                    },
+                                    "min": {
+                                        "description": "Earliest deadline date in ISO 8601 format.",
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "deadlineChanges": {
+                                "description": "Object containg information of the deadline changes.",
+                                "type": "array",
+                                "items": {
+                                    "description": "Deadline change.",
+                                    "type": "object",
+                                    "properties": {
+                                        "current": {
+                                            "description": "If the deadline changes were update.",
+                                            "type": "boolean"
+                                        },
+                                        "description": {
+                                            "description": "Reason or purpose for the update.",
+                                            "type": "string"
+                                        },
+                                        "handled": {
+                                            "description": "If the deadline changes were handled by the picker.",
+                                            "type": "boolean"
+                                        },
+                                        "max": {
+                                            "description": "Latest deadline date in ISO 8601 format.",
+                                            "type": "string"
+                                        },
+                                        "min": {
+                                            "description": "Earliest deadline date in ISO 8601 format.",
+                                            "type": "string"
+                                        },
+                                        "oldDates": {
+                                            "description": "Object containg previous deadline information.",
+                                            "type": "object",
+                                            "properties": {
+                                                "max": {
+                                                    "description": "Latest deadline date in ISO 8601 format.",
+                                                    "type": "string"
+                                                },
+                                                "min": {
+                                                    "description": "Earliest deadline date in ISO 8601 format.",
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "updatedAt": {
+                                            "description": "An explanation about the purpose of this instance.",
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "orderId": {
+                                "description": "Unique identifier of the order.",
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "success": {
+                        "description": "Condition if the request was successful.",
+                        "type": "boolean"
+                    }
+                }
+            },
             "AddItemRequest": {
-                "title": "AddItemRequest",
                 "required": [
                     "type",
                     "orderId",
@@ -280,7 +384,20 @@
                         "type": "string"
                     },
                     "pickingOptions": {
-                        "$ref": "#/components/schemas/PickingOptions"
+                        "required": ["onNotFound", "alternateOptions"],
+                        "type": "object",
+                        "properties": {
+                            "onNotFound": {
+                                "type": "string"
+                            },
+                            "alternateOptions": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": ""
+                            }
+                        }
                     }
                 },
                 "example": {
@@ -298,29 +415,7 @@
                     }
                 }
             },
-            "PickingOptions": {
-                "title": "PickingOptions",
-                "required": ["onNotFound", "alternateOptions"],
-                "type": "object",
-                "properties": {
-                    "onNotFound": {
-                        "type": "string"
-                    },
-                    "alternateOptions": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "description": ""
-                    }
-                },
-                "example": {
-                    "onNotFound": "REPLACE",
-                    "alternateOptions": ["74"]
-                }
-            },
             "AddQuantityRequest": {
-                "title": "AddQuantityRequest",
                 "required": [
                     "type",
                     "orderId",
@@ -367,7 +462,6 @@
                 }
             },
             "RejectItemRequest": {
-                "title": "RejectItemRequest",
                 "required": [
                     "type",
                     "orderId",
@@ -514,7 +608,20 @@
                         "type": "string"
                     },
                     "pickingOptions": {
-                        "$ref": "#/components/schemas/PickingOptions"
+                        "required": ["onNotFound", "alternateOptions"],
+                        "type": "object",
+                        "properties": {
+                            "onNotFound": {
+                                "type": "string"
+                            },
+                            "alternateOptions": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": ""
+                            }
+                        }
                     }
                 },
                 "example": {
@@ -554,7 +661,20 @@
                         "type": "string"
                     },
                     "pickingOptions": {
-                        "$ref": "#/components/schemas/PickingOptions"
+                        "required": ["onNotFound", "alternateOptions"],
+                        "type": "object",
+                        "properties": {
+                            "onNotFound": {
+                                "type": "string"
+                            },
+                            "alternateOptions": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": ""
+                            }
+                        }
                     }
                 },
                 "example": {
