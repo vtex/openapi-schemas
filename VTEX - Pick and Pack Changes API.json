@@ -148,28 +148,42 @@
             "post": {
                 "summary": "Update items of the order",
                 "description": "Modifies an order by adding, updating, or removing items. The endpoint supports actions like adding items, modifying quantities, rejecting or replacing items, and updating item details, adding notes and suggest product replacements.\r\n\r\n>ℹ️ This endpoint is currently in beta and subject to changes. Use with caution in production environments.\r\n\r\n>⚠️ Before using this endpoint, you must make a request with the [Cart simulation](https://developers.vtex.com/docs/api-reference/checkout-api#post-/api/checkout/pub/orderForms/simulation) endpoint to check inventory availability. For more information of how to simulate a cart, check the [Simulate a shopping cart](https://developers.vtex.com/docs/guides/simulate-a-shopping-cart) guide.\r\n\r\n## Permissions\r\n\r\nAny user or [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| OMS | OMS access | **Only show orders created by the user (via call center)** |\r\n| Catalog | Telesales | **Assisted Sales** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>\u2757 To prevent integrations from having excessive permissions, consider the [best practices for managing app keys](https://help.vtex.com/en/tutorial/best-practices-application-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
-                "operationId": "AddItem",
-                "parameters": [],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    }
+                ],
                 "requestBody": {
-                    "description": "",
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/AddItemRequest"
-                            },
-                            "example": {
-                                "type": "ADD_ITEM",
-                                "orderId": "1481110515526-01",
-                                "itemId": "49",
-                                "quantity": 2,
-                                "warehouseId": "9029",
-                                "price": 500000,
-                                "sellingPrice": 200000,
-                                "note": "TEST from VTEX PROXY 3",
-                                "pickingOptions": {
-                                    "onNotFound": "REPLACE",
-                                    "alternateOptions": ["74"]
-                                }
+                                "oneOf":[
+                                    {
+                                        "$ref": "#/components/schemas/AddItemRequest"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/AddQuantityRequest"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/ItemToAddRequest"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/RejectItemRequest"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/ReplaceItemRequest"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/ItemToReplace"
+                                    }
+                                    ,
+                                    {
+                                        "$ref": "#/components/schemas/UpdateItemRequest"
+                                    }
+                                ]
                             }
                         }
                     },
@@ -386,53 +400,68 @@
                 "properties": {
                     "type": {
                         "type": "string",
-                        "description": ""
+                        "description": "Action type (`ADD_ITEM`)."
                     },
                     "orderId": {
                         "type": "string",
-                        "description": ""
+                        "description": "Unique identifier of the order."
                     },
                     "itemId": {
                         "type": "string",
-                        "description": ""
+                        "description": "Unique identifier of the item."
                     },
                     "quantity": {
                         "type": "integer",
-                        "description": ""
+                        "description": "Quantity of items to add."
                     },
                     "warehouseId": {
                         "type": "string",
-                        "description": ""
+                        "description": "Unique identifier of the warehouse."
                     },
                     "price": {
                         "type": "integer",
-                        "description": ""
+                        "description": "Price of the item."
                     },
                     "sellingPrice": {
                         "type": "integer",
-                        "description": ""
+                        "description": "Selling price of the item."
                     },
                     "note": {
                         "type": "string",
-                        "description": ""
+                        "description": "Note to add to the item."
                     },
                     "pickingOptions": {
                         "required": ["onNotFound", "alternateOptions"],
                         "type": "object",
+                        "description": "Items picking options.",
                         "properties": {
                             "onNotFound": {
                                 "type": "string",
-                                "description": ""
+                                "description": "List of alternate options."
                             },
                             "alternateOptions": {
                                 "type": "array",
                                 "items": {
                                     "type": "string",
-                                    "description": ""
+                                    "description": "ID of alternative items."
                                 },
-                                "description": ""
+                                "description": "List of IDs of alternative items."
                             }
                         }
+                    }
+                },
+                "example": {
+                    "type": "ADD_ITEM",
+                    "orderId": "1481110515526-01",
+                    "itemId": "49",
+                    "quantity": 2,
+                    "warehouseId": "9029",
+                    "price": 500000,
+                    "sellingPrice": 200000,
+                    "note": "TEST from VTEX PROXY 3",
+                    "pickingOptions": {
+                        "onNotFound": "REPLACE",
+                        "alternateOptions": ["74"]
                     }
                 }
             },
@@ -449,27 +478,32 @@
                 "type": "object",
                 "properties": {
                     "type": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Action type (`ADD_QUANTITY`)."
                     },
                     "orderId": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Unique identifier of the order."
                     },
                     "itemId": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Unique identifier for the item."
                     },
                     "newQuantity": {
                         "type": "integer",
-                        "format": "int32"
+                        "description": "New quantity of items."
                     },
                     "unitMultiplier": {
                         "type": "integer",
-                        "format": "int32"
+                        "description": "Unit multiplier."
                     },
                     "reasonType": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Reason type."
                     },
                     "reasonDetail": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Reason detail."
                     }
                 },
                 "example": {
@@ -494,23 +528,28 @@
                 "type": "object",
                 "properties": {
                     "type": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Action type (`REJECT`)."
                     },
                     "orderId": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Unique identifier of the order."
                     },
                     "itemId": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Unique identifier for the item."
                     },
                     "quantity": {
                         "type": "integer",
-                        "format": "int32"
+                        "description": "Quantity of items to reject."
                     },
                     "reasonType": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Reason type."
                     },
                     "reasonDetail": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Reason detail."
                     }
                 },
                 "example": {
@@ -523,34 +562,37 @@
                 }
             },
             "ReplaceItemRequest": {
-                "title": "ReplaceItemRequest",
                 "required": [
                     "type",
                     "orderId",
                     "itemToReplace",
-                    "itemToAdd",
+                    "ItemToAddRequest",
                     "reasonType",
                     "reasonDetail"
                 ],
                 "type": "object",
                 "properties": {
                     "type": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Action type (`REPLACE`)."
                     },
                     "orderId": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Unique identifier of the order."
                     },
                     "itemToReplace": {
                         "$ref": "#/components/schemas/ItemToReplace"
                     },
-                    "itemToAdd": {
-                        "$ref": "#/components/schemas/ItemToAdd"
+                    "ItemToAddRequest": {
+                        "$ref": "#/components/schemas/ItemToAddRequest"
                     },
                     "reasonType": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Reason type."
                     },
                     "reasonDetail": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Reason detail."
                     }
                 },
                 "example": {
@@ -560,7 +602,7 @@
                         "id": "49",
                         "quantity": 1
                     },
-                    "itemToAdd": {
+                    "ItemToAddRequest": {
                         "id": "17",
                         "quantity": 2,
                         "price": 20000,
@@ -577,16 +619,18 @@
                 }
             },
             "ItemToReplace": {
-                "title": "ItemToReplace",
                 "required": ["id", "quantity"],
                 "type": "object",
+                "description": "Items to be replaced in the order.",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Unique identifier of the item."
                     },
                     "quantity": {
                         "type": "integer",
-                        "format": "int32"
+                        "format": "int32",
+                        "description": "Item quantity."
                     }
                 },
                 "example": {
@@ -594,53 +638,53 @@
                     "quantity": 1
                 }
             },
-            "ItemToAdd": {
-                "title": "ItemToAdd",
-                "required": [
-                    "id",
-                    "quantity",
-                    "price",
-                    "sellingPrice",
-                    "warehouseId",
-                    "note",
-                    "pickingOptions"
-                ],
+            "ItemToAddRequest": {
                 "type": "object",
+                "description": "Items to be added in the order.",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Unique identifier of the item."
                     },
                     "quantity": {
                         "type": "integer",
-                        "format": "int32"
+                        "format": "int32",
+                        "description": "Item quantity."
                     },
                     "price": {
                         "type": "integer",
-                        "format": "int32"
+                        "format": "int32",
+                        "description": "Price of the item."
                     },
                     "sellingPrice": {
                         "type": "integer",
-                        "format": "int32"
+                        "format": "int32",
+                        "description": "Selling price of the item."
                     },
                     "warehouseId": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Unique identifier of the warehouse."
                     },
                     "note": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Note to add to the item."
                     },
                     "pickingOptions": {
                         "required": ["onNotFound", "alternateOptions"],
                         "type": "object",
+                        "description": "Items picking options.",
                         "properties": {
                             "onNotFound": {
-                                "type": "string"
+                                "type": "string",
+                                "description": "List of alternate options."
                             },
                             "alternateOptions": {
                                 "type": "array",
                                 "items": {
-                                    "type": "string"
+                                    "type": "string",
+                                    "description": "ID of alternative items."
                                 },
-                                "description": ""
+                                "description": "List of IDs of alternative items."
                             }
                         }
                     }
@@ -684,6 +728,7 @@
                     "pickingOptions": {
                         "required": ["onNotFound", "alternateOptions"],
                         "type": "object",
+                        "description": "Items picking options.",
                         "properties": {
                             "onNotFound": {
                                 "type": "string"
@@ -691,9 +736,10 @@
                             "alternateOptions": {
                                 "type": "array",
                                 "items": {
-                                    "type": "string"
+                                    "type": "string",
+                                    "description": "ID of alternative items."
                                 },
-                                "description": ""
+                                "description": "List of IDs of alternative items."
                             }
                         }
                     }
