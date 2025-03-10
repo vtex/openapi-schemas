@@ -2,193 +2,73 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Pick and Pack API",
-        "description": "The Pick and Pack API provides comprehensive functionality for order management, picking operations, shipment tracking, and returns processing. The main capabilities include:\n\n- Retrieving detailed order information including items, packages, and status\n\n- Accessing worksheet data for picking operations\n\n- Querying shipment tracking and delivery details\n\n- Getting facility information\n\n\n### General Guidelines\n\n- All timestamps are in ISO 8601 format (`YYYY-MM-DDTHH:mm:ss.sssZ`) and `UTC` timezone\n\n- All monetary values are represented in cents\n\n- All requests and responses use JSON format\n\n- Request IDs are included in all responses for tracking purposes\n\n\n## Authentication Guide\n\nTo access the API endpoints, you need to follow these steps to obtain and use a `JWT` token:\n\n1. Configure your `APIKEY_ACCOUNT`, obtain an API key from your account administrator\n    \n2. Generate `JWT` Token\n    \n    ``` http\n          POST {{ENDPOINT_TOKEN_AUTH}}/token\n          Content-Type: application/json\n          {\n            \"apiKey\": \"your-apikey-account\"\n          }\n    \n     ```\n    \n    Response:\n    \n    ``` json\n          {\n            \"data\": \"eyJhbGciOiJIUzI1...[JWT token]\"\n          }\n    \n     ```\n    \n3. Use the `JWT` Token  \n    Include the token in the Authorization header for all API requests:\n    \n    ``` http\n          GET {{ENDPOINT_PNP}}/v1/orders/123456\n          Authorization: Bearer eyJhbGciOiJIUzI1...[JWT token]\n    \n     ```\n    \n\n> Note: The Postman collection includes a pre-request script that automatically handles token generation and renewal. While this script facilitates development, you can disable it and manage authentication manually following the steps above. \n  \n\n## Error Handling\n\nThe API uses standard HTTP response codes and returns additional error details in the response body:\n\n``` json\n{\n  \"type\": \"exception\",\n  \"code\": \"ORD0002B\",\n  \"message\": \"Order not found [ORDER-ID]\",\n  \"date\": \"2024-02-13T15:24:01.933Z\",\n  \"requestId\": \"2f63bf9c-5730-449a-97b9-4bd36a466ab4\"\n}\n\n ```\n\nCommon error codes:\n\n- 401 - Authentication\n    \n- 403 - Forbidden errors (Invalid token, expired token)\n    \n- 404 - Resource not found\n    \n- 400 - Invalid request parameters\n    \n- 500 - Internal server error\n    \n\n## Troubleshooting Guide\n\n### Common Issues and Solutions\n\n##### 1\\. Token Expiration\n\n- Authentication tokens expire after 15 minutes\n    \n- Check console logs for refresh attempts\n    \n- Verify `APIKEY_ACCOUNT` format\n    \n- Ensure endpoint URLs are correct\n    \n\n##### 2\\. Variable Errors\n\n- Check variable syntax\n    \n- Validate API key format\n    \n\n##### 3\\. Cache-Related Issues\n\n- Response data might appear stale due to API caching\n    \n- Each endpoint has specific cache duration:\n    \n    - Orders: 30 seconds\n        \n    - Shipments: 30 seconds\n        \n    - Worksheets: 30 seconds\n        \n    - Facilities: 30 seconds\n        \n- For real-time data, consider the cache duration when implementing polling strategies\n    \n- Cache is based on specific parameters (e.g., orderId, shipmentId)\n    \n\n### Best Practices\n\n1. Always check response headers for cache information\n    \n2. Use request IDs for tracking issues\n    \n3. Monitor API rate limits (30 requests/second, 100 concurrent requests)",
+        "description": "The Pick and Pack API provides comprehensive functionality for order management, picking operations, shipment tracking, and returns processing. The main capabilities include:\n\n- Retrieving detailed order information including items, packages, and status\n\n- Accessing worksheet data for picking operations\n\n- Querying shipment tracking and delivery details\n\n- Getting facility information",
         "contact": {},
         "version": "1.0"
     },
     "servers": [
         {
-            "url": "https://auth.pickingnpacking.com/prod",
-            "variables": {}
+            "url": "https://auth.pickingnpacking.com/prod/{environment}",
+            "variables": {
+                "environment": {
+                    "default": "DefaultParameterValue",
+                    "description": "Server to access the authentication necessary to make a request in the Pick and Pack Provider API."
+                }
+            }
         },
         {
-            "url": "https://api.pick-and-pack.com/prod/v1",
-            "variables": {}
+            "url": "https://api.pick-and-pack.com/prod/v1/{environment}",
+            "variables": {
+                "environment": {
+                    "default": "DefaultParameterValue",
+                    "description": "Server to access the authentication necessary to make a request in the Pick and Pack Provider API."
+                }
+            }
         }
     ],
     "paths": {
         "/token": {
             "post": {
-                "tags": [
-                    "Auth"
+                "tags": ["Authentication"],
+                "summary": "Create JWT token",
+                "description": "Creates a `JWT` (JSON Web Token) necessary to access the Pick and Pack Last Mile Protocol API information.\r\n\r\n>ℹ️ To generate the `JWT` it is necessary to have the `API KEY` previously generated by the Pick and Pack team.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
                 ],
-                "summary": "Get Token",
-                "operationId": "GetToken",
-                "parameters": [],
                 "requestBody": {
-                    "description": "",
                     "content": {
                         "application/json": {
-                            "schema":
-                                    {
-                                        "$ref": "#/components/schemas/GetTokenRequest"
-                                    },
+                            "schema": {
+                                "$ref": "#/components/schemas/CreatetokenRequest"
+                            },
                             "example": {
-                                "apiKey": "Paste the API key generated from the Pick and Pack admin"
+                                "apiKey": "{pnpApiKey}"
                             }
                         }
-                    },
-                    "required": true
+                    }
                 },
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "headers": {
-                            "Content-Length": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "247"
-                                    }
-                                }
-                            },
-                            "Connection": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "keep-alive"
-                                    }
-                                }
-                            },
-                            "Date": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "Thu, 13 Feb 2025 12:20:53 GMT"
-                                    }
-                                }
-                            },
-                            "X-Amzn-Trace-Id": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "Root=1-67ade3a5-2fe2659f2844565e60c9af4e;Parent=0ca4f63969aaf44e;Sampled=0;Lineage=1:12516381:0"
-                                    }
-                                }
-                            },
-                            "x-amzn-RequestId": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "d2d8d6ae-a183-401b-a288-af78ab54f14b"
-                                    }
-                                }
-                            },
-                            "Access-Control-Allow-Origin": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "*"
-                                    }
-                                }
-                            },
-                            "Access-Control-Allow-Headers": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token"
-                                    }
-                                }
-                            },
-                            "x-amz-apigw-id": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "F7CB5FQ1oAMEDeg="
-                                    }
-                                }
-                            },
-                            "Access-Control-Allow-Methods": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "OPTIONS,POST,GET,PATCH"
-                                    }
-                                }
-                            },
-                            "X-Cache": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "Miss from cloudfront"
-                                    }
-                                }
-                            },
-                            "Via": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "1.1 fc35ef111c1094afc1f2d15f87a34bee.cloudfront.net (CloudFront)"
-                                    }
-                                }
-                            },
-                            "X-Amz-Cf-Pop": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "BOG50-P1"
-                                    }
-                                }
-                            },
-                            "X-Amz-Cf-Id": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "nUFohA3lnM5rMAcyZWlBfTgJdus-rOiGKAcftDMC3XREey1_u8_zOA=="
-                                    }
-                                }
-                            }
-                        },
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "allOf": [
-                                        {
-                                            "$ref": "#/components/schemas/m200"
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Success message."
                                         },
-                                        {
-                                            "example": {
-                                                "message": "success",
-                                                "data": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJob3N0bmFtZSI6Imxhc3RtaWxlIiwidXNlcm5hbWUiOiJsYXN0bWlsZS5jcmlzdGlhbnJvbWVyb3Z0ZXhjb20iLCJpYXQiOjE3Mzk0NDkyNTMsImV4cCI6MTczOTQ1MDE1M30.lkb1e5XDuUBddthwaxrvi_Ub0YBEAEessJy_bvzb-do"
-                                            }
+                                        "data": {
+                                            "type": "string",
+                                            "description": "JWT token."
                                         }
-                                    ]
+                                    }
                                 },
                                 "example": {
                                     "message": "success",
@@ -198,29 +78,30 @@
                         }
                     }
                 },
-                "deprecated": false,
-                "security": [],
                 "servers": [
                     {
-                        "url": "https://auth.pickingnpacking.com/prod",
-                        "variables": {}
+                        "url": "https://auth.pickingnpacking.com/prod/{environment}",
+                        "variables": {
+                            "environment": {
+                                "default": "DefaultParameterValue",
+                                "description": "Server to access the authentication necessary to make a request in the Pick and Pack Provider API."
+                            }
+                        }
                     }
                 ]
             }
         },
         "/orders/{orderId}": {
             "get": {
-                "tags": [
-                    "Orders"
-                ],
+                "tags": ["Orders"],
                 "summary": "Get Order",
-                "description": "Retrieve order details by ID.\n\n> The response is cached for 30 seconds based on the `orderId` parameter. Rate limited to 30 requests per second with a maximum of 100 concurrent requests.",
+                "description": "Retrieves order details by its ID.\n\n>ℹ️ The response is cached for 30 seconds based on the `orderId` parameter. Rate limited to 30 requests per second with a maximum of 100 concurrent requests.\r\n\r\n## Permissions\r\n\r\nAny user or [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| OMS | OMS access | **Only show orders created by the user (via call center)** |\r\n| Catalog | Telesales | **Assisted Sales** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>\u2757 To prevent integrations from having excessive permissions, consider the [best practices for managing app keys](https://help.vtex.com/en/tutorial/best-practices-application-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
                 "operationId": "GetOrder",
                 "parameters": [
                     {
                         "name": "orderId",
                         "in": "path",
-                        "description": "Order ID to retrieve",
+                        "description": "Order ID.",
                         "required": true,
                         "style": "simple",
                         "schema": {
@@ -232,310 +113,16 @@
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "headers": {
-                            "Date": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "Thu, 13 Feb 2025 11:01:05 GMT"
-                                    }
-                                }
-                            },
-                            "Content-Length": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "1040"
-                                    }
-                                }
-                            },
-                            "Connection": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "keep-alive"
-                                    }
-                                }
-                            },
-                            "x-amzn-RequestId": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "f50b424e-8af5-41e1-95b5-a27c3ee0b0c7"
-                                    }
-                                }
-                            },
-                            "access-control-allow-origin": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "*"
-                                    }
-                                }
-                            },
-                            "Content-Encoding": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "gzip"
-                                    }
-                                }
-                            },
-                            "access-control-allow-headers": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "*"
-                                    }
-                                }
-                            },
-                            "x-amzn-Remapped-content-length": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "3298"
-                                    }
-                                }
-                            },
-                            "x-amzn-Remapped-connection": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "keep-alive"
-                                    }
-                                }
-                            },
-                            "x-amz-apigw-id": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "F62VVEOYoAMElIA="
-                                    }
-                                }
-                            },
-                            "etag": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "W/\"ce2-O6sigU3p4ZxS1LBsTpQW+BHPiGU\""
-                                    }
-                                }
-                            },
-                            "x-powered-by": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "Express"
-                                    }
-                                }
-                            },
-                            "X-Amzn-Trace-Id": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "Root=1-67add0ee-25bf85e73956d5ed2f00ac97;Parent=1157212644e7a158;Sampled=0;Lineage=2:9023b89a:0"
-                                    }
-                                }
-                            },
-                            "x-amzn-Remapped-date": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "Thu, 13 Feb 2025 11:01:05 GMT"
-                                    }
-                                }
-                            }
-                        },
                         "content": {
-                            "application/json; charset=utf-8": {
+                            "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/m2001"
+                                    "$ref": "#/components/schemas/GetOrderResponse"
                                 }
                             }
                         }
                     },
                     "403": {
                         "description": "Forbidden",
-                        "headers": {
-                            "Date": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "Thu, 24 Aug 2023 19:20:15 GMT"
-                                    }
-                                }
-                            },
-                            "Content-Length": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "82"
-                                    }
-                                }
-                            },
-                            "Connection": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "keep-alive"
-                                    }
-                                }
-                            },
-                            "x-amzn-RequestId": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "33524cf3-2fc5-48e9-8ae0-47335d8bd8b0"
-                                    }
-                                }
-                            },
-                            "access-control-allow-origin": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "*"
-                                    }
-                                }
-                            },
-                            "access-control-allow-headers": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token"
-                                    }
-                                }
-                            },
-                            "x-amzn-ErrorType": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "AccessDeniedException"
-                                    }
-                                }
-                            },
-                            "x-amz-apigw-id": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "KLgJcHALoAMF78Q="
-                                    }
-                                }
-                            },
-                            "access-control-allow-methods": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "OPTIONS,POST"
-                                    }
-                                }
-                            },
-                            "x-amzn-Remapped-content-length": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "190"
-                                    }
-                                }
-                            },
-                            "x-amzn-Remapped-connection": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "keep-alive"
-                                    }
-                                }
-                            },
-                            "etag": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "W/\"be-2iCFdR5rZ6/Jd57j8EZZ/HKSTJY\""
-                                    }
-                                }
-                            },
-                            "x-powered-by": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "Express"
-                                    }
-                                }
-                            },
-                            "X-Amzn-Trace-Id": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "Root=1-674faa5f-491591d408588d7353b1b283;Parent=4d0108b27e510e89;Sampled=0;Lineage=2:9023b89a:0"
-                                    }
-                                }
-                            },
-                            "x-amzn-Remapped-date": {
-                                "content": {
-                                    "text/plain": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "example": "Wed, 04 Dec 2024 01:03:29 GMT"
-                                    }
-                                }
-                            }
-                        },
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -599,9 +186,7 @@
         },
         "/orders/{orderId}/tracking": {
             "patch": {
-                "tags": [
-                    "Orders"
-                ],
+                "tags": ["Orders"],
                 "summary": "Set Delivery",
                 "description": "This endpoint helps you complete the Pick and Pack workflow by setting the order status to delivered. You can also update the OMS with additional shipping details. Keep in mind that all fields are optional. For more information, refer to our official documentation here: [https://developers.vtex.com/docs/api-reference/orders-api#put-/api/oms/pvt/orders/-orderId-/invoice/-invoiceNumber-/tracking](https://developers.vtex.com/docs/api-reference/orders-api#put-/api/oms/pvt/orders/-orderId-/invoice/-invoiceNumber-/tracking)",
                 "operationId": "SetDelivery",
@@ -978,9 +563,7 @@
         },
         "/worksheets/{worksheetId}": {
             "get": {
-                "tags": [
-                    "Worksheets"
-                ],
+                "tags": ["Worksheets"],
                 "summary": "Get Worksheet",
                 "description": "Retrieve worksheet details by ID.\n\n> The response is cached for 30 seconds based on the `worksheetId` parameter. Rate limited to 30 requests per second with a maximum of 100 concurrent requests.",
                 "operationId": "GetWorksheet",
@@ -1442,12 +1025,7 @@
                                     "status": "COMPLETED",
                                     "createdAt": "2025-02-11T00:32:47.542Z",
                                     "priority": 0,
-                                    "categoriesIds": [
-                                        "12",
-                                        "6",
-                                        "7",
-                                        "9"
-                                    ],
+                                    "categoriesIds": ["12", "6", "7", "9"],
                                     "lastPickedItemTime": 1739233967327,
                                     "finishEstimatedDate": "2025-02-13T16:03:55.202Z",
                                     "hostname": "lastmile",
@@ -1891,9 +1469,7 @@
         },
         "/worksheets": {
             "get": {
-                "tags": [
-                    "Worksheets"
-                ],
+                "tags": ["Worksheets"],
                 "summary": "Get Worksheets by Order",
                 "description": "List all worksheets by order ID.\n\n> The response is cached for 30 seconds based on the `orderId` query parameter. Rate limited to 30 requests per second with a maximum of 100 concurrent requests.",
                 "operationId": "GetWorksheetsbyOrder",
@@ -2104,12 +1680,7 @@
                                         "id": "c13ed6d8-1c86-4ad9-be63-5e2f4c5451b2",
                                         "facilityId": "783262b09ddc4b8facee2fa50541fd1e",
                                         "worksheetId": "546744628006",
-                                        "categoriesIds": [
-                                            "12",
-                                            "6",
-                                            "7",
-                                            "9"
-                                        ],
+                                        "categoriesIds": ["12", "6", "7", "9"],
                                         "finishedDate": null,
                                         "initDate": "2025-02-11T00:33:18.584Z",
                                         "status": "COMPLETED",
@@ -2482,9 +2053,7 @@
         },
         "/facilities/{facilityId}": {
             "get": {
-                "tags": [
-                    "Facilities"
-                ],
+                "tags": ["Facilities"],
                 "summary": "Get Facility",
                 "description": "Retrieve facility details by ID.\n\n> The response is cached for 30 seconds based on the `facilityId` parameter. Rate limited to 30 requests per second with a maximum of 100 concurrent requests.",
                 "operationId": "GetFacility",
@@ -3030,9 +2599,7 @@
         },
         "/shipments/{shipmentId}": {
             "get": {
-                "tags": [
-                    "Shipments"
-                ],
+                "tags": ["Shipments"],
                 "summary": "Get Shipment",
                 "description": "Retrieves detailed information about a shipment using either the internal system ID or the carrier's tracking ID.\n\n### Path Variables\n\n- `shipmentId` (required): Can be either:\n    \n    - Internal UUID (when using BY_INTERNAL_ID filter)\n        \n    - Carrier tracking number (when using BY_EXTERNAL_ID filter)\n        \n\n### Headers\n\n- `X-PNP-FilterMethod` (required): Determines how the shipmentId will be interpreted\n    \n    - `BY_INTERNAL_ID`: Use internal system UUID\n        \n    - `BY_EXTERNAL_ID`: Use carrier tracking number\n        \n\n> The response is cached for 30 seconds based on both the `shipmentId` parameter and `X-PNP-FilterMethod` header. Rate limited to 30 requests per second with a maximum of 100 concurrent requests.",
                 "operationId": "GetShipment",
@@ -3246,9 +2813,7 @@
                                                         "weight": "0",
                                                         "description": "Caja",
                                                         "id": "17aa920c-a364-4412-a288-7b269b88f403",
-                                                        "categories": [
-                                                            "Caja"
-                                                        ],
+                                                        "categories": ["Caja"],
                                                         "items": [
                                                             {
                                                                 "name": "Bolígrafo",
@@ -3366,9 +2931,7 @@
                                             "weight": "0",
                                             "description": "Caja",
                                             "id": "17aa920c-a364-4412-a288-7b269b88f403",
-                                            "categories": [
-                                                "Caja"
-                                            ],
+                                            "categories": ["Caja"],
                                             "items": [
                                                 {
                                                     "name": "Bolígrafo",
@@ -3790,9 +3353,7 @@
         },
         "/shipments": {
             "get": {
-                "tags": [
-                    "Shipments"
-                ],
+                "tags": ["Shipments"],
                 "summary": "List Shipments",
                 "description": "List all shipments by order ID.\n\n> The response is cached for 30 seconds based on the `orderId` query parameter. Rate limited to 30 requests per second with a maximum of 100 concurrent requests.",
                 "operationId": "ListShipments",
@@ -4377,27 +3938,22 @@
             }
         },
         "schemas": {
-            "GetTokenRequest": {
-                "title": "GetTokenRequest",
-                "required": [
-                    "apiKey"
-                ],
+            "CreatetokenRequest": {
+                "required": ["apiKey"],
                 "type": "object",
                 "properties": {
                     "apiKey": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "The `API KEY` previously generated by the Pick and Pack team. To contact the team, fill out our [form](https://vtex.com/us-en/contact) and indicate the name of the Pick and Pack product in the `Comments` section."
                     }
                 },
                 "example": {
-                    "apiKey": "Paste the API key generated from the Pick and Pack admin"
+                    "apiKey": "{pnpApiKey}"
                 }
             },
             "m200": {
                 "title": "m200",
-                "required": [
-                    "message",
-                    "data"
-                ],
+                "required": ["message", "data"],
                 "type": "object",
                 "properties": {
                     "message": {
@@ -4412,8 +3968,7 @@
                     "data": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJob3N0bmFtZSI6Imxhc3RtaWxlIiwidXNlcm5hbWUiOiJsYXN0bWlsZS5jcmlzdGlhbnJvbWVyb3Z0ZXhjb20iLCJpYXQiOjE3Mzk0NDkyNTMsImV4cCI6MTczOTQ1MDE1M30.lkb1e5XDuUBddthwaxrvi_Ub0YBEAEessJy_bvzb-do"
                 }
             },
-            "m2001": {
-                "title": "m2001",
+            "GetOrderResponse": {
                 "required": [
                     "orderId",
                     "sequence",
@@ -4436,60 +3991,70 @@
                 "type": "object",
                 "properties": {
                     "orderId": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Order ID."
                     },
                     "sequence": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Sequence number."
                     },
                     "status": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Order status."
                     },
                     "createdAt": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Order creation date."
                     },
                     "updatedAt": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Order last update date."
                     },
                     "shippingEstimatedDateMin": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Minimum estimated shipping date."
                     },
                     "tags": {
                         "type": "array",
                         "items": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Order tag."
                         },
-                        "description": ""
+                        "description": "Array of order tags."
                     },
                     "pickingTime": {
-                        "type": "number"
+                        "type": "number",
+                        "description": "Order picking time."
                     },
                     "packingTime": {
-                        "type": "number"
+                        "type": "number",
+                        "description": "Order packing time."
                     },
                     "shippingTime": {
                         "type": "integer",
-                        "format": "int32"
+                        "description": "Order shipping time."
                     },
                     "invoices": {
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/Invoice"
                         },
-                        "description": ""
+                        "description": "Array of order invoices."
                     },
                     "unhandledItems": {
                         "type": "array",
                         "items": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Order unhandled item."
                         },
-                        "description": ""
+                        "description": "Array of order unhandled items."
                     },
                     "pickedItems": {
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/PickedItem"
                         },
-                        "description": ""
+                        "description": "Array of order picked items."
                     },
                     "rejectedItems": {
                         "type": "array",
@@ -4522,19 +4087,16 @@
                 }
             },
             "Invoice": {
-                "title": "Invoice",
-                "required": [
-                    "invoiceKey",
-                    "invoiceTotal"
-                ],
+                "required": ["invoiceKey", "invoiceTotal"],
                 "type": "object",
                 "properties": {
                     "invoiceKey": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Invoice key."
                     },
                     "invoiceTotal": {
                         "type": "integer",
-                        "format": "int32"
+                        "description": "Order invoice total."
                     }
                 },
                 "example": {
@@ -4543,7 +4105,6 @@
                 }
             },
             "PickedItem": {
-                "title": "PickedItem",
                 "required": [
                     "id",
                     "sku",
@@ -4571,109 +4132,109 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Picked item ID."
                     },
                     "sku": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Picked item SKU."
                     },
                     "referenceCode": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Picked item reference code."
                     },
                     "itemName": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Picked item name."
                     },
                     "price": {
                         "type": "integer",
-                        "format": "int32"
+                        "description": "Picked item price."
                     },
                     "pickingPrice": {
                         "type": "integer",
-                        "format": "int32"
+                        "description": "Picked item picking price."
                     },
                     "quantity": {
                         "type": "integer",
-                        "format": "int32"
+                        "description": "Picked item quantity."
                     },
                     "originalQuantity": {
                         "type": "integer",
-                        "format": "int32"
+                        "description": "Picked item original quantity."
                     },
                     "replacedBy": {
                         "type": "string",
-                        "nullable": true
+                        "nullable": true,
+                        "description": "Picked item replaced by."
                     },
                     "weighableProduct": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Picked item weighable product."
                     },
                     "unitMultiplier": {
-                        "oneOf": [
-                            {
-                                "type": "number"
-                            },
-                            {
-                                "type": "integer",
-                                "format": "int32"
-                            }
-                        ]
+                        "type": "integer",
+                        "description": "Picked item unit multiplier."
                     },
                     "originalUnitMultiplier": {
-                        "oneOf": [
-                            {
-                                "type": "number"
-                            },
-                            {
-                                "type": "integer",
-                                "format": "int32"
-                            }
-                        ]
+                        "type": "integer",
+                        "description": "Picked item original unit multiplier."
                     },
                     "unitOfMeasure": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Picked item unit of measure."
                     },
                     "images": {
                         "type": "array",
                         "items": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Picked item image."
                         },
-                        "description": ""
+                        "description": "Array of picked item images."
                     },
                     "ean": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Picked item EAN."
                     },
                     "status": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Picked item status."
                     },
                     "packedQuantity": {
                         "type": "integer",
-                        "format": "int32"
+                        "description": "Picked item packed quantity."
                     },
                     "reasons": {
                         "type": "string",
-                        "nullable": true
+                        "nullable": true,
+                        "description": "Picked item reasons for order changes."
                     },
                     "pickers": {
                         "type": "array",
                         "items": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Picker name."
                         },
-                        "description": ""
+                        "description": "Array of pickers."
                     },
                     "worksheets": {
                         "type": "array",
                         "items": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Worksheet ID."
                         },
-                        "description": ""
+                        "description": "Array of worksheets."
                     },
                     "warehouses": {
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/Warehouse"
                         },
-                        "description": ""
+                        "description": "Array of warehouses."
                     },
                     "createdAt": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Picked item creation date."
                     }
                 },
                 "example": {
@@ -4697,12 +4258,8 @@
                     "status": "COMPLETED",
                     "packedQuantity": 1,
                     "reasons": null,
-                    "pickers": [
-                        "returnsconnect"
-                    ],
-                    "worksheets": [
-                        "546206888193"
-                    ],
+                    "pickers": ["returnsconnect"],
+                    "worksheets": ["546206888193"],
                     "warehouses": [
                         {
                             "warehouseId": "9029",
@@ -4714,23 +4271,20 @@
                 }
             },
             "Warehouse": {
-                "title": "Warehouse",
-                "required": [
-                    "warehouseId",
-                    "warehouseName",
-                    "quantity"
-                ],
+                "required": ["warehouseId", "warehouseName", "quantity"],
                 "type": "object",
                 "properties": {
                     "warehouseId": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Warehouse ID."
                     },
                     "warehouseName": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Warehouse name."
                     },
                     "quantity": {
                         "type": "integer",
-                        "format": "int32"
+                        "description": "Warehouse item quantity."
                     }
                 },
                 "example": {
@@ -4888,12 +4442,8 @@
                             "reasonDetail": "out-of-stock"
                         }
                     ],
-                    "pickers": [
-                        "returnsconnect"
-                    ],
-                    "worksheets": [
-                        "546206888193"
-                    ],
+                    "pickers": ["returnsconnect"],
+                    "worksheets": ["546206888193"],
                     "warehouses": [
                         {
                             "warehouseId": "9029",
@@ -4906,10 +4456,7 @@
             },
             "Reason": {
                 "title": "Reason",
-                "required": [
-                    "reasonType",
-                    "reasonDetail"
-                ],
+                "required": ["reasonType", "reasonDetail"],
                 "type": "object",
                 "properties": {
                     "reasonType": {
@@ -4926,11 +4473,7 @@
             },
             "Package": {
                 "title": "Package",
-                "required": [
-                    "id",
-                    "status",
-                    "itemsIds"
-                ],
+                "required": ["id", "status", "itemsIds"],
                 "type": "object",
                 "properties": {
                     "id": {
@@ -4950,11 +4493,7 @@
                 "example": {
                     "id": "b05a0fa9-a11e-476e-bf58-677cf0431424",
                     "status": "PACKED",
-                    "itemsIds": [
-                        "75",
-                        "140",
-                        "137"
-                    ]
+                    "itemsIds": ["75", "140", "137"]
                 }
             },
             "Payment": {
@@ -5044,12 +4583,7 @@
             },
             "403Expiredtoken1": {
                 "title": "403Expiredtoken1",
-                "required": [
-                    "message",
-                    "code",
-                    "reason",
-                    "requestId"
-                ],
+                "required": ["message", "code", "reason", "requestId"],
                 "type": "object",
                 "properties": {
                     "message": {
@@ -5074,13 +4608,7 @@
             },
             "403Forbidden1": {
                 "title": "403Forbidden1",
-                "required": [
-                    "type",
-                    "code",
-                    "message",
-                    "date",
-                    "requestId"
-                ],
+                "required": ["type", "code", "message", "date", "requestId"],
                 "type": "object",
                 "properties": {
                     "type": {
@@ -5109,11 +4637,7 @@
             },
             "m2002": {
                 "title": "m2002",
-                "required": [
-                    "deliveredDate",
-                    "events",
-                    "orderId"
-                ],
+                "required": ["deliveredDate", "events", "orderId"],
                 "type": "object",
                 "properties": {
                     "deliveredDate": {
@@ -5145,12 +4669,7 @@
             },
             "Event": {
                 "title": "Event",
-                "required": [
-                    "city",
-                    "state",
-                    "description",
-                    "date"
-                ],
+                "required": ["city", "state", "description", "date"],
                 "type": "object",
                 "properties": {
                     "city": {
@@ -5175,13 +4694,7 @@
             },
             "404Invoicenotfound1": {
                 "title": "404Invoicenotfound1",
-                "required": [
-                    "type",
-                    "code",
-                    "message",
-                    "date",
-                    "requestId"
-                ],
+                "required": ["type", "code", "message", "date", "requestId"],
                 "type": "object",
                 "properties": {
                     "type": {
@@ -5358,12 +4871,7 @@
                     "status": "COMPLETED",
                     "createdAt": "2025-02-11T00:32:47.542Z",
                     "priority": 0,
-                    "categoriesIds": [
-                        "12",
-                        "6",
-                        "7",
-                        "9"
-                    ],
+                    "categoriesIds": ["12", "6", "7", "9"],
                     "lastPickedItemTime": 1739233967327,
                     "finishEstimatedDate": "2025-02-13T16:03:55.202Z",
                     "hostname": "lastmile",
@@ -5832,10 +5340,7 @@
             },
             "Category": {
                 "title": "Category",
-                "required": [
-                    "id",
-                    "name"
-                ],
+                "required": ["id", "name"],
                 "type": "object",
                 "properties": {
                     "id": {
@@ -5852,11 +5357,7 @@
             },
             "ItemAssignment": {
                 "title": "ItemAssignment",
-                "required": [
-                    "startPickingAt",
-                    "assignedAt",
-                    "finishedAt"
-                ],
+                "required": ["startPickingAt", "assignedAt", "finishedAt"],
                 "type": "object",
                 "properties": {
                     "startPickingAt": {
@@ -6073,13 +5574,7 @@
             },
             "404Notfound1": {
                 "title": "404Notfound1",
-                "required": [
-                    "type",
-                    "code",
-                    "message",
-                    "date",
-                    "requestId"
-                ],
+                "required": ["type", "code", "message", "date", "requestId"],
                 "type": "object",
                 "properties": {
                     "type": {
@@ -6206,12 +5701,7 @@
                     "id": "c13ed6d8-1c86-4ad9-be63-5e2f4c5451b2",
                     "facilityId": "783262b09ddc4b8facee2fa50541fd1e",
                     "worksheetId": "546744628006",
-                    "categoriesIds": [
-                        "12",
-                        "6",
-                        "7",
-                        "9"
-                    ],
+                    "categoriesIds": ["12", "6", "7", "9"],
                     "finishedDate": null,
                     "initDate": "2025-02-11T00:33:18.584Z",
                     "status": "COMPLETED",
@@ -6247,11 +5737,7 @@
             },
             "OrdersId1": {
                 "title": "OrdersId1",
-                "required": [
-                    "orderId",
-                    "unitsQuantity",
-                    "itemsQuantity"
-                ],
+                "required": ["orderId", "unitsQuantity", "itemsQuantity"],
                 "type": "object",
                 "properties": {
                     "orderId": {
@@ -6274,10 +5760,7 @@
             },
             "DeliveryWindow": {
                 "title": "DeliveryWindow",
-                "required": [
-                    "minDate",
-                    "maxDate"
-                ],
+                "required": ["minDate", "maxDate"],
                 "type": "object",
                 "properties": {
                     "minDate": {
@@ -6294,13 +5777,7 @@
             },
             "400OrderIDisrequiredCopy1": {
                 "title": "400OrderIDisrequiredCopy1",
-                "required": [
-                    "type",
-                    "code",
-                    "message",
-                    "date",
-                    "requestId"
-                ],
+                "required": ["type", "code", "message", "date", "requestId"],
                 "type": "object",
                 "properties": {
                     "type": {
@@ -6412,11 +5889,7 @@
             },
             "ContactInformation": {
                 "title": "ContactInformation",
-                "required": [
-                    "email",
-                    "name",
-                    "phone"
-                ],
+                "required": ["email", "name", "phone"],
                 "type": "object",
                 "properties": {
                     "email": {
@@ -6437,10 +5910,7 @@
             },
             "Location": {
                 "title": "Location",
-                "required": [
-                    "latitude",
-                    "longitude"
-                ],
+                "required": ["latitude", "longitude"],
                 "type": "object",
                 "properties": {
                     "latitude": {
@@ -6607,9 +6077,7 @@
                             "weight": "0",
                             "description": "Caja",
                             "id": "17aa920c-a364-4412-a288-7b269b88f403",
-                            "categories": [
-                                "Caja"
-                            ],
+                            "categories": ["Caja"],
                             "items": [
                                 {
                                     "name": "Bolígrafo",
@@ -6695,11 +6163,7 @@
             },
             "Agent": {
                 "title": "Agent",
-                "required": [
-                    "id",
-                    "name",
-                    "vehicle"
-                ],
+                "required": ["id", "name", "vehicle"],
                 "type": "object",
                 "properties": {
                     "id": {
@@ -6720,12 +6184,7 @@
             },
             "Evidence": {
                 "title": "Evidence",
-                "required": [
-                    "date",
-                    "type",
-                    "content",
-                    "author"
-                ],
+                "required": ["date", "type", "content", "author"],
                 "type": "object",
                 "properties": {
                     "date": {
@@ -6807,9 +6266,7 @@
                     "weight": "0",
                     "description": "Caja",
                     "id": "17aa920c-a364-4412-a288-7b269b88f403",
-                    "categories": [
-                        "Caja"
-                    ],
+                    "categories": ["Caja"],
                     "items": [
                         {
                             "name": "Bolígrafo",
@@ -6853,14 +6310,7 @@
             },
             "Item1": {
                 "title": "Item1",
-                "required": [
-                    "name",
-                    "image",
-                    "ean",
-                    "quantity",
-                    "id",
-                    "price"
-                ],
+                "required": ["name", "image", "ean", "quantity", "id", "price"],
                 "type": "object",
                 "properties": {
                     "name": {
@@ -6895,11 +6345,7 @@
             },
             "Dimensions": {
                 "title": "Dimensions",
-                "required": [
-                    "width",
-                    "length",
-                    "height"
-                ],
+                "required": ["width", "length", "height"],
                 "type": "object",
                 "properties": {
                     "width": {
@@ -6920,12 +6366,7 @@
             },
             "Note": {
                 "title": "Note",
-                "required": [
-                    "date",
-                    "type",
-                    "content",
-                    "author"
-                ],
+                "required": ["date", "type", "content", "author"],
                 "type": "object",
                 "properties": {
                     "date": {
@@ -6950,10 +6391,7 @@
             },
             "Timezone": {
                 "title": "Timezone",
-                "required": [
-                    "offset",
-                    "value"
-                ],
+                "required": ["offset", "value"],
                 "type": "object",
                 "properties": {
                     "offset": {
@@ -7167,13 +6605,7 @@
             },
             "400OrderIDisrequired1": {
                 "title": "400OrderIDisrequired1",
-                "required": [
-                    "type",
-                    "code",
-                    "message",
-                    "date",
-                    "requestId"
-                ],
+                "required": ["type", "code", "message", "date", "requestId"],
                 "type": "object",
                 "properties": {
                     "type": {
@@ -7216,7 +6648,7 @@
     ],
     "tags": [
         {
-            "name": "Auth"
+            "name": "Authentication"
         },
         {
             "name": "Orders"
