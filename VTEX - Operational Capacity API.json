@@ -1,0 +1,768 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Operation Capacity API",
+        "description": "This API allows management of fulfillment locations and their capacities for VTEX logistics operations. It supports retrieving capacities by parent account, configuring capacity settings per location, listing capacity details, retrieving a paginated list of locations, and updating location status.",
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "https://{accountName}.{environment}.com.br",
+            "description": "VTEX server URL.",
+            "variables": {
+                "accountName": {
+                    "description": "Name of the VTEX account.",
+                    "default": "apiexamples"
+                },
+                "environment": {
+                    "description": "Environment to use.",
+                    "enum": [
+                        "vtexcommercestable"
+                    ],
+                    "default": "vtexcommercestable"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/api/fulfillment-locations/capacity/by-parent-account-name": {
+            "put": {
+                "tags": [
+                    "Capacity"
+                ],
+                "summary": "Get Locations Capacities By Account",
+                "description": "Retrieves the current capacities of all locations associated with a parent account.",
+                "operationId": "GetLocationsCapacitiesByAccount",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of operational capacities",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/LocationCapacity"
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "locationId": "locationId_3",
+                                        "accountName": "seller_2",
+                                        "accountId": "id_2",
+                                        "availability": {
+                                            "amountUsagePercentage": 0,
+                                            "startAt": "2025-02-10T00:00:00-03:00",
+                                            "endAt": "2025-02-10T23:59:59-03:00"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/fulfillment-locations/location/{locationId}/capacities/{code}/": {
+            "put": {
+                "tags": [
+                    "Capacity Configuration"
+                ],
+                "summary": "Configure Location Capacity",
+                "description": "Updates the capacity settings of a specific location (identified by `locationId`) for a given task type (`code`). The API allows configuration of capacity parameters (such as capacity type, unit, and actions) that control the operational capacity of the location.",
+                "operationId": "ConfigureLocationCapacity",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/locationIdPath"
+                    },
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "description": "The type of task to update. Currently, the only supported value is 'fulfill_orders'.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Capacity configuration settings. If a field is omitted, the current values will be preserved.",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CapacityConfiguration"
+                            },
+                            "example": {
+                                "capacityType": "FIXED",
+                                "capacityUnit": "ORDERS",
+                                "fullCapacityAction": "PAUSE",
+                                "maxIncreasePromise": {
+                                    "amount": 18
+                                },
+                                "dayCapacity": {
+                                    "MONDAY": 11,
+                                    "TUESDAY": 3,
+                                    "WEDNESDAY": 1,
+                                    "THURSDAY": 8,
+                                    "FRIDAY": 4,
+                                    "SATURDAY": 10,
+                                    "SUNDAY": 7,
+                                    "HOLIDAYS_AND_EXCEPTIONS": 5
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated capacity configuration",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CapacityConfiguration"
+                                },
+                                "example": {
+                                    "id": 71,
+                                    "capacityType": "FIXED",
+                                    "capacityUnit": "ORDERS",
+                                    "fullCapacityAction": "PAUSE",
+                                    "taskId": 1,
+                                    "locationTask": null,
+                                    "capacityShifts": [
+                                        {
+                                            "id": 607,
+                                            "capacityAmount": 11,
+                                            "capacityRuleId": 71,
+                                            "timeStart": "00:00:00",
+                                            "timeEnd": "23:59:59",
+                                            "weekDay": "MONDAY"
+                                        },
+                                        {
+                                            "id": 608,
+                                            "capacityAmount": 3,
+                                            "capacityRuleId": 71,
+                                            "timeStart": "00:00:00",
+                                            "timeEnd": "23:59:59",
+                                            "weekDay": "TUESDAY"
+                                        }
+                                    ],
+                                    "additionalInfo": {
+                                        "maxIncreasePromise": {
+                                            "amount": 18,
+                                            "unit": "DAYS"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/fulfillment-locations/locations/{locationId}/capacities/": {
+            "get": {
+                "tags": [
+                    "Capacity Details"
+                ],
+                "summary": "List Location Capacities",
+                "description": "Lists the capacity details for the next `daysRequested` days for the specified location. If `daysRequested` is not provided, it defaults to 3 days.",
+                "operationId": "ListLocationCapacities",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/locationIdPath"
+                    },
+                    {
+                        "name": "daysRequested",
+                        "in": "query",
+                        "description": "Number of days to be displayed. Defaults to 3 if not provided.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 3
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Capacity details for the requested days",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CapacityDetail"
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "amountPercentage": 92.10526315789474,
+                                        "capacityLimitAmount": 38,
+                                        "capacityUsageAmount": 35,
+                                        "startAt": "2025-02-07T03:00:00+00:00",
+                                        "endAt": "2025-02-08T02:59:59+00:00"
+                                    },
+                                    {
+                                        "amountPercentage": 92.10526315789474,
+                                        "capacityLimitAmount": 38,
+                                        "capacityUsageAmount": 35,
+                                        "startAt": "2025-02-08T03:00:00+00:00",
+                                        "endAt": "2025-02-09T02:59:59+00:00"
+                                    },
+                                    {
+                                        "amountPercentage": 92.10526315789474,
+                                        "capacityLimitAmount": 38,
+                                        "capacityUsageAmount": 35,
+                                        "startAt": "2025-02-09T03:00:00+00:00",
+                                        "endAt": "2025-02-10T02:59:59+00:00"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/fulfillment-locations/location/": {
+            "get": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "List Locations",
+                "description": "Retrieves a paginated list of fulfillment locations that match the given search criteria and status filter. Pagination is controlled via `page` and `pageSize` parameters.",
+                "operationId": "ListLocations",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number, starting from 0. Defaults to 0 if not provided.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 0
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "description": "Number of results per page (maximum: 30). Defaults to 30 if not provided.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 30,
+                            "maximum": 30
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by location status (ACTIVE, MANUALLY_PAUSED, PAUSED). Multiple statuses can be separated by commas.",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search for locations by name.",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated list of fulfillment locations",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LocationsList"
+                                },
+                                "example": {
+                                    "hasNextPage": false,
+                                    "data": [
+                                        {
+                                            "id": "locationId_1",
+                                            "name": "Location A",
+                                            "status": "ACTIVE",
+                                            "timeZone": "America/Bahia",
+                                            "vtexAccountName": ""
+                                        },
+                                        {
+                                            "id": "locationId_3",
+                                            "name": "seller_2",
+                                            "status": "ACTIVE",
+                                            "timeZone": "America/Bahia",
+                                            "vtexAccountName": ""
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/fulfillment-locations/locations/{locationId}/status/": {
+            "put": {
+                "tags": [
+                    "Location Status"
+                ],
+                "summary": "Update Location Status",
+                "description": "Updates the status of a specific location (identified by `locationId`) to either `ACTIVE` or `MANUALLY_PAUSED`.",
+                "operationId": "UpdateLocationStatus",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/locationIdPath"
+                    }
+                ],
+                "requestBody": {
+                    "description": "New status of the location. Allowed values: ACTIVE, MANUALLY_PAUSED.",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateLocationStatusRequest"
+                            },
+                            "example": {
+                                "status": "MANUALLY_PAUSED"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated location details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Location"
+                                },
+                                "example": {
+                                    "id": "locationId_1",
+                                    "name": "Location A",
+                                    "status": "MANUALLY_PAUSED",
+                                    "timeZone": "America/Bahia",
+                                    "vtexAccountName": "",
+                                    "vtexAccount": {
+                                        "id": "1b4018ec-48bf-4a59-9eae-547403e11afc",
+                                        "name": "logisticsqa",
+                                        "companyName": "VTEX",
+                                        "ownerAccountName": "logisticsqa"
+                                    },
+                                    "locationTasks": [],
+                                    "address": {
+                                        "formattedAddress": "Centro Empresarial - Praia de Botafogo, 300 - 3º Andar - Botafogo, Rio de Janeiro - RJ, 22250-040, Brasil",
+                                        "country": "Brasil",
+                                        "administrativeAreaLevel1": "RJ",
+                                        "administrativeAreaLevel2": "Rio de Janeiro",
+                                        "postalCode": "22250-040",
+                                        "geoLocation": {
+                                            "latitude": -22.9443688,
+                                            "longitude": -43.1825604
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "security": [
+        {
+            "appKey": [],
+            "appToken": []
+        },
+        {
+            "VtexIdclientAutCookie": []
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys)."
+            },
+            "VtexIdclientAutCookie": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "VtexIdclientAutCookie",
+                "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
+            }
+        },
+        "parameters": {
+            "locationIdPath": {
+                "name": "locationId",
+                "in": "path",
+                "description": "Unique identifier of the location",
+                "required": true,
+                "schema": {
+                    "type": "string"
+                }
+            },
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            }
+        },
+        "schemas": {
+            "LocationCapacity": {
+                "type": "object",
+                "description": "Represents the capacity information for a fulfillment location, including its identifier, account details, and availability window.",
+                "properties": {
+                    "locationId": {
+                        "type": "string",
+                        "description": "Unique identifier for the location."
+                    },
+                    "accountName": {
+                        "type": "string",
+                        "description": "Name of the account associated with the location."
+                    },
+                    "accountId": {
+                        "type": "string",
+                        "description": "Identifier for the VTEX account."
+                    },
+                    "availability": {
+                        "type": "object",
+                        "description": "Availability details including usage percentage and time window.",
+                        "properties": {
+                            "amountUsagePercentage": {
+                                "type": "number",
+                                "description": "Percentage of capacity currently in use."
+                            },
+                            "startAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Start time of the availability period."
+                            },
+                            "endAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "End time of the availability period."
+                            }
+                        }
+                    }
+                }
+            },
+            "CapacityConfiguration": {
+                "type": "object",
+                "description": "Configuration settings for a location's operational capacity including type, unit, full capacity action, maximum allowed increase promise, and daily capacity settings.",
+                "properties": {
+                    "capacityType": {
+                        "type": "string",
+                        "enum": [
+                            "FIXED",
+                            "UNLIMITED"
+                        ],
+                        "description": "Type of capacity. Allowed values: FIXED or UNLIMITED."
+                    },
+                    "capacityUnit": {
+                        "type": "string",
+                        "enum": [
+                            "ORDERS",
+                            "ORDER_ITEMS"
+                        ],
+                        "description": "Unit of capacity. Allowed values: ORDERS or ORDER_ITEMS."
+                    },
+                    "fullCapacityAction": {
+                        "type": "string",
+                        "enum": [
+                            "PAUSE",
+                            "MOVE_TO_NEXT_SHIFT"
+                        ],
+                        "description": "Action to take when full capacity is reached. Allowed values: PAUSE or MOVE_TO_NEXT_SHIFT."
+                    },
+                    "maxIncreasePromise": {
+                        "type": "object",
+                        "description": "Defines the maximum allowed increase in the delivery promise.",
+                        "properties": {
+                            "amount": {
+                                "type": "integer",
+                                "maximum": 18,
+                                "description": "Maximum number of additional capacity units allowed."
+                            }
+                        }
+                    },
+                    "dayCapacity": {
+                        "type": "object",
+                        "description": "Capacity settings for each day of the week and exceptions.",
+                        "properties": {
+                            "MONDAY": {
+                                "type": "integer",
+                                "description": "Capacity setting for Monday."
+                            },
+                            "TUESDAY": {
+                                "type": "integer",
+                                "description": "Capacity setting for Tuesday."
+                            },
+                            "WEDNESDAY": {
+                                "type": "integer",
+                                "description": "Capacity setting for Wednesday."
+                            },
+                            "THURSDAY": {
+                                "type": "integer",
+                                "description": "Capacity setting for Thursday."
+                            },
+                            "FRIDAY": {
+                                "type": "integer",
+                                "description": "Capacity setting for Friday."
+                            },
+                            "SATURDAY": {
+                                "type": "integer",
+                                "description": "Capacity setting for Saturday."
+                            },
+                            "SUNDAY": {
+                                "type": "integer",
+                                "description": "Capacity setting for Sunday."
+                            },
+                            "HOLIDAYS_AND_EXCEPTIONS": {
+                                "type": "integer",
+                                "description": "Capacity setting for holidays and exceptions."
+                            }
+                        }
+                    }
+                }
+            },
+            "CapacityDetail": {
+                "type": "object",
+                "description": "Details for a specific day's capacity including usage percentage, limit, usage amount, and the active time window.",
+                "properties": {
+                    "amountPercentage": {
+                        "type": "number",
+                        "description": "Percentage of capacity used."
+                    },
+                    "capacityLimitAmount": {
+                        "type": "integer",
+                        "description": "Maximum capacity amount for the day."
+                    },
+                    "capacityUsageAmount": {
+                        "type": "integer",
+                        "description": "Capacity amount used for the day."
+                    },
+                    "startAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Start time for the capacity period."
+                    },
+                    "endAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "End time for the capacity period."
+                    }
+                }
+            },
+            "Location": {
+                "type": "object",
+                "description": "Represents a fulfillment location with its details, including identifier, name, status, time zone, account information, associated tasks, and address.",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique identifier of the location."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the location."
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ACTIVE",
+                            "MANUALLY_PAUSED",
+                            "PAUSED"
+                        ],
+                        "description": "Current status of the location."
+                    },
+                    "timeZone": {
+                        "type": "string",
+                        "description": "Time zone of the location."
+                    },
+                    "vtexAccountName": {
+                        "type": "string",
+                        "description": "VTEX account name associated with the location."
+                    },
+                    "vtexAccount": {
+                        "type": "object",
+                        "description": "Detailed VTEX account information.",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "description": "VTEX account unique identifier."
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": "Name of the VTEX account."
+                            },
+                            "companyName": {
+                                "type": "string",
+                                "description": "Company name associated with the VTEX account."
+                            },
+                            "ownerAccountName": {
+                                "type": "string",
+                                "description": "Owner account name."
+                            }
+                        }
+                    },
+                    "locationTasks": {
+                        "type": "array",
+                        "description": "List of tasks associated with the location.",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "address": {
+                        "type": "object",
+                        "description": "Address details of the location.",
+                        "properties": {
+                            "formattedAddress": {
+                                "type": "string",
+                                "description": "The full formatted address."
+                            },
+                            "country": {
+                                "type": "string",
+                                "description": "Country where the location is situated."
+                            },
+                            "administrativeAreaLevel1": {
+                                "type": "string",
+                                "description": "First administrative division (e.g., state)."
+                            },
+                            "administrativeAreaLevel2": {
+                                "type": "string",
+                                "description": "Second administrative division (e.g., city)."
+                            },
+                            "postalCode": {
+                                "type": "string",
+                                "description": "Postal code of the location."
+                            },
+                            "geoLocation": {
+                                "type": "object",
+                                "description": "Geographic coordinates of the location.",
+                                "properties": {
+                                    "latitude": {
+                                        "type": "number",
+                                        "description": "Latitude coordinate."
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "description": "Longitude coordinate."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "LocationsList": {
+                "type": "object",
+                "description": "Represents a paginated list of fulfillment locations.",
+                "properties": {
+                    "hasNextPage": {
+                        "type": "boolean",
+                        "description": "Indicates if there is another page of results."
+                    },
+                    "data": {
+                        "type": "array",
+                        "description": "List of fulfillment locations.",
+                        "items": {
+                            "$ref": "#/components/schemas/Location"
+                        }
+                    }
+                }
+            },
+            "UpdateLocationStatusRequest": {
+                "type": "object",
+                "description": "Request body for updating a location's status.",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ACTIVE",
+                            "MANUALLY_PAUSED"
+                        ],
+                        "description": "New status of the location. Allowed values: ACTIVE or MANUALLY_PAUSED."
+                    }
+                },
+                "required": [
+                    "status"
+                ]
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Capacity"
+        },
+        {
+            "name": "Capacity configuration"
+        },
+        {
+            "name": "Capacity details"
+        },
+        {
+            "name": "Locations"
+        },
+        {
+            "name": "Location status"
+        }
+    ]
+}
