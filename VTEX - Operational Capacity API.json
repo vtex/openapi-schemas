@@ -72,10 +72,10 @@
         "/api/fulfillment-locations/location/{locationId}/capacities/{code}/": {
             "put": {
                 "tags": [
-                    "Capacity Configuration"
+                    "Capacity configuration"
                 ],
-                "summary": "Configure Location Capacity",
-                "description": "Updates the capacity settings of a specific location (identified by `locationId`) for a given task type (`code`). The API allows configuration of capacity parameters (such as capacity type, unit, and actions) that control the operational capacity of the location.",
+                "summary": "Configure location capacity",
+                "description": "Updates the capacity settings of a specific location for a given task type (`code`). The API allows configuration of capacity parameters (such as capacity type, unit, and actions) that control the operational capacity of the location. If a field is omitted, the current values will be preserved.\r\n\r\n## Permissions\r\n\r\nAny user or [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Logistics | Logistics access | **Logistics full access** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>\u2757 To prevent integrations from having excessive permissions, consider the [best practices for managing app keys](https://help.vtex.com/en/tutorial/best-practices-application-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Accept"
@@ -89,20 +89,20 @@
                     {
                         "name": "code",
                         "in": "path",
-                        "description": "The type of task to update. Currently, the only supported value is 'fulfill_orders'.",
+                        "description": "The type of task to update. Currently, the only supported value is `fulfill_orders`.",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "default": "fulfill_orders"
                         }
                     }
                 ],
                 "requestBody": {
-                    "description": "Capacity configuration settings. If a field is omitted, the current values will be preserved.",
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/CapacityConfiguration"
+                                "$ref": "#/components/schemas/CapacityConfigurationRequest"
                             },
                             "example": {
                                 "capacityType": "FIXED",
@@ -127,11 +127,11 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Updated capacity configuration",
+                        "description": "OK",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/CapacityConfiguration"
+                                    "$ref": "#/components/schemas/CapacityConfigurationResponse"
                                 },
                                 "example": {
                                     "id": 71,
@@ -432,10 +432,11 @@
             "locationIdPath": {
                 "name": "locationId",
                 "in": "path",
-                "description": "Unique identifier of the location",
+                "description": "Unique identifier of the location.",
                 "required": true,
                 "schema": {
-                    "type": "string"
+                    "type": "integer",
+                    "example": 71
                 }
             },
             "Content-Type": {
@@ -500,7 +501,7 @@
                     }
                 }
             },
-            "CapacityConfiguration": {
+            "CapacityConfigurationRequest": {
                 "type": "object",
                 "description": "Configuration settings for a location's operational capacity including type, unit, full capacity action, maximum allowed increase promise, and daily capacity settings.",
                 "properties": {
@@ -510,7 +511,7 @@
                             "FIXED",
                             "UNLIMITED"
                         ],
-                        "description": "Type of capacity. Allowed values: FIXED or UNLIMITED."
+                        "description": "Type of capacity."
                     },
                     "capacityUnit": {
                         "type": "string",
@@ -518,7 +519,7 @@
                             "ORDERS",
                             "ORDER_ITEMS"
                         ],
-                        "description": "Unit of capacity. Allowed values: ORDERS or ORDER_ITEMS."
+                        "description": "Unit of capacity."
                     },
                     "fullCapacityAction": {
                         "type": "string",
@@ -526,7 +527,7 @@
                             "PAUSE",
                             "MOVE_TO_NEXT_SHIFT"
                         ],
-                        "description": "Action to take when full capacity is reached. Allowed values: PAUSE or MOVE_TO_NEXT_SHIFT."
+                        "description": "Action to take when full capacity is reached."
                     },
                     "maxIncreasePromise": {
                         "type": "object",
@@ -574,6 +575,107 @@
                             "HOLIDAYS_AND_EXCEPTIONS": {
                                 "type": "integer",
                                 "description": "Capacity setting for holidays and exceptions."
+                            }
+                        }
+                    }
+                }
+            },
+            "CapacityConfigurationResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier of the location.",
+                        "type": "integer"
+                    },
+                    "capacityType": {
+                        "type": "string",
+                        "enum": [
+                            "FIXED",
+                            "UNLIMITED"
+                        ],
+                        "description": "Type of capacity."
+                    },
+                    "capacityUnit": {
+                        "type": "string",
+                        "enum": [
+                            "ORDERS",
+                            "ORDER_ITEMS"
+                        ],
+                        "description": "Unit of capacity."
+                    },
+                    "fullCapacityAction": {
+                        "type": "string",
+                        "enum": [
+                            "PAUSE",
+                            "MOVE_TO_NEXT_SHIFT"
+                        ],
+                        "description": "Action to take when full capacity is reached."
+                    },
+                    "taskId": {
+                        "description": "Unique identifier of the task.",
+                        "type": "integer"
+                    },
+                    "locationTask": {
+                        "description": "Object containing information of the task associated with the location.",
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "capacityShifts": {
+                        "description": "List of capacity shifts of the location.",
+                        "type": "array",
+                        "items": {
+                            "description": "Object cointainf capacity shift information.",
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "description": "Unique identifier of the capacity shift.",
+                                    "type": "integer"
+                                },
+                                "capacityAmount": {
+                                    "description": "Amount of product avaiable in the capacity shift.",
+                                    "type": "integer"
+                                },
+                                "capacityRuleId": {
+                                    "description": "Unique identifier of the capacity shift rule.",
+                                    "type": "integer"
+                                },
+                                "timeStart": {
+                                    "description": "Start time in the format `HH:MM:SS`.",
+                                    "type": "string"
+                                },
+                                "timeEnd": {
+                                    "description": "End time in the format `HH:MM:SS`.",
+                                    "type": "string"
+                                },
+                                "weekDay": {
+                                    "description": "Day of the week .",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "additionalInfo": {
+                        "description": "Additional information of the capacity shifts.",
+                        "type": "object",
+                        "properties": {
+                            "maxIncreasePromise": {
+                                "type": "object",
+                                "description": "Defines the maximum allowed increase in the delivery promise.",
+                                "properties": {
+                                    "amount": {
+                                        "type": "integer",
+                                        "maximum": 18,
+                                        "description": "Maximum number of additional capacity units allowed."
+                                    },
+                                    "unit": {
+                                        "type": "string",
+                                        "description": "Unit of the amount.",
+                                        "enum": [
+                                            "DAYS",
+                                            "WEEKS"
+                                        ]
+                                    }
+                                }
                             }
                         }
                     }
