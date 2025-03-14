@@ -10,6 +10,12 @@ Please check our [Contributing Guide](CONTRIBUTING.md) for more information abou
 
 Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
 
+## API Slug Mapping
+
+The OpenAPI schema files in this repository follow a naming convention that integrates with the Developer Portal's centralized API slug mapping system. This ensures consistent URLs and naming across documentation.
+
+Read the [Centralized API Slug Mapping](docs/centralized-api-slug-mapping.md) documentation to learn how API names are mapped to URL slugs and how to follow the naming conventions when adding new API schemas.
+
 ## VTEX APIs
 
 - Antifraud Provider API ![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https://raw.githubusercontent.com/vtex/openapi-schemas/master/VTEX%2520-%2520Antifraud%2520Provider%2520API.json&label=OpenAPI)
