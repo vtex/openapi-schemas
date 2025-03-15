@@ -3,15 +3,15 @@
     "info": {
         "version": "0.1.12",
         "title": "VTEX Ad Network API",
-        "description": "VTEX Ad Network connects VTEX stores with brands interested in advertising their products. This connection allows advertisers and merchants to boost their business:\r\n\r\n* **Advertisers:** Brands that can create ad campaigns to promote products in VTEX stores offering the same products in their catalogs, thus increasing sales. \r\n\r\n* **Merchants:** Can offer ad space in their stores for advertisers to promote products. In return, these merchants will receive a fee for each click on an ad in their stores.\r\n\r\n> Learn more about [VTEX Ad Network](https://help.vtex.com/en/tutorial/vtex-ad-network-beta--2cgqXcBuJmXN2livQvClur).\r\n\r\n## Index\r\n### Sponsored products\r\n `GET` [Get sponsored products for a query](https://developers.vtex.com/docs/api-reference/vtex-ad-network-api#get-/sponsored_products/-facets-)\r\n## Common parameters \r\n\r\n| **Parameter name** | **Description**   |\r\n| --------------- | ----------------- | \r\n| `{{accountName}}` | Name of the VTEX account. Used as part of the URL. |  \r\n| ` {{environment}}` | Environment to use. Used as part of the URL. |",
+        "description": "VTEX Ad Network connects VTEX stores with brands interested in advertising their products. This connection allows advertisers and publishers to boost their business:\r\n\r\n* **Advertisers:** Brands that can create ad campaigns to promote products in VTEX stores offering the same products in their catalogs, thus increasing sales. \r\n\r\n* **Publishers:** Can offer ad space in their stores for advertisers to promote products. In return, these publishers will receive a fee for each click on an ad in their stores.\r\n\r\n> Learn more about [VTEX Ad Network](https://help.vtex.com/en/tutorial/vtex-ad-network-beta--2cgqXcBuJmXN2livQvClur).\r\n\r\n## Index\r\n### Sponsored products\r\n `GET` [Get sponsored products for a query](https://developers.vtex.com/docs/api-reference/vtex-ad-network-api#get-/sponsored_products/-facets-)\r\n### Ad events\r\n `POST` [Send ad events](https://developers.vtex.com/docs/api-reference/vtex-ad-network-api#post-/ads)\r\n### Order events\r\n `POST` [Send order events](https://developers.vtex.com/docs/api-reference/vtex-ad-network-api#post-/order)\r\n### Banner\r\n `POST` [Get banner information](https://developers.vtex.com/docs/api-reference/vtex-ad-network-api#post-/banner/query)\r\n## Common parameters \r\n\r\n| **Parameter name** | **Description**   |\r\n| --------------- | ----------------- | \r\n| `{{accountName}}` | Name of the VTEX account. Used as part of the URL. |  \r\n| ` {{environment}}` | Environment to use. Used as part of the URL. |",
         "license": {
             "name": "MIT"
         }
     },
     "servers": [
         {
-            "url": "https://{accountName}.{environment}.com.br/api/io/_v/api/intelligent-search",
-            "description": "VTEX IO Intelligent Search server URL.",
+            "url": "https://{accountName}.{environment}.com.br/api/io/_v/api/ad-server",
+            "description": "VTEX Ad Network server URL.",
             "variables": {
                 "accountName": {
                     "default": "apiexamples",
@@ -25,13 +25,57 @@
                     "default": "vtexcommercestable"
                 }
             }
+        },
+        {
+            "url": "https://{accountName}.{environment}.com.br/api/io/_v/api/intelligent-search",
+            "description": "VTEX Ad Network server URL, integrated with Intelligent Search.",
+            "variables": {
+                "accountName": {
+                    "default": "apiexamples",
+                    "description": "Name of the VTEX account. Used as part of the URL."
+                },
+                "environment": {
+                    "description": "Environment to use. Used as part of the URL.",
+                    "enum": [
+                        "vtexcommercestable"
+                    ],
+                    "default": "vtexcommercestable"
+                }
+            }
+        },
+        {
+            "url": "https://af-origin.vtex.com/api/activity-flow",
+            "description": "VTEX Ad Network Activity Flow server."
+        },
+        {
+            "url": "https://ad-server.vtex.com/api/ad-server/ads/",
+            "description": "VTEX Ad Network server."
         }
     ],
     "paths": {
         "/sponsored_products/{facets}": {
+            "servers": [
+                {
+                    "url": "https://{accountName}.{environment}.com.br/api/io/_v/api/intelligent-search",
+                    "description": "VTEX Ad Network server URL, integrated with Intelligent Search.",
+                    "variables": {
+                        "accountName": {
+                            "default": "apiexamples",
+                            "description": "Name of the VTEX account. Used as part of the URL."
+                        },
+                        "environment": {
+                            "description": "Environment to use. Used as part of the URL.",
+                            "enum": [
+                                "vtexcommercestable"
+                            ],
+                            "default": "vtexcommercestable"
+                        }
+                    }
+                }
+            ],
             "get": {
                 "summary": "Get sponsored products for a query",
-                "description": "Lists sponsored products for a given search query.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [authentication](https:\/\/developers.vtex.com\/docs\/guides\/authentication) or [permissions](https:\/\/help.vtex.com\/en\/tutorial\/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Lists sponsored products for a given search query. This endpoint must be used when the merchant uses a third-party search engine.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [authentication](https:\/\/developers.vtex.com\/docs\/guides\/authentication) or [permissions](https:\/\/help.vtex.com\/en\/tutorial\/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
                 "tags": [
                     "Sponsored products"
                 ],
@@ -41,6 +85,15 @@
                     },
                     {
                         "$ref": "#/components/parameters/query"
+                    },
+                    {
+                        "$ref": "#/components/parameters/products"
+                    },
+                    {
+                        "$ref": "#/components/parameters/sponsoredCount"
+                    },
+                    {
+                        "$ref": "#/components/parameters/advertisementPlacement"
                     },
                     {
                         "$ref": "#/components/parameters/simulationBehavior"
@@ -608,6 +661,399 @@
                     }
                 }
             }
+        },
+        "/ads": {
+            "servers": [
+                {
+                    "url": "https://af-origin.vtex.com/api/activity-flow",
+                    "description": "VTEX Ad Network server."
+                }
+            ],
+            "post": {
+                "summary": "Send ad events",
+                "description": "Sends ad events, including impressions, views, and clicks, according to these rules:\r\n\r\n* **Impressions:** Must be sent when the ad is rendered in the interface.\r\n\r\n* **Views:** Must be sent when the ad appears more than 50% on the screen for more than 1s.\r\n\r\n* **Click:** Must be sent when the ad is clicked.\r\n\r\n>⚠️ The `MacId` and the `SessionID` are required and must be handled as described in the table below. They are used as anonymous identifiers to link events with orders. These attributes are the merchant's responsibility, and they must be managed at the device level.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [authentication](https:\/\/developers.vtex.com\/docs\/guides\/authentication) or [permissions](https:\/\/help.vtex.com\/en\/tutorial\/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "tags": [
+                    "Ad events"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "description": "Ad event request body.",
+                                "required": [
+                                    "accountName",
+                                    "MacId",
+                                    "Url",
+                                    "Ref",
+                                    "SessionId",
+                                    "adRequestId",
+                                    "adResponseId",
+                                    "actionType",
+                                    "productId",
+                                    "productName",
+                                    "campaignId",
+                                    "adId",
+                                    "channel"
+                                ],
+                                "properties": {
+                                    "accountName": {
+                                        "type": "string",
+                                        "description": "Merchant's account name. It should be the same as the account name registered at VTEX.",
+                                        "example": "apiexamples"
+                                    },
+                                    "MacId": {
+                                        "type": "string",
+                                        "description": "A long-life identifier stored in the browser cookies or device of each shopper. It is valid for one year and is renewed as new events are sent. It expires if the user clears their cookies or deletes the app. Use UUID Version 4.",
+                                        "example": "f805a89b-ef06-4d6a-ae9d-4dd5699ccd6f"
+                                    },
+                                    "Url": {
+                                        "type": "string",
+                                        "description": "Current page URL or the current mobile view.",
+                                        "example": "https://www.apiexamples.com.br/busca?tshirt"
+                                    },
+                                    "Ref": {
+                                        "type": "string",
+                                        "description": "Previous page URL (accessed before the current page URL) or mobile equivalent.",
+                                        "example": "https://www.apiexamples.com.br"
+                                    },
+                                    "SessionId": {
+                                        "type": "string",
+                                        "description": "Session identifier, which expires after 30 minutes. Use UUID Version 4.",
+                                        "example": "fb252d90-7494-4097-90fd-cc73eeaa575c"
+                                    },
+                                    "placement": {
+                                        "type": "string",
+                                        "description": "Refers to where the ad is shown on the site.",
+                                        "enum": [
+                                            "top_search",
+                                            "middle_search",
+                                            "home_shelf",
+                                            "pdp_shelf",
+                                            "search_shelf",
+                                            "cart_shelf",
+                                            "plp_shelf"
+                                        ],
+                                        "example": "top_search"
+                                    },
+                                    "position": {
+                                        "type": "number",
+                                        "description": "Position of the ads in the list.",
+                                        "example": 2
+                                    },
+                                    "adRequestId": {
+                                        "type": "string",
+                                        "description": "Identifier of an ad request. This ID should be retrieved through the [ad request](https://developers.vtex.com/docs/api-reference/vtex-ad-network-api#get-/sponsored_products/-facets-).",
+                                        "example": "1f97dca0-b022-4bce-907c-d22daa1cef01"
+                                    },
+                                    "adResponseId": {
+                                        "type": "string",
+                                        "description": "Identifier of an ad response. This ID should be retrieved through the [ad request](https://developers.vtex.com/docs/api-reference/vtex-ad-network-api#get-/sponsored_products/-facets-).",
+                                        "example": "b0b5d188-21b3-4d3a-b3ca-81c0626ff7d6"
+                                    },
+                                    "actionType": {
+                                        "type": "string",
+                                        "description": "Type of action associated with the event.",
+                                        "enum": [
+                                            "click",
+                                            "view",
+                                            "impression"
+                                        ],
+                                        "example": "click"
+                                    },
+                                    "productId": {
+                                        "type": "string",
+                                        "description": "Product ID associated with the ad event.",
+                                        "example": "1234"
+                                    },
+                                    "productName": {
+                                        "type": "string",
+                                        "description": "Product name associated with the ad event.",
+                                        "example": "tshirt XYZ"
+                                    },
+                                    "campaignId": {
+                                        "type": "string",
+                                        "description": "Campaign ID to which the ad belongs.",
+                                        "example": "9e424dcd-9b46-456e-a3a5-05803c83452f"
+                                    },
+                                    "adId": {
+                                        "type": "string",
+                                        "description": "Ad identifier associated with the ad event. This ID should be retrieved through the [ad request](https://developers.vtex.com/docs/api-reference/vtex-ad-network-api#get-/sponsored_products/-facets-).",
+                                        "example": "05949176-3a10-435e-9d08-3ba8da51de3b"
+                                    },
+                                    "channel": {
+                                        "type": "string",
+                                        "description": "Specifies if it is a mobile or web client.",
+                                        "enum": [
+                                            "website",
+                                            "android",
+                                            "ios",
+                                            "msite",
+                                            "whatsapp"
+                                        ],
+                                        "example": "website"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/order": {
+            "servers": [
+                {
+                    "url": "https://af-origin.vtex.com/api/activity-flow",
+                    "description": "VTEX Ad Network server."
+                }
+            ],
+            "post": {
+                "summary": "Send order events",
+                "description": "Sends order events.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [authentication](https:\/\/developers.vtex.com\/docs\/guides\/authentication) or [permissions](https:\/\/help.vtex.com\/en\/tutorial\/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "tags": [
+                    "Order events"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "description": "Order event request body.",
+                                "required": [
+                                    "accountName",
+                                    "macId",
+                                    "url",
+                                    "ref",
+                                    "sessionId",
+                                    "orderGroup",
+                                    "channel"
+                                ],
+                                "properties": {
+                                    "accountName": {
+                                        "type": "string",
+                                        "description": "Merchant's account name. It should be the same as the account name registered at VTEX.",
+                                        "example": "apiexamples"
+                                    },
+                                    "macId": {
+                                        "type": "string",
+                                        "description": "A long-life identifier stored in the browser cookies or device of each shopper. It is valid for one year and is renewed as new events are sent. It expires if the user clears their cookies or deletes the app. Use UUID Version 4.",
+                                        "example": "f805a89b-ef06-4d6a-ae9d-4dd5699ccd6f"
+                                    },
+                                    "url": {
+                                        "type": "string",
+                                        "description": "Current page URL or the current mobile view.",
+                                        "example": "https://www.apiexamples.com.br/busca?tshirt"
+                                    },
+                                    "ref": {
+                                        "type": "string",
+                                        "description": "Previous page URL (accessed before the current page URL) or mobile equivalent.",
+                                        "example": "https://www.apiexamples.com.br"
+                                    },
+                                    "sessionId": {
+                                        "type": "string",
+                                        "description": "Session identifier, which expires after 30 minutes. Use UUID Version 4.",
+                                        "example": "fb252d90-7494-4097-90fd-cc73eeaa575c"
+                                    },
+                                    "orderGroup": {
+                                        "type": "string",
+                                        "description": "Order group ID for the created order. The order group ID is a segment of the order ID that groups all orders related to the same purchase. For example, in order ID `v71021570str-02`, the order group ID is `v71021570str`. The `orderGroup` value should be the same as the one created in the OMS to enable the correlation between the order events and the order tables.",
+                                        "example": "v71021570str"
+                                    },
+                                    "channel": {
+                                        "type": "string",
+                                        "description": "Specifies if it is a mobile or web client.",
+                                        "enum": [
+                                            "website",
+                                            "android",
+                                            "ios",
+                                            "msite",
+                                            "whatsapp"
+                                        ],
+                                        "example": "website"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/banner/query": {
+            "servers": [
+                {
+                    "url": "https://ad-server.vtex.com/api/ad-server/ads/",
+                    "description": "VTEX Network server."
+                }
+            ],
+            "post": {
+                "summary": "Get banner information",
+                "description": "Retrieves banner information. Applicable to non-VTEX stores integrating with VTEX Ad Network with targeting.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [authentication](https:\/\/developers.vtex.com\/docs\/guides\/authentication) or [permissions](https:\/\/help.vtex.com\/en\/tutorial\/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "tags": [
+                    "Banner"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "description": "Banner request body.",
+                                "required": [
+                                    "accountName",
+                                    "adUnit",
+                                    "channel",
+                                    "count",
+                                    "placement",
+                                    "userId"
+                                ],
+                                "properties": {
+                                    "accountName": {
+                                        "type": "string",
+                                        "description": "Merchant's account name. It should be the same as the account name registered at VTEX.",
+                                        "example": "apiexamples"
+                                    },
+                                    "adUnit": {
+                                        "type": "string",
+                                        "description": "Ad unit, which refers to the ad type.",
+                                        "example": "billboard"
+                                    },
+                                    "channel": {
+                                        "type": "string",
+                                        "description": "Specifies if it is a mobile or web client.",
+                                        "enum": [
+                                            "website",
+                                            "android",
+                                            "ios",
+                                            "msite",
+                                            "whatsapp"
+                                        ],
+                                        "example": "website"
+                                    },
+                                    "count": {
+                                        "type": "number",
+                                        "description": "Product count.",
+                                        "example": 2
+                                    },
+                                    "placement": {
+                                        "type": "string",
+                                        "description": "Refers to where the ad is shown on the site.",
+                                        "enum": [
+                                            "top_search",
+                                            "middle_search",
+                                            "home_shelf",
+                                            "pdp_shelf",
+                                            "search_shelf",
+                                            "cart_shelf",
+                                            "plp_shelf"
+                                        ],
+                                        "example": "top_search"
+                                    },
+                                    "userId": {
+                                        "type": "string",
+                                        "description": "User ID.",
+                                        "example": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Banner response body.",
+                                    "properties": {
+                                        "adRequestId": {
+                                            "type": "string",
+                                            "description": "Ad request ID."
+                                        },
+                                        "adResponseId": {
+                                            "type": "string",
+                                            "description": "Ad response ID."
+                                        },
+                                        "banners": {
+                                            "type": "array",
+                                            "description": "Banners information.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Banner information.",
+                                                "properties": {
+                                                    "adUnit": {
+                                                        "type": "string",
+                                                        "description": "Ad unit."
+                                                    },
+                                                    "advertiserName": {
+                                                        "type": "string",
+                                                        "description": "Advertiser name."
+                                                    },
+                                                    "bannerId": {
+                                                        "type": "string",
+                                                        "description": "Banner ID."
+                                                    },
+                                                    "bannerImageId": {
+                                                        "type": "string",
+                                                        "description": "Banner image ID."
+                                                    },
+                                                    "campaignId": {
+                                                        "type": "string",
+                                                        "description": "Campaign ID."
+                                                    },
+                                                    "height": {
+                                                        "type": "number",
+                                                        "description": "Banner height."
+                                                    },
+                                                    "width": {
+                                                        "type": "number",
+                                                        "description": "Banner width."
+                                                    },
+                                                    "imageUrl": {
+                                                        "type": "string",
+                                                        "description": "Banner image URL."
+                                                    },
+                                                    "targetUrl": {
+                                                        "type": "string",
+                                                        "description": "Banner target URL."
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "adRequestId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                    "adResponseId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                    "banners": [
+                                        {
+                                            "adUnit": "billboard",
+                                            "advertiserName": "string",
+                                            "bannerId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                            "bannerImageId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                            "campaignId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                            "height": 0,
+                                            "width": 0,
+                                            "imageUrl": "string",
+                                            "targetUrl": "string"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -632,6 +1078,42 @@
                     "type": "string",
                     "default": "/",
                     "example": "color/blue"
+                }
+            },
+            "sponsoredCount": {
+                "in": "query",
+                "name": "sponsoredCount",
+                "description": "Amount of sponsored products to be returned in the response.",
+                "schema": {
+                    "type": "string",
+                    "example": "5"
+                }
+            },
+            "products": {
+                "in": "query",
+                "name": "products",
+                "description": "Product IDs separated by `;`. Used only by VTEX Ad Network integrations without targeting, to verify if the informed products are sponsored and sort them based on the merchant's criteria.",
+                "schema": {
+                    "type": "string",
+                    "example": "1;2;3"
+                }
+            },
+            "advertisementPlacement": {
+                "in": "query",
+                "name": "advertisementPlacement",
+                "description": "Advertisement placement.",
+                "schema": {
+                    "type": "string",
+                    "example": "top_search",
+                    "enum": [
+                        "top_search",
+                        "middle_search",
+                        "search_shelf",
+                        "cart_shelf",
+                        "plp_shelf",
+                        "autocomplete",
+                        "homepage"
+                    ]
                 }
             },
             "locale": {
