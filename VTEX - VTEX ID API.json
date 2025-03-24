@@ -678,9 +678,181 @@
             }
         },
         "/api/vtexid/pub/authentication/accesskey/validate": {
-            "post": {}
+            "post": {
+                "tags": [
+                    "Refresh token"
+                ],
+                "summary": "Validate session",
+                "description": "Validates the user session using the access key sent to the user through the [Send access key](#) endpoint.\r\n\r\nThe refresh token (`vid_rt`) is returned in the `Set-Cookie` header. This token is required for the [Refresh token](#) request.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/accountName"
+                    },
+                    {
+                        "$ref": "#/components/parameters/environment"
+                    },
+                    {
+                        "name": "accessKey",
+                        "in": "header",
+                        "description": "Access key sent to the user through the [Send access key](#) endpoint.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "jane@mail.com"
+                        }
+                    },
+                    {
+                        "name": "email",
+                        "in": "query",
+                        "description": "User email.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "jane@mail.com"
+                        }
+                    },
+                    {
+                        "name": "authenticationToken",
+                        "in": "query",
+                        "description": "Authentication token obtained in the [Start authentication](#) request.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "5C8ADD300E10CF878528BCBF8714463DCFBA6F3C4001D9261D71D87017B984FB"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "Set-Cookie": {
+                                "description": "Refresh token.",
+                                "schema": {
+                                    "type": "string",
+                                    "example": "vid_rt=eyJhbGciOiJFUzI1NiIsImtpZCI6IjA1MTZFN0IwMDNFODMxRTg0QkFDOTg2NzBCNUM2QTRERTlBN0RFNkUiLCJ0eXAiOiJqd3QifQ"
+                                }
+                            },
+                            "400": {
+                                "description": "Bad request",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "authStatus": {
+                                                    "type": "string",
+                                                    "description": "Error message, which can be `InvalidEmail` (when the email informed is not valid) or `InvalidToken` (when the token is malformed, expired, or has an invalid signature)."
+                                                },
+                                                "promptMFA": {
+                                                    "type": "boolean",
+                                                    "description": "Indicates whether multi-factor authentication is required."
+                                                },
+                                                "lastAttemptAvailable": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "Number of remaining authentication attempts before the account is locked, or null if not applicable."
+                                                },
+                                                "clientToken": {
+                                                    "type": "string",
+                                                    "nullable": true,
+                                                    "description": "Token provided to the client upon authentication, or null if authentication failed."
+                                                },
+                                                "authCookie": {
+                                                    "type": "string",
+                                                    "nullable": true,
+                                                    "description": "Authentication cookie."
+                                                },
+                                                "accountAuthCookie": {
+                                                    "type": "string",
+                                                    "nullable": true,
+                                                    "description": "Cookie specific to account authentication."
+                                                },
+                                                "expiresIn": {
+                                                    "type": "integer",
+                                                    "description": "Time in seconds until authentication expires."
+                                                },
+                                                "userId": {
+                                                    "type": "string",
+                                                    "nullable": true,
+                                                    "description": "Unique identifier for the authenticated user, or null if authentication failed."
+                                                },
+                                                "phoneNumber": {
+                                                    "type": "string",
+                                                    "nullable": true,
+                                                    "description": "User's phone number associated with the account, or null if not available."
+                                                },
+                                                "scope": {
+                                                    "type": "string",
+                                                    "nullable": true,
+                                                    "description": "Authentication scope granted, or null if not applicable."
+                                                }
+                                            }
+                                        },
+                                        "example": {
+                                            "authStatus": "InvalidEmail",
+                                            "promptMFA": false,
+                                            "lastAttemptAvailable": null,
+                                            "clientToken": null,
+                                            "authCookie": null,
+                                            "accountAuthCookie": null,
+                                            "expiresIn": 0,
+                                            "userId": null,
+                                            "phoneNumber": null,
+                                            "scope": null
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         },
-        "/api/vtexid/refreshtoken/webstore": {}
+        "/api/vtexid/refreshtoken/webstore": {
+            "post": {
+                "tags": [
+                    "Refresh token"
+                ],
+                "summary": "Refresh token",
+                "description": "Generates a new auth token.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "name": "vid_rt",
+                        "in": "cookie",
+                        "description": "Refresh token obtained in the [Validate session](#) request.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjA1MTZFN0IwMDNFODMxRTg0QkFDOTg2NzBCNUM2QTRERTlBN0RFNkUiLCJ0eXAiOiJqd3QifQ"
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/accountName"
+                    },
+                    {
+                        "$ref": "#/components/parameters/environment"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
     },
     "components": {
         "parameters": {
