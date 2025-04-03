@@ -1,0 +1,163 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Delivery Promise API",
+        "version": "1.0.0",
+        "description": "VTEX's new solution that allows customers to view only the products they can buy, considering both product availability and valid shipping methods."
+    },
+    "servers": [
+        {
+            "url": "https://{accountName}.{environment}.com.br/api",
+            "variables": {
+                "accountName": {
+                    "default": "yourAccount"
+                },
+                "environment": {
+                    "default": "vtex"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/delivery-promises/external-sellers/{sellerId}/products": {
+            "put": {
+                "summary": "Update product availability",
+                "description": "Notifies VTEX of changes in product availability and delivery promises.",
+                "parameters": [
+                    {
+                        "name": "sellerId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The seller’s ID registered in the marketplace."
+                    },
+                    {
+                        "name": "an",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The account name receiving the notification."
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "itemId": {
+                                            "type": "string",
+                                            "description": "The SKU ID of the item."
+                                        },
+                                        "productId": {
+                                            "type": "string",
+                                            "description": "The product ID."
+                                        },
+                                        "availability": {
+                                            "type": "integer",
+                                            "description": "Total available items."
+                                        },
+                                        "promises": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "availability": {
+                                                        "type": "integer",
+                                                        "description": "Available items for this delivery promise."
+                                                    },
+                                                    "deliveryChannel": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "delivery",
+                                                            "pickup-in-point"
+                                                        ],
+                                                        "description": "Delivery channel type."
+                                                    },
+                                                    "deliveryZoneIds": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        },
+                                                        "description": "Delivery zones where the item is available."
+                                                    },
+                                                    "deliveryInfo": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string",
+                                                                "description": "ID of the delivery method."
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "description": "Display name of the delivery method."
+                                                            },
+                                                            "deliveryTime": {
+                                                                "type": "string",
+                                                                "description": "Estimated delivery time in dd.hh:mm:ss format."
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Request accepted successfully."
+                    },
+                    "400": {
+                        "description": "Bad request: Invalid JSON or non-registered items."
+                    },
+                    "401": {
+                        "description": "Unauthorized: Invalid app key/token."
+                    },
+                    "403": {
+                        "description": "Forbidden: Inadequate permissions."
+                    },
+                    "404": {
+                        "description": "Not found: Seller ID not found."
+                    },
+                    "429": {
+                        "description": "Too many requests: Request limit exceeded."
+                    },
+                    "500": {
+                        "description": "Internal server error: Unexpected application failure."
+                    }
+                },
+                "security": [
+                    {
+                        "appKey": [],
+                        "appToken": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey"
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken"
+            }
+        }
+    }
+}
