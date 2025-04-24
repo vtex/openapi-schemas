@@ -2,6 +2,22 @@
 
 This documentation comprises VTEX's public APIs as OpenAPI 3.0 JSON schemas. Files are automatically synced with VTEX's Developer Portal [API Reference page](https://developers.vtex.com/docs/api-reference) and can be imported to Postman following [these instructions](https://learning.postman.com/docs/postman/collections/working-with-openAPI/).
 
+## Table of Contents
+
+- [Contributing with the documentation](#contributing-with-the-documentation)
+- [Code of Conduct](#code-of-conduct)
+- [API Slug Mapping](#api-slug-mapping)
+- [VTEX APIs](#vtex-apis)
+- [Requisites](#requisites)
+  - [Servers](#servers)
+  - [Authentication](#authentication)
+    - [Security schemes](#security-schemes)
+    - [Security requirement](#security-requirement)
+  - [Adding a new file](#adding-a-new-file)
+- [GitHub Actions](#github-actions)
+  - [Spectral Linter](#spectral-linter)
+  - [Postman Collection Converter](#postman-collection-converter)
+
 ## Contributing with the documentation
 
 Please check our [Contributing Guide](CONTRIBUTING.md) for more information about how to contribute with this repository.
@@ -159,3 +175,36 @@ The `security` object we use at VTEX is:
 ### Adding a new file
 
 After creating a file for a new API reference in this repository, read [this step-by-step](https://github.com/vtexdocs/dev-portal-content#how-to-publish-a-new-api-reference-and-add-it-to-navigation) to publish it on our Developer Portal.
+
+## GitHub Actions
+
+This repository uses GitHub Actions for automated workflows that help maintain code quality and generate necessary artifacts. Below are the details of each action:
+
+### Spectral Linter
+
+**Source File:** `.github/workflows/linter.yml`
+
+**Summary:** This action runs Spectral to lint OpenAPI specification files when pull requests are created or updated. It helps maintain consistency and quality in API specifications.
+
+**Trigger Conditions:**
+- On pull request creation or update
+
+**Dependencies:**
+- `actions/checkout@v4`: Checks out the repository code
+- `mshick/add-pr-comment@v2`: Adds automated comments to pull requests
+- `stoplightio/spectral-action@v0.8.10`: Runs the Spectral linter on OpenAPI files
+
+### Postman Collection Converter
+
+**Source File:** `.github/workflows/portman.yml`
+
+**Summary:** This action automatically converts OpenAPI specifications to Postman Collections when changes are made to JSON files in pull requests targeting the master branch.
+
+**Trigger Conditions:**
+- On pull request to master branch
+
+**Dependencies:**
+- `actions/checkout@v2`: Checks out the repository code
+- `actions/setup-node@v2`: Sets up Node.js environment
+- `@apideck/portman`: NPM package for converting OpenAPI specs to Postman collections
+- `ad-m/github-push-action@v0.6.0`: Pushes generated files back to the repository
