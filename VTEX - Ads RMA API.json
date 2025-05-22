@@ -1,0 +1,373 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "version": "1.0.0",
+        "title": "VTEX Ads - RMA API",
+        "description": "API for retrieving ads in VTEX Ads Retail Media."
+    },
+    "servers": [
+        {
+            "url": "https://newtail-media.newtail.com.br",
+            "description": "VTEX Ads Retail Media API Server"
+        }
+    ],
+    "paths": {
+        "/v1/rma/{publisher_id}": {
+            "post": {
+                "tags": [
+                    "Retrieving Ads"
+                ],
+                "summary": "Get ads",
+                "description": "Retrieve Product and Banner ad formats based on context and placements.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "publisher_id",
+                        "in": "path",
+                        "description": "Publisher identifier provided by your account manager",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "0d675bf6-03f6-4b81-9617-e79dffddc3ab"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "session_id",
+                                    "context",
+                                    "placements"
+                                ],
+                                "properties": {
+                                    "session_id": {
+                                        "type": "string",
+                                        "description": "Unique identifier for a user session. Must contain only alphanumeric characters.",
+                                        "example": "f361661f5986477990092a34562f18347"
+                                    },
+                                    "user_id": {
+                                        "type": "string",
+                                        "description": "Unique identifier for the user. Must contain only alphanumeric characters.",
+                                        "example": "6a746448cf5942bcaa3da426844ad115"
+                                    },
+                                    "store_id": {
+                                        "type": "string",
+                                        "description": "Filters ads based on the store's inventory. If not provided, ads with any available inventory will be returned.",
+                                        "example": "1"
+                                    },
+                                    "context": {
+                                        "type": "string",
+                                        "description": "Context where the ad will be displayed.",
+                                        "example": "search",
+                                        "enum": ["home", "category", "search", "product_page", "brand_page", "digital_signage"]
+                                    },
+                                    "term": {
+                                        "type": "string",
+                                        "description": "Search terms used for product searches. Required only in search context.",
+                                        "example": "desodorante"
+                                    },
+                                    "category_name": {
+                                        "type": "string",
+                                        "description": "Name of the category used for targeting. Always provide the full breadcrumb path of the current category. Required only in category context.",
+                                        "example": "Daily Care > Deodorant > Spray"
+                                    },
+                                    "product_sku": {
+                                        "type": "string",
+                                        "description": "SKU ID used for targeting. Required only in product context.",
+                                        "example": "12345"
+                                    },
+                                    "brand_name": {
+                                        "type": "string",
+                                        "description": "Name of the brand to filter products by. Required only in brand context.",
+                                        "example": "Nivea"
+                                    },
+                                    "placements": {
+                                        "type": "object",
+                                        "description": "Placements are used to query multiple ads for different site regions with their own configurations.",
+                                        "additionalProperties": {
+                                            "type": "object",
+                                            "required": [
+                                                "quantity",
+                                                "size",
+                                                "types"
+                                            ],
+                                            "properties": {
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "description": "Number of ads to be returned.",
+                                                    "example": 3
+                                                },
+                                                "size": {
+                                                    "type": "string",
+                                                    "description": "Expected ad size. Important when a region has a predefined size and requires a media asset fitting that size.",
+                                                    "example": "desktop"
+                                                },
+                                                "types": {
+                                                    "type": "array",
+                                                    "description": "Types of ads that can be returned in this request.",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "enum": ["product", "banner", "sponsored_brand", "digital_signage"]
+                                                    },
+                                                    "example": ["banner", "product"]
+                                                },
+                                                "asset_types": {
+                                                    "type": "array",
+                                                    "description": "Accepted media types (valid for banner and sponsored_brands).",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "enum": ["image", "video"]
+                                                    },
+                                                    "example": ["image"]
+                                                },
+                                                "allow_sku_duplications": {
+                                                    "type": "boolean",
+                                                    "description": "Allows the same SKU ads to appear multiple times in the same placement. Default=false.",
+                                                    "example": false
+                                                }
+                                            }
+                                        },
+                                        "example": {
+                                            "placementName1": {
+                                                "quantity": 1,
+                                                "size": "desktop",
+                                                "types": ["banner"]
+                                            },
+                                            "placementName2": {
+                                                "quantity": 2,
+                                                "size": "mobile",
+                                                "types": ["product"]
+                                            }
+                                        }
+                                    },
+                                    "product_attributes": {
+                                        "type": "object",
+                                        "description": "Additional product information. Used when catalog data is incomplete and these details need to be sent during ad queries.",
+                                        "properties": {
+                                            "category_name": {
+                                                "type": "string",
+                                                "description": "Product category.",
+                                                "example": "Daily Care > Deodorant > Spray"
+                                            },
+                                            "brand_name": {
+                                                "type": "string",
+                                                "description": "Product brand.",
+                                                "example": "Dove"
+                                            }
+                                        }
+                                    },
+                                    "channel": {
+                                        "type": "string",
+                                        "description": "Indicates the device type accessing the ad.",
+                                        "example": "site",
+                                        "enum": ["site", "msite", "app"]
+                                    },
+                                    "device_id": {
+                                        "type": "string",
+                                        "description": "Unique device identifier. Required for digital signage.",
+                                        "example": "screen identifier"
+                                    },
+                                    "userAgent": {
+                                        "type": "string",
+                                        "description": "Provides meta-information about the client environment accessing the ad.",
+                                        "example": "App/1.0 (Pixel 6; Android 12.0)"
+                                    },
+                                    "tags": {
+                                        "type": "array",
+                                        "description": "Filters ads that contain at least one of the requested tags. Only works with product campaigns.",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": ["Mega Maio"]
+                                    },
+                                    "skus": {
+                                        "type": "array",
+                                        "description": "SKU filter for querying sponsored products. Note: Only sponsored product campaigns respect this filter.",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": ["12345", "67890"]
+                                    },
+                                    "dedup_campaign_ads": {
+                                        "type": "boolean",
+                                        "description": "Specifies whether results should be deduplicated by campaign, so at most one ad per campaign is returned. Default=false.",
+                                        "example": false
+                                    },
+                                    "dedup_ads": {
+                                        "type": "boolean",
+                                        "description": "Specifies whether results should deduplicate ads across multiple placements (use only when querying multiple placements simultaneously). Default=false.",
+                                        "example": false
+                                    },
+                                    "segmentation": {
+                                        "type": "array",
+                                        "description": "Allows campaign segmentation based on user information.",
+                                        "items": {
+                                            "type": "object",
+                                            "required": [
+                                                "key",
+                                                "values"
+                                            ],
+                                            "properties": {
+                                                "key": {
+                                                    "type": "string",
+                                                    "description": "Type of segmentation.",
+                                                    "enum": ["AGE", "GENDER", "STATE", "CITY", "AUDIENCES"],
+                                                    "example": "STATE"
+                                                },
+                                                "values": {
+                                                    "type": "array",
+                                                    "description": "One or more accepted values.",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "minItems": 1,
+                                                    "example": ["RJ"]
+                                                }
+                                            }
+                                        },
+                                        "example": [
+                                            {
+                                                "key": "STATE",
+                                                "values": ["RJ"]
+                                            },
+                                            {
+                                                "key": "CITY",
+                                                "values": ["Rio de Janeiro"]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "array",
+                                        "description": "List of ads for a specific placement.",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "ad_id": {
+                                                    "type": "string",
+                                                    "description": "Unique identifier of the ad."
+                                                },
+                                                "media_url": {
+                                                    "type": "string",
+                                                    "description": "URL of the image to be displayed."
+                                                },
+                                                "destination_url": {
+                                                    "type": "string",
+                                                    "description": "Destination URL of the ad (not all ads have a destination).",
+                                                    "nullable": true
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "description": "Type of ad.",
+                                                    "enum": ["banner", "product", "sponsored_brand"]
+                                                },
+                                                "seller_id": {
+                                                    "type": "string",
+                                                    "description": "Identifier of the seller.",
+                                                    "nullable": true
+                                                },
+                                                "click_url": {
+                                                    "type": "string",
+                                                    "description": "URL of the click event beacon for the ad."
+                                                },
+                                                "impression_url": {
+                                                    "type": "string",
+                                                    "description": "URL of the impression event beacon for the ad."
+                                                },
+                                                "view_url": {
+                                                    "type": "string",
+                                                    "description": "URL of the view event beacon for the ad."
+                                                },
+                                                "product_sku": {
+                                                    "type": "string",
+                                                    "description": "Product identifier. Present when ad type is 'product'."
+                                                },
+                                                "product_name": {
+                                                    "type": "string",
+                                                    "description": "Product name. Present when ad type is 'product'."
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "placementName1": [
+                                        {
+                                            "ad_id": "6d2d8837-bf5a-4ba4-90d2-5546cb18d5ce",
+                                            "media_url": "https://cdn.newtail.com.br/retail_media/ads/2023/05/03/f97a938660e56fe38a9c9ade21c27df8-1280x256-red.png",
+                                            "destination_url": null,
+                                            "type": "banner",
+                                            "click_url": "https://newtail-media.newtail.com.br/v1/beacon/click/6d2d8837-bf5a-4ba4-90d2-5546cb18d5ce?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=banner",
+                                            "impression_url": "https://newtail-media.newtail.com.br/v1/beacon/impression/6d2d8837-bf5a-4ba4-90d2-5546cb18d5ce?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=banner",
+                                            "view_url": "https://newtail-media.newtail.com.br/v1/beacon/view/6d2d8837-bf5a-4ba4-90d2-5546cb18d5ce?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=banner"
+                                        }
+                                    ],
+                                    "placementName2": [
+                                        {
+                                            "ad_id": "846fbf5e-6980-4a5e-a4a1-9b2a2dcbafb7",
+                                            "product_sku": "10001236",
+                                            "type": "product",
+                                            "click_url": "https://newtail-media.newtail.com.br/v1/beacon/click/846fbf5e-6980-4a5e-a4a1-9b2a2dcbafb7?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=product",
+                                            "impression_url": "https://newtail-media.newtail.com.br/v1/beacon/impression/846fbf5e-6980-4a5e-a4a1-9b2a2dcbafb7?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=product",
+                                            "view_url": "https://newtail-media.newtail.com.br/v1/beacon/view/846fbf5e-6980-4a5e-a4a1-9b2a2dcbafb7?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=product"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "parameters": {
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Retrieving Ads"
+        }
+    ]
+}
