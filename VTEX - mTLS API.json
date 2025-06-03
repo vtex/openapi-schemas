@@ -1,0 +1,174 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "version": "1.0",
+        "title": "mTLS API",
+        "description": "The Mutual Transport Layer Security (mTLS) API enables merchants to manage SSL certificates for mutual TLS authentication with VTEX services. This API supports the creation and revocation of certificates signed by VTEX's internal Certificate Authority (CA).\n\nWith this API you can:\n- Generate signed certificates for merchant applications.\n- Revoke certificates that are no longer needed or have been compromised.\n\n>❗When generating a Certificate Signing Request (CSR), you must use OpenSSL version 3.0.0 or higher.\n\n## Index\n\n### Certificate Management\n- `POST` [Sign certificate](https://developers.vtex.com/docs/api-reference/mtls-api#post-/api/edge/private-certificates/sign): Request a certificate signed by VTEX's CA.\n- `DELETE` [Revoke certificate](https://developers.vtex.com/docs/api-reference/mtls-api#delete-/api/edge/private-certificates/-serialNumber-): Revoke a previously issued certificate.\n\n## Common parameters\n\n| Parameter name | Description | Type |\n|-|-|-|\n| `{accountName}` | Name of the VTEX account. Used as part of the URL. | Server variable |\n| `{environment}` | Environment to use. Used as part of the URL. The default value is `vtexcommercestable`. | Server variable     |\n| `X-VTEX-API-AppKey` | Unique identifier of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys). | Authentication header |\n| `X-VTEX-API-AppToken` | Secret token of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys). | Authentication header |\n| `VtexIdclientAutCookie` | [User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours. | Authentication header |"
+    },
+    "servers": [
+        {
+            "url": "https://{accountName}.{environment}.com.br",
+            "description": "VTEX server URL.",
+            "variables": {
+                "accountName": {
+                    "description": "Name of the VTEX account. Used as part of the URL.",
+                    "default": "apiexamples"
+                },
+                "environment": {
+                    "description": "Environment to use. Used as part of the URL.",
+                    "enum": [
+                        "vtexcommercestable"
+                    ],
+                    "default": "vtexcommercestable"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/api/edge/private-certificates/sign": {
+            "post": {
+                "tags": [
+                    "Certificate Management"
+                ],
+                "summary": "Sign certificate",
+                "description": "Request a certificate signed by VTEX's Certificate Authority (CA). The request must include a valid Certificate Signing Request (CSR) generated with OpenSSL version 3.0.0 or higher.\n\n>❗ The account making the request must match the `OU` field in the CSR.\n\n## Permissions\n\nAny user or [application key](https://developers.vtex.com/docs/guides/authentication-overview#application-keys) must have the appropriate [License Manager resource](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. This is the applicable resource for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\r\n| CDN API | Certificate management | **Update certificate** | \n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add the resource above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing app keys](https://help.vtex.com/en/tutorial/best-practices-application-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "description": "The CSR (Certificate Signing Request) content.",
+                    "required": true,
+                    "content": {
+                        "text/plain": {
+                            "schema": {
+                                "type": "string",
+                                "description": "The CSR content in PEM format.",
+                                "example": "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string",
+                                    "description": "The signed certificate in PEM format.",
+                                    "example": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - User or application does not have the required permissions."
+                    }
+                }
+            }
+        },
+        "/api/edge/private-certificates/{serialNumber}": {
+            "delete": {
+                "tags": [
+                    "Certificate Management"
+                ],
+                "summary": "Revoke certificate",
+                "description": "Revokes a previously issued certificate based on its serial number. The serial number can be obtained from the certificate using OpenSSL.\n\n## Permissions\n\nAny user or [application key](https://developers.vtex.com/docs/guides/authentication-overview#application-keys) must have the appropriate [License Manager resource](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. This is the applicable resource for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\r\n| CDN API | Certificate management | **Update certificate** | \n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add the resource above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing app keys](https://help.vtex.com/en/tutorial/best-practices-application-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "name": "serialNumber",
+                        "in": "path",
+                        "description": "The serial number of the certificate to be revoked. Both formats are accepted: with (4d:0a:0a:39:36:0b:2e:12:54:dd:b6:ce:57:db:c9:40) or without (4D0A0A39360B2E1254DDB6CE57DBC940) colons.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "4D0A0A39360B2E1254DDB6CE57DBC940"
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Certificate successfully revoked"
+                    },
+                    "403": {
+                        "description": "Forbidden - User or application does not have the required permissions"
+                    },
+                    "404": {
+                        "description": "Certificate not found"
+                    }
+                }
+            }
+        }
+    },
+    "security": [
+        {
+            "appKey": [],
+            "appToken": []
+        },
+        {
+            "VtexIdclientAutCookie": []
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys)."
+            },
+            "VtexIdclientAutCookie": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "VtexIdclientAutCookie",
+                "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
+            }
+        },
+        "parameters": {
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "text/plain"
+                }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "text/plain"
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Certificate Management"
+        }
+    ]
+}
