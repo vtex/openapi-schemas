@@ -1,0 +1,333 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Delivery Promise Notificaton API",
+        "version": "1.0.0",
+        "description": "[Delivery Promise (Beta)](https://help.vtex.com/en/tutorial/delivery-promise-beta--p9EJH9GgxL0JceA6dBswd) is VTEX's new solution that allows customers to view only the products they can buy in their shopping experience, considering both the product availability in the seller inventory and valid shipping methods for their delivery address. The Delivery Promise Notificaton API notifies the VTEX store of the seller's product availability and delivery promises.\r\n\r\n>ℹ️ This feature is in beta, which means that we are working to improve it. If you have any questions, please contact our [Support Center](https://support.vtex.com/hc/en-us/requests).\r\n\r\n### Delivery Promise\r\n\r\n- `PUT` [Update product availability](https://developers.vtex.com/docs/api-reference/delivery-promise-notification-api#put-/delivery-promises/external-sellers/-sellerId-/products)"
+    },
+    "servers": [
+        {
+            "url": "https://{accountName}.{environment}.com.br/api",
+            "description": "VTEX server URL.",
+            "variables": {
+                "accountName": {
+                    "description": "Name of the VTEX account. Used as part of the URL.",
+                    "default": "apiexamples"
+                },
+                "environment": {
+                    "description": "Environment to use. Used as part of the URL.",
+                    "enum": ["vtexcommercestable"],
+                    "default": "vtexcommercestable"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/delivery-promises/external-sellers/{sellerId}/products": {
+            "put": {
+                "summary": "Update external product availability",
+                "description": "Notifies VTEX of changes in product availability and delivery promises.\r\n\r\n## Permissions\r\n\r\nAny user or [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Delivery Promises | ProductAvailability | **Notify Product Availability Change** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>\u2757 To prevent integrations from having excessive permissions, consider the [best practices for managing app keys](https://help.vtex.com/en/tutorial/best-practices-application-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "tags": ["Delivery Promise"],
+                "parameters": [
+                    {
+                        "name": "sellerId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The seller’s ID registered in the marketplace."
+                    },
+                    {
+                        "name": "an",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The account name receiving the notification."
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "itemId",
+                                    "availability",
+                                    "promises"
+                                ],
+                                "properties": {
+                                    "itemId": {
+                                        "type": "string",
+                                        "description": "Unique identifier of the binding of the seller with the SKU."
+                                    },
+                                    "productId": {
+                                        "type": "string",
+                                        "description": "The product unique identifier."
+                                    },
+                                    "availability": {
+                                        "type": "integer",
+                                        "description": "Total available items."
+                                    },
+                                    "promises": {
+                                        "type": "array",
+                                        "description": "List of delivery promises.",
+                                        "items": {
+                                            "type": "object",
+                                            "description": "Delivery promise details.",
+                                            "required": [
+                                                "availability",
+                                                "deliveryChannel"
+                                            ],
+                                            "properties": {
+                                                "availability": {
+                                                    "type": "integer",
+                                                    "description": "Available items for this delivery promise."
+                                                },
+                                                "deliveryChannel": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "delivery",
+                                                        "pickup-in-point"
+                                                    ],
+                                                    "description": "Delivery channel type."
+                                                },
+                                                "deliveryZoneIds": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "description": "Delivery zone unique identifier."
+                                                    },
+                                                    "description": "List of delivery zones where the item is available."
+                                                },
+                                                "deliveryInfo": {
+                                                    "type": "object",
+                                                    "description": "Delivery method details.",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "description": "Unique identifier of the delivery method."
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "description": "Display name of the delivery method."
+                                                        },
+                                                        "deliveryTime": {
+                                                            "type": "string",
+                                                            "description": "Estimated delivery time in `dd.hh:mm:ss` format. For example, `2.02:00:00` represents an estimated delivery time of two days and two hours."
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "example": {
+                                "itemId": "B",
+                                "productId": "XPTO",
+                                "availability": 7,
+                                "promises": [
+                                    {
+                                        "availability": 5,
+                                        "deliveryChannel": "delivery",
+                                        "deliveryZoneIds": ["rio-de-janeiro"],
+                                        "deliveryInfo": {
+                                            "id": "Prime5Days",
+                                            "name": "Same Week",
+                                            "deliveryTime": "5.00:00:00"
+                                        }
+                                    },
+                                    {
+                                        "availability": 3,
+                                        "deliveryChannel": "pickup-in-point",
+                                        "deliveryZoneIds": ["rio-de-janeiro"],
+                                        "deliveryInfo": {
+                                            "id": "Prime2Day",
+                                            "name": "Same Day",
+                                            "deliveryTime": "1.00:00:00"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Accept",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "description": "Empty schema."
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "description": "Error message. Invalid JSON or non-registered items."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "error": "Invalid JSON or non-registered items."
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "description": "Error message. Invalid API key or token."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "error": "Invalid API key or token."
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "description": "Error message. Inadequate permissions."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "error": "Inadequate permissions."
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "description": "Error message. Request limit exceeded."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "error": "Request limit exceeded."
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "description": "Error message. Unexpected application failure."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "error": "Unexpected application failure."
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "appKey": [],
+                        "appToken": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys)."
+            },
+            "VtexIdclientAutCookie": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "VtexIdclientAutCookie",
+                "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
+            }
+        },
+        "parameters": {
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "default": "application/json"
+                }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "default": "application/json"
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Delivery Promise",
+            "description": "Operations related to the delivery promise."
+        }
+    ]
+}
