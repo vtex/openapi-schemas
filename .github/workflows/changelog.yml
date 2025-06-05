@@ -1,0 +1,39 @@
+name: Generate Changelog
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  generate-changelog:
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: npm install
+        
+      - name: Set Git identity
+        run: |
+          git config user.name "julia-rabello"
+          git config user.email "julia.alexandre@vtex.com"
+
+      - name: Generate Changelog
+        run:
+            npm run release
+
+      - name: Push Changes
+        run: |
+          git push --follow-tags origin main
