@@ -1,0 +1,227 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "version": "1.0",
+        "title": "Punchout API",
+        "description": "The Punchout API enables seamless login integration between external procurement systems and VTEX. It allows procurement system users to authenticate into VTEX without manual credential management, using a secure OAuth2-like flow with real-time credential validation and one-time tokens (OTT).\r\n\r\n>ℹ️ Learn more about [Punchout login integration](https://developers.vtex.com/docs/guides/punchout-login-integration).\r\n\r\n## Endpoint requirements\r\n\r\n- OTTs expire after 5 minutes and are single-use to prevent replay attacks.\r\n- Return URLs are validated against authorized hosts to prevent open redirect vulnerabilities.\r\n\r\n## Index\r\n\r\n### Punchout login\r\n\r\n-  `POST` [Start VTEX user punchout flow](https://developers.vtex.com/docs/api-reference/api-reference/punchout-api#post-/api/authenticator/punchout/start)\r\n\r\n- `POST` [Start pre-authenticated user punchout flow](https://developers.vtex.com/docs/api-reference/punchout-api#post-/api/authenticator/punchout/authenticated/start)"
+    },
+    "servers": [
+        {
+            "url": "https://{storeHost}",
+            "description": "Store host URL.",
+            "variables": {
+                "storeHost": {
+                    "description": "Store host.",
+                    "default": "apiexamples.com"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/api/authenticator/punchout/start": {
+            "post": {
+                "tags": [
+                    "Punchout login"
+                ],
+                "summary": "Start VTEX user punchout flow",
+                "description": "Initiates punchout authentication for an existing VTEX user.\r\n\r\nThis endpoint validates the credentials against the VTEX user database. If validation succeeds, it returns a URL containing a one-time token that can be accessed via web browser to start an authenticated session. \r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https:\/\/help.vtex.com\/en\/tutorial\/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "returnURL",
+                        "in": "query",
+                        "description": "Optional path that will complement the `storeHost` for post-authentication redirection. This value is validated against a list of authorized hosts to prevent open redirect vulnerabilities.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "/path"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "username",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "username": {
+                                        "type": "string",
+                                        "description": "Username of an existing VTEX user.",
+                                        "example": "user@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "description": "Password of the VTEX user.",
+                                        "example": "mypassword123"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK - Credentials validated successfully and OTT generated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "url": {
+                                            "type": "string",
+                                            "description": "URL containing a one-time token for authentication. The token expires after 5 minutes and is single-use to prevent replay attacks.",
+                                            "example": "https://apiexamples.com/intermediate-path?token=xyz123"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Invalid request payload or missing required fields"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid credentials"
+                    },
+                    "403": {
+                        "description": "Forbidden - Provided returnURL does not match an authorized host"
+                    }
+                }
+            }
+        },
+        "/api/authenticator/punchout/authenticated/start": {
+            "post": {
+                "tags": [
+                    "Punchout login"
+                ],
+                "security": [
+                    {
+                        "appKey": [],
+                        "appToken": []
+                    }
+                ],
+                "summary": "Start pre-authenticated user punchout flow",
+                "description": "Initiates punchout authentication for a pre-authenticated user who doesn't exist in VTEX. This endpoint must be called with valid API key/token credentials associated with a role with the CanPunchout permission. No password validation is performed as the caller is pre-authenticated.\r\n\r\n## Permissions\r\n\r\nAny user or [application key](https://developers.vtex.com/docs/guides/authentication-overview#application-keys) must have the appropriate [License Manager resource](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. This is the applicable resource for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Vtex ID | Identity Providers | **CanPunchout** |\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing app keys](https://help.vtex.com/en/tutorial/best-practices-application-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "returnURL",
+                        "in": "query",
+                        "description": "Optional path that will complement the `storeHost` for post-authentication redirection. This value is validated against a list of authorized hosts to prevent open redirect vulnerabilities.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "/path"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "username"
+                                ],
+                                "properties": {
+                                    "username": {
+                                        "type": "string",
+                                        "description": "Username for the procurement system user, who doesn't need to be an existing VTEX user.",
+                                        "example": "procurement.user@example.com"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK - Authentication successful and OTT generated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "url": {
+                                            "type": "string",
+                                            "description": "URL containing a one-time token for authentication. The token expires after 5 minutes and is single-use to prevent replay attacks.",
+                                            "example": "https://apiexamples.com/intermediate-path?token=xyz123"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Invalid request payload or missing required fields"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid API credentials"
+                    },
+                    "403": {
+                        "description": "Forbidden - Provided returnURL does not match an authorized host or missing CanPunchout permission"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys)."
+            }
+        },
+        "parameters": {
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Punchout login"
+        }
+    ]
+}
