@@ -1,0 +1,588 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "version": "1.0",
+        "title": "Storefront Permissions API",
+        "description": "The Storefront Permissions API allows management of user roles and resource access within the VTEX License Manager in the Storefront. You can assign roles to users, revoke roles, check user access to resources, remove users, and fetch user roles and details.\r\n\r\n> [!IMPORTANT]\r\n> The necessary VTEX credentials and authentication methods can be found in the [Authentication docs](https://github.com/vtex/vtex-id/blob/master/docs/authentication.md).\r\n> All endpoints require the Storefront Permissions feature to be enabled for your account. Requests to accounts without this feature enabled will receive a 403 Forbidden response.\r\n\r\n## Endpoint requirements\r\n\r\n- All endpoints require authentication.\r\n- Storefront Permissions feature must be enabled.\r\n- Some endpoints require specific permissions (see endpoint descriptions).\r\n\r\n## Index\r\n\r\n### Storefront Permissions\r\n\r\n- `POST` [Assign Role to User](#post-/api/license-manager/storefront/roles/assign): Assigns a specific role to a user.\r\n- `DELETE` [Revoke Role from User](#delete-/api/license-manager/storefront/roles/revoke): Removes a specific role from a user.\r\n- `GET` [Check User Resource Access](#get-/api/license-manager/storefront/users/{userId}/resources/{resourceKey}/granted): Verifies if a user has access to a resource.\r\n- `DELETE` [Remove User](#delete-/api/license-manager/storefront/remove/users/{userId}): Removes a user from the Storefront system.\r\n- `GET` [Fetch User Roles by ID](#get-/api/license-manager/storefront/users/{userId}/roles): Retrieves all roles assigned to a user by user ID.\r\n- `GET` [Fetch User Roles by Email](#get-/api/license-manager/storefront/users/{email}/roles): Retrieves all roles assigned to a user by email.\r\n- `GET` [Fetch User Details](#get-/api/license-manager/storefront/users/{userId}): Retrieves user details by ID.\r\n\r\n## Common parameters\r\n\r\n| Parameter name | Description | Type |\r\n| - | - | - |\r\n| `X-VTEX-API-AppKey` | Unique identifier of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys). | Authentication header. |\r\n| `X-VTEX-API-AppToken` | Secret token of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys). | Authentication header. |\r\n| `VtexIdclientAutCookie` | [User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours. | Authentication header. |"
+    },
+    "servers": [
+        {
+            "url": "https://{accountName}.{environment}.com.br",
+            "description": "VTEX server URL.",
+            "variables": {
+                "accountName": {
+                    "description": "Name of the VTEX account. Used as part of the URL.",
+                    "default": "apiexamples"
+                },
+                "environment": {
+                    "description": "Environment to use. Used as part of the URL.",
+                    "enum": [
+                        "vtexcommercestable"
+                    ],
+                    "default": "vtexcommercestable"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/api/license-manager/storefront/roles/assign": {
+            "post": {
+                "tags": [
+                    "Storefront Permissions"
+                ],
+                "summary": "Assign role to user",
+                "description": "Assigns a specific role to a user. Requires `Edit_Storefront_User_Permissions`.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "roleId",
+                                    "userId"
+                                ],
+                                "properties": {
+                                    "roleId": {
+                                        "type": "integer",
+                                        "description": "Role ID to assign."
+                                    },
+                                    "userId": {
+                                        "type": "string",
+                                        "description": "GUID of the user to assign the role to."
+                                    }
+                                }
+                            },
+                            "example": {
+                                "roleId": 123,
+                                "userId": "00000000-0000-0000-0000-000000000000"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Boolean indicating if the role was successfully assigned.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "boolean"
+                                },
+                                "example": true
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or invalid request parameters.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid authentication.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - Feature not enabled for this account.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/license-manager/storefront/roles/revoke": {
+            "delete": {
+                "tags": [
+                    "Storefront Permissions"
+                ],
+                "summary": "Revoke role from user",
+                "description": "Removes a specific role from a user. Requires `Edit_Storefront_User_Permissions`.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "roleId",
+                                    "userId"
+                                ],
+                                "properties": {
+                                    "roleId": {
+                                        "type": "integer",
+                                        "description": "Role ID to revoke."
+                                    },
+                                    "userId": {
+                                        "type": "string",
+                                        "description": "GUID of the user to revoke the role from."
+                                    }
+                                }
+                            },
+                            "example": {
+                                "roleId": 123,
+                                "userId": "00000000-0000-0000-0000-000000000000"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Boolean indicating if the role was successfully revoked.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "boolean"
+                                },
+                                "example": true
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or invalid request parameters.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid authentication.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - Feature not enabled for this account.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/license-manager/storefront/users/{userId}/resources/{resourceKey}/granted": {
+            "get": {
+                "tags": [
+                    "Storefront Permissions"
+                ],
+                "summary": "Check user resource access",
+                "description": "Verifies if a specific user has access to a particular resource. Requires `View_Storefront_User_Permissions`.",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "description": "GUID of the user to check."
+                    },
+                    {
+                        "name": "resourceKey",
+                        "in": "path",
+                        "required": true,
+                        "description": "Resource key as registered in Storefront."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Boolean indicating if the user has access to the resource.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "boolean"
+                                },
+                                "example": true
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or invalid path parameters.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid authentication.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - Feature not enabled for this account.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/license-manager/storefront/remove/users/{userId}": {
+            "delete": {
+                "tags": [
+                    "Storefront Permissions"
+                ],
+                "summary": "Remove user",
+                "description": "Removes a user completely from the Storefront system, including all their role assignments. Requires `Edit_Storefront_User_Permissions`.",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "description": "GUID of the user to remove."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Boolean indicating if the user was successfully removed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "boolean"
+                                },
+                                "example": true
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or invalid path parameters.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid authentication.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - Feature not enabled for this account.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/license-manager/storefront/users/{userId}/roles": {
+            "get": {
+                "tags": [
+                    "Storefront Permissions"
+                ],
+                "summary": "Fetch user roles by ID",
+                "description": "Retrieves all roles assigned to a specific user by user ID. Requires `View_Storefront_User_Permissions`.",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "description": "GUID of the user to retrieve roles for."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User roles response.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "UserId": {
+                                            "type": "string",
+                                            "description": "User GUID."
+                                        },
+                                        "Email": {
+                                            "type": "string",
+                                            "description": "User email address."
+                                        },
+                                        "Roles": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "description": "List of roles assigned to the user."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "UserId": "f0a15a42-f7fc-4b09-a9ab-fabc76d9f332",
+                                    "Email": "lekas53942@hazhab.com",
+                                    "Roles": [
+                                        "Organizational Unit Admin"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or invalid path parameters.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid authentication.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - Feature not enabled for this account.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/license-manager/storefront/users/{email}/roles": {
+            "get": {
+                "tags": [
+                    "Storefront Permissions"
+                ],
+                "summary": "Fetch user roles by email",
+                "description": "Retrieves all roles assigned to a specific user by email. Requires `View_Storefront_User_Permissions`.",
+                "parameters": [
+                    {
+                        "name": "email",
+                        "in": "path",
+                        "required": true,
+                        "description": "Email address of the user to retrieve roles for."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User roles response.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "UserId": {
+                                            "type": "string",
+                                            "description": "User GUID."
+                                        },
+                                        "Email": {
+                                            "type": "string",
+                                            "description": "User email address."
+                                        },
+                                        "Roles": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "description": "List of roles assigned to the user."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "UserId": "f0a15a42-f7fc-4b09-a9ab-fabc76d9f332",
+                                    "Email": "lekas53942@hazhab.com",
+                                    "Roles": [
+                                        "Organizational Unit Admin"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or invalid path parameters.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid authentication.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - Feature not enabled for this account.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/license-manager/storefront/users/{userId}": {
+            "get": {
+                "tags": [
+                    "Storefront Permissions"
+                ],
+                "summary": "Fetch user details",
+                "description": "Retrieves user details by ID. Requires `View_Storefront_User_Permissions`.",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "description": "GUID of the user to retrieve."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User details response.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "UserId": {
+                                            "type": "string",
+                                            "description": "User GUID."
+                                        },
+                                        "Email": {
+                                            "type": "string",
+                                            "description": "User email address."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "UserId": "f0a15a42-f7fc-4b09-a9ab-fabc76d9f332",
+                                    "Email": "lekas53942@hazhab.com"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or invalid path parameters.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid authentication.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - Feature not enabled for this account.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "security": [
+        {
+            "appKey": [],
+            "appToken": []
+        },
+        {
+            "VtexIdclientAutCookie": []
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys)."
+            },
+            "VtexIdclientAutCookie": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "VtexIdclientAutCookie",
+                "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Storefront Permissions"
+        }
+    ]
+}
