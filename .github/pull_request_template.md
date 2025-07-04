@@ -6,4 +6,5 @@
 ### Changelog
 Do not forget to update your changes to our Developer Portal's changelog. Did you create a release note?
 - [ ] Yes, I already created a release note about this change.
-- [ ] No, but I am going to.
+- [ ] Not yet, but I'm going to.
+- [ ] No, it's just a fix.
