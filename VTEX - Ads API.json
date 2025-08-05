@@ -1,0 +1,1704 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "version": "1.0.0",
+        "title": "VTEX Ads API",
+        "description": "VTEX Ads API enables merchants and marketplace operators to manage advertising campaigns, track ad performance, and synchronize product catalogs within the VTEX Ads platform.\n\nThis API is primarily used by:\n- Store developers\n- Marketplace operators\n- Integration partners\n- Advertising platform providers\n\nWith this API you can:\n- Synchronize product catalog information for advertising\n- Track ad impressions, clicks, and views\n- Monitor conversion events and campaign performance\n- Manage ad inventory and placements\n\n>ℹ️ Learn more about [VTEX Ads](https://developers.vtex.com/docs/guides).\n\n## Before you begin\n\n- For bulk operations (product and inventory updates), there is a limit of 500 objects per request and 3 simultaneous requests.\n- The event URLs for tracking impressions, clicks and views must not be constructed manually — always use the URLs provided from `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-).\n- Authentication is required using `X-App-Id` and `X-Api-Key` headers. Contact [our support](https://help.vtex.com/en/tutorial/how-does-vtex-support-work--2eAT5EyOvaLoHdIWDVaxC3) to obtain these credentials.\n\n## Index\n\n### Catalog synchronization\n- `POST` [Synchronize product information](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/product/bulk/products)\n- `POST` [Synchronize inventory information](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/product/bulk/inventories)\n\n### Ads events notification\n- `POST` [Track ad impressions](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/beacon/impression/-ad_id-)\n- `POST` [Track ad clicks](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/beacon/click/-ad_id-)\n- `POST` [Track ad views](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/beacon/view/-ad_id-)\n- `POST` [Track conversions](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/beacon/conversion)\n\n### Ads\n- `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-)\n\n| Parameter name | Description | Type |\n| - | - | - |\n| `X-App-Id` | Publisher App ID for authorization | Authentication header |\n| `X-Api-Key` | API Key for authentication | Authentication header |\n| `Content-Type` | Type of the content being sent | Request header |\n| `Accept` | HTTP Client Negotiation Accept Header | Request header |"
+    },
+    "servers": [
+        {
+            "url": "https://api-retail-media.newtail.com.br",
+            "description": "VTEX Ads server."
+        },
+        {
+            "url": "https://events.newtail-media.newtail.com.br",
+            "description": "VTEX Ads events server."
+        }
+    ],
+    "paths": {
+        "/product/bulk/products": {
+            "servers": [
+                {
+                    "url": "https://api.ads.vtex.com",
+                    "description": "VTEX Ads server."
+                }
+            ],
+            "post": {
+                "tags": [
+                    "Catalog synchronization"
+                ],
+                "summary": "Synchronize product information",
+                "description": "Update the basic product data in the VTEX Ads catalog.\r\n\r\n>⚠️ For each batch insert/update, a maximum of 500 objects per request and 3 simultaneous requests are allowed.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "maxItems": 500,
+                                "items": {
+                                    "type": "object",
+                                    "required": [
+                                        "product_sku",
+                                        "name",
+                                        "url",
+                                        "categories"
+                                    ],
+                                    "properties": {
+                                        "product_sku": {
+                                            "type": "string",
+                                            "description": "Product ID to be inserted/updated.",
+                                            "example": "teste-120210"
+                                        },
+                                        "parent_sku": {
+                                            "type": "string",
+                                            "description": "SKU of the parent product.",
+                                            "example": "teste-120200"
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "description": "Product name.",
+                                            "example": "TechBrand Laptop Model X-15 4GB 256GB SSD 15.6\" Display Windows 11 - Gray"
+                                        },
+                                        "url": {
+                                            "type": "string",
+                                            "description": "URL of the product page.",
+                                            "example": "https://www.example.com/product/4100903080"
+                                        },
+                                        "image_url": {
+                                            "type": "string",
+                                            "description": "URL of the main product image.",
+                                            "example": "https://images.example.com/products/01/00/img/4100903/1/4100903143_1GG.jpg"
+                                        },
+                                        "categories": {
+                                            "type": "array",
+                                            "description": "List of product categories.",
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "example": [
+                                                "Computers",
+                                                "Laptops"
+                                            ]
+                                        },
+                                        "brand": {
+                                            "type": "string",
+                                            "description": "Product brand.",
+                                            "example": "TechBrand"
+                                        },
+                                        "gtins": {
+                                            "type": "array",
+                                            "description": "Barcode. For Newtail Network, sending the GTIN is mandatory.",
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "example": [
+                                                "7898915633481"
+                                            ]
+                                        },
+                                        "metadata": {
+                                            "type": "object",
+                                            "description": "Additional product information.",
+                                            "example": {
+                                                "key": "value1"
+                                            }
+                                        },
+                                        "tags": {
+                                            "type": "array",
+                                            "description": "List of product tags to be used later during ad queries (`POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-)) to better contextualize the search. Maximum of 10 tags per SKU, maximum of 64 characters per tag. Only works for Product campaigns.",
+                                            "maxItems": 10,
+                                            "items": {
+                                                "type": "string",
+                                                "maxLength": 64
+                                            },
+                                            "example": [
+                                                "Special Sale"
+                                            ]
+                                        },
+                                        "sellers": {
+                                            "type": "array",
+                                            "description": "List of sellers who sell that product. Maximum of 64 characters per seller.",
+                                            "items": {
+                                                "type": "string",
+                                                "maxLength": 64
+                                            },
+                                            "example": [
+                                                "Seller1",
+                                                "Seller2"
+                                            ]
+                                        }
+                                    }
+                                }
+                            },
+                            "example": [
+                                {
+                                    "product_sku": "sample-120210",
+                                    "name": "TechBrand Laptop Model X-15 4GB 256GB SSD 15.6\" Display Windows 11 - Gray",
+                                    "url": "https://www.example.com/product/4100903080",
+                                    "image_url": "https://images.example.com/products/01/00/img/4100903/1/4100903143_1GG.jpg",
+                                    "categories": [
+                                        "Computers",
+                                        "Laptops"
+                                    ],
+                                    "brand": "TechBrand",
+                                    "gtins": [
+                                        "7898915633481"
+                                    ],
+                                    "metadata": {
+                                        "key": "value1"
+                                    }
+                                },
+                                {
+                                    "product_sku": "sample-120211",
+                                    "name": "TechBrand Laptop Model X-15 4GB 256GB SSD 15.6\" Display Windows 11 - Gray",
+                                    "url": "https://www.example.com/product/4100903080",
+                                    "categories": [
+                                        "Computers",
+                                        "Laptops"
+                                    ],
+                                    "brand": "TechBrand",
+                                    "gtins": [
+                                        "7898915633481"
+                                    ],
+                                    "tags": [
+                                        "Mega Maio"
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "messages": {
+                                            "type": "array",
+                                            "description": "List of messages from the server.",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "messages": [
+                                        "products will be processed soon"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "instancePath": {
+                                                "type": "string",
+                                                "description": "Path to the property with the error."
+                                            },
+                                            "schemaPath": {
+                                                "type": "string",
+                                                "description": "Path to the schema validation rule."
+                                            },
+                                            "keyword": {
+                                                "type": "string",
+                                                "description": "Validation keyword."
+                                            },
+                                            "params": {
+                                                "type": "object",
+                                                "description": "Error parameters."
+                                            },
+                                            "message": {
+                                                "type": "string",
+                                                "description": "Error message."
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "instancePath": "/0",
+                                        "schemaPath": "#/items/required",
+                                        "keyword": "required",
+                                        "params": {
+                                            "missingProperty": "product_sku"
+                                        },
+                                        "message": "must have required property 'product_sku'"
+                                    },
+                                    {
+                                        "instancePath": "/0",
+                                        "schemaPath": "#/items/required",
+                                        "keyword": "required",
+                                        "params": {
+                                            "missingProperty": "url"
+                                        },
+                                        "message": "must have required property 'url'"
+                                    },
+                                    {
+                                        "instancePath": "/0",
+                                        "schemaPath": "#/items/required",
+                                        "keyword": "required",
+                                        "params": {
+                                            "missingProperty": "image_url"
+                                        },
+                                        "message": "must have required property 'image_url'"
+                                    },
+                                    {
+                                        "instancePath": "/1",
+                                        "schemaPath": "#/items/required",
+                                        "keyword": "required",
+                                        "params": {
+                                            "missingProperty": "name"
+                                        },
+                                        "message": "must have required property 'name'"
+                                    },
+                                    {
+                                        "instancePath": "/1",
+                                        "schemaPath": "#/items/required",
+                                        "keyword": "required",
+                                        "params": {
+                                            "missingProperty": "url"
+                                        },
+                                        "message": "must have required property 'url'"
+                                    },
+                                    {
+                                        "instancePath": "/1",
+                                        "schemaPath": "#/items/required",
+                                        "keyword": "required",
+                                        "params": {
+                                            "missingProperty": "image_url"
+                                        },
+                                        "message": "must have required property 'image_url'"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/product/bulk/inventories": {
+            "servers": [
+                {
+                    "url": "https://api.ads.vtex.com",
+                    "description": "VTEX Ads server."
+                }
+            ],
+            "post": {
+                "tags": [
+                    "Catalog synchronization"
+                ],
+                "summary": "Synchronize inventory information",
+                "description": "Update inventory information, which defines the price, promotional price, and product availability.\r\n\r\n>⚠️ For each batch insert/update, a maximum of 500 objects per request and 3 simultaneous requests are allowed.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "maxItems": 500,
+                                "items": {
+                                    "type": "object",
+                                    "required": [
+                                        "product_sku",
+                                        "price",
+                                        "promotional_price",
+                                        "is_available"
+                                    ],
+                                    "properties": {
+                                        "product_sku": {
+                                            "type": "string",
+                                            "description": "Product ID to be inserted/updated.",
+                                            "example": "120210"
+                                        },
+                                        "store_id": {
+                                            "type": "string",
+                                            "description": "Store identifier. If store_id is not sent, it will be interpreted that this inventory information will be used for all stores.",
+                                            "example": "1"
+                                        },
+                                        "price": {
+                                            "type": "number",
+                                            "description": "Product price.",
+                                            "format": "double",
+                                            "example": 18.20
+                                        },
+                                        "promotional_price": {
+                                            "type": "number",
+                                            "description": "Promotional price of the product. Use 0 to remove the promotional price.",
+                                            "format": "double",
+                                            "example": 16.32
+                                        },
+                                        "is_available": {
+                                            "type": "boolean",
+                                            "description": "Indicates if the product is available for sale.",
+                                            "example": true
+                                        }
+                                    }
+                                }
+                            },
+                            "example": [
+                                {
+                                    "product_sku": "120210",
+                                    "store_id": "1",
+                                    "price": 18.20,
+                                    "promotional_price": 16.32,
+                                    "is_available": true
+                                },
+                                {
+                                    "product_sku": "120212",
+                                    "price": 18.20,
+                                    "promotional_price": 0,
+                                    "is_available": true
+                                }
+                            ]
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "messages": {
+                                            "type": "array",
+                                            "description": "List of messages from the server.",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "messages": [
+                                        "inventories will be processed soon"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "instancePath": {
+                                                "type": "string",
+                                                "description": "Path to the property with the error."
+                                            },
+                                            "schemaPath": {
+                                                "type": "string",
+                                                "description": "Path to the schema validation rule."
+                                            },
+                                            "keyword": {
+                                                "type": "string",
+                                                "description": "Validation keyword."
+                                            },
+                                            "params": {
+                                                "type": "object",
+                                                "description": "Error parameters."
+                                            },
+                                            "message": {
+                                                "type": "string",
+                                                "description": "Error message."
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "instancePath": "/0",
+                                        "schemaPath": "#/items/required",
+                                        "keyword": "required",
+                                        "params": {
+                                            "missingProperty": "product_sku"
+                                        },
+                                        "message": "must have required property 'product_sku'"
+                                    },
+                                    {
+                                        "instancePath": "/0",
+                                        "schemaPath": "#/items/required",
+                                        "keyword": "required",
+                                        "params": {
+                                            "missingProperty": "promotional_price"
+                                        },
+                                        "message": "must have required property 'promotional_price'"
+                                    },
+                                    {
+                                        "instancePath": "/0",
+                                        "schemaPath": "#/items/required",
+                                        "keyword": "required",
+                                        "params": {
+                                            "missingProperty": "is_available"
+                                        },
+                                        "message": "must have required property 'is_available'"
+                                    },
+                                    {
+                                        "instancePath": "/1",
+                                        "schemaPath": "#/items/required",
+                                        "keyword": "required",
+                                        "params": {
+                                            "missingProperty": "price"
+                                        },
+                                        "message": "must have required property 'price'"
+                                    },
+                                    {
+                                        "instancePath": "/1",
+                                        "schemaPath": "#/items/required",
+                                        "keyword": "required",
+                                        "params": {
+                                            "missingProperty": "promotional_price"
+                                        },
+                                        "message": "must have required property 'promotional_price'"
+                                    },
+                                    {
+                                        "instancePath": "/1",
+                                        "schemaPath": "#/items/required",
+                                        "keyword": "required",
+                                        "params": {
+                                            "missingProperty": "is_available"
+                                        },
+                                        "message": "must have required property 'is_available'"
+                                    },
+                                    {
+                                        "instancePath": "/2",
+                                        "schemaPath": "#/items/required",
+                                        "keyword": "required",
+                                        "params": {
+                                            "missingProperty": "price"
+                                        },
+                                        "message": "must have required property 'price'"
+                                    },
+                                    {
+                                        "instancePath": "/2",
+                                        "schemaPath": "#/items/required",
+                                        "keyword": "required",
+                                        "params": {
+                                            "missingProperty": "is_available"
+                                        },
+                                        "message": "must have required property 'is_available'"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/beacon/impression/{ad_id}": {
+            "servers": [
+                {
+                    "url": "https://events-api.ads.vtex.com",
+                    "description": "VTEX Ads events server."
+                }
+            ],
+            "post": {
+                "tags": [
+                    "Ads events notification"
+                ],
+                "summary": "Track ad impressions",
+                "description": "Track when an ad is rendered or visible to a user. The event URL must not be constructed manually — always use the URL provided from `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-).\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "ad_id",
+                        "in": "path",
+                        "description": "Unique identifier of the ad.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "4a94bc6e-7db1-425f-8430-cb4d17488b3b"
+                        }
+                    },
+                    {
+                        "name": "pos",
+                        "in": "query",
+                        "description": "Position of the ad.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "1"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "session_id"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "type": "string",
+                                        "description": "Unique identifier for the user within your platform. It must remain consistent across all user touchpoints and sales channels.",
+                                        "example": "6f92d1e9-00b6-4f8b-9645-faeab321e1cc"
+                                    },
+                                    "session_id": {
+                                        "type": "string",
+                                        "description": "The user's session identifier. It has a limited lifespan and helps determine when a user transitions from anonymous to identified state.",
+                                        "example": "5898b8d1-c250-4bb5-931b-8b9d0ee7b499"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "messages": {
+                                            "type": "array",
+                                            "description": "List of messages from the server.",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "messages": [
+                                        "impression will be processed soon"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "instancePath": {
+                                                "type": "string",
+                                                "description": "Path to the property with the error."
+                                            },
+                                            "keyword": {
+                                                "type": "string",
+                                                "description": "Validation keyword."
+                                            },
+                                            "message": {
+                                                "type": "string",
+                                                "description": "Error message."
+                                            },
+                                            "params": {
+                                                "type": "object",
+                                                "description": "Error parameters."
+                                            },
+                                            "schemaPath": {
+                                                "type": "string",
+                                                "description": "Path to the schema validation rule."
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "instancePath": "",
+                                        "keyword": "required",
+                                        "message": "must have required property 'user_id'",
+                                        "params": {
+                                            "missingProperty": "user_id"
+                                        },
+                                        "schemaPath": "#/anyOf/0/required"
+                                    },
+                                    {
+                                        "instancePath": "",
+                                        "keyword": "required",
+                                        "message": "must have required property 'session_id'",
+                                        "params": {
+                                            "missingProperty": "session_id"
+                                        },
+                                        "schemaPath": "#/anyOf/1/required"
+                                    },
+                                    {
+                                        "instancePath": "",
+                                        "keyword": "anyOf",
+                                        "message": "must match a schema in anyOf",
+                                        "params": {},
+                                        "schemaPath": "#/anyOf"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/beacon/click/{ad_id}": {
+            "servers": [
+                {
+                    "url": "https://events-api.ads.vtex.com",
+                    "description": "VTEX Ads events server."
+                }
+            ],
+            "post": {
+                "tags": [
+                    "Ads events notification"
+                ],
+                "summary": "Track ad clicks",
+                "description": "Track when a user clicks on an ad. The event URL must not be constructed manually — always use the URL provided from `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-).\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "ad_id",
+                        "in": "path",
+                        "description": "Unique identifier of the ad.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "4a94bc6e-7db1-425f-8430-cb4d17488b3b"
+                        }
+                    },
+                    {
+                        "name": "pos",
+                        "in": "query",
+                        "description": "Position of the ad.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "1"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "session_id"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "type": "string",
+                                        "description": "Unique identifier for the user within your platform. It must remain consistent across all user touchpoints and sales channels.",
+                                        "example": "6f92d1e9-00b6-4f8b-9645-faeab321e1cc"
+                                    },
+                                    "session_id": {
+                                        "type": "string",
+                                        "description": "The user's session identifier. It has a limited lifespan and helps determine when a user transitions from anonymous to identified state.",
+                                        "example": "5898b8d1-c250-4bb5-931b-8b9d0ee7b499"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "messages": {
+                                            "type": "array",
+                                            "description": "List of messages from the server.",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "messages": [
+                                        "click will be processed soon"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "instancePath": {
+                                                "type": "string",
+                                                "description": "Path to the property with the error."
+                                            },
+                                            "keyword": {
+                                                "type": "string",
+                                                "description": "Validation keyword."
+                                            },
+                                            "message": {
+                                                "type": "string",
+                                                "description": "Error message."
+                                            },
+                                            "params": {
+                                                "type": "object",
+                                                "description": "Error parameters."
+                                            },
+                                            "schemaPath": {
+                                                "type": "string",
+                                                "description": "Path to the schema validation rule."
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "instancePath": "",
+                                        "keyword": "required",
+                                        "message": "must have required property 'user_id'",
+                                        "params": {
+                                            "missingProperty": "user_id"
+                                        },
+                                        "schemaPath": "#/anyOf/0/required"
+                                    },
+                                    {
+                                        "instancePath": "",
+                                        "keyword": "required",
+                                        "message": "must have required property 'session_id'",
+                                        "params": {
+                                            "missingProperty": "session_id"
+                                        },
+                                        "schemaPath": "#/anyOf/1/required"
+                                    },
+                                    {
+                                        "instancePath": "",
+                                        "keyword": "anyOf",
+                                        "message": "must match a schema in anyOf",
+                                        "params": {},
+                                        "schemaPath": "#/anyOf"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/beacon/view/{ad_id}": {
+            "servers": [
+                {
+                    "url": "https://events-api.ads.vtex.com",
+                    "description": "VTEX Ads events server."
+                }
+            ],
+            "post": {
+                "tags": [
+                    "Ads events notification"
+                ],
+                "summary": "Track ad views",
+                "description": "Track views for banner ads. The event URL must not be constructed manually — always use the URL provided from `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-).\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "ad_id",
+                        "in": "path",
+                        "description": "Unique identifier of the ad.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "4a94bc6e-7db1-425f-8430-cb4d17488b3b"
+                        }
+                    },
+                    {
+                        "name": "pos",
+                        "in": "query",
+                        "description": "Position of the ad.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "1"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "session_id"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "type": "string",
+                                        "description": "Unique identifier for the user within your platform. It must remain consistent across all user touchpoints and sales channels.",
+                                        "example": "6f92d1e9-00b6-4f8b-9645-faeab321e1cc"
+                                    },
+                                    "session_id": {
+                                        "type": "string",
+                                        "description": "The user's session identifier. It has a limited lifespan and helps determine when a user transitions from anonymous to identified state.",
+                                        "example": "5898b8d1-c250-4bb5-931b-8b9d0ee7b499"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "messages": {
+                                            "type": "array",
+                                            "description": "List of messages from the server.",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "messages": [
+                                        "view will be processed soon"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "instancePath": {
+                                                "type": "string",
+                                                "description": "Path to the property with the error."
+                                            },
+                                            "keyword": {
+                                                "type": "string",
+                                                "description": "Validation keyword."
+                                            },
+                                            "message": {
+                                                "type": "string",
+                                                "description": "Error message."
+                                            },
+                                            "params": {
+                                                "type": "object",
+                                                "description": "Error parameters."
+                                            },
+                                            "schemaPath": {
+                                                "type": "string",
+                                                "description": "Path to the schema validation rule."
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "instancePath": "",
+                                        "keyword": "required",
+                                        "message": "must have required property 'user_id'",
+                                        "params": {
+                                            "missingProperty": "user_id"
+                                        },
+                                        "schemaPath": "#/anyOf/0/required"
+                                    },
+                                    {
+                                        "instancePath": "",
+                                        "keyword": "required",
+                                        "message": "must have required property 'session_id'",
+                                        "params": {
+                                            "missingProperty": "session_id"
+                                        },
+                                        "schemaPath": "#/anyOf/1/required"
+                                    },
+                                    {
+                                        "instancePath": "",
+                                        "keyword": "anyOf",
+                                        "message": "must match a schema in anyOf",
+                                        "params": {},
+                                        "schemaPath": "#/anyOf"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/beacon/conversion": {
+            "servers": [
+                {
+                    "url": "https://events-api.ads.vtex.com",
+                    "description": "VTEX Ads events server."
+                }
+            ],
+            "post": {
+                "tags": [
+                    "Ads events notification"
+                ],
+                "summary": "Track conversions",
+                "description": "Track when an ad leads to a purchase. This endpoint is used to notify one or more orders (sending them in a batch).\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "publisher_id",
+                                    "user_id",
+                                    "session_id",
+                                    "order_id",
+                                    "email_hashed",
+                                    "items",
+                                    "created_at"
+                                ],
+                                "properties": {
+                                    "channel": {
+                                        "type": "string",
+                                        "description": "Identifies the conversion channel.",
+                                        "example": "ecommerce"
+                                    },
+                                    "publisher_id": {
+                                        "type": "string",
+                                        "description": "Publisher identification.",
+                                        "example": "xxx"
+                                    },
+                                    "user_id": {
+                                        "type": "string",
+                                        "description": "User identification.",
+                                        "example": "6f92d1e9-00b6-4f8b-9645-faeab321e1cc"
+                                    },
+                                    "session_id": {
+                                        "type": "string",
+                                        "description": "Identification of the session in which the purchase was made, to help attribute the sale to ads.",
+                                        "example": "5898b8d1-c250-4bb5-931b-8b9d0ee7b499"
+                                    },
+                                    "order_id": {
+                                        "type": "string",
+                                        "description": "Order identification.",
+                                        "example": "123"
+                                    },
+                                    "email_hashed": {
+                                        "type": "string",
+                                        "description": "Hashed user email identification.",
+                                        "example": "xyz"
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "description": "List of items purchased in the order.",
+                                        "items": {
+                                            "type": "object",
+                                            "description": "Order item information",
+                                            "required": [
+                                                "sku",
+                                                "quantity",
+                                                "price",
+                                                "promotional_price"
+                                            ],
+                                            "properties": {
+                                                "sku": {
+                                                    "type": "string",
+                                                    "description": "Product SKU identification.",
+                                                    "example": "12221"
+                                                },
+                                                "quantity": {
+                                                    "type": "number",
+                                                    "description": "Quantity of product purchased.",
+                                                    "format": "double",
+                                                    "example": 1
+                                                },
+                                                "price": {
+                                                    "type": "number",
+                                                    "description": "Product 'from' price. Not multiplied by quantity.",
+                                                    "format": "double",
+                                                    "example": 2000
+                                                },
+                                                "promotional_price": {
+                                                    "type": "number",
+                                                    "description": "Product 'for' price (discounted price). Not multiplied by quantity.",
+                                                    "format": "double",
+                                                    "example": 1899
+                                                },
+                                                "seller_id": {
+                                                    "type": "string",
+                                                    "description": "Seller ID identification.",
+                                                    "example": "1234",
+                                                    "nullable": true
+                                                },
+                                                "product_id": {
+                                                    "type": "string",
+                                                    "description": "Unique product identification that includes the SKU.",
+                                                    "example": "4567"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "created_at": {
+                                        "type": "string",
+                                        "description": "Order creation date in ISO 8601 format (UTC - no timezone).",
+                                        "example": "2023-01-01T09:20:00Z"
+                                    },
+                                    "is_company": {
+                                        "type": "boolean",
+                                        "description": "Indicates if the sale was made to an individual or a company. Default=false.",
+                                        "example": false
+                                    },
+                                    "gender": {
+                                        "type": "string",
+                                        "description": "Indicates customer's gender. F: female, M: male, O: other. Default=null.",
+                                        "enum": [
+                                            "F",
+                                            "M",
+                                            "O",
+                                            null
+                                        ],
+                                        "example": "M"
+                                    },
+                                    "uf": {
+                                        "type": "string",
+                                        "description": "Indicates the state where the order was made.",
+                                        "example": "SP"
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "description": "Indicates the name of the city where the customer bought.",
+                                        "example": "São Paulo"
+                                    },
+                                    "phone_hashed": {
+                                        "type": "string",
+                                        "description": "Hashed user phone number identification.",
+                                        "example": "abc123"
+                                    },
+                                    "social_id_hashed": {
+                                        "type": "string",
+                                        "description": "Hashed user CPF or CNPJ identification.",
+                                        "example": "def456"
+                                    },
+                                    "first_name_hashed": {
+                                        "type": "string",
+                                        "description": "Hashed user first name identification.",
+                                        "example": "ghi789"
+                                    },
+                                    "last_name_hashed": {
+                                        "type": "string",
+                                        "description": "Hashed user last name identification.",
+                                        "example": "jkl012"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "messages": {
+                                            "type": "array",
+                                            "description": "List of messages from the server.",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "messages": [
+                                        "conversion will be processed soon"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "instancePath": {
+                                                "type": "string",
+                                                "description": "Path to the property with the error."
+                                            },
+                                            "keyword": {
+                                                "type": "string",
+                                                "description": "Validation keyword."
+                                            },
+                                            "message": {
+                                                "type": "string",
+                                                "description": "Error message."
+                                            },
+                                            "params": {
+                                                "type": "object",
+                                                "description": "Error parameters."
+                                            },
+                                            "schemaPath": {
+                                                "type": "string",
+                                                "description": "Path to the schema validation rule."
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "instancePath": "",
+                                        "keyword": "required",
+                                        "message": "must have required property 'user_id'",
+                                        "params": {
+                                            "missingProperty": "user_id"
+                                        },
+                                        "schemaPath": "#/required"
+                                    },
+                                    {
+                                        "instancePath": "",
+                                        "keyword": "required",
+                                        "message": "must have required property 'order_id'",
+                                        "params": {
+                                            "missingProperty": "order_id"
+                                        },
+                                        "schemaPath": "#/required"
+                                    },
+                                    {
+                                        "instancePath": "",
+                                        "keyword": "required",
+                                        "message": "must have required property 'publisher_id'",
+                                        "params": {
+                                            "missingProperty": "publisher_id"
+                                        },
+                                        "schemaPath": "#/required"
+                                    },
+                                    {
+                                        "instancePath": "",
+                                        "keyword": "required",
+                                        "message": "must have required property 'items'",
+                                        "params": {
+                                            "missingProperty": "items"
+                                        },
+                                        "schemaPath": "#/required"
+                                    },
+                                    {
+                                        "instancePath": "",
+                                        "keyword": "required",
+                                        "message": "must have required property 'created_at'",
+                                        "params": {
+                                            "missingProperty": "created_at"
+                                        },
+                                        "schemaPath": "#/required"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/rma/{publisher_id}": {
+            "servers": [
+                {
+                    "url": "https://api.ads.vtex.com",
+                    "description": "VTEX Ads server."
+                }
+            ],
+            "post": {
+                "tags": [
+                    "Ads"
+                ],
+                "summary": "Get ads",
+                "description": "Retrieve Product and Banner ad formats based on context and placements.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "publisher_id",
+                        "in": "path",
+                        "description": "Publisher identifier provided by your account manager",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "0d675bf6-03f6-4b81-9617-e79dffddc3ab"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "session_id",
+                                    "context",
+                                    "placements"
+                                ],
+                                "properties": {
+                                    "session_id": {
+                                        "type": "string",
+                                        "description": "Unique identifier for a user session. Must contain only alphanumeric characters.",
+                                        "example": "f361661f5986477990092a34562f18347"
+                                    },
+                                    "user_id": {
+                                        "type": "string",
+                                        "description": "Unique identifier for the user. Must contain only alphanumeric characters.",
+                                        "example": "6a746448cf5942bcaa3da426844ad115"
+                                    },
+                                    "store_id": {
+                                        "type": "string",
+                                        "description": "Filters ads based on the store's inventory. If not provided, ads with any available inventory will be returned.",
+                                        "example": "1"
+                                    },
+                                    "context": {
+                                        "type": "string",
+                                        "description": "Context where the ad will be displayed.",
+                                        "example": "search",
+                                        "enum": [
+                                            "home",
+                                            "category",
+                                            "search",
+                                            "product_page",
+                                            "brand_page",
+                                            "digital_signage"
+                                        ]
+                                    },
+                                    "term": {
+                                        "type": "string",
+                                        "description": "Search terms used for product searches. Required only in search context.",
+                                        "example": "desodorante"
+                                    },
+                                    "category_name": {
+                                        "type": "string",
+                                        "description": "Name of the category used for targeting. Always provide the full breadcrumb path of the current category. Required only in category context.",
+                                        "example": "Daily Care > Deodorant > Spray"
+                                    },
+                                    "product_sku": {
+                                        "type": "string",
+                                        "description": "SKU ID used for targeting. Required only in product context.",
+                                        "example": "12345"
+                                    },
+                                    "brand_name": {
+                                        "type": "string",
+                                        "description": "Name of the brand to filter products by. Required only in brand context.",
+                                        "example": "Nivea"
+                                    },
+                                    "placements": {
+                                        "type": "object",
+                                        "description": "Placements are used to query multiple ads for different site regions with their own configurations.",
+                                        "additionalProperties": {
+                                            "type": "object",
+                                            "required": [
+                                                "quantity",
+                                                "size",
+                                                "types"
+                                            ],
+                                            "properties": {
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "description": "Number of ads to be returned.",
+                                                    "example": 3
+                                                },
+                                                "size": {
+                                                    "type": "string",
+                                                    "description": "Expected ad size. Important when a region has a predefined size and requires a media asset fitting that size.",
+                                                    "example": "desktop"
+                                                },
+                                                "types": {
+                                                    "type": "array",
+                                                    "description": "Types of ads that can be returned in this request.",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "product",
+                                                            "banner",
+                                                            "sponsored_brand",
+                                                            "digital_signage"
+                                                        ]
+                                                    },
+                                                    "example": [
+                                                        "banner",
+                                                        "product"
+                                                    ]
+                                                },
+                                                "asset_types": {
+                                                    "type": "array",
+                                                    "description": "Accepted media types (valid for banner and sponsored_brands).",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "image",
+                                                            "video"
+                                                        ]
+                                                    },
+                                                    "example": [
+                                                        "image"
+                                                    ]
+                                                },
+                                                "allow_sku_duplications": {
+                                                    "type": "boolean",
+                                                    "description": "Allows the same SKU ads to appear multiple times in the same placement. Default=false.",
+                                                    "example": false
+                                                }
+                                            }
+                                        },
+                                        "example": {
+                                            "placementName1": {
+                                                "quantity": 1,
+                                                "size": "desktop",
+                                                "types": [
+                                                    "banner"
+                                                ]
+                                            },
+                                            "placementName2": {
+                                                "quantity": 2,
+                                                "size": "mobile",
+                                                "types": [
+                                                    "product"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "product_attributes": {
+                                        "type": "object",
+                                        "description": "Additional product information. Used when catalog data is incomplete and these details need to be sent during ad queries.",
+                                        "properties": {
+                                            "category_name": {
+                                                "type": "string",
+                                                "description": "Product category.",
+                                                "example": "Daily Care > Deodorant > Spray"
+                                            },
+                                            "brand_name": {
+                                                "type": "string",
+                                                "description": "Product brand.",
+                                                "example": "Dove"
+                                            }
+                                        }
+                                    },
+                                    "channel": {
+                                        "type": "string",
+                                        "description": "Indicates the device type accessing the ad.",
+                                        "example": "site",
+                                        "enum": [
+                                            "site",
+                                            "msite",
+                                            "app"
+                                        ]
+                                    },
+                                    "device_id": {
+                                        "type": "string",
+                                        "description": "Unique device identifier. Required for digital signage.",
+                                        "example": "screen identifier"
+                                    },
+                                    "userAgent": {
+                                        "type": "string",
+                                        "description": "Provides meta-information about the client environment accessing the ad.",
+                                        "example": "App/1.0 (Pixel 6; Android 12.0)"
+                                    },
+                                    "tags": {
+                                        "type": "array",
+                                        "description": "Filters ads that contain at least one of the requested tags. Only works with product campaigns.",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "Mega Maio"
+                                        ]
+                                    },
+                                    "skus": {
+                                        "type": "array",
+                                        "description": "SKU filter for querying sponsored products. Note: Only sponsored product campaigns respect this filter.",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "12345",
+                                            "67890"
+                                        ]
+                                    },
+                                    "dedup_campaign_ads": {
+                                        "type": "boolean",
+                                        "description": "Specifies whether results should be deduplicated by campaign, so at most one ad per campaign is returned. Default=false.",
+                                        "example": false
+                                    },
+                                    "dedup_ads": {
+                                        "type": "boolean",
+                                        "description": "Specifies whether results should deduplicate ads across multiple placements (use only when querying multiple placements simultaneously). Default=false.",
+                                        "example": false
+                                    },
+                                    "segmentation": {
+                                        "type": "array",
+                                        "description": "Allows campaign segmentation based on user information.",
+                                        "items": {
+                                            "type": "object",
+                                            "required": [
+                                                "key",
+                                                "values"
+                                            ],
+                                            "properties": {
+                                                "key": {
+                                                    "type": "string",
+                                                    "description": "Type of segmentation.",
+                                                    "enum": [
+                                                        "AGE",
+                                                        "GENDER",
+                                                        "STATE",
+                                                        "CITY",
+                                                        "AUDIENCES"
+                                                    ],
+                                                    "example": "STATE"
+                                                },
+                                                "values": {
+                                                    "type": "array",
+                                                    "description": "One or more accepted values.",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "minItems": 1,
+                                                    "example": [
+                                                        "RJ"
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        "example": [
+                                            {
+                                                "key": "STATE",
+                                                "values": [
+                                                    "RJ"
+                                                ]
+                                            },
+                                            {
+                                                "key": "CITY",
+                                                "values": [
+                                                    "Rio de Janeiro"
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "array",
+                                        "description": "List of ads for a specific placement.",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "ad_id": {
+                                                    "type": "string",
+                                                    "description": "Unique identifier of the ad."
+                                                },
+                                                "media_url": {
+                                                    "type": "string",
+                                                    "description": "URL of the image to be displayed."
+                                                },
+                                                "destination_url": {
+                                                    "type": "string",
+                                                    "description": "Destination URL of the ad (not all ads have a destination).",
+                                                    "nullable": true
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "description": "Type of ad.",
+                                                    "enum": [
+                                                        "banner",
+                                                        "product",
+                                                        "sponsored_brand"
+                                                    ]
+                                                },
+                                                "seller_id": {
+                                                    "type": "string",
+                                                    "description": "Identifier of the seller.",
+                                                    "nullable": true
+                                                },
+                                                "click_url": {
+                                                    "type": "string",
+                                                    "description": "URL of the click event beacon for the ad."
+                                                },
+                                                "impression_url": {
+                                                    "type": "string",
+                                                    "description": "URL of the impression event beacon for the ad."
+                                                },
+                                                "view_url": {
+                                                    "type": "string",
+                                                    "description": "URL of the view event beacon for the ad."
+                                                },
+                                                "product_sku": {
+                                                    "type": "string",
+                                                    "description": "Product identifier. Present when ad type is 'product'."
+                                                },
+                                                "product_name": {
+                                                    "type": "string",
+                                                    "description": "Product name. Present when ad type is 'product'."
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "placementName1": [
+                                        {
+                                            "ad_id": "6d2d8837-bf5a-4ba4-90d2-5546cb18d5ce",
+                                            "media_url": "https://cdn.newtail.com.br/retail_media/ads/2023/05/03/f97a938660e56fe38a9c9ade21c27df8-1280x256-red.png",
+                                            "destination_url": null,
+                                            "type": "banner",
+                                            "click_url": "https://events-api.ads.vtex.com/v1/beacon/click/6d2d8837-bf5a-4ba4-90d2-5546cb18d5ce?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=banner",
+                                            "impression_url": "https://events-api.ads.vtex.com/v1/beacon/impression/6d2d8837-bf5a-4ba4-90d2-5546cb18d5ce?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=banner",
+                                            "view_url": "https://events-api.ads.vtex.com/v1/beacon/view/6d2d8837-bf5a-4ba4-90d2-5546cb18d5ce?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=banner"
+                                        }
+                                    ],
+                                    "placementName2": [
+                                        {
+                                            "ad_id": "846fbf5e-6980-4a5e-a4a1-9b2a2dcbafb7",
+                                            "product_sku": "10001236",
+                                            "type": "product",
+                                            "click_url": "https://events-api.ads.vtex.com/v1/beacon/click/846fbf5e-6980-4a5e-a4a1-9b2a2dcbafb7?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=product",
+                                            "impression_url": "https://events-api.ads.vtex.com/v1/beacon/impression/846fbf5e-6980-4a5e-a4a1-9b2a2dcbafb7?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=product",
+                                            "view_url": "https://events-api.ads.vtex.com/v1/beacon/view/846fbf5e-6980-4a5e-a4a1-9b2a2dcbafb7?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=product"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "X-App-Id": {
+                "name": "X-App-Id",
+                "type": "apiKey",
+                "in": "header",
+                "description": "Publisher App ID for authorization."
+            },
+            "X-Api-Key": {
+                "name": "X-Api-Key",
+                "type": "apiKey",
+                "in": "header",
+                "description": "API Key for authentication."
+            }
+        },
+        "parameters": {
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            }
+        }
+    },
+    "security": [
+        {
+            "X-App-Id": [],
+            "X-Api-Key": []
+        }
+    ],
+    "tags": [
+        {
+            "name": "Catalog synchronization"
+        },
+        {
+            "name": "Ads events notification"
+        },
+        {
+            "name": "Ads"
+        }
+    ]
+}
