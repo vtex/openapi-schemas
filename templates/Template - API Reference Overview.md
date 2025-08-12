@@ -53,6 +53,6 @@ You can add a table like the example below, going over frequently used parameter
 | - | - | - |
 | `{{accountName}}` | Name of the VTEX account. Used as part of the URL. | Server variable. |
 | `{{environment}` | Environment to use. Used as part of the URL. The default value is `vtexcommercestable`. | Server variable. |
-| `X-VTEX-API-AppKey` | Unique identifier of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys). | Authentication header. Must be used together with `X-VTEX-API-AppToken`. Not necessary when using `VtexIdclientAutCookie`. |
-| `X-VTEX-API-AppToken` | Secret token of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys). | Authentication header. Must be used together with `X-VTEX-API-AppKey`. Not necessary when using `VtexIdclientAutCookie`. |
+| `X-VTEX-API-AppKey` | Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys). | Authentication header. Must be used together with `X-VTEX-API-AppToken`. Not necessary when using `VtexIdclientAutCookie`. |
+| `X-VTEX-API-AppToken` | Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys). | Authentication header. Must be used together with `X-VTEX-API-AppKey`. Not necessary when using `VtexIdclientAutCookie`. |
 | `VtexIdclientAutCookie` | [User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours. | Authentication header. Not necessary when using `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken`. |
