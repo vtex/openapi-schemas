@@ -135,13 +135,13 @@ The security schemes we use are:
         "type": "apiKey",
         "in": "header",
         "name": "X-VTEX-API-AppKey",
-        "description": "Unique identifier of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys)."
+        "description": "Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
     },
     "appToken": {
         "type": "apiKey",
         "in": "header",
         "name": "X-VTEX-API-AppToken",
-        "description": "Secret token of the [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys)."
+        "description": "Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
     },
     "VtexIdclientAutCookie": {
         "type": "apiKey",
