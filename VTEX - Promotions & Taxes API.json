@@ -2407,7 +2407,13 @@
                                     "accumulateWithManualPrice": false,
                                     "type": "regular",
                                     "useNewProgressiveAlgorithm": false,
-                                    "percentualDiscountValueList": []
+                                    "percentualDiscountValueList": [],
+                                    "optIn": {
+                                        "sellers": [
+                                            "seller-id-1",
+                                            "seller-id-2"
+                                        ]
+                                    }
                                 },
                                 "schema": {
                                     "type": "object",
@@ -3112,9 +3118,198 @@
                                                 "type": "number",
                                                 "description": "Percentual discount value."
                                             }
+                                        },
+                                        "optIn": {
+                                            "type": "object",
+                                            "description": "Object defining the sellers that opted in to participate in the promotion. If `null`, the promotion is not restricted by seller opt-in.",
+                                            "nullable": true,
+                                            "properties": {
+                                                "sellers": {
+                                                    "type": "array",
+                                                    "description": "List of seller IDs that opted in to the promotion.",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "description": "Seller ID."
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/rnb/pvt/calculatorconfiguration/{promotionId}/seller-opt": {
+            "post": {
+                "tags": [
+                    "Promotions and taxes"
+                ],
+                "summary": "Seller opt-in or opt-out",
+                "description": "Adds or removes one or more sellers to or from a specified promotion.\r\n\r\n>⚠️ When the first seller opts in to an inactive promotion, it's activated, and when the last seller opts out, it's deactivated.\r\n\r\n\r\n## Permissions\r\n\r\nAny user or [application key](https:\/\/developers.vtex.com\/docs\/guides\/api-authentication-using-application-keys) must have at least one of the appropriate [License Manager resources](https:\/\/help.vtex.com\/en\/tutorial\/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `401` error. These are the applicable resources for this endpoint\r\n\r\n| **Product**             | **Category**                  | **Resource**                          |\r\n| ----------------------- | ----------------------------- | ------------------------------------- |\r\n| Rates and Benefits      | Manage external seller promos | **External_Seller_Promotions**        |",
+                "operationId": "OptSellerInOrOutOfPromotion",
+                "parameters": [
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Type of the content being sent.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "promotionId",
+                        "in": "path",
+                        "description": "The ID of the promotion.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "d8a10358-cbb7-42ae-b020-91e104d997e7"
+                        }
+                    },
+                    {
+                        "name": "an",
+                        "in": "query",
+                        "description": "The VTEX account name that owns the promotion.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "mystore"
+                        }
+                    },
+                    {
+                        "name": "if-Match",
+                        "in": "header",
+                        "description": "Must match the current `lastModified` value of the promotion.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "2025-05-27T14:05:41.7706903Z"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "sellerIds",
+                                    "operation"
+                                ],
+                                "properties": {
+                                    "sellerIds": {
+                                        "type": "array",
+                                        "description": "List of seller IDs that opted in or out to the promotion.",
+                                        "items": {
+                                            "description": "Seller ID.",
+                                            "type": "string",
+                                            "example": "seller-id-1"
+                                        }
+                                    },
+                                    "operation": {
+                                        "type": "string",
+                                        "description": "Operation to perform: `OptIn` or `OptOut`.",
+                                        "enum": [
+                                            "OptIn",
+                                            "OptOut"
+                                        ],
+                                        "example": "OptIn"
+                                    }
+                                }
+                            },
+                            "example": {
+                                "sellerIds": [
+                                    "seller-id-1",
+                                    "seller-id-2"
+                                ],
+                                "operation": "OptIn"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Opt-in or opt-out executed successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "lastModified": {
+                                            "type": "string",
+                                            "description": "Timestamp of the promotion's last modification (UTC)."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "lastModified": "2025-05-27T14:05:41.7706903Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Error message."
+                                },
+                                "example": "The promotion's `IdSellerIsInclusive` field is false, or the promotion is archived/inactive without any opt-in sellers."
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Error message."
+                                },
+                                "example": "The user or app key does not have the Manage External Seller Promotions role."
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Precondition Failed",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Error message."
+                                },
+                                "example": "The `If-Match` header does not match the promotion's current `lastModified`."
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Error message."
+                                },
+                                "example": "No unarchived promotion exists with the provided ID."
                             }
                         }
                     }
@@ -3269,7 +3464,13 @@
                                 "accumulateWithManualPrice": false,
                                 "type": "regular",
                                 "useNewProgressiveAlgorithm": false,
-                                "percentualDiscountValueList": []
+                                "percentualDiscountValueList": [],
+                                "optIn": {
+                                    "sellers": [
+                                        "seller-id-1",
+                                        "seller-id-2"
+                                    ]
+                                }
                             },
                             "schema": {
                                 "type": "object",
@@ -4086,6 +4287,22 @@
                                             "description": "Percentual discount value.",
                                             "example": 10
                                         }
+                                    },
+                                    "optIn": {
+                                        "type": "object",
+                                        "description": "Object defining the sellers that opted in to participate in the promotion. If null, the promotion is not restricted by seller opt-in.",
+                                        "nullable": true,
+                                        "properties": {
+                                            "sellers": {
+                                                "type": "array",
+                                                "description": "List of seller IDs that opted in to the promotion.",
+                                                "items": {
+                                                    "type": "string",
+                                                    "description": "Seller ID.",
+                                                    "example": "seller-id-1"
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -4217,7 +4434,13 @@
                                     "accumulateWithManualPrice": false,
                                     "type": "regular",
                                     "useNewProgressiveAlgorithm": false,
-                                    "percentualDiscountValueList": []
+                                    "percentualDiscountValueList": [],
+                                    "optIn": {
+                                        "sellers": [
+                                            "seller-id-1",
+                                            "seller-id-2"
+                                        ]
+                                    }
                                 },
                                 "schema": {
                                     "type": "object",
@@ -4900,6 +5123,21 @@
                                             "items": {
                                                 "type": "number",
                                                 "description": "Percentual discount value."
+                                            }
+                                        },
+                                        "optIn": {
+                                            "type": "object",
+                                            "description": "Object defining the sellers that opted in to participate in the promotion. If `null`, the promotion is not restricted by seller opt-in.",
+                                            "nullable": true,
+                                            "properties": {
+                                                "sellers": {
+                                                    "type": "array",
+                                                    "description": "List of seller IDs that opted in to the promotion.",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "description": "Seller ID."
+                                                    }
+                                                }
                                             }
                                         }
                                     }
