@@ -114,7 +114,876 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/GetOrderResponse"
+                                    "type": "object",
+                                    "description": "Order with status, timing, items, packages, invoices, and payments.",
+                                    "properties": {
+                                        "orderId": {
+                                            "type": "string",
+                                            "description": "Unique order identifier assigned by the platform."
+                                        },
+                                        "sequence": {
+                                            "type": "string",
+                                            "description": "Sequence number for the order."
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "description": "Order status.",
+                                            "enum": [
+                                                "READY_FOR_HANDLING",
+                                                "READY_FOR_PICKING",
+                                                "PICKING",
+                                                "PARTIAL_COLLECTED",
+                                                "COLLECTED",
+                                                "READY_FOR_PACKING",
+                                                "PACKING",
+                                                "PARTIAL_PACKED",
+                                                "PREPARING_SHIPPING",
+                                                "READY_FOR_SHIPPING",
+                                                "PARTIAL_SHIPPED",
+                                                "SHIPPING",
+                                                "DELIVERED",
+                                                "REJECTED",
+                                                "CANCELED",
+                                                "PAUSED"
+                                            ],
+                                            "minLength": 1
+                                        },
+                                        "createdAt": {
+                                            "type": "string",
+                                            "description": "Order creation date and time  in ISO 8601 format.",
+                                            "format": "date-time"
+                                        },
+                                        "updatedAt": {
+                                            "type": "string",
+                                            "description": "Order last update date and time  in ISO 8601 format.",
+                                            "format": "date-time"
+                                        },
+                                        "shippingEstimatedDateMin": {
+                                            "type": "string",
+                                            "description": "Minimum estimated shipping date and time in ISO 8601 format.",
+                                            "format": "date-time"
+                                        },
+                                        "tags": {
+                                            "type": "array",
+                                            "description": "List of free-form tags associated with the order.",
+                                            "items": {
+                                                "type": "string",
+                                                "description": "Order tag."
+                                            }
+                                        },
+                                        "pickingTime": {
+                                            "type": "number",
+                                            "description": "Time spent in picking stage, in minutes (decimal)."
+                                        },
+                                        "packingTime": {
+                                            "type": "number",
+                                            "description": "Time spent in packing stage, in minutes (decimal)."
+                                        },
+                                        "shippingTime": {
+                                            "type": "number",
+                                            "description": "Time spent in shipping stage, in minutes (decimal)."
+                                        },
+                                        "invoices": {
+                                            "type": "array",
+                                            "description": "Invoices associated with the order.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Invoice entry with key and total.",
+                                                "properties": {
+                                                    "invoiceKey": {
+                                                        "type": "string",
+                                                        "description": "Unique invoice key or identifier."
+                                                    },
+                                                    "invoiceTotal": {
+                                                        "type": "integer",
+                                                        "description": "Total invoice amount in minor currency units."
+                                                    }
+                                                },
+                                                "required": [
+                                                    "invoiceKey",
+                                                    "invoiceTotal"
+                                                ]
+                                            }
+                                        },
+                                        "unhandledItems": {
+                                            "type": "array",
+                                            "description": "Order unhandled items, not yet processed to a final state.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Order item currently unhandled.",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "description": "Unhandled item ID."
+                                                    },
+                                                    "sku": {
+                                                        "type": "string",
+                                                        "description": "Unhandled item SKU."
+                                                    },
+                                                    "referenceCode": {
+                                                        "type": "string",
+                                                        "description": "Unhandled item reference code."
+                                                    },
+                                                    "itemName": {
+                                                        "type": "string",
+                                                        "description": "Unhandled item name."
+                                                    },
+                                                    "price": {
+                                                        "type": "integer",
+                                                        "description": "Unhandled item price."
+                                                    },
+                                                    "pickingPrice": {
+                                                        "type": "integer",
+                                                        "nullable": true,
+                                                        "description": "Unit price used during picking."
+                                                    },
+                                                    "quantity": {
+                                                        "type": "integer",
+                                                        "nullable": true,
+                                                        "description": "Final quantity for this item."
+                                                    },
+                                                    "originalQuantity": {
+                                                        "type": "integer",
+                                                        "description": "Quantity originally ordered before any adjustments."
+                                                    },
+                                                    "replacedBy": {
+                                                        "type": "array",
+                                                        "nullable": true,
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "Unhandled item replaced by."
+                                                        },
+                                                        "description": "List of unhandled item replaced by."
+                                                    },
+                                                    "weighableProduct": {
+                                                        "type": "boolean",
+                                                        "description": "Indicates if the product is sold by weight."
+                                                    },
+                                                    "unitMultiplier": {
+                                                        "type": "number",
+                                                        "description": "Unit multiplier applied to the item."
+                                                    },
+                                                    "originalUnitMultiplier": {
+                                                        "type": "number",
+                                                        "description": "Original unit multiplier before any changes."
+                                                    },
+                                                    "unitOfMeasure": {
+                                                        "type": "string",
+                                                        "description": "Unit of measure for the item."
+                                                    },
+                                                    "images": {
+                                                        "type": "array",
+                                                        "description": "List of unhandled item images.",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "URL of an item image."
+                                                        }
+                                                    },
+                                                    "ean": {
+                                                        "type": "string",
+                                                        "description": "Unhandled item EAN."
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "description": "Unhandled item status.",
+                                                        "enum": [
+                                                            "PENDING",
+                                                            "ASSIGNED",
+                                                            "COLLECTED",
+                                                            "REPLACED",
+                                                            "REJECTED",
+                                                            "REFUNDED",
+                                                            "RETURNED",
+                                                            "CANCELLED",
+                                                            "PENDING_TRANSFERRED",
+                                                            "TRANSFERRED",
+                                                            "COMPLETED",
+                                                            "READY_FOR_PACKING",
+                                                            "READY_FOR_SHIPPING",
+                                                            "SHIPPED",
+                                                            "DELIVERED",
+                                                            "PACKED",
+                                                            "PAUSED"
+                                                        ]
+                                                    },
+                                                    "packedQuantity": {
+                                                        "type": "integer",
+                                                        "description": "Quantity packed for this item.",
+                                                        "nullable": true
+                                                    },
+                                                    "reasons": {
+                                                        "type": "array",
+                                                        "description": "Reasons for rejection or change.",
+                                                        "nullable": true,
+                                                        "items": {
+                                                            "type": "object",
+                                                            "description": "Reason entry explaining an exception or change.",
+                                                            "properties": {
+                                                                "reasonType": {
+                                                                    "type": "string",
+                                                                    "description": "Reason type."
+                                                                },
+                                                                "reasonDetail": {
+                                                                    "type": "string",
+                                                                    "description": "Reason for the unhandled item, such as out-of-stock."
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "pickers": {
+                                                        "type": "array",
+                                                        "nullable": true,
+                                                        "description": "Identifiers of pickers who handled this line.",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "Picker name."
+                                                        }
+                                                    },
+                                                    "worksheets": {
+                                                        "type": "array",
+                                                        "nullable": true,
+                                                        "description": "List of related worksheet identifiers.",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "Worksheet identifier."
+                                                        }
+                                                    },
+                                                    "warehouses": {
+                                                        "type": "array",
+                                                        "description": "List of warehouse allocation or availability for this item.",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "description": "Warehouse allocation record.",
+                                                            "properties": {
+                                                                "warehouseId": {
+                                                                    "type": "string",
+                                                                    "description": "Warehouse identifier."
+                                                                },
+                                                                "warehouseName": {
+                                                                    "type": "string",
+                                                                    "description": "Warehouse name."
+                                                                },
+                                                                "quantity": {
+                                                                    "type": "integer",
+                                                                    "description": "Quantity allocated from the warehouse."
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "warehouseId",
+                                                                "warehouseName",
+                                                                "quantity"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "createdAt": {
+                                                        "type": "string",
+                                                        "description": "Item created date and time in ISO 8601 timestamp.",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "sku",
+                                                    "referenceCode",
+                                                    "itemName",
+                                                    "price",
+                                                    "pickingPrice",
+                                                    "quantity",
+                                                    "originalQuantity",
+                                                    "replacedBy",
+                                                    "weighableProduct",
+                                                    "unitMultiplier",
+                                                    "originalUnitMultiplier",
+                                                    "unitOfMeasure",
+                                                    "images",
+                                                    "ean",
+                                                    "status",
+                                                    "packedQuantity",
+                                                    "reasons",
+                                                    "pickers",
+                                                    "worksheets",
+                                                    "warehouses",
+                                                    "createdAt"
+                                                ]
+                                            }
+                                        },
+                                        "pickedItems": {
+                                            "type": "array",
+                                            "description": "List of order items picked.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Picked order item.",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "description": "Picked item identifier."
+                                                    },
+                                                    "sku": {
+                                                        "type": "string",
+                                                        "description": "Picked item SKU."
+                                                    },
+                                                    "referenceCode": {
+                                                        "type": "string",
+                                                        "description": "Picked item reference code."
+                                                    },
+                                                    "itemName": {
+                                                        "type": "string",
+                                                        "description": "Picked item name."
+                                                    },
+                                                    "price": {
+                                                        "type": "integer",
+                                                        "description": "Picked item price."
+                                                    },
+                                                    "pickingPrice": {
+                                                        "type": "integer",
+                                                        "nullable": true,
+                                                        "description": "Unit price used during picking."
+                                                    },
+                                                    "quantity": {
+                                                        "type": "integer",
+                                                        "nullable": true,
+                                                        "description": "Final quantity for this item."
+                                                    },
+                                                    "originalQuantity": {
+                                                        "type": "integer",
+                                                        "description": "Quantity originally ordered before any adjustments."
+                                                    },
+                                                    "replacedBy": {
+                                                        "type": "array",
+                                                        "nullable": true,
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "Picked item replaced by."
+                                                        },
+                                                        "description": "List of picked item replaced by."
+                                                    },
+                                                    "weighableProduct": {
+                                                        "type": "boolean",
+                                                        "description": "Indicates if the product is sold by weight."
+                                                    },
+                                                    "unitMultiplier": {
+                                                        "type": "number",
+                                                        "description": "Unit multiplier applied to the item."
+                                                    },
+                                                    "originalUnitMultiplier": {
+                                                        "type": "number",
+                                                        "description": "Original unit multiplier before any changes."
+                                                    },
+                                                    "unitOfMeasure": {
+                                                        "type": "string",
+                                                        "description": "Unit of measure for the item (for example, KILOGRAMS or UNITS)."
+                                                    },
+                                                    "images": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "Picked item image."
+                                                        },
+                                                        "description": "List of picked item images."
+                                                    },
+                                                    "ean": {
+                                                        "type": "string",
+                                                        "description": "Picked item EAN."
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "description": "Picked item status.",
+                                                        "enum": [
+                                                            "PENDING",
+                                                            "ASSIGNED",
+                                                            "COLLECTED",
+                                                            "REPLACED",
+                                                            "REJECTED",
+                                                            "REFUNDED",
+                                                            "RETURNED",
+                                                            "CANCELLED",
+                                                            "PENDING_TRANSFERRED",
+                                                            "TRANSFERRED",
+                                                            "COMPLETED",
+                                                            "READY_FOR_PACKING",
+                                                            "READY_FOR_SHIPPING",
+                                                            "SHIPPED",
+                                                            "DELIVERED",
+                                                            "PACKED",
+                                                            "PAUSED"
+                                                        ]
+                                                    },
+                                                    "packedQuantity": {
+                                                        "type": "integer",
+                                                        "description": "Quantity packed for this picked item.",
+                                                        "nullable": true
+                                                    },
+                                                    "reasons": {
+                                                        "type": "array",
+                                                        "description": "List of reasons for rejection or change.",
+                                                        "nullable": true,
+                                                        "items": {
+                                                            "type": "object",
+                                                            "description": "Reason entry explaining an exception or change.",
+                                                            "properties": {
+                                                                "reasonType": {
+                                                                    "type": "string",
+                                                                    "description": "Reason type."
+                                                                },
+                                                                "reasonDetail": {
+                                                                    "type": "string",
+                                                                    "description": "Reason detail such as out-of-stock."
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "pickers": {
+                                                        "type": "array",
+                                                        "nullable": true,
+                                                        "description": "Identifiers of pickers who handled this line.",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "Picker name."
+                                                        }
+                                                    },
+                                                    "worksheets": {
+                                                        "type": "array",
+                                                        "nullable": true,
+                                                        "description": "List of related worksheet identifiers.",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "Worksheet identifier."
+                                                        }
+                                                    },
+                                                    "warehouses": {
+                                                        "type": "array",
+                                                        "description": "List of warehouse allocation or availability for this item.",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "description": "Warehouse allocation record.",
+                                                            "properties": {
+                                                                "warehouseId": {
+                                                                    "type": "string",
+                                                                    "description": "Warehouse identifier."
+                                                                },
+                                                                "warehouseName": {
+                                                                    "type": "string",
+                                                                    "description": "Warehouse display name."
+                                                                },
+                                                                "quantity": {
+                                                                    "type": "integer",
+                                                                    "description": "Quantity allocated from the warehouse."
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "warehouseId",
+                                                                "warehouseName",
+                                                                "quantity"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "createdAt": {
+                                                        "type": "string",
+                                                        "description": "Picked item creation date in ISO 8601 format.",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "sku",
+                                                    "referenceCode",
+                                                    "itemName",
+                                                    "price",
+                                                    "pickingPrice",
+                                                    "quantity",
+                                                    "originalQuantity",
+                                                    "replacedBy",
+                                                    "weighableProduct",
+                                                    "unitMultiplier",
+                                                    "originalUnitMultiplier",
+                                                    "unitOfMeasure",
+                                                    "images",
+                                                    "ean",
+                                                    "status",
+                                                    "packedQuantity",
+                                                    "reasons",
+                                                    "pickers",
+                                                    "worksheets",
+                                                    "warehouses",
+                                                    "createdAt"
+                                                ]
+                                            }
+                                        },
+                                        "rejectedItems": {
+                                            "type": "array",
+                                            "description": "List of items that were rejected, for example due to being out-of-stock.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Rejected order item.",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "description": "Rejected item identifier within the order."
+                                                    },
+                                                    "sku": {
+                                                        "type": "string",
+                                                        "description": "Rejected item SKU."
+                                                    },
+                                                    "referenceCode": {
+                                                        "type": "string",
+                                                        "description": "Rejected item reference code."
+                                                    },
+                                                    "itemName": {
+                                                        "type": "string",
+                                                        "description": "Rejected item name."
+                                                    },
+                                                    "price": {
+                                                        "type": "integer",
+                                                        "description": "Rejected item price."
+                                                    },
+                                                    "pickingPrice": {
+                                                        "type": "number",
+                                                        "nullable": true,
+                                                        "description": "Rejected item picking price."
+                                                    },
+                                                    "quantity": {
+                                                        "type": "integer",
+                                                        "nullable": true,
+                                                        "description": "Final quantity for this rejected item."
+                                                    },
+                                                    "originalQuantity": {
+                                                        "type": "integer",
+                                                        "description": "Quantity originally ordered before any adjustments."
+                                                    },
+                                                    "replacedBy": {
+                                                        "type": "array",
+                                                        "nullable": true,
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "ID of the items that served as replacements for this one."
+                                                        },
+                                                        "description": "List of items that replaced the current item."
+                                                    },
+                                                    "weighableProduct": {
+                                                        "type": "boolean",
+                                                        "description": "Indicates if the product is sold by weight."
+                                                    },
+                                                    "unitMultiplier": {
+                                                        "type": "number",
+                                                        "description": "Rejected item unit multiplier."
+                                                    },
+                                                    "originalUnitMultiplier": {
+                                                        "type": "number",
+                                                        "description": "Original unit multiplier before any changes."
+                                                    },
+                                                    "unitOfMeasure": {
+                                                        "type": "string",
+                                                        "description": "Unit of measure for the item."
+                                                    },
+                                                    "images": {
+                                                        "type": "array",
+                                                        "description": "Rejected item images URLs.",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "URL of a rejected item image."
+                                                        }
+                                                    },
+                                                    "ean": {
+                                                        "type": "string",
+                                                        "description": "Rejected item EAN."
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "description": "Rejected item status.",
+                                                        "enum": [
+                                                            "PENDING",
+                                                            "ASSIGNED",
+                                                            "COLLECTED",
+                                                            "REPLACED",
+                                                            "REJECTED",
+                                                            "REFUNDED",
+                                                            "RETURNED",
+                                                            "CANCELLED",
+                                                            "PENDING_TRANSFERRED",
+                                                            "TRANSFERRED",
+                                                            "COMPLETED",
+                                                            "READY_FOR_PACKING",
+                                                            "READY_FOR_SHIPPING",
+                                                            "SHIPPED",
+                                                            "DELIVERED",
+                                                            "PACKED",
+                                                            "PAUSED"
+                                                        ]
+                                                    },
+                                                    "packedQuantity": {
+                                                        "type": "integer",
+                                                        "description": "Quantity packed for this item.",
+                                                        "nullable": true
+                                                    },
+                                                    "reasons": {
+                                                        "type": "array",
+                                                        "description": "List of reasons for rejection or change.",
+                                                        "nullable": true,
+                                                        "items": {
+                                                            "type": "object",
+                                                            "description": "Reason entry explaining an exception or change.",
+                                                            "properties": {
+                                                                "reasonType": {
+                                                                    "type": "string",
+                                                                    "description": "Reason type."
+                                                                },
+                                                                "reasonDetail": {
+                                                                    "type": "string",
+                                                                    "description": "Reason detail such as out-of-stock."
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "pickers": {
+                                                        "type": "array",
+                                                        "description": "Identifiers of pickers who handled this item.",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "Picker name."
+                                                        }
+                                                    },
+                                                    "worksheets": {
+                                                        "type": "array",
+                                                        "description": "List of related worksheet identifiers.",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "Worksheet identifier."
+                                                        }
+                                                    },
+                                                    "warehouses": {
+                                                        "type": "array",
+                                                        "description": "List of warehouse allocation or availability for this item.",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "description": "Warehouse allocation record.",
+                                                            "properties": {
+                                                                "warehouseId": {
+                                                                    "type": "string",
+                                                                    "description": "Warehouse identifier."
+                                                                },
+                                                                "warehouseName": {
+                                                                    "type": "string",
+                                                                    "description": "Warehouse display name."
+                                                                },
+                                                                "quantity": {
+                                                                    "type": "integer",
+                                                                    "description": "Quantity allocated from the warehouse."
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "warehouseId",
+                                                                "warehouseName",
+                                                                "quantity"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "createdAt": {
+                                                        "type": "string",
+                                                        "description": "Rejected item creation date in ISO 8601 format.",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "sku",
+                                                    "referenceCode",
+                                                    "itemName",
+                                                    "price",
+                                                    "pickingPrice",
+                                                    "quantity",
+                                                    "originalQuantity",
+                                                    "replacedBy",
+                                                    "weighableProduct",
+                                                    "unitMultiplier",
+                                                    "originalUnitMultiplier",
+                                                    "unitOfMeasure",
+                                                    "images",
+                                                    "ean",
+                                                    "status",
+                                                    "packedQuantity",
+                                                    "reasons",
+                                                    "pickers",
+                                                    "worksheets",
+                                                    "warehouses",
+                                                    "createdAt"
+                                                ]
+                                            }
+                                        },
+                                        "replacedItems": {
+                                            "type": "array",
+                                            "description": "Items that replaced other items or were themselves replacements.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Replacement order item.",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "description": "Replaced item ID."
+                                                    },
+                                                    "referenceCode": {
+                                                        "type": "string",
+                                                        "description": "Replaced item reference code."
+                                                    },
+                                                    "orderSource": {
+                                                        "type": "string",
+                                                        "description": "Order source."
+                                                    },
+                                                    "originalQuantity": {
+                                                        "type": "integer",
+                                                        "description": "Replaced item original quantity."
+                                                    },
+                                                    "image": {
+                                                        "type": "string",
+                                                        "description": "Replaced item image."
+                                                    },
+                                                    "temperature": {
+                                                        "type": "string",
+                                                        "nullable": true,
+                                                        "enum": ["COLD", "FROZEN", "AMBIENT", "HOT"],
+                                                        "description": "Replaced item temperature."
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "referenceCode",
+                                                    "name",
+                                                    "originalQuantity",
+                                                    "image",
+                                                    "orderSource",
+                                                    "temperature"
+                                                ]
+                                            }
+                                        },
+                                        "packages": {
+                                            "type": "array",
+                                            "description": "List of packages created for the order.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Order package.",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "description": "Package identifier."
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "description": "Package status.",
+                                                        "enum": [
+                                                            "PENDING",
+                                                            "READY_FOR_SHIPPING",
+                                                            "PACKED",
+                                                            "SHIPPED",
+                                                            "DELIVERED",
+                                                            "RETURNED"
+                                                        ]
+                                                    },
+                                                    "itemsIds": {
+                                                        "type": "array",
+                                                        "description": "List of identifiers of items included in this package.",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "Item ID contained in the package."
+                                                        }
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "status",
+                                                    "itemsIds"
+                                                ]
+                                            }
+                                        },
+                                        "payment": {
+                                            "type": "array",
+                                            "description": "List of payments linked to this order.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Order payment.",
+                                                "properties": {
+                                                    "paymentId": {
+                                                        "type": "string",
+                                                        "description": "Payment identifier."
+                                                    },
+                                                    "paymentName": {
+                                                        "type": "string",
+                                                        "description": "Payment method name."
+                                                    },
+                                                    "transactionId": {
+                                                        "type": "string",
+                                                        "description": "Payment gateway transaction identifier."
+                                                    },
+                                                    "currency": {
+                                                        "type": "object",
+                                                        "description": "Currency details.",
+                                                        "properties": {
+                                                            "symbol": {
+                                                                "type": "string",
+                                                                "description": "Currency symbol."
+                                                            },
+                                                            "code": {
+                                                                "type": "string",
+                                                                "description": "ISO 4217 currency code."
+                                                            },
+                                                            "decimalSeparator": {
+                                                                "type": "string",
+                                                                "description": "Decimal separator character."
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "description": "Currency display name or code."
+                                                            },
+                                                            "decimalDigits": {
+                                                                "type": "integer",
+                                                                "description": "Number of decimal digits."
+                                                            },
+                                                            "groupSize": {
+                                                                "type": "integer",
+                                                                "description": "Digit group size for thousands."
+                                                            },
+                                                            "groupSeparator": {
+                                                                "type": "string",
+                                                                "description": "Thousands group separator character."
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "symbol",
+                                                            "code",
+                                                            "decimalSeparator",
+                                                            "name",
+                                                            "decimalDigits",
+                                                            "groupSize",
+                                                            "groupSeparator"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "paymentId",
+                                                    "paymentName",
+                                                    "transactionId",
+                                                    "currency"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "orderId",
+                                        "sequence",
+                                        "status",
+                                        "createdAt",
+                                        "updatedAt",
+                                        "shippingEstimatedDateMin",
+                                        "tags",
+                                        "pickingTime",
+                                        "packingTime",
+                                        "shippingTime",
+                                        "invoices",
+                                        "unhandledItems",
+                                        "pickedItems",
+                                        "rejectedItems",
+                                        "replacedItems",
+                                        "packages",
+                                        "payment"
+                                    ]
                                 },
                                 "example": {
                                     "orderId": "1509750516095-01",
@@ -1232,7 +2101,7 @@
                 ]
             }
         },
-        "/shipments/": {
+        "/shipments": {
             "get": {
                 "tags": ["Shipments"],
                 "summary": "List shipments by order ID",
@@ -1367,25 +2236,25 @@
         "schemas": {
             "GetOrderResponse": {
                 "type": "object",
-                "required": [  
-                    "orderId",  
-                    "sequence",  
-                    "status",  
-                    "createdAt",  
-                    "updatedAt",  
-                    "shippingEstimatedDateMin",  
-                    "tags",  
-                    "pickingTime",  
-                    "packingTime",  
-                    "shippingTime",  
-                    "invoices",  
-                    "unhandledItems",  
-                    "pickedItems",  
-                    "rejectedItems",  
-                    "replacedItems",  
-                    "packages",  
-                    "payment"  
-                ],  
+                "required": [
+                    "orderId",
+                    "sequence",
+                    "status",
+                    "createdAt",
+                    "updatedAt",
+                    "shippingEstimatedDateMin",
+                    "tags",
+                    "pickingTime",
+                    "packingTime",
+                    "shippingTime",
+                    "invoices",
+                    "unhandledItems",
+                    "pickedItems",
+                    "rejectedItems",
+                    "replacedItems",
+                    "packages",
+                    "payment"
+                ],
                 "properties": {
                     "orderId": {
                         "type": "string",
@@ -1574,11 +2443,11 @@
                             "description": "Category.",
                             "type": "object",
                             "required": ["name", "id"],
-                            "properties": {  
+                            "properties": {
                                 "name": {
                                     "type": "string",
                                     "description": "Category name."
-                                },  
+                                },
                                 "id": {
                                     "type": "string",
                                     "description": "Category ID."
@@ -1600,26 +2469,30 @@
                     "itemAssignment2": {
                         "type": "object",
                         "description": "Item assignment.",
-                        "required": ["startPickingAt", "assignedAt", "finishedAt"],
-                        "properties": {  
-                            "startPickingAt": {  
-                                "type": "string",  
+                        "required": [
+                            "startPickingAt",
+                            "assignedAt",
+                            "finishedAt"
+                        ],
+                        "properties": {
+                            "startPickingAt": {
+                                "type": "string",
                                 "format": "date-time",
                                 "nullable": true,
                                 "description": "Start picking date and time."
-                            },  
-                            "assignedAt": { 
-                                "type": "string", 
+                            },
+                            "assignedAt": {
+                                "type": "string",
                                 "format": "date-time",
                                 "description": "Assigned date and time."
-                            },  
-                            "finishedAt": {  
-                                "type": "string",  
+                            },
+                            "finishedAt": {
+                                "type": "string",
                                 "format": "date-time",
                                 "nullable": true,
                                 "description": "Finished date and time."
-                            }  
-                        } 
+                            }
+                        }
                     },
                     "orderSource": {
                         "type": "string",
@@ -2145,7 +3018,7 @@
                         "nullable": true,
                         "items": {
                             "type": "string",
-                            "description": "Rejected item replaced by."
+                            "description": "ID of the item that replaced this one."
                         },
                         "description": "List of rejected item replaced by."
                     },
