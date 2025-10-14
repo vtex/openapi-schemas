@@ -1,10 +1,10 @@
 {
   "_": {
-    "postman_id": "709abc67-a43a-40d9-924b-6c96dab41a18"
+    "postman_id": "6752e44f-af10-4456-963f-2c56cd68db75"
   },
   "item": [
     {
-      "id": "b93056d2-aacc-405c-b7b3-fb61bd79f041",
+      "id": "bbbae994-7aaa-432d-b93d-4d20b26e5923",
       "name": "Payment Flow",
       "description": {
         "content": "",
@@ -12,7 +12,7 @@
       },
       "item": [
         {
-          "id": "05e45a17-dbdc-49e2-96f3-63df6d59d9e8",
+          "id": "39191bf7-d04e-4c50-b0d8-93d9790a5760",
           "name": "List Payment Provider Manifest",
           "request": {
             "name": "List Payment Provider Manifest",
@@ -62,7 +62,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "16532725-41e2-406e-9d37-eee6827e83bc",
+              "id": "d67647d6-7370-4f80-ae69-fa29ab12757c",
               "name": "OK",
               "originalRequest": {
                 "url": {
@@ -118,7 +118,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "b4c3263a-5ad7-4f56-add9-d7f13959800c",
+                "id": "849917a2-232f-4cf2-8b71-7847aa12ae40",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[GET]::/manifest - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
@@ -134,12 +134,12 @@
           }
         },
         {
-          "id": "d5da302e-01c8-4868-a118-07a1a20a6e14",
+          "id": "f701c79b-90ac-4131-a52a-781599941746",
           "name": "Create payment",
           "request": {
             "name": "Create payment",
             "description": {
-              "content": "Creates a new payment and initiates the payment flow.\r\n\r\n> ℹ️ This request is made from VTEX to the payment provider.\r\n\r\nPayment providers must:\r\n\r\n- Execute authorization on payments made through credit/debit card or any synchronized payments;\r\n\r\n- Return the required information to the customer on payments made through bank-issued invoice, redirect, or any async payments.\r\n\r\n >ℹ️ This endpoint has to meet the principle of [idempotence](https://en.wikipedia.org/wiki/Idempotence). When calling this endpoint for the first time of a payment, without a `paymentId`, it should create a new payment. When calling this endpoint for an existing `paymentId`, it should not create another payment, but return the updated status of the existing payment instead.\r\n\r\n## Callbacks (asynchronous flow)\r\n\r\nCallbacks are used for asynchronous payments, which do not receive the final status immediately. At first, an `undefined` status is returned, and the final status will be received from a callback request in the future as `authorized` or `denied`. There are two types of callbacks:\r\n\r\n- **Notification:** If a payment returns with `undefined` status, you are expected to send us a callback/notification to update it later, sending a POST with an updated version of your response (same structure as above) to the `callbackUrl` we have provided.\r\n\r\n- **Retry:** If a payment returns with `undefined` status, you are expected to call the retry endpoint provided by the `callbackUrl` when the processing of the payment is completed, so we make another Create Payment request to update the status with the new value (`authorized` or `denied`).\r\n\r\nCallback requests should be authenticated using a Key and Token which you can [generate from your VTEX partner account License Manager](https://help.vtex.com/en/tutorial/application-keys--2iffYzlvvz4BDMr6WGUtet#generating-app-keys-in-your-account). To do so, `POST` your request passing the `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken` headers with your credentials. **Note:** do not mix up these credentials with the ones we send on behalf of the merchant when sending our requests.\r\n\r\n>⚠ For integrations not using VTEX IO, use the **Notification** callback. For integrations developed using VTEX IO infrastructure, use the **Retry** callback.\r\n\r\n### Callback URL\r\n\r\nThe `callbackUrl` field contains an URL that the payment provider uses to make a callback and inform our gateway of the final payment status: `approved` or `denied`. \r\n\r\nThis URL has some query parameters, including the `X-VTEX-signature`. This parameter is mandatory and contains a signature token to identify that the request has been generated from VTEX as a security measure. The signature token has at most 32 characters. You can check an example of callback URL with the signature token below:\r\n\r\n```\r\nhttps://gatewayqa.vtexpayments.com.br/api/pvt/payment-provider/transactions/8FB0F111111122222333344449984ACB/payments/A2A9A25B11111111222222333327883C/callback?accountName=teampaymentsintegrations&X-VTEX-signature=R******tk\r\n```\r\n\r\nIn the [Transactions page of the Admin](https://help.vtex.com/en/tutorial/how-to-view-the-orders-details--tutorials_452), the signature token appears masked for security reasons, as in this example: `X-VTEX-signature=Rj******tk`.\r\n\r\nWhen making the callback request, we recommend that payment providers use the callback URL exactly as received, which guarantees that all the parameters are included.\r\n\r\nSee below an example of a payload forwarded along with the callback URL:\r\n\r\n```json\r\n{\r\n    \"paymentId\": \"8B3BA2F4352545A8B1C5A215F356A01C\",\r\n    \"status\": \"approved\",\r\n    \"authorizationId\": \"184520\",\r\n    \"nsu\": \"21705348\",\r\n    \"tid\": \"21705348\",\r\n    \"acquirer\": \"pagmm\",\r\n    \"code\": \"0000\",\r\n    \"message\": \"Successfully approved transaction\",\r\n    \"delayToAutoSettle\": 1200,\r\n    \"delayToAutoSettleAfterAntifraud\": 1200,\r\n    \"delayToCancel\": 86400,\r\n    \"cardBrand\": \"Mastercard\",\r\n    \"firstDigits\": \"534696\",\r\n    \"lastDigits\": \"6921\",\r\n    \"maxValue\": 16.6\r\n}\r\n```\r\n\r\n>ℹ️ The parameter values sent in the callback payload replace the original values informed in the **Create Payment** request.\r\n\r\n>⚠️ If the waiting parameters (`delayToAutoSettle` and `delayToAutoSettleAfterAntifraud`) are not sent with the callback URL, the values for these parameters will be automatically set to 24 hours.\r\n\r\n## Beta features\r\n\r\nThe beta features available for payment providers are:\r\n\r\n- `inboundRequestsUrl`: Allows to forward external requests back to your payment provider implementation, including the configured credentials (`X-VTEX-API-*` headers), and settings.\r\n\r\n>ℹ You can reach out to our team by [opening a ticket](https://help.vtex.com/en/tutorial/opening-tickets-to-vtex-support--16yOEqpO32UQYygSmMSSAM) to know more about any beta features.\r\n\r\n## Permissions\r\n\r\nCheck with your service provider to know what permissions are needed.",
+              "content": "Creates a new payment and initiates the payment flow.\r\n\r\n> ℹ️ This request is made from VTEX to the payment provider.\r\n\r\nPayment providers must:\r\n\r\n- Execute authorization on payments made through credit/debit card or any synchronized payments;\r\n\r\n- Return the required information to the customer on payments made through bank-issued invoice, redirect, or any async payments.\r\n\r\n >ℹ️ This endpoint has to meet the principle of [idempotence](https://en.wikipedia.org/wiki/Idempotence). When calling this endpoint for the first time of a payment, without a `paymentId`, it should create a new payment. When calling this endpoint for an existing `paymentId`, it should not create another payment, but return the updated status of the existing payment instead.\r\n\r\n## Callbacks (asynchronous flow)\r\n\r\nCallbacks are used for asynchronous payments, which do not receive the final status immediately. At first, an `undefined` status is returned, and the final status will be received from a callback request in the future as `authorized` or `denied`. There are two types of callbacks:\r\n\r\n- **Notification:** If a payment returns with `undefined` status, you are expected to send us a callback/notification to update it later, sending a POST with an updated version of your response (same structure as above) to the `callbackUrl` we have provided.\r\n\r\n- **Retry:** If a payment returns with `undefined` status, you are expected to call the retry endpoint provided by the `callbackUrl` when the processing of the payment is completed, so we make another Create Payment request to update the status with the new value (`authorized` or `denied`).\r\n\r\nCallback requests should be authenticated using a Key and Token which you can [generate from your VTEX partner account License Manager](https://help.vtex.com/en/tutorial/api-keys--2iffYzlvvz4BDMr6WGUtet#generating-app-keys-in-your-account). To do so, `POST` your request passing the `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken` headers with your credentials. **Note:** do not mix up these credentials with the ones we send on behalf of the merchant when sending our requests.\r\n\r\n>⚠ For integrations not using VTEX IO, use the **Notification** callback. For integrations developed using VTEX IO infrastructure, use the **Retry** callback.\r\n\r\n### Callback URL\r\n\r\nThe `callbackUrl` field contains an URL that the payment provider uses to make a callback and inform our gateway of the final payment status: `approved` or `denied`. \r\n\r\nThis URL has some query parameters, including the `X-VTEX-signature`. This parameter is mandatory and contains a signature token to identify that the request has been generated from VTEX as a security measure. The signature token has at most 32 characters. You can check an example of callback URL with the signature token below:\r\n\r\n```\r\nhttps://gatewayqa.vtexpayments.com.br/api/pvt/payment-provider/transactions/8FB0F111111122222333344449984ACB/payments/A2A9A25B11111111222222333327883C/callback?accountName=teampaymentsintegrations&X-VTEX-signature=R******tk\r\n```\r\n\r\nIn the [Transactions page of the Admin](https://help.vtex.com/en/tutorial/how-to-view-the-orders-details--tutorials_452), the signature token appears masked for security reasons, as in this example: `X-VTEX-signature=Rj******tk`.\r\n\r\nWhen making the callback request, we recommend that payment providers use the callback URL exactly as received, which guarantees that all the parameters are included.\r\n\r\nSee below an example of a payload forwarded along with the callback URL:\r\n\r\n```json\r\n{\r\n    \"paymentId\": \"8B3BA2F4352545A8B1C5A215F356A01C\",\r\n    \"status\": \"approved\",\r\n    \"authorizationId\": \"184520\",\r\n    \"nsu\": \"21705348\",\r\n    \"tid\": \"21705348\",\r\n    \"acquirer\": \"pagmm\",\r\n    \"code\": \"0000\",\r\n    \"message\": \"Successfully approved transaction\",\r\n    \"delayToAutoSettle\": 1200,\r\n    \"delayToAutoSettleAfterAntifraud\": 1200,\r\n    \"delayToCancel\": 86400,\r\n    \"cardBrand\": \"Mastercard\",\r\n    \"firstDigits\": \"534696\",\r\n    \"lastDigits\": \"6921\",\r\n    \"maxValue\": 16.6\r\n}\r\n```\r\n\r\n>ℹ️ The parameter values sent in the callback payload replace the original values informed in the **Create Payment** request.\r\n\r\n>⚠️ If the waiting parameters (`delayToAutoSettle` and `delayToAutoSettleAfterAntifraud`) are not sent with the callback URL, the values for these parameters will be automatically set to 24 hours.\r\n\r\n## Beta features\r\n\r\nThe beta features available for payment providers are:\r\n\r\n- `inboundRequestsUrl`: Allows to forward external requests back to your payment provider implementation, including the configured credentials (`X-VTEX-API-*` headers), and settings.\r\n\r\n>ℹ You can reach out to our team by [opening a ticket](https://help.vtex.com/en/tutorial/opening-tickets-to-vtex-support--16yOEqpO32UQYygSmMSSAM) to know more about any beta features.\r\n\r\n## Permissions\r\n\r\nCheck with your service provider to know what permissions are needed.",
               "type": "text/plain"
             },
             "url": {
@@ -235,7 +235,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "695d7f4b-3fd9-4c33-b325-e58fff116f66",
+              "id": "68bfbb5c-7045-4ed1-8766-41602cee144d",
               "name": "Success",
               "originalRequest": {
                 "url": {
@@ -329,7 +329,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "334830f5-9e75-49fb-9c63-f80b067d8e42",
+              "id": "734132fb-2f20-44e8-a31c-42326828df18",
               "name": "Success - PIX",
               "originalRequest": {
                 "url": {
@@ -423,7 +423,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "6f18c7a5-6ac2-4534-8a1a-b7ca0ca304b3",
+              "id": "ca2419da-cdba-45d1-a358-0f210b3f5f88",
               "name": "Success - Credit Card",
               "originalRequest": {
                 "url": {
@@ -517,7 +517,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "86773936-b18e-48e7-a48e-e24f6db1a5d3",
+              "id": "a8c4d350-a1a3-4bab-8735-31d49ee195e5",
               "name": "Success - Bank invoice",
               "originalRequest": {
                 "url": {
@@ -611,7 +611,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "e87cf185-01d1-4fbd-9d1b-1af49399c7a9",
+              "id": "67db1181-f02b-4ec8-b7a3-b3ea673bc939",
               "name": "Success - Payment App",
               "originalRequest": {
                 "url": {
@@ -705,7 +705,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "76062736-564d-4eff-8786-4abc694d7fd3",
+              "id": "064397ed-5b91-46cb-bb75-1f352a3b0318",
               "name": "Success - Redirect",
               "originalRequest": {
                 "url": {
@@ -799,7 +799,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "bdc33be1-ee33-429f-919a-e605a2877b7b",
+              "id": "ae41962c-17ff-479d-9b25-74348eaffb13",
               "name": "Success - Callback",
               "originalRequest": {
                 "url": {
@@ -893,7 +893,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "4fc6577e-79bc-40ff-8773-3d403e3a267a",
+              "id": "d77768a9-9948-4e02-85d6-3f8af2c2fcee",
               "name": "Redirect Success Undefined",
               "originalRequest": {
                 "url": {
@@ -987,7 +987,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "da1728bc-36c8-4497-9e14-2b88fea8250f",
+              "id": "e50ec3c1-3ccf-4dfd-9d85-66c325f28f4b",
               "name": "Redirect Success Approved",
               "originalRequest": {
                 "url": {
@@ -1081,7 +1081,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "59c0ee8d-95f0-4074-b1dc-f1e2291e2478",
+              "id": "0d557d53-0115-4102-b907-41d7925dba64",
               "name": "Fail Generic Error",
               "originalRequest": {
                 "url": {
@@ -1175,7 +1175,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "ed1d0717-0a70-4b20-9971-f5427751a14a",
+              "id": "d3979ee1-be18-420e-8eb9-ecae99fbacbc",
               "name": "Fail Bad Request",
               "originalRequest": {
                 "url": {
@@ -1269,7 +1269,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "14fa5e52-e9db-4239-9d30-1529f27c0ec8",
+              "id": "cd849f6e-3981-4d40-a7f5-0666ce24d8dc",
               "name": "Credit Card Success Approved",
               "originalRequest": {
                 "url": {
@@ -1363,7 +1363,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "16820825-e071-482a-8dc8-22c90fc35953",
+              "id": "6c0103fa-fcf2-4161-9758-fc2a1ae13327",
               "name": "Pix Success Approved",
               "originalRequest": {
                 "url": {
@@ -1457,7 +1457,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "312abf4d-bc6c-4aa7-936f-0114c3ebf6e9",
+              "id": "9b38ce55-3c0a-477d-983b-6394a4ab07cf",
               "name": "Success Undefined",
               "originalRequest": {
                 "url": {
@@ -1551,7 +1551,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "d4862c0c-95fb-4a79-8556-44cae8e14291",
+              "id": "8646762f-a693-42b3-9742-f07c1e673479",
               "name": "BankInvoice Success Undefined",
               "originalRequest": {
                 "url": {
@@ -1645,7 +1645,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "eed925da-26a7-41cb-9320-5a916569d515",
+              "id": "ad4ca062-fae9-4fe5-8111-964a7c485ba5",
               "name": "Success Denied",
               "originalRequest": {
                 "url": {
@@ -1739,7 +1739,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "bf1efe8c-040f-447b-8bc1-bf2ac0679271",
+              "id": "b2c8f464-8bd3-44ad-85bb-32ed0ad3701f",
               "name": "BankInvoice Success Approved",
               "originalRequest": {
                 "url": {
@@ -1833,7 +1833,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "f3b4ab82-80b3-402a-9622-590f366fb8f7",
+              "id": "1ff510c8-b60a-4fd7-82ea-3112eddd197c",
               "name": "Payment App + Inbound Request Success Undefined",
               "originalRequest": {
                 "url": {
@@ -1927,7 +1927,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "7f4929aa-166e-41d5-8e9d-498c97ba449b",
+              "id": "5a10fe70-a600-4627-be86-f091c19225be",
               "name": "Redirect Success Undefined",
               "originalRequest": {
                 "url": {
@@ -2021,7 +2021,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "8901bded-0c9b-418e-9be7-864311c016e6",
+              "id": "591d2606-7a54-4161-840a-60c83ea1ccc7",
               "name": "Redirect Success Approved",
               "originalRequest": {
                 "url": {
@@ -2115,7 +2115,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "0fbb9ea8-467e-4080-9d62-105afa10f1a7",
+              "id": "42c1ac89-99af-4528-831b-7238259e7b93",
               "name": "Fail Generic Error",
               "originalRequest": {
                 "url": {
@@ -2209,7 +2209,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "3e8cfdb2-f4e5-4f23-b73d-cc7fecaf0116",
+              "id": "4157427e-7b5f-4910-ae9b-562291f197c8",
               "name": "Fail Bad Request",
               "originalRequest": {
                 "url": {
@@ -2303,7 +2303,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "d5db5a20-4ff0-4c73-8622-afa970e354b6",
+              "id": "1502bda5-53b4-40e4-91fd-c5236ebee356",
               "name": "Credit Card Success Approved",
               "originalRequest": {
                 "url": {
@@ -2397,7 +2397,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "408b55d8-4f84-460a-bcd7-38f5c59374bb",
+              "id": "1b67088d-4492-48c4-81a1-22ec2a03ef6d",
               "name": "Pix Success Approved",
               "originalRequest": {
                 "url": {
@@ -2491,7 +2491,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "dd845c5b-6647-4fde-8a31-b8aec8212b75",
+              "id": "3d1e0140-1b31-4b75-bede-12b17c78cdda",
               "name": "Success Undefined",
               "originalRequest": {
                 "url": {
@@ -2585,7 +2585,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "ffa87e51-6490-4a7a-8539-c6b8a51ab50d",
+              "id": "cb8797f9-af5c-4030-92b4-25126ee57703",
               "name": "BankInvoice Success Undefined",
               "originalRequest": {
                 "url": {
@@ -2679,7 +2679,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "42a98696-3db3-4558-8937-d99163b59297",
+              "id": "719546b3-cae6-41ff-95d8-6f8f28b204a8",
               "name": "Success Denied",
               "originalRequest": {
                 "url": {
@@ -2773,7 +2773,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "d139e2d0-a29e-45da-bc5d-54bede358018",
+              "id": "b8154844-d0b3-4f8f-a463-c59778269706",
               "name": "BankInvoice Success Approved",
               "originalRequest": {
                 "url": {
@@ -2867,7 +2867,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "78f8c263-b330-4ac6-a86d-3646e3935cc6",
+              "id": "cff6d873-5672-46c0-96ca-4b08371ebf95",
               "name": "Payment App + Inbound Request Success Undefined",
               "originalRequest": {
                 "url": {
@@ -2961,7 +2961,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "e143adf7-952c-4b06-a005-027d9d27480b",
+              "id": "bd894e8e-dfa9-4f7e-bd9b-0216f379c31b",
               "name": "Redirect Success Undefined",
               "originalRequest": {
                 "url": {
@@ -3055,7 +3055,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "f71152c3-31bb-421a-bd0f-11248758b252",
+              "id": "9a901cab-ac30-406a-bea8-3db47f25f594",
               "name": "Redirect Success Approved",
               "originalRequest": {
                 "url": {
@@ -3149,7 +3149,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "6f3aeebf-fb6b-4d5d-bf30-903b2d83fb89",
+              "id": "a653bb85-f947-4b7c-913d-3bf8189e9aed",
               "name": "Fail Generic Error",
               "originalRequest": {
                 "url": {
@@ -3243,7 +3243,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "6f4c94fd-a2d8-46fb-a724-ef2e59fafacd",
+              "id": "9cfb1a9a-c832-40bd-9bd7-6d0b72c5fb73",
               "name": "Fail Bad Request",
               "originalRequest": {
                 "url": {
@@ -3338,13 +3338,13 @@
             {
               "listen": "test",
               "script": {
-                "id": "3c9a9b2d-63ee-4f91-af31-041f7c4789e9",
+                "id": "5906cb96-b2c3-423f-9aae-5cb2746c9509",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[POST]::/payments - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
                   "// Validate if response header has matching content-type\npm.test(\"[POST]::/payments - Content-Type is application/json\", function () {\n   pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\n});\n",
                   "// Validate if response has JSON Body \npm.test(\"[POST]::/payments - Response has JSON Body\", function () {\n    pm.response.to.have.jsonBody();\n});\n",
-                  "// Response Validation\nconst schema = {\"required\":[\"paymentId\",\"status\",\"authorizationId\",\"tid\",\"nsu\",\"acquirer\",\"delayToAutoSettle\",\"delayToAutoSettleAfterAntifraud\",\"delayToCancel\"],\"type\":\"object\",\"description\":\"Create payment response body information.\",\"properties\":{\"paymentId\":{\"type\":\"string\",\"description\":\"VTEX identifier for this payment. The same sent in the request.\"},\"status\":{\"type\":\"string\",\"description\":\"The Provider's status for this payment. Must be one of three values:\\r\\n\\r\\n- `approved`\\r\\n- `denied`\\r\\n- `undefined`.\"},\"authorizationId\":{\"type\":\"string\",\"description\":\"Provider's unique identifier for the authorization. Should be sent when the payment is authorized. In other statuses, it should be absent or `null`.\"},\"bankIssueInvoiceId\":{\"type\":\"string\",\"description\":\"This field is deprecated, please use `paymentUrl` instead. The bank invoice URL to be presented to the end user.\"},\"paymentUrl\":{\"type\":[\"string\",\"null\"],\"description\":\"When the payment is via bank invoice, this should be the invoice URL to be presented to the user. If the payment requires the redirection of the user, this should be the URL to redirect the user. If neither is the case, then this should be absent.\"},\"paymentAppData\":{\"type\":\"object\",\"description\":\"Object which indicates that a [Payment App](https://developers.vtex.com/docs/guides/payments-integration-payment-app) is needed to finish the payment. This object contains the data to be used by the Payment App.\",\"required\":[\"appName\",\"payload\"],\"properties\":{\"appName\":{\"type\":\"string\",\"description\":\"Indicates which VTEX IO app that will handle the payment flow at Checkout.\"},\"payload\":{\"type\":\"string\",\"description\":\"The payload that will be sent to your app, like a serialized JSON, for example.\"}}},\"identificationNumber\":{\"type\":\"string\",\"description\":\"The bank invoice unformatted identification number. Should only be present when the payment is made via bank invoice.\"},\"identificationNumberFormatted\":{\"type\":\"string\",\"description\":\"The bank invoice formatted identification number that will be presented to the end user.\"},\"barCodeImageType\":{\"type\":\"string\",\"description\":\"The bank invoice barcode image type. For instance, \\\"i25\\\" for Brazilian *Boleto Bancário*. Should only be present when the payment is made via bank invoice.\"},\"barCodeImageNumber\":{\"type\":\"string\",\"description\":\"The bank invoice number to generate a barcode (must follow any regulations/specifications for targeted countries). Should only be present when the payment is made via bank invoice.\"},\"tid\":{\"type\":\"string\",\"description\":\"Provider's unique identifier for the transaction.\"},\"nsu\":{\"type\":[\"string\",\"null\"],\"description\":\"Provider's unique sequential number for the transaction.\"},\"acquirer\":{\"type\":[\"string\",\"null\"],\"description\":\"Acquirer name (mostly used for card payments).\"},\"redirectUrl\":{\"type\":\"string\",\"description\":\"This field is deprecated, please use `paymentUrl` instead. The URL the end user needs to be redirected to (external authentication, 3DS, etc).\"},\"code\":{\"type\":[\"string\",\"null\"],\"description\":\"Provider's operation/error code to be logged.\"},\"message\":{\"type\":[\"string\",\"null\"],\"description\":\"Provider's operation/error message to be logged.\"},\"delayToAutoSettle\":{\"type\":\"integer\",\"description\":\"Total time (in seconds) before we make an automatic call to `/settlements`, regardless of whether the payment was approved by the merchant's anti-fraud provider or not. The maximum time allowed to wait for an auto capture is 604800 seconds (7 days).\"},\"delayToAutoSettleAfterAntifraud\":{\"type\":\"integer\",\"description\":\"Total time (in seconds) before we make an automatic call to `/settlements` after merchant's antifraud approval.\"},\"delayToCancel\":{\"type\":\"integer\",\"description\":\"Total time (in seconds) to wait for an authorization and make an automatic call to `/cancellations` to cancel the payment. The minimum value is 10 minutes (600 seconds).\\r\\n\\r\\n**NOTE 1**: If you set this field to a time period less than 24 hours (86399 seconds or less), the gateway will retry processing the payment every 1 hour. If you use a value of 24 hours (86400 seconds) or more in this field, the gateway will retry processing the payment every 4 hours.\\r\\n\\r\\n**NOTE 2**:  For `delayToCancel` values between 5 minutes and 1 hour (300 and 3600 seconds), or when payment is made by [PIX](https://developers.vtex.com/docs/guides/payments-integration-pix-instant-payments-in-brazil) (Brazilian instant payment method), retry calls will occur every 5 minutes.\\r\\n\\r\\n**NOTE 3**:  The maximum value allowed for the `delayToCancel` field is 30 days (2592000 seconds). However, when payment is made by [PIX](https://developers.vtex.com/docs/guides/payments-integration-pix-instant-payments-in-brazil) (Brazilian instant payment method), the values must be set between 15 and 1 hour (900 seconds and 3600 seconds).\"},\"maxValue\":{\"type\":\"integer\",\"description\":\"The maximum value for this payment. This field allows changes to be made to transactions to settle larger amounts as a result of order changes.\"},\"connectorMetadata\":{\"type\":\"array\",\"description\":\"Array containing metadata fields sent from the provider to the payment gateway.\",\"items\":{\"type\":\"object\",\"description\":\"Metadata fields information.\",\"required\":[\"name\",\"value\"],\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"The name of the metadata to be stored in the gateway (limited to 20 characters).\"},\"value\":{\"type\":\"string\",\"description\":\"The value of the metadata stored (limited to 200 characters).\"}}}}}}\n\n// Validate if response matches JSON schema \npm.test(\"[POST]::/payments - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
+                  "// Response Validation\nconst schema = {\"required\":[\"paymentId\",\"status\",\"authorizationId\",\"tid\",\"nsu\",\"acquirer\",\"delayToAutoSettle\",\"delayToAutoSettleAfterAntifraud\",\"delayToCancel\"],\"type\":\"object\",\"description\":\"Create payment response body information.\",\"properties\":{\"paymentId\":{\"type\":\"string\",\"description\":\"VTEX identifier for this payment. The same sent in the request.\"},\"status\":{\"type\":\"string\",\"description\":\"The Provider's status for this payment. Must be one of three values:\\r\\n\\r\\n- `approved`\\r\\n- `denied`\\r\\n- `undefined`.\"},\"authorizationId\":{\"type\":\"string\",\"description\":\"Provider's unique identifier for the authorization. Should be sent when the payment is authorized. In other statuses, it should be absent or `null`.\"},\"bankIssueInvoiceId\":{\"type\":\"string\",\"description\":\"This field is deprecated, please use `paymentUrl` instead. The bank invoice URL to be presented to the end user.\"},\"paymentUrl\":{\"type\":[\"string\",\"null\"],\"description\":\"When the payment is via bank invoice, this should be the invoice URL to be presented to the user. If the payment requires the redirection of the user, this should be the URL to redirect the user. If neither is the case, then this should be absent.\"},\"paymentAppData\":{\"type\":\"object\",\"description\":\"Object which indicates that a [Payment App](https://developers.vtex.com/docs/guides/payments-integration-payment-app) is needed to finish the payment. This object contains the data to be used by the Payment App.\",\"required\":[\"appName\",\"payload\"],\"properties\":{\"appName\":{\"type\":\"string\",\"description\":\"Indicates which VTEX IO app that will handle the payment flow at Checkout.\"},\"payload\":{\"type\":\"string\",\"description\":\"The payload that will be sent to your app, like a serialized JSON, for example.\"}}},\"identificationNumber\":{\"type\":\"string\",\"description\":\"The bank invoice unformatted identification number. Should only be present when the payment is made via bank invoice.\"},\"identificationNumberFormatted\":{\"type\":\"string\",\"description\":\"The bank invoice formatted identification number that will be presented to the end user.\"},\"barCodeImageType\":{\"type\":\"string\",\"description\":\"The bank invoice barcode image type. For instance, \\\"i25\\\" for Brazilian *Boleto Bancário*. Should only be present when the payment is made via bank invoice.\"},\"barCodeImageNumber\":{\"type\":\"string\",\"description\":\"The bank invoice number to generate a barcode (must follow any regulations/specifications for targeted countries). Should only be present when the payment is made via bank invoice.\"},\"tid\":{\"type\":\"string\",\"description\":\"Provider's unique identifier for the transaction.\"},\"nsu\":{\"type\":[\"string\",\"null\"],\"description\":\"Provider's unique sequential number for the transaction.\"},\"acquirer\":{\"type\":[\"string\",\"null\"],\"description\":\"Acquirer name (mostly used for card payments).\"},\"redirectUrl\":{\"type\":\"string\",\"description\":\"This field is deprecated, please use `paymentUrl` instead. The URL the end user needs to be redirected to (external authentication, 3DS, etc).\"},\"code\":{\"type\":[\"string\",\"null\"],\"description\":\"Provider's operation/error code to be logged.\"},\"message\":{\"type\":[\"string\",\"null\"],\"description\":\"Provider's operation/error message to be logged.\"},\"delayToAutoSettle\":{\"type\":\"integer\",\"description\":\"Total time (in seconds) before we make an automatic call to `/settlements`, regardless of whether the payment was approved by the merchant's anti-fraud provider or not. The maximum time allowed to wait for an auto capture is 604800 seconds (7 days).\"},\"delayToAutoSettleAfterAntifraud\":{\"type\":\"integer\",\"description\":\"Total time (in seconds) before we make an automatic call to `/settlements` after merchant's antifraud approval.\"},\"delayToCancel\":{\"type\":\"integer\",\"description\":\"Total time (in seconds) to wait for an authorization and make an automatic call to `/cancellations` to cancel the payment. The minimum value is 10 minutes (600 seconds).\\r\\n\\r\\n**NOTE 1**: If you set this field to a time period of less than 24 hours (86399 seconds or less), the gateway will retry processing the payment every 1 hour. If you use a value of 24 hours (86400 seconds) or more in this field, the gateway will retry processing the payment every 4 hours.\\r\\n\\r\\n**NOTE 2**: For `delayToCancel` values between 5 minutes and 1 hour (300 and 3600 seconds), or when payment is made by [PIX](https://developers.vtex.com/docs/guides/payments-integration-pix-instant-payments-in-brazil) (Brazilian instant payment method), retry calls will occur every 5 minutes.\\r\\n\\r\\n**NOTE 3**: The maximum value allowed for the `delayToCancel` field is 30 days (2592000 seconds). However, when payment is made by [PIX](https://developers.vtex.com/docs/guides/payments-integration-pix-instant-payments-in-brazil) (Brazilian instant payment method), the values must be set between 15 and 1 hour (900 seconds and 3600 seconds).\"},\"maxValue\":{\"type\":\"integer\",\"description\":\"The maximum value for this payment. This field allows changes to be made to transactions to settle larger amounts as a result of order changes.\"},\"connectorMetadata\":{\"type\":\"array\",\"description\":\"Array containing metadata fields sent from the provider to the payment gateway.\",\"items\":{\"type\":\"object\",\"description\":\"Metadata fields information.\",\"required\":[\"name\",\"value\"],\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"The name of the metadata to be stored in the gateway (limited to 20 characters).\"},\"value\":{\"type\":\"string\",\"description\":\"The value of the metadata stored (limited to 200 characters).\"}}}}}}\n\n// Validate if response matches JSON schema \npm.test(\"[POST]::/payments - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
                 ]
               }
             }
@@ -3354,7 +3354,7 @@
           }
         },
         {
-          "id": "9044e413-c39c-4862-9e35-702c8ac388a8",
+          "id": "807ad057-3aa4-4aaa-aaad-cb74a89dfcf2",
           "name": "Cancel payment",
           "request": {
             "name": "Cancel payment",
@@ -3434,7 +3434,7 @@
             "method": "POST",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"paymentId\": \"F5C1A4E20D3B4E07B7E871F5B5BC9F91\",\n  \"requestId\": \"D12D9B80972C462980F5067A3A126837\",\n  \"authorizationId\": \"5784589\",\n  \"tid\": \"10022005181543584603\",\n  \"transactionId\": \"D3AA1FC8372E430E8236649DB5EBD08E\",\n  \"nsu\": \"NSU987432\",\n  \"sandboxMode\": false,\n  \"merchantSettings\": [\n    {\n      \"name\": \"Public Merchant ID Test.\",\n      \"value\": \"1\"\n    },\n    {\n      \"name\": \"Public Merchant ID Test.\",\n      \"value\": \"1\"\n    }\n  ],\n  \"connectorMetadata\": [\n    {\n      \"name\": \"MetadataName\",\n      \"value\": \"MetadataValue\"\n    },\n    {\n      \"name\": \"MetadataName\",\n      \"value\": \"MetadataValue\"\n    }\n  ]\n}",
+              "raw": "{\n  \"paymentId\": \"F5C1A4E20D3B4E07B7E871F5B5BC9F91\",\n  \"requestId\": \"D12D9B80972C462980F5067A3A126837\",\n  \"authorizationId\": \"5784589\",\n  \"tid\": \"10022005181543584603\",\n  \"transactionId\": \"D3AA1FC8372E430E8236649DB5EBD08E\",\n  \"value\": 2300,\n  \"nsu\": \"NSU987432\",\n  \"sandboxMode\": false,\n  \"merchantSettings\": [\n    {\n      \"name\": \"Public Merchant ID Test.\",\n      \"value\": \"1\"\n    },\n    {\n      \"name\": \"Public Merchant ID Test.\",\n      \"value\": \"1\"\n    }\n  ],\n  \"connectorMetadata\": [\n    {\n      \"name\": \"MetadataName\",\n      \"value\": \"MetadataValue\"\n    },\n    {\n      \"name\": \"MetadataName\",\n      \"value\": \"MetadataValue\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "headerFamily": "json",
@@ -3468,7 +3468,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "31b66c80-d488-4472-94cf-fb162cdcfd59",
+              "id": "9cddddda-c052-4c2f-9b2f-ccfb4f312859",
               "name": "OK",
               "originalRequest": {
                 "url": {
@@ -3540,7 +3540,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"paymentId\": \"F5C1A4E20D3B4E07B7E871F5B5BC9F91\",\n  \"requestId\": \"D12D9B80972C462980F5067A3A126837\",\n  \"authorizationId\": \"5784589\",\n  \"tid\": \"10022005181543584603\",\n  \"transactionId\": \"D3AA1FC8372E430E8236649DB5EBD08E\",\n  \"nsu\": \"NSU987432\",\n  \"sandboxMode\": false,\n  \"merchantSettings\": [\n    {\n      \"name\": \"Public Merchant ID Test.\",\n      \"value\": \"1\"\n    },\n    {\n      \"name\": \"Public Merchant ID Test.\",\n      \"value\": \"1\"\n    }\n  ],\n  \"connectorMetadata\": [\n    {\n      \"name\": \"MetadataName\",\n      \"value\": \"MetadataValue\"\n    },\n    {\n      \"name\": \"MetadataName\",\n      \"value\": \"MetadataValue\"\n    }\n  ]\n}",
+                  "raw": "{\n  \"paymentId\": \"F5C1A4E20D3B4E07B7E871F5B5BC9F91\",\n  \"requestId\": \"D12D9B80972C462980F5067A3A126837\",\n  \"authorizationId\": \"5784589\",\n  \"tid\": \"10022005181543584603\",\n  \"transactionId\": \"D3AA1FC8372E430E8236649DB5EBD08E\",\n  \"value\": 2300,\n  \"nsu\": \"NSU987432\",\n  \"sandboxMode\": false,\n  \"merchantSettings\": [\n    {\n      \"name\": \"Public Merchant ID Test.\",\n      \"value\": \"1\"\n    },\n    {\n      \"name\": \"Public Merchant ID Test.\",\n      \"value\": \"1\"\n    }\n  ],\n  \"connectorMetadata\": [\n    {\n      \"name\": \"MetadataName\",\n      \"value\": \"MetadataValue\"\n    },\n    {\n      \"name\": \"MetadataName\",\n      \"value\": \"MetadataValue\"\n    }\n  ]\n}",
                   "options": {
                     "raw": {
                       "headerFamily": "json",
@@ -3564,7 +3564,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "ad10fb0d-c475-44fb-b50c-eb509c61be4e",
+              "id": "efc3dd51-e0f9-40ce-9197-4eee62ea4cfb",
               "name": "Internal Server Error",
               "originalRequest": {
                 "url": {
@@ -3636,7 +3636,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"paymentId\": \"F5C1A4E20D3B4E07B7E871F5B5BC9F91\",\n  \"requestId\": \"D12D9B80972C462980F5067A3A126837\",\n  \"authorizationId\": \"5784589\",\n  \"tid\": \"10022005181543584603\",\n  \"transactionId\": \"D3AA1FC8372E430E8236649DB5EBD08E\",\n  \"nsu\": \"NSU987432\",\n  \"sandboxMode\": false,\n  \"merchantSettings\": [\n    {\n      \"name\": \"Public Merchant ID Test.\",\n      \"value\": \"1\"\n    },\n    {\n      \"name\": \"Public Merchant ID Test.\",\n      \"value\": \"1\"\n    }\n  ],\n  \"connectorMetadata\": [\n    {\n      \"name\": \"MetadataName\",\n      \"value\": \"MetadataValue\"\n    },\n    {\n      \"name\": \"MetadataName\",\n      \"value\": \"MetadataValue\"\n    }\n  ]\n}",
+                  "raw": "{\n  \"paymentId\": \"F5C1A4E20D3B4E07B7E871F5B5BC9F91\",\n  \"requestId\": \"D12D9B80972C462980F5067A3A126837\",\n  \"authorizationId\": \"5784589\",\n  \"tid\": \"10022005181543584603\",\n  \"transactionId\": \"D3AA1FC8372E430E8236649DB5EBD08E\",\n  \"value\": 2300,\n  \"nsu\": \"NSU987432\",\n  \"sandboxMode\": false,\n  \"merchantSettings\": [\n    {\n      \"name\": \"Public Merchant ID Test.\",\n      \"value\": \"1\"\n    },\n    {\n      \"name\": \"Public Merchant ID Test.\",\n      \"value\": \"1\"\n    }\n  ],\n  \"connectorMetadata\": [\n    {\n      \"name\": \"MetadataName\",\n      \"value\": \"MetadataValue\"\n    },\n    {\n      \"name\": \"MetadataName\",\n      \"value\": \"MetadataValue\"\n    }\n  ]\n}",
                   "options": {
                     "raw": {
                       "headerFamily": "json",
@@ -3660,7 +3660,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "5d19fd6b-7049-4c33-a24f-ce62113cfbc4",
+              "id": "337d9b89-5f15-40f0-a7a4-c324b4686413",
               "name": "Not Implemented",
               "originalRequest": {
                 "url": {
@@ -3732,7 +3732,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"paymentId\": \"F5C1A4E20D3B4E07B7E871F5B5BC9F91\",\n  \"requestId\": \"D12D9B80972C462980F5067A3A126837\",\n  \"authorizationId\": \"5784589\",\n  \"tid\": \"10022005181543584603\",\n  \"transactionId\": \"D3AA1FC8372E430E8236649DB5EBD08E\",\n  \"nsu\": \"NSU987432\",\n  \"sandboxMode\": false,\n  \"merchantSettings\": [\n    {\n      \"name\": \"Public Merchant ID Test.\",\n      \"value\": \"1\"\n    },\n    {\n      \"name\": \"Public Merchant ID Test.\",\n      \"value\": \"1\"\n    }\n  ],\n  \"connectorMetadata\": [\n    {\n      \"name\": \"MetadataName\",\n      \"value\": \"MetadataValue\"\n    },\n    {\n      \"name\": \"MetadataName\",\n      \"value\": \"MetadataValue\"\n    }\n  ]\n}",
+                  "raw": "{\n  \"paymentId\": \"F5C1A4E20D3B4E07B7E871F5B5BC9F91\",\n  \"requestId\": \"D12D9B80972C462980F5067A3A126837\",\n  \"authorizationId\": \"5784589\",\n  \"tid\": \"10022005181543584603\",\n  \"transactionId\": \"D3AA1FC8372E430E8236649DB5EBD08E\",\n  \"value\": 2300,\n  \"nsu\": \"NSU987432\",\n  \"sandboxMode\": false,\n  \"merchantSettings\": [\n    {\n      \"name\": \"Public Merchant ID Test.\",\n      \"value\": \"1\"\n    },\n    {\n      \"name\": \"Public Merchant ID Test.\",\n      \"value\": \"1\"\n    }\n  ],\n  \"connectorMetadata\": [\n    {\n      \"name\": \"MetadataName\",\n      \"value\": \"MetadataValue\"\n    },\n    {\n      \"name\": \"MetadataName\",\n      \"value\": \"MetadataValue\"\n    }\n  ]\n}",
                   "options": {
                     "raw": {
                       "headerFamily": "json",
@@ -3757,7 +3757,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "3de4d6e7-2469-4bce-8333-80b3c446b761",
+                "id": "9c232d55-b87d-4fc8-8ffe-06e21c9262d9",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[POST]::/payments/:paymentId/cancellations - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
@@ -3773,7 +3773,7 @@
           }
         },
         {
-          "id": "08a789b3-5e1f-4f59-ad38-25ca05e1ed37",
+          "id": "09495649-706a-4646-83f5-70d4c3892f72",
           "name": "Settle payment",
           "request": {
             "name": "Settle payment",
@@ -3887,7 +3887,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "1fc6636d-91b8-4695-9711-cd60eee013f4",
+              "id": "3e47b31f-5d12-43ca-92ed-998a63c147ab",
               "name": "OK",
               "originalRequest": {
                 "url": {
@@ -3983,7 +3983,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "336d3dab-4b81-4d1a-b808-eb009093009f",
+              "id": "ad1a5a44-bdca-4218-8ea3-5d99010576ee",
               "name": "Internal Server Error",
               "originalRequest": {
                 "url": {
@@ -4080,7 +4080,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "cf695b36-0dec-4d57-a5a4-4ec52a30d032",
+                "id": "d1ac6659-e1db-4d49-8cef-54cf0e7fefac",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[POST]::/payments/:paymentId/settlements - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
@@ -4096,7 +4096,7 @@
           }
         },
         {
-          "id": "d25fe6d5-1cb4-4835-a140-50ca816bfa3a",
+          "id": "be7771cf-6387-49a3-a4b3-daa50b7fd12f",
           "name": "Refund payment",
           "request": {
             "name": "Refund payment",
@@ -4210,7 +4210,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "7f3603b5-b4d6-4f23-bfc7-cdaec94d1be7",
+              "id": "e093300c-e4b4-44c8-b0eb-100dcd21c9ee",
               "name": "OK",
               "originalRequest": {
                 "url": {
@@ -4306,7 +4306,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "3aabfae2-f86a-4009-8e91-5d65d60987bf",
+              "id": "d2c1d055-11d6-461e-a184-36dcf443a5d2",
               "name": "Internal Server Error",
               "originalRequest": {
                 "url": {
@@ -4402,7 +4402,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "2bac424e-1922-4da8-ae1d-ce208aed3003",
+              "id": "6dc9b592-146d-4313-bd75-2b5a6c08c348",
               "name": "Not Implemented",
               "originalRequest": {
                 "url": {
@@ -4499,7 +4499,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "8d3ce3cf-021b-4da2-82ab-20d7908907b5",
+                "id": "cafeea8e-50fc-4b12-b4de-6609d7e2d73f",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[POST]::/payments/:paymentId/refunds - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
@@ -4515,7 +4515,7 @@
           }
         },
         {
-          "id": "eaac0eca-3485-4a2f-9a90-b2fa27601c1e",
+          "id": "89c9b5d6-afab-401f-8982-e2c4291376c9",
           "name": "Inbound request (BETA)",
           "request": {
             "name": "Inbound request (BETA)",
@@ -4640,7 +4640,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "0de4e586-c67e-4231-9dcf-c1fe5e52ef14",
+              "id": "0c82cd28-1193-4574-a090-a389a7c92626",
               "name": "OK",
               "originalRequest": {
                 "url": {
@@ -4738,7 +4738,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "dda1f12e-fea3-4d23-bfc6-86223663b8d2",
+                "id": "eef5fad7-19e5-49d2-8549-e40d507a09ff",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[POST]::/payments/:paymentId/inbound/:action - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
@@ -4757,7 +4757,7 @@
       "event": []
     },
     {
-      "id": "a0513c51-224b-40c0-9047-1c423a52add9",
+      "id": "9acae035-d1e6-4cdd-846e-620184c80ef3",
       "name": "Configuration Flow",
       "description": {
         "content": "",
@@ -4765,7 +4765,7 @@
       },
       "item": [
         {
-          "id": "312077c2-6466-457c-8ca6-3e799fdd8e15",
+          "id": "35adadbd-623c-4c1f-b8df-78011be7dfac",
           "name": "Create authorization token",
           "request": {
             "name": "Create authorization token",
@@ -4867,7 +4867,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "22d33809-bcd8-45be-b966-b6610d51b6e2",
+              "id": "9c2e497e-c18e-4b3b-9ee8-8d7700f2d17a",
               "name": "OK",
               "originalRequest": {
                 "url": {
@@ -4963,7 +4963,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "c0e6392d-e13c-411e-8952-a0c411557030",
+                "id": "26ed23ce-b769-463b-86ba-edd2ee2ab41a",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[POST]::/authorization/token - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
@@ -4979,7 +4979,7 @@
           }
         },
         {
-          "id": "3c99bc90-637f-4b22-b880-d6613a6ca2d1",
+          "id": "6c67d72a-7dd9-470f-adcf-2a0997e30fce",
           "name": "Provider authentication",
           "request": {
             "name": "Provider authentication",
@@ -5083,7 +5083,7 @@
               "_": {
                 "postman_previewlanguage": "text"
               },
-              "id": "5c629cb1-2a81-432a-b5e6-5fec5b18cac2",
+              "id": "f6e8422f-d919-44fc-97b3-d1bdfab1a7a7",
               "name": "OK. This endpoint does not return any data in the response body.",
               "originalRequest": {
                 "url": {
@@ -5175,7 +5175,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "5928bf90-15c2-4a2b-b136-0d779e8b86d8",
+                "id": "36b1e8da-4d67-4b49-8e00-955ae486e1e9",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[GET]::/authorization/redirect - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n"
@@ -5188,7 +5188,7 @@
           }
         },
         {
-          "id": "9c827567-51b5-4492-b0ab-02ee845ba01b",
+          "id": "2c55e86d-da68-41a2-a1da-f1415277641e",
           "name": "Get credentials",
           "request": {
             "name": "Get credentials",
@@ -5296,7 +5296,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "54bf55f7-d2d2-431e-ba42-0ff6c572d8f1",
+              "id": "24b98669-fe4a-4fea-99f1-0fc269d13600",
               "name": "OK",
               "originalRequest": {
                 "url": {
@@ -5398,7 +5398,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "6acb1540-130f-4c83-b616-44ee3aaaff3e",
+                "id": "dba96bf0-f93a-4f83-8808-a87975c3527d",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[GET]::/authorization/credentials - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
@@ -5431,7 +5431,7 @@
     }
   ],
   "info": {
-    "_postman_id": "709abc67-a43a-40d9-924b-6c96dab41a18",
+    "_postman_id": "6752e44f-af10-4456-963f-2c56cd68db75",
     "name": "Payment Provider Protocol API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "description": {

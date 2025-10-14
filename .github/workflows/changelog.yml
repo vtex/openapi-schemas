@@ -1,0 +1,79 @@
+name: Generate Changelog
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  generate-changelog:
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Pull
+        run: git pull
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: npm install
+        
+      - name: Set Git identity
+        run: |
+          git config user.name "julia-rabello"
+          git config user.email "julia.alexandre@vtex.com"
+
+
+      - name: Find next available version tag and bump if needed
+        id: bump_tag
+        run: |
+          BASE_VERSION=$(npx standard-version --dry-run | grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          if [ -z "$BASE_VERSION" ]; then
+            echo "Could not determine base version. Exiting."
+            exit 1
+          fi
+          VERSION=$BASE_VERSION
+          MAJOR=$(echo $VERSION | cut -d. -f1 | tr -d 'v')
+          MINOR=$(echo $VERSION | cut -d. -f2)
+          PATCH=$(echo $VERSION | cut -d. -f3)
+          while git ls-remote --tags origin | grep -q "refs/tags/$VERSION"; do
+            PATCH=$((PATCH + 1))
+            VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          done
+          echo "Using version: $VERSION"
+          echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Generate Changelog
+        run: |
+          npx standard-version --release-as $RELEASE_VERSION
+
+      - name: Get created tag name
+        id: get_tag
+        run: |
+          TAG=$(git describe --tags --abbrev=0)
+          echo "TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Push Changes
+        run: |
+          git push --force --follow-tags origin main
+
+      - name: Cleanup tag on failure
+        if: failure()
+        run: |
+          if [ -n "$TAG" ]; then
+            echo "Deleting tag $TAG locally and remotely..."
+            git tag -d "$TAG" || true
+            git push --delete origin "$TAG" || true
+          else
+            echo "No tag to clean up."
+          fi
