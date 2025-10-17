@@ -1,0 +1,582 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Recommendations BFF API",
+        "version": "1.0.0",
+        "description": "The Recommendations BFF API allows VTEX stores, integrators, and partners to fetch product recommendations, record user/product events, and manage recommendation sessions.\n\nThis API is used to power personalized and contextual product recommendations, track user interactions, and enable advanced analytics for VTEX stores.\n\n## Index\n\n### Events\n\n- `POST` [Recommendation view](https://developers.vtex.com/docs/api-reference/recommendations-bff-api#post-/api/recommend-bff/v2/events/recommendation-view): Records when a user views a recommendation.\n- `POST` [Recommendation click](https://developers.vtex.com/docs/api-reference/recommendations-bff-api#post-/api/recommend-bff/v2/events/recommendation-click): Records a click on a product within a recommendation shelf.\n- `POST` [Product view](https://developers.vtex.com/docs/api-reference/recommendations-bff-api#post-/api/recommend-bff/v2/events/product-view): Records when a user views a product.\n\n### Recommendations\n\n- `GET` [Fetch recommendations](https://developers.vtex.com/docs/api-reference/recommendations-bff-api#get-/api/recommend-bff/v2/recommendations): Retrieves a list of recommended products based on the provided parameters.\n\n### Users\n\n- `POST` [Start session](https://developers.vtex.com/docs/api-reference/recommendations-bff-api#post-/api/recommend-bff/v2/users/start-session): Creates a unique ID for a user to associate with the current session."
+    },
+    "servers": [
+        {
+            "url": "https://api.{environment}.com.br",
+            "description": "VTEX server URL.",
+            "variables": {
+                "environment": {
+                    "description": "Environment to use. Used as part of the URL.",
+                    "enum": [
+                        "vtexcommercestable",
+                        "vtexcommercebeta"
+                    ],
+                    "default": "vtexcommercestable"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/api/recommend-bff/v2/events/recommendation-view": {
+            "post": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Recommendation view",
+                "description": "Records when a user views a recommendation.\n\n## Permissions\n\nThis endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "name": "x-vtex-rec-origin",
+                        "in": "header",
+                        "description": "Required format: `{accountName}/{sourceType}/{appOrIntegrationId}`. Must match the `an` query parameter for account name.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples/storefront/vtex.recommendation-shelf@2.x"
+                        }
+                    },
+                    {
+                        "name": "an",
+                        "in": "query",
+                        "description": "VTEX account name. Must match the account name in the `x-vtex-rec-origin` header.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RecommendationViewEventV2Request"
+                            },
+                            "example": {
+                                "userId": "user-id",
+                                "correlationId": "correlation-id--from-recommendation-request",
+                                "products": [
+                                    "product-id-1",
+                                    "product-id-2",
+                                    "product-id-3"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/recommend-bff/v2/events/recommendation-click": {
+            "post": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Recommendation click",
+                "description": "Records a click on a product within a recommendation shelf.\n\n## Permissions\n\nThis endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "name": "x-vtex-rec-origin",
+                        "in": "header",
+                        "description": "Required format: `{accountName}/{sourceType}/{appOrIntegrationId}`. Must match the `an` query parameter for account name.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples/storefront/vtex.recommendation-shelf@2.x"
+                        }
+                    },
+                    {
+                        "name": "an",
+                        "in": "query",
+                        "description": "VTEX account name. Must match the account name in the `x-vtex-rec-origin` header.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RecommendationClickEventV2Request"
+                            },
+                            "example": {
+                                "userId": "user-id",
+                                "correlationId": "correlation-id--from-recommendation-request",
+                                "product": "product-id"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/recommend-bff/v2/recommendations": {
+            "get": {
+                "tags": [
+                    "Recommendations"
+                ],
+                "summary": "Fetch recommendations",
+                "description": "Retrieves a list of recommended products based on the provided parameters.\n\n**Supported Recommendation Types:**\n\n  - **PERSONALIZED**: Provides recommendations tailored to the user's profile and behavior.\n  - **VISUAL_SIMILARITY**: Returns visually similar items to the specified product.\n  - **SIMILAR_ITEMS**: Requires `products` with only **one product ID**. Returns items similar to the specified product.\n  - **CROSS_SELL**: Requires `products` with only **one product ID**. Suggests complementary items to the specified product.\n  - **CART_RECOMMENDATIONS**: Requires `products` with **all items currently in the user's cart**. Returns recommendations based on the cart contents.\n  - **LAST_SEEN**: Returns the most recently viewed products for the given user.\n  - **TOP_ITEMS**: Returns the top selling or most popular items in the store.\n  \n >ℹ️ Either `campaignVrn` or `recommendationType` must be provided, but not both.\n\n\n## Permissions\n\nThis endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "name": "x-vtex-rec-origin",
+                        "in": "header",
+                        "description": "Required format: `{accountName}/{sourceType}/{appOrIntegrationId}`. Must match the `an` query parameter for account name.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples/storefront/vtex.recommendation-shelf@2.x"
+                        }
+                    },
+                    {
+                        "name": "an",
+                        "in": "query",
+                        "description": "VTEX account name. Must match the account name in the `x-vtex-rec-origin` header.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "campaignVrn",
+                        "in": "query",
+                        "description": "VRN identifier for an existing campaign.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "vrn:recommendations:apiexamples:rec-top-items-v2:campaign-dynamo-id"
+                        }
+                    },
+                    {
+                        "name": "userId",
+                        "in": "query",
+                        "description": "User ID, required for personalized recommendations. It can be found in the `vtex-recommendations-user` cookie.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "198e0f50-acf8-42f7-998a-5cd125464749"
+                        }
+                    },
+                    {
+                        "name": "products",
+                        "in": "query",
+                        "description": "Comma-separated list of product IDs for context. For Similar Items and Cross-sell, send only **one product ID**. For Cart Recommendations, send all product IDs in the user's cart.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "product-id-1,product-id-2,product-id-3"
+                        }
+                    },
+                    {
+                        "name": "salesChannel",
+                        "in": "query",
+                        "description": "Trade policy ID. We also try to extract it from the segment cookie. If none is provided in the query, we will use the default trade policy.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "1"
+                        }
+                    },
+                    {
+                        "name": "locale",
+                        "in": "query",
+                        "description": "The user's locale information. If not provided, it is extracted from the segment cookie. This is important for multi-language stores.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "en-US"
+                        }
+                    },
+                    {
+                        "name": "zipCode",
+                        "in": "query",
+                        "description": "Zip code for location-based recommendations. If not provided, it is extracted from the segment cookie.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "90210"
+                        }
+                    },
+                    {
+                        "name": "pickupPoint",
+                        "in": "query",
+                        "description": "Pickup point identifier for location-based recommendations. If not provided, it is extracted from the segment cookie.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "pickup-1234"
+                        }
+                    },
+                    {
+                        "name": "regionId",
+                        "in": "query",
+                        "description": "Region identifier for location-based recommendations. If not provided, it is extracted from the segment cookie.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "southeast-1"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully fetched recommendations.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RecommendationsV2Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RecommendationsV2Response"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/recommend-bff/v2/users/start-session": {
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Start session",
+                "description": "Creates a unique user ID to associate with the current session and links it to the provided order form ID. This user ID is also stored in the `vtex-rec-user-id` cookie for session continuity. If the `orderFormId` is not provided in the request body, the API attempts to retrieve it from the `checkout.vtex.com` cookie. This endpoint is typically used to initialize a recommendation session for tracking and personalization purposes.\n\n## Permissions\n\nThis endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "name": "x-vtex-rec-origin",
+                        "in": "header",
+                        "description": "Required format: `{accountName}/{sourceType}/{appOrIntegrationId}`. Must match the `an` query parameter for account name. See API description for details.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples/storefront/vtex.recommendation-shelf@2.x"
+                        }
+                    },
+                    {
+                        "name": "x-forwarded-host",
+                        "in": "header",
+                        "schema": {
+                            "type": "string",
+                            "example": "www.apixamples.com"
+                        }
+                    },
+                    {
+                        "name": "host",
+                        "in": "header",
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples.vtexcommercestable.com.br"
+                        }
+                    },
+                    {
+                        "name": "an",
+                        "in": "query",
+                        "description": "VTEX account name. Must match the account name in the `x-vtex-rec-origin` header.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session started successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StartSessionV2Response"
+                                },
+                                "example": {
+                                    "recommendationsUserId": "198e0f50-acf8-42f7-998a-5cd125464749"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StartSessionV2Response"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StartSessionV2Request"
+                            },
+                            "example": {
+                                "orderFormId": "d761924de4254f6883a8ec2e9a28597d"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/recommend-bff/v2/events/product-view": {
+            "post": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Product view",
+                "description": "Records when a user views a product. When source isn't passed, it defaults to `WEB_DESKTOP` or is derived from user agent.\n\n## Permissions\n\nThis endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "name": "x-vtex-rec-origin",
+                        "in": "header",
+                        "description": "Required format: `{accountName}/{sourceType}/{appOrIntegrationId}`. Must match the `an` query parameter for account name.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples/storefront/vtex.recommendation-shelf@2.x"
+                        }
+                    },
+                    {
+                        "name": "user-agent",
+                        "in": "header",
+                        "schema": {
+                            "type": "string",
+                            "example": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                        }
+                    },
+                    {
+                        "name": "an",
+                        "in": "query",
+                        "description": "VTEX account name. Must match the account name in the `x-vtex-rec-origin` header.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductViewEventV2Request"
+                            },
+                            "example": {
+                                "userId": "user-id",
+                                "product": "product-id-1",
+                                "source": "WEB_DESKTOP"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "StartSessionV2Request": {
+                "type": "object",
+                "description": "Request body for starting a user session.",
+                "properties": {
+                    "orderFormId": {
+                        "type": "string",
+                        "description": "Order form ID associated with the session.",
+                        "example": "d761924de4254f6883a8ec2e9a28597d"
+                    }
+                },
+                "required": [
+                    "orderFormId"
+                ]
+            },
+            "StartSessionV2Response": {
+                "type": "object",
+                "description": "Response body for starting a user session.",
+                "properties": {
+                    "recommendationsUserId": {
+                        "type": "string",
+                        "description": "The recommendations user ID.",
+                        "example": "198e0f50-acf8-42f7-998a-5cd125464749"
+                    }
+                },
+                "required": [
+                    "recommendationsUserId"
+                ]
+            },
+            "RecommendationsV2Response": {
+                "type": "object",
+                "properties": {
+                    "products": {
+                        "type": "array",
+                        "description": "List of recommended SKU IDs.",
+                        "items": {
+                            "type": "string",
+                            "description": "SKU ID."
+                        },
+                        "example": [
+                            "sku1",
+                            "sku2"
+                        ]
+                    },
+                    "correlationId": {
+                        "type": "string",
+                        "description": "Correlation ID for the recommendation request.",
+                        "example": "correlation-123"
+                    },
+                    "campaign": {
+                        "type": "object",
+                        "description": "Campaign information, if applicable.",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "description": "Campaign ID.",
+                                "example": "campaign-dynamo-id"
+                            },
+                            "title": {
+                                "type": "string",
+                                "description": "Campaign title.",
+                                "example": "Top Items"
+                            },
+                            "type": {
+                                "type": "string",
+                                "description": "Type of campaign.",
+                                "enum": [
+                                    "TOP_ITEMS",
+                                    "PERSONALIZED",
+                                    "SIMILAR_ITEMS",
+                                    "CROSS_SELL",
+                                    "CART_RECOMMENDATIONS",
+                                    "LAST_SEEN",
+                                    "RECENT_INTERACTIONS",
+                                    "VISUAL_SIMILARITY",
+                                    "SEARCH_BASED"
+                                ],
+                                "example": "TOP_ITEMS"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "type"
+                        ]
+                    }
+                },
+                "required": [
+                    "products",
+                    "correlationId",
+                    "campaign"
+                ]
+            },
+            "RecommendationViewEventV2Request": {
+                "type": "object",
+                "properties": {
+                    "userId": {
+                        "type": "string",
+                        "description": "User ID.",
+                        "example": "198e0f50-acf8-42f7-998a-5cd125464749"
+                    },
+                    "correlationId": {
+                        "type": "string",
+                        "description": "Correlation ID for the recommendation request.",
+                        "example": "correlation-123"
+                    },
+                    "products": {
+                        "type": "array",
+                        "description": "List of SKU IDs viewed.",
+                        "items": {
+                            "type": "string",
+                            "description": "SKU ID."
+                        },
+                        "example": [
+                            "sku1",
+                            "sku2"
+                        ]
+                    }
+                },
+                "required": [
+                    "userId",
+                    "correlationId",
+                    "products"
+                ]
+            },
+            "RecommendationClickEventV2Request": {
+                "type": "object",
+                "properties": {
+                    "userId": {
+                        "type": "string",
+                        "description": "User ID.",
+                        "example": "198e0f50-acf8-42f7-998a-5cd125464749"
+                    },
+                    "product": {
+                        "type": "string",
+                        "description": "Product ID that was clicked.",
+                        "example": "sku1"
+                    },
+                    "correlationId": {
+                        "type": "string",
+                        "description": "Correlation ID for the recommendation request.",
+                        "example": "correlation-123"
+                    }
+                },
+                "required": [
+                    "userId",
+                    "product",
+                    "correlationId"
+                ]
+            },
+            "ProductViewEventV2Request": {
+                "type": "object",
+                "properties": {
+                    "userId": {
+                        "type": "string",
+                        "description": "User ID.",
+                        "example": "198e0f50-acf8-42f7-998a-5cd125464749"
+                    },
+                    "product": {
+                        "type": "string",
+                        "description": "Product ID viewed.",
+                        "example": "sku1"
+                    },
+                    "source": {
+                        "type": "string",
+                        "description": "Source of the view event.",
+                        "enum": [
+                            "WEB_DESKTOP",
+                            "WEB_MOBILE",
+                            "MOBILE_APP",
+                            "MOBILE",
+                            "DESKTOP"
+                        ],
+                        "example": "WEB_DESKTOP"
+                    }
+                },
+                "required": [
+                    "userId",
+                    "product"
+                ]
+            }
+        }
+    }
+}
