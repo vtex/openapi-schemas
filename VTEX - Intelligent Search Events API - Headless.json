@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "VTEX Intelligent Search Events API - Headless",
-        "description": "Intelligent Search Events API is responsible for collecting the search events to improve your search results, such as page interactions and conversion, in a headless implementation. Some of the features improved by this collection are the possibility to sort the products by clicks or record the top search in the autocomplete.\r\n\r\n>⚠️ **This API applies only to Headless scenarios**. It doesn't apply to stores using Store Framework, since they are already integrated with all Intelligent Search features.\r\n\r\n## Building the request body\r\n\r\nIn the following sections, we explain the required structure for the request body for saving events. Check the `POST` [Save events](https://developers.vtex.com/docs/api-reference/intelligent-search-events-api-headless#post-/event) endpoint reference for  more detailed field descriptions and examples.\r\n\r\nFull request example (Session Ping):\r\n\r\n```json\r\ncurl --request post \\\r\n\t--url https://sp.vtex.com/event-api/v1/{accountName}/event \\\r\n\t--header 'Content-Type: application/json' \\\r\n\t--data '{\"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\"url\":\"https://example.com/search/?query=zapatilha\",\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\"type\":\"search.query\",\"text\":\"zapatilha\",\"misspelled\":true,\"match\":392,\"operator\":\"and\"}'\r\n```\r\n\r\n### User identification\r\n\r\nTo identify the user, there are two required identifiers: `session` and `anonymous`. We recommend using a [Universally Unique Identifier (UUID) v4](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID) without dashes.\r\n\r\nSample JavaScript code to generate a random UUID without dashes:\r\n\r\n```js\r\nwindow.crypto.randomUUID().replaceAll('-', '')\r\n```\r\n\r\n>⚠️ The `session` and `anonymous` identifiers need to be sent in every request.\r\n\r\n\r\n### Event type\r\n\r\nTo identify the events that occur in our search, the `type` field is required in the request. The most common event types are the following:\r\n\r\n| Event type | Value | Description |\r\n| - | - | - |\r\n| Session Ping | `session.ping` | Sends an ACK to the API to renew the session server-side. It should be sent every 1 minute. |\r\n| Page Confirmation |`page.confirmation` | Sends a confirmation informing the products that were bought. |\r\n| Search Click | `search.click` |  Sends an event every time a shopper clicks on a product from a search page. |\r\n| Search Query | `search.query` | Sends a query event every time the shopper makes a full-text search. |\r\n| Search Autocomplete Click | `search.autocomplete.click` | Sends an event every time a shopper clicks on a product from an autocomplete search. |\r\n| Search Autocomplete Query | `search.autocomplete.query` | Sends a query event every time the shopper makes an autocomplete search. |\r\n\r\n### Optional fields\r\n\r\nInformation to identify where the context of that request came from: `agent` and `URL`. Read the API reference for more information on each field.\r\n\r\n### Request body examples per event type\r\n\r\nThe body is built by combining the user information, the event type, and add the optional fields. Below there is an example for each type of event.\r\n\r\n#### Session Ping\r\n\r\n\r\n```json\r\n{\r\n\t\"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\r\n\t\"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\r\n\t\"url\":\"https://example.com/search/?query=zapatilha\",\r\n\t\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\r\n\t\"type\":\"session.ping\"\r\n}\r\n```\r\n\r\n#### Page Confirmation\r\n\r\n```json\r\n{\r\n  \"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\r\n  \"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\r\n  \"products\": [\r\n    {\r\n      \"productId\": \"ABC123\",\r\n      \"price\": 9.99,\r\n      \"quantity\": 3\r\n    },\r\n    {\r\n      \"productId\": \"XYZ789\",\r\n      \"price\": 5.99,\r\n      \"quantity\": 2\r\n    }\r\n  ],\r\n  \"order\": \"123ABC\",\r\n  \"type\": \"page.confirmation\"\r\n}\r\n```\r\n\r\n#### Search Click\r\n\r\n```json\r\n{\r\n\t\"type\": \"search.click\",\r\n\t\"productId\": \"12345\",\r\n\t\"position\": 1,\r\n\t\"url\": \"https://example.com/s?q=pneu&sort=score_desc&page=0\",\r\n\t\"text\": \"pneu\",\r\n\t\"agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36\",\r\n\t\"anonymous\": \"1ce47e50-3f10-4556-95d3-57d4881c03a4\",\r\n\t\"session\": \"51a53ce3-096d-4740-a6d0-3cf86085ba13\"\r\n}\r\n```\r\n\r\n#### Search Query\r\n\r\n```json\r\n{\r\n\t\"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\r\n\t\"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\r\n\t\"url\":\"https://example.com/search/?query=zapatilha\",\r\n\t\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\r\n\t\"type\":\"search.query\",\r\n\t\"text\":\"zapatilha\",\r\n\t\"misspelled\":true,\r\n\t\"match\":392,\r\n\t\"operator\":\"and\"\r\n}\r\n```\r\n\r\n#### Search Autocomplete Click\r\n\r\n```json\r\n{\r\n\t\"type\": \"search.autocomplete.click\",\r\n\t\"productId\": \"12345\",\r\n\t\"position\": 1,\r\n\t\"url\": \"https://example.com/s?q=pneu&sort=score_desc&page=0\",\r\n\t\"text\": \"pneu\",\r\n\t\"agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36\",\r\n\t\"anonymous\": \"1ce47e50-3f10-4556-95d3-57d4881c03a4\",\r\n\t\"session\": \"51a53ce3-096d-4740-a6d0-3cf86085ba13\"\r\n}\r\n```\r\n\r\n#### Search Autocomplete Query\r\n\r\n```json\r\n{\r\n\t\"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\r\n\t\"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\r\n\t\"url\":\"https://example.com/search/?query=zapatilha\",\r\n\t\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\r\n\t\"type\":\"search.autocomplete.query\",\r\n\t\"text\":\"zapatilha\",\r\n\t\"misspelled\":true,\r\n\t\"match\":392,\r\n\t\"operator\":\"and\"\r\n}\r\n```\r\n\r\n### Finding search query information\r\n\r\nSearch query information is possible to find in the Intelligent Search GraphQL response. To retrieve the information above, add operator, fuzzy, and correction attributes in the GraphQL query. Example:\r\n\r\n```graphql\r\nquery {\r\n  productSearch(fullText: \"id:43534\") {\r\n    products {\r\n      productId\r\n      productName\r\n      ...\r\n    }\r\n    operator\r\n    fuzzy\r\n    correction{ \r\n      misspelled\r\n    }\r\n  }\r\n}\r\n```",
+        "description": "Intelligent Search Events API is responsible for collecting the search events to improve your search results, such as page interactions and conversion, in a headless implementation. Some of the features improved by this collection are the possibility to sort the products by clicks or record the top search in the autocomplete.\r\n\r\n>⚠️ **This API applies only to Headless scenarios**. It doesn't apply to stores using Store Framework, since they are already integrated with all Intelligent Search features.\r\n\r\n## Building the request body\r\n\r\nIn the following sections, we explain the required structure for the request body for saving events. Check the `POST` [Save events](https://developers.vtex.com/docs/api-reference/intelligent-search-events-api-headless#post-/event) endpoint reference for  more detailed field descriptions and examples.\r\n\r\nFull request example (Session Ping):\r\n\r\n```json\r\ncurl --request post \\\r\n\t--url https://sp.vtex.com/event-api/v1/{accountName}/event \\\r\n\t--header 'Content-Type: application/json' \\\r\n\t--data '{\"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\"url\":\"https://example.com/search/?query=zapatilha\",\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\"type\":\"search.query\",\"text\":\"zapatilha\",\"misspelled\":true,\"match\":392,\"operator\":\"and\"}'\r\n```\r\n\r\n### User identification\r\n\r\nTo identify the user, there are two required identifiers: `session` and `anonymous`.\r\n\r\n- **session**: Identifier related to the current navigation, in UUID v4 format without dashes. The session cookie must be updated with each `session.ping` event, which is essential to determine if a session is active or has been closed. A session is automatically closed after 30 minutes without any `session.ping` event. Events registered for a session that has already been closed by the system are automatically disregarded. The session identifier changes if the user opens another tab in private navigation mode.\r\n\r\n- **anonymous**: Identifier related to the user, in UUID v4 format without dashes. This information is kept in storage for one year. Similar to the session identifier, the anonymous identifier should be renewed to measure returning customers, though the lack of renewal is less critical due to the longer duration of this identifier.\r\n\r\nThese IDs must be generated uniquely and must not be copies of other identifiers or tokens from the platform. We recommend using a [Universally Unique Identifier (UUID) v4](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID) without dashes.\r\n\r\nSample JavaScript code to generate a random UUID without dashes:\r\n\r\n```js\r\nwindow.crypto.randomUUID().replaceAll('-', '')\r\n```\r\n\r\n>⚠️ The `session` and `anonymous` identifiers must be sent in every request.\r\n\r\n\r\n### Event type\r\n\r\nTo identify the events that occur in our search, the `type` field is required in the request. An event always depends on the previous one to be useful. The first two events (Session Ping and Search Query) are essential for basic search report information, suggestion APIs, most searched terms, and part of the relevance criteria composition. The last two events (Search Click and Page Confirmation) complement the search report and relevance criteria.\r\n\r\nFor autocomplete functionality, the Search Autocomplete Query and Search Autocomplete Click events follow a similar pattern: the query event tracks autocomplete searches, and the click event tracks product selections from autocomplete results. These events help improve autocomplete suggestions and track user interactions within the autocomplete feature.\r\n\r\nThe most common event types are the following:\r\n\r\n| Event type | Value | Description |\r\n| - | - | - |\r\n| Session Ping | `session.ping` | Sends an ACK to the API to renew the session server-side. It should be sent every 1 minute. This event is essential to keep the session active. A session is automatically closed after 30 minutes without any `session.ping` event, and events registered for closed sessions are automatically disregarded. |\r\n| Search Query | `search.query` | Sends a query event every time the shopper makes a full-text search. |\r\n| Search Click | `search.click` |  Sends an event every time a shopper clicks on a product from a search page. |\r\n| Page Confirmation |`page.confirmation` | Sends a confirmation informing the products that were bought. |\r\n| Search Autocomplete Query | `search.autocomplete.query` | Sends a query event every time the shopper makes an autocomplete search. |\r\n| Search Autocomplete Click | `search.autocomplete.click` | Sends an event every time a shopper clicks on a product from an autocomplete search. |\r\n\r\n### Request body examples per event type\r\n\r\nThe body is built by combining the user information, the event type, and add the optional fields. Below there is an example for each type of event.\r\n\r\n#### Session Ping\r\n\r\n\r\n```json\r\n{\r\n\t\"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\r\n\t\"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\r\n\t\"url\":\"https://example.com/search/?query=zapatilha\",\r\n\t\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\r\n\t\"type\":\"session.ping\"\r\n}\r\n```\r\n\r\n#### Search Query\r\n\r\n```json\r\n{\r\n\t\"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\r\n\t\"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\r\n\t\"url\":\"https://example.com/search/?query=zapatilha\",\r\n\t\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\r\n\t\"type\":\"search.query\",\r\n\t\"text\":\"zapatilha\",\r\n\t\"misspelled\":true,\r\n\t\"match\":392,\r\n\t\"operator\":\"and\"\r\n}\r\n```\r\n\r\n#### Search Click\r\n\r\n```json\r\n{\r\n\t\"type\": \"search.click\",\r\n\t\"productId\": \"12345\",\r\n\t\"position\": 1,\r\n\t\"url\": \"https://example.com/s?q=pneu&sort=score_desc&page=0\",\r\n\t\"text\": \"pneu\",\r\n\t\"agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36\",\r\n\t\"anonymous\": \"1ce47e50-3f10-4556-95d3-57d4881c03a4\",\r\n\t\"session\": \"51a53ce3-096d-4740-a6d0-3cf86085ba13\"\r\n}\r\n```\r\n\r\n#### Page Confirmation\r\n\r\n```json\r\n{\r\n  \"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\r\n  \"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\r\n  \"products\": [\r\n    {\r\n      \"productId\": \"ABC123\",\r\n      \"price\": 9.99,\r\n      \"quantity\": 3\r\n    },\r\n    {\r\n      \"productId\": \"XYZ789\",\r\n      \"price\": 5.99,\r\n      \"quantity\": 2\r\n    }\r\n  ],\r\n  \"order\": \"123ABC\",\r\n  \"type\": \"page.confirmation\"\r\n}\r\n```\r\n\r\n#### Search Autocomplete Query\r\n\r\n```json\r\n{\r\n\t\"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\r\n\t\"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\r\n\t\"url\":\"https://example.com/search/?query=zapatilha\",\r\n\t\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\r\n\t\"type\":\"search.autocomplete.query\",\r\n\t\"text\":\"zapatilha\",\r\n\t\"misspelled\":true,\r\n\t\"match\":392,\r\n\t\"operator\":\"and\"\r\n}\r\n```\r\n\r\n#### Search Autocomplete Click\r\n\r\n```json\r\n{\r\n\t\"type\": \"search.autocomplete.click\",\r\n\t\"productId\": \"12345\",\r\n\t\"position\": 1,\r\n\t\"url\": \"https://example.com/s?q=pneu&sort=score_desc&page=0\",\r\n\t\"text\": \"pneu\",\r\n\t\"agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36\",\r\n\t\"anonymous\": \"1ce47e50-3f10-4556-95d3-57d4881c03a4\",\r\n\t\"session\": \"51a53ce3-096d-4740-a6d0-3cf86085ba13\"\r\n}\r\n```\r\n\r\n### Finding search query information\r\n\r\nSearch query information such as `operator`, `fuzzy`, and `correction` is available in the Intelligent Search API response, which is part of the normal context of a search results page. Check the `GET` [Get list of products for a query](https://developers.vtex.com/docs/api-reference/intelligent-search-api#get-/product_search/-facets-?endpoint=get-/product_search/-facets-) endpoint reference for more information.",
         "contact": {},
         "version": "1.0"
     },
@@ -44,13 +44,13 @@
                                         "$ref": "#/components/schemas/SessionPing"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/PageConfirmation"
+                                        "$ref": "#/components/schemas/Query"
                                     },
                                     {
                                         "$ref": "#/components/schemas/Click"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/Query"
+                                        "$ref": "#/components/schemas/PageConfirmation"
                                     },
                                     {
                                         "$ref": "#/components/schemas/AutocompleteQuery"
@@ -67,11 +67,32 @@
                                         "anonymous": "eed429ecf04a4a23ae7f4429033b48cd",
                                         "url": "https://example.com/search/?query=zapatilha",
                                         "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0",
+                                        "type": "session.ping"
+                                    }
+                                },
+                                "Search Query": {
+                                    "value": {
+                                        "session": "df66a4d239864d2e8497c89aea14a3ad",
+                                        "anonymous": "eed429ecf04a4a23ae7f4429033b48cd",
+                                        "url": "https://example.com/search/?query=zapatilha",
+                                        "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0",
                                         "type": "search.query",
                                         "text": "zapatilha",
                                         "misspelled": true,
                                         "match": 392,
                                         "operator": "and"
+                                    }
+                                },
+                                "Search Click": {
+                                    "value": {
+                                        "type": "search.click",
+                                        "productId": "12345",
+                                        "position": 1,
+                                        "url": "https://example.com/s?q=pneu&sort=score_desc&page=0",
+                                        "text": "pneu",
+                                        "agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+                                        "anonymous": "1ce47e50-3f10-4556-95d3-57d4881c03a4",
+                                        "session": "51a53ce3-096d-4740-a6d0-3cf86085ba13"
                                     }
                                 },
                                 "Page Confirmation": {
@@ -94,16 +115,17 @@
                                         "type": "page.confirmation"
                                     }
                                 },
-                                "Search Click": {
+                                "Search Autocomplete Query": {
                                     "value": {
-                                        "type": "search.click",
-                                        "productId": "12345",
-                                        "position": 1,
-                                        "url": "https://example.com/s?q=pneu&sort=score_desc&page=0",
-                                        "text": "pneu",
-                                        "agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-                                        "anonymous": "1ce47e50-3f10-4556-95d3-57d4881c03a4",
-                                        "session": "51a53ce3-096d-4740-a6d0-3cf86085ba13"
+                                        "session": "df66a4d239864d2e8497c89aea14a3ad",
+                                        "anonymous": "eed429ecf04a4a23ae7f4429033b48cd",
+                                        "url": "https://example.com/search/?query=zapatilha",
+                                        "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0",
+                                        "type": "search.autocomplete.query",
+                                        "text": "zapatilha",
+                                        "misspelled": true,
+                                        "match": 392,
+                                        "operator": "and"
                                     }
                                 },
                                 "Search Autocomplete Click": {
@@ -116,32 +138,6 @@
                                         "agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
                                         "anonymous": "1ce47e50-3f10-4556-95d3-57d4881c03a4",
                                         "session": "51a53ce3-096d-4740-a6d0-3cf86085ba13"
-                                    }
-                                },
-                                "Search Query": {
-                                    "value": {
-                                        "session": "df66a4d239864d2e8497c89aea14a3ad",
-                                        "anonymous": "eed429ecf04a4a23ae7f4429033b48cd",
-                                        "url": "https://example.com/search/?query=zapatilha",
-                                        "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0",
-                                        "type": "search.query",
-                                        "text": "zapatilha",
-                                        "misspelled": true,
-                                        "match": 392,
-                                        "operator": "and"
-                                    }
-                                },
-                                "Search Autocomplete Query": {
-                                    "value": {
-                                        "session": "df66a4d239864d2e8497c89aea14a3ad",
-                                        "anonymous": "eed429ecf04a4a23ae7f4429033b48cd",
-                                        "url": "https://example.com/search/?query=zapatilha",
-                                        "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0",
-                                        "type": "search.autocomplete.query",
-                                        "text": "zapatilha",
-                                        "misspelled": true,
-                                        "match": 392,
-                                        "operator": "and"
                                     }
                                 }
                             }
@@ -170,20 +166,20 @@
                     "anonymous": {
                         "type": "string",
                         "title": "anonymous",
-                        "description": "Identifier related to related to the user, in UUID v4 format without dashes. This information is kept in storage for one year.",
+                        "description": "Identifier related to the user, in UUID v4 format without dashes. This information is kept in storage for one year. Similar to the session identifier, the anonymous identifier should be renewed to measure returning customers, though the lack of renewal is less critical due to the longer duration of this identifier.",
                         "example": "df66a4d239864d2e8497c89aea14a3ad"
                     },
                     "session": {
                         "type": "string",
                         "title": "session",
-                        "description": "Identifier related to the current navigation, in UUID v4 format without dashes. It is a cookie that lasts for 30 minutes, changing if the user opens another tab in private navigation mode.",
+                        "description": "Identifier related to the current navigation, in UUID v4 format without dashes. The session cookie must be updated with each `session.ping` event, which is essential to determine if a session is active or has been closed. A session is automatically closed after 30 minutes without any `session.ping` event. Events registered for a session that has already been closed by the system are automatically disregarded. The session identifier changes if the user opens another tab in private navigation mode.",
                         "example": "eed429ecf04a4a23ae7f4429033b48cd"
                     }
                 }
             },
             "SessionPing": {
                 "title": "SessionPing",
-                "description": "Sends an ACK to the API to renew the session server-side. It should be sent every 1 minute.",
+                "description": "Sends an ACK to the API to renew the session server-side. It should be sent every 1 minute. This event is essential to keep the session active and to determine if a session is ongoing or has been closed. A session is automatically closed after 30 minutes without any `session.ping` event, and events registered for closed sessions are automatically disregarded.",
                 "type": "object",
                 "required": [
                     "session",
@@ -207,8 +203,7 @@
                     "agent": {
                         "type": "string",
                         "title": "agent",
-                        "description": "Identifies whether the request came from a mobile or desktop application. It's used as a filter in the search report.",
-                        "default": "desktop",
+                        "description": "A string that represents the HTTP User-Agent of the device that made the request.",
                         "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0"
                     }
                 }
@@ -363,8 +358,7 @@
                     "agent": {
                         "type": "string",
                         "title": "agent",
-                        "description": "Identifies whether the request came from a mobile or desktop application. It's used as a filter in the search report.",
-                        "default": "desktop",
+                        "description": "A string that represents the HTTP User-Agent of the device that made the request.",
                         "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0"
                     },
                     "anonymous": {
@@ -404,8 +398,7 @@
                     "agent": {
                         "type": "string",
                         "title": "agent",
-                        "description": "Identifies whether the request came from a mobile or desktop application. It's used as a filter in the search report.",
-                        "default": "desktop",
+                        "description": "A string that represents the HTTP User-Agent of the device that made the request.",
                         "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0"
                     },
                     "type": {
@@ -435,7 +428,11 @@
                     "operator": {
                         "type": "string",
                         "title": "operator",
-                        "description": "Identifies the type of operator used on the search. The possible values are: `and`, `or`. Find more details in [this Elastic Search guide](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-match-query.html).",
+                        "description": "Identifies the type of operator used on the search.",
+                        "enum": [
+                            "and",
+                            "or"
+                        ],
                         "example": "and"
                     }
                 }
@@ -484,8 +481,7 @@
                     "agent": {
                         "type": "string",
                         "title": "agent",
-                        "description": "Identifies whether the request came from a mobile or desktop application. It's used as a filter in the search report.",
-                        "default": "desktop",
+                        "description": "A string that represents the HTTP User-Agent of the device that made the request.",
                         "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0"
                     },
                     "anonymous": {
@@ -525,8 +521,7 @@
                     "agent": {
                         "type": "string",
                         "title": "agent",
-                        "description": "Identifies whether the request came from a mobile or desktop application. It's used as a filter in the search report.",
-                        "default": "desktop",
+                        "description": "A string that represents the HTTP User-Agent of the device that made the request.",
                         "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0"
                     },
                     "type": {
@@ -556,7 +551,7 @@
                     "operator": {
                         "type": "string",
                         "title": "operator",
-                        "description": "Identifies the type of operator used on the search. The possible values are: `and`, `or`. Find more details in [this Elastic Search guide](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-match-query.html).",
+                        "description": "Identifies the type of operator used on the search. The possible values are: `and`, `or`.",
                         "example": "and",
                         "enum": [
                             "and",
@@ -601,6 +596,7 @@
                     },
                     "price": {
                         "type": "number",
+                        "format": "double",
                         "description": "Price of the product.",
                         "example": 9.99
                     },
