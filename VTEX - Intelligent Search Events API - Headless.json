@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "VTEX Intelligent Search Events API - Headless",
-        "description": "Intelligent Search Events API is responsible for collecting the search events to improve your search results, such as page interactions and conversion, in a headless implementation. Some of the features improved by this collection are the possibility to sort the products by clicks or record the top search in the autocomplete.\r\n\r\n>⚠️ **This API applies only to Headless scenarios**. It doesn't apply to stores using Store Framework, since they are already integrated with all Intelligent Search features.\r\n\r\n## Building the request body\r\n\r\nIn the following sections, we explain the required structure for the request body for saving events. Check the `POST` [Save events](https://developers.vtex.com/docs/api-reference/intelligent-search-events-api-headless#post-/event) endpoint reference for  more detailed field descriptions and examples.\r\n\r\nFull request example (Session Ping):\r\n\r\n```json\r\ncurl --request post \\\r\n\t--url https://sp.vtex.com/event-api/v1/{accountName}/event \\\r\n\t--header 'Content-Type: application/json' \\\r\n\t--data '{\"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\"url\":\"https://example.com/search/?query=zapatilha\",\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\"type\":\"search.query\",\"text\":\"zapatilha\",\"misspelled\":true,\"match\":392,\"operator\":\"and\"}'\r\n```\r\n\r\n### User identification\r\n\r\nTo identify the user, there are two required identifiers: `session` and `anonymous`.\r\n\r\n- **session**: Identifier related to the current navigation, in UUID v4 format without dashes. The session cookie must be updated with each `session.ping` event, which is essential to determine if a session is active or has been closed. A session is automatically closed after 30 minutes without any `session.ping` event. Events registered for a session that has already been closed by the system are automatically disregarded. The session identifier changes if the user opens another tab in private navigation mode.\r\n\r\n- **anonymous**: Identifier related to the user, in UUID v4 format without dashes. This information is kept in storage for one year. Similar to the session identifier, the anonymous identifier should be renewed to measure returning customers, though the lack of renewal is less critical due to the longer duration of this identifier.\r\n\r\nThese IDs must be generated uniquely and must not be copies of other identifiers or tokens from the platform. We recommend using a [Universally Unique Identifier (UUID) v4](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID) without dashes.\r\n\r\nSample JavaScript code to generate a random UUID without dashes:\r\n\r\n```js\r\nwindow.crypto.randomUUID().replaceAll('-', '')\r\n```\r\n\r\n>⚠️ The `session` and `anonymous` identifiers must be sent in every request.\r\n\r\n\r\n### Event type\r\n\r\nTo identify the events that occur in our search, the `type` field is required in the request. An event always depends on the previous one to be useful. The first two events (Session Ping and Search Query) are essential for basic search report information, suggestion APIs, most searched terms, and part of the relevance criteria composition. The last two events (Search Click and Page Confirmation) complement the search report and relevance criteria.\r\n\r\nFor autocomplete functionality, the Search Autocomplete Query and Search Autocomplete Click events follow a similar pattern: the query event tracks autocomplete searches, and the click event tracks product selections from autocomplete results. These events help improve autocomplete suggestions and track user interactions within the autocomplete feature.\r\n\r\nThe most common event types are the following:\r\n\r\n| Event type | Value | Description |\r\n| - | - | - |\r\n| Session Ping | `session.ping` | Sends an ACK to the API to renew the session server-side. It should be sent every 1 minute. This event is essential to keep the session active. A session is automatically closed after 30 minutes without any `session.ping` event, and events registered for closed sessions are automatically disregarded. |\r\n| Search Query | `search.query` | Sends a query event every time the shopper makes a full-text search. |\r\n| Search Click | `search.click` |  Sends an event every time a shopper clicks on a product from a search page. |\r\n| Page Confirmation |`page.confirmation` | Sends a confirmation informing the products that were bought. |\r\n| Search Autocomplete Query | `search.autocomplete.query` | Sends a query event every time the shopper makes an autocomplete search. |\r\n| Search Autocomplete Click | `search.autocomplete.click` | Sends an event every time a shopper clicks on a product from an autocomplete search. |\r\n\r\n### Request body examples per event type\r\n\r\nThe body is built by combining the user information, the event type, and add the optional fields. Below there is an example for each type of event.\r\n\r\n#### Session Ping\r\n\r\n\r\n```json\r\n{\r\n\t\"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\r\n\t\"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\r\n\t\"url\":\"https://example.com/search/?query=zapatilha\",\r\n\t\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\r\n\t\"type\":\"session.ping\"\r\n}\r\n```\r\n\r\n#### Search Query\r\n\r\n```json\r\n{\r\n\t\"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\r\n\t\"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\r\n\t\"url\":\"https://example.com/search/?query=zapatilha\",\r\n\t\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\r\n\t\"type\":\"search.query\",\r\n\t\"text\":\"zapatilha\",\r\n\t\"misspelled\":true,\r\n\t\"match\":392,\r\n\t\"operator\":\"and\"\r\n}\r\n```\r\n\r\n#### Search Click\r\n\r\n```json\r\n{\r\n\t\"type\": \"search.click\",\r\n\t\"productId\": \"12345\",\r\n\t\"position\": 1,\r\n\t\"url\": \"https://example.com/s?q=pneu&sort=score_desc&page=0\",\r\n\t\"text\": \"pneu\",\r\n\t\"agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36\",\r\n\t\"anonymous\": \"1ce47e50-3f10-4556-95d3-57d4881c03a4\",\r\n\t\"session\": \"51a53ce3-096d-4740-a6d0-3cf86085ba13\"\r\n}\r\n```\r\n\r\n#### Page Confirmation\r\n\r\n```json\r\n{\r\n  \"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\r\n  \"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\r\n  \"products\": [\r\n    {\r\n      \"productId\": \"ABC123\",\r\n      \"price\": 9.99,\r\n      \"quantity\": 3\r\n    },\r\n    {\r\n      \"productId\": \"XYZ789\",\r\n      \"price\": 5.99,\r\n      \"quantity\": 2\r\n    }\r\n  ],\r\n  \"order\": \"123ABC\",\r\n  \"type\": \"page.confirmation\"\r\n}\r\n```\r\n\r\n#### Search Autocomplete Query\r\n\r\n```json\r\n{\r\n\t\"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\r\n\t\"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\r\n\t\"url\":\"https://example.com/search/?query=zapatilha\",\r\n\t\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\r\n\t\"type\":\"search.autocomplete.query\",\r\n\t\"text\":\"zapatilha\",\r\n\t\"misspelled\":true,\r\n\t\"match\":392,\r\n\t\"operator\":\"and\"\r\n}\r\n```\r\n\r\n#### Search Autocomplete Click\r\n\r\n```json\r\n{\r\n\t\"type\": \"search.autocomplete.click\",\r\n\t\"productId\": \"12345\",\r\n\t\"position\": 1,\r\n\t\"url\": \"https://example.com/s?q=pneu&sort=score_desc&page=0\",\r\n\t\"text\": \"pneu\",\r\n\t\"agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36\",\r\n\t\"anonymous\": \"1ce47e50-3f10-4556-95d3-57d4881c03a4\",\r\n\t\"session\": \"51a53ce3-096d-4740-a6d0-3cf86085ba13\"\r\n}\r\n```\r\n\r\n### Finding search query information\r\n\r\nSearch query information such as `operator`, `fuzzy`, and `correction` is available in the Intelligent Search API response, which is part of the normal context of a search results page. Check the `GET` [Get list of products for a query](https://developers.vtex.com/docs/api-reference/intelligent-search-api#get-/product_search/-facets-?endpoint=get-/product_search/-facets-) endpoint reference for more information.",
+        "description": "Intelligent Search Events API is responsible for collecting the search events to improve your search results, such as page interactions and conversion, in a headless implementation. Some of the features improved by this collection are the possibility to sort the products by clicks or record the top search in the autocomplete.\r\n\r\n>⚠️ **This API applies only to Headless scenarios**. It doesn't apply to stores using Store Framework, since they are already integrated with all Intelligent Search features.\r\n\r\n## Building the request body\r\n\r\nIn the following sections, we explain the required structure for the request body for saving events. Check the `POST` [Save events](https://developers.vtex.com/docs/api-reference/intelligent-search-events-api-headless#post-/event) endpoint reference for  more detailed field descriptions and examples.\r\n\r\nFull request example (Session Ping):\r\n\r\n```json\r\ncurl --request post \\\r\n\t--url https://sp.vtex.com/event-api/v1/{accountName}/event \\\r\n\t--header 'Content-Type: application/json' \\\r\n\t--data '{\"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\"url\":\"https://example.com/search/?query=zapatilha\",\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\"type\":\"search.query\",\"text\":\"zapatilha\",\"misspelled\":true,\"match\":392,\"operator\":\"and\"}'\r\n```\r\n\r\n### User identification\r\n\r\nTo identify the user, there are two required identifiers: `session` and `anonymous`.\r\n\r\n- **session**: Identifier related to the current navigation, in UUID v4 format without dashes. The session cookie must be updated with each `session.ping` event, which is essential to determine if a session is active or has been closed. A session is automatically closed after 30 minutes without any `session.ping` event. Events registered for a session that has already been closed by the system are automatically disregarded. The session identifier changes if the user opens another tab in private navigation mode.\r\n\r\n- **anonymous**: Identifier related to the user, in UUID v4 format without dashes. This information is kept in storage for one year. Similar to the session identifier, the anonymous identifier should be renewed to measure returning customers, though the lack of renewal is less critical due to the longer duration of this identifier.\r\n\r\nThese IDs must be generated uniquely and must not be copies of other identifiers or tokens from the platform. We recommend using a [Universally Unique Identifier (UUID) v4](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID) without dashes.\r\n\r\nSample JavaScript code to generate a random UUID without dashes:\r\n\r\n```js\r\nwindow.crypto.randomUUID().replaceAll('-', '')\r\n```\r\n\r\n>⚠️ The `session` and `anonymous` identifiers must be sent in every request.\r\n\r\n\r\n### Event type\r\n\r\nTo identify the events that occur in our search, the `type` field is required in the request. An event always depends on the previous one to be useful. The first two events (Session Ping and Search Query) are essential for basic search report information, suggestion APIs, most searched terms, and part of the relevance criteria composition. The last two events (Search Click and Page Confirmation) complement the search report and relevance criteria.\r\n\r\nFor autocomplete functionality, the Search Autocomplete Query and Search Autocomplete Click events follow a similar pattern: the query event tracks autocomplete searches, and the click event tracks product selections from autocomplete results. These events help improve autocomplete suggestions and track user interactions within the autocomplete feature.\r\n\r\nThe most common event types are the following:\r\n\r\n| Event type | Value | Description |\r\n| - | - | - |\r\n| Session Ping | `session.ping` | Sends an ACK to the API to renew the session server-side. It should be sent every 1 minute. This event is essential to keep the session active. A session is automatically closed after 30 minutes without any `session.ping` event, and events registered for closed sessions are automatically disregarded. |\r\n| Search Query | `search.query` | Sends a query event every time the shopper makes a full-text search. |\r\n| Search Click | `search.click` |  Sends an event every time a shopper clicks on a product from a search page. |\r\n| Page Confirmation |`page.confirmation` | Sends a confirmation informing the products that were bought. |\r\n| Search Autocomplete Query | `search.autocomplete.query` | Sends a query event every time the shopper makes an autocomplete search. |\r\n| Search Autocomplete Click | `search.autocomplete.click` | Sends an event every time a shopper clicks on a product from an autocomplete search. |\r\n\r\n### Request body examples per event type\r\n\r\nThe body is built by combining the user information, the event type, and add the optional fields. Below there is an example for each type of event.\r\n\r\n#### Session Ping\r\n\r\n\r\n```json\r\n{\r\n\t\"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\r\n\t\"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\r\n\t\"url\":\"https://example.com/search/?query=zapatilha\",\r\n\t\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\r\n\t\"type\":\"session.ping\"\r\n}\r\n```\r\n\r\n#### Search Query\r\n\r\n```json\r\n{\r\n\t\"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\r\n\t\"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\r\n\t\"url\":\"https://example.com/search/?query=zapatilha\",\r\n\t\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\r\n\t\"type\":\"search.query\",\r\n\t\"text\":\"zapatilha\",\r\n\t\"misspelled\":true,\r\n\t\"match\":392,\r\n\t\"operator\":\"and\"\r\n}\r\n```\r\n\r\n#### Search Click\r\n\r\n```json\r\n{\r\n\t\"type\": \"search.click\",\r\n\t\"product\": \"12345\",\r\n\t\"position\": 1,\r\n\t\"url\": \"https://example.com/s?q=pneu&sort=score_desc&page=0\",\r\n\t\"text\": \"pneu\",\r\n\t\"agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36\",\r\n\t\"anonymous\": \"1ce47e50-3f10-4556-95d3-57d4881c03a4\",\r\n\t\"session\": \"51a53ce3-096d-4740-a6d0-3cf86085ba13\"\r\n}\r\n```\r\n\r\n#### Page Confirmation\r\n\r\n```json\r\n{\r\n  \"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\r\n  \"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\r\n  \"products\": [\r\n    {\r\n      \"product\": \"ABC123\",\r\n      \"price\": 9.99,\r\n      \"quantity\": 3\r\n    },\r\n    {\r\n      \"product\": \"XYZ789\",\r\n      \"price\": 5.99,\r\n      \"quantity\": 2\r\n    }\r\n  ],\r\n  \"order\": \"123ABC\",\r\n  \"type\": \"page.confirmation\"\r\n}\r\n```\r\n\r\n#### Search Autocomplete Query\r\n\r\n```json\r\n{\r\n\t\"session\":\"df66a4d239864d2e8497c89aea14a3ad\",\r\n\t\"anonymous\":\"eed429ecf04a4a23ae7f4429033b48cd\",\r\n\t\"url\":\"https://example.com/search/?query=zapatilha\",\r\n\t\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0\",\r\n\t\"type\":\"search.autocomplete.query\",\r\n\t\"text\":\"zapatilha\",\r\n\t\"misspelled\":true,\r\n\t\"match\":392,\r\n\t\"operator\":\"and\"\r\n}\r\n```\r\n\r\n#### Search Autocomplete Click\r\n\r\n```json\r\n{\r\n\t\"type\": \"search.autocomplete.click\",\r\n\t\"product\": \"12345\",\r\n\t\"position\": 1,\r\n\t\"url\": \"https://example.com/s?q=pneu&sort=score_desc&page=0\",\r\n\t\"text\": \"pneu\",\r\n\t\"agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36\",\r\n\t\"anonymous\": \"1ce47e50-3f10-4556-95d3-57d4881c03a4\",\r\n\t\"session\": \"51a53ce3-096d-4740-a6d0-3cf86085ba13\"\r\n}\r\n```\r\n\r\n### Finding search query information\r\n\r\nSearch query information such as `operator`, `fuzzy`, and `correction` is available in the Intelligent Search API response, which is part of the normal context of a search results page. Check the `GET` [Get list of products for a query](https://developers.vtex.com/docs/api-reference/intelligent-search-api#get-/product_search/-facets-?endpoint=get-/product_search/-facets-) endpoint reference for more information.",
         "contact": {},
         "version": "1.0"
     },
@@ -86,7 +86,7 @@
                                 "Search Click": {
                                     "value": {
                                         "type": "search.click",
-                                        "productId": "12345",
+                                        "product": "12345",
                                         "position": 1,
                                         "url": "https://example.com/s?q=pneu&sort=score_desc&page=0",
                                         "text": "pneu",
@@ -101,12 +101,12 @@
                                         "anonymous": "eed429ecf04a4a23ae7f4429033b48cd",
                                         "products": [
                                             {
-                                                "productId": "ABC123",
+                                                "product": "ABC123",
                                                 "price": 9.99,
                                                 "quantity": 3
                                             },
                                             {
-                                                "productId": "XYZ789",
+                                                "product": "XYZ789",
                                                 "price": 5.99,
                                                 "quantity": 2
                                             }
@@ -131,7 +131,7 @@
                                 "Search Autocomplete Click": {
                                     "value": {
                                         "type": "search.autocomplete.click",
-                                        "productId": "12345",
+                                        "product": "12345",
                                         "position": 1,
                                         "url": "https://example.com/s?q=pneu&sort=score_desc&page=0",
                                         "text": "pneu",
@@ -203,8 +203,32 @@
                     "agent": {
                         "type": "string",
                         "title": "agent",
-                        "description": "A string that represents the HTTP User-Agent of the device that made the request.",
+                        "description": "HTTP User-Agent of the device that made the request.",
                         "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0"
+                    },
+                    "device": {
+                        "type": "string",
+                        "title": "device",
+                        "description": "Device type. It can take on one of two values: \"mobile\" or \"desktop\". If specified, it takes precedence over the value specified in agent.",
+                        "enum": [
+                            "mobile",
+                            "desktop"
+                        ]
+                    },
+                    "ab": {
+                        "type": "string",
+                        "title": "ab",
+                        "description": "A/B test variant that the shopper is currently participating in. It is used to determine which variant of an A/B test the shopper saw when the event occurred. This property is optional, and its value is not predefined, as it is specific to each A/B test."
+                    },
+                    "vtexSession": {
+                        "type": "string",
+                        "title": "vtexSession",
+                        "description": "Current navigation session using the VtexRCSessionIdv7 cookie."
+                    },
+                    "vtexMac": {
+                        "type": "string",
+                        "title": "vtexMac",
+                        "description": "Anonymous shopper information using the VtexRCMacIdv7 cookie."
                     }
                 }
             },
@@ -320,7 +344,7 @@
                 "type": "object",
                 "required": [
                     "type",
-                    "productId",
+                    "product",
                     "position",
                     "text",
                     "anonymous",
@@ -333,15 +357,25 @@
                         "description": "Type of event, which can be one of the following: `page.cart`, `page.empty_cart`, `search.query`, `page.confirmation`, `session.ping`, `search.click`, `search.autocomplete.query`, or `search.autocomplete.click`.",
                         "example": "search.click"
                     },
-                    "productId": {
+                    "product": {
                         "type": "string",
-                        "description": "Unique identifier of the clicked product.",
+                        "description": "Unique identifier of the product that the user clicked on.",
                         "example": "12345"
                     },
                     "position": {
                         "type": "integer",
-                        "description": "Position of the clicked product on the search results page.",
+                        "description": "Position of the clicked product on the search results page.  This is useful to identify which product was clicked in case there are multiple products displayed on the same page. The position should start at 0 for the first product in the list.",
                         "example": 1
+                    },
+                    "page": {
+                        "type": "string",
+                        "title": "page",
+                        "description": "Page number on which the clicked product was displayed. This is useful in case there are multiple pages of search results, allowing to identify on which page the click happened."
+                    },
+                    "clickType": {
+                        "type": "string",
+                        "title": "clickType",
+                        "description": "Type of click event."
                     },
                     "url": {
                         "type": "string",
@@ -358,8 +392,32 @@
                     "agent": {
                         "type": "string",
                         "title": "agent",
-                        "description": "A string that represents the HTTP User-Agent of the device that made the request.",
+                        "description": "HTTP User-Agent of the device that made the request.",
                         "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0"
+                    },
+                    "device": {
+                        "type": "string",
+                        "title": "device",
+                        "description": "Device type. It can take on one of two values: \"mobile\" or \"desktop\". If specified, it takes precedence over the value specified in agent.",
+                        "enum": [
+                            "mobile",
+                            "desktop"
+                        ]
+                    },
+                    "ab": {
+                        "type": "string",
+                        "title": "ab",
+                        "description": "A/B test variant that the shopper is currently participating in. It is used to determine which variant of an A/B test the shopper saw when the event occurred. This property is optional, and its value is not predefined, as it is specific to each A/B test."
+                    },
+                    "vtexSession": {
+                        "type": "string",
+                        "title": "vtexSession",
+                        "description": "Current navigation session using the VtexRCSessionIdv7 cookie."
+                    },
+                    "vtexMac": {
+                        "type": "string",
+                        "title": "vtexMac",
+                        "description": "Anonymous shopper information using the VtexRCMacIdv7 cookie."
                     },
                     "anonymous": {
                         "$ref": "#/components/schemas/UserIdentification/properties/anonymous"
@@ -377,9 +435,7 @@
                     "session",
                     "anonymous",
                     "type",
-                    "misspelled",
                     "text",
-                    "match",
                     "operator"
                 ],
                 "properties": {
@@ -398,8 +454,32 @@
                     "agent": {
                         "type": "string",
                         "title": "agent",
-                        "description": "A string that represents the HTTP User-Agent of the device that made the request.",
+                        "description": "HTTP User-Agent of the device that made the request.",
                         "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0"
+                    },
+                    "device": {
+                        "type": "string",
+                        "title": "device",
+                        "description": "Device type. It can take on one of two values: \"mobile\" or \"desktop\". If specified, it takes precedence over the value specified in agent.",
+                        "enum": [
+                            "mobile",
+                            "desktop"
+                        ]
+                    },
+                    "ab": {
+                        "type": "string",
+                        "title": "ab",
+                        "description": "A/B test variant that the shopper is currently participating in. It is used to determine which variant of an A/B test the shopper saw when the event occurred. This property is optional, and its value is not predefined, as it is specific to each A/B test."
+                    },
+                    "vtexSession": {
+                        "type": "string",
+                        "title": "vtexSession",
+                        "description": "Current navigation session using the VtexRCSessionIdv7 cookie."
+                    },
+                    "vtexMac": {
+                        "type": "string",
+                        "title": "vtexMac",
+                        "description": "Anonymous shopper information using the VtexRCMacIdv7 cookie."
                     },
                     "type": {
                         "type": "string",
@@ -415,15 +495,70 @@
                     },
                     "misspelled": {
                         "type": "boolean",
+                        "nullable": true,
                         "title": "misspelled",
-                        "description": "Indicates whether the query has a typo (`true`) or not (`false`).",
+                        "description": "Indicates whether the search query has any spelling mistakes or not. This value can be retrieved from `GET` [Get list of products for a query](https://developers.vtex.com/docs/api-reference/intelligent-search-api#get-/product_search/-facets-?endpoint=get-/product_search/-facets-).",
                         "example": true
                     },
                     "match": {
                         "type": "number",
                         "title": "match",
-                        "description": "Amount of products retrieved by the search.",
+                        "description": "Number of products retrieved by the search query. This value can be retrieved from `GET` [Get list of products for a query](https://developers.vtex.com/docs/api-reference/intelligent-search-api#get-/product_search/-facets-?endpoint=get-/product_search/-facets-).",
                         "example": 396
+                    },
+                    "products": {
+                        "oneOf": [
+                            {
+                                "type": "array",
+                                "title": "products",
+                                "description": "List of product IDs contained in a search result page. This value can be retrieved from `GET` [Get list of products for a query](https://developers.vtex.com/docs/api-reference/intelligent-search-api#get-/product_search/-facets-?endpoint=get-/product_search/-facets-).",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            {
+                                "type": "array",
+                                "title": "products",
+                                "description": "List of products contained in a search result page with their positions. This value can be retrieved from `GET` [Get list of products for a query](https://developers.vtex.com/docs/api-reference/intelligent-search-api#get-/product_search/-facets-?endpoint=get-/product_search/-facets-).",
+                                "items": {
+                                    "type": "object",
+                                    "required": [
+                                        "id",
+                                        "local",
+                                        "global"
+                                    ],
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "description": "Unique identifier of the product."
+                                        },
+                                        "local": {
+                                            "type": "number",
+                                            "description": "Position in the current page."
+                                        },
+                                        "global": {
+                                            "type": "number",
+                                            "description": "Position in the result set."
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "page": {
+                        "type": "number",
+                        "title": "page",
+                        "description": "Index of the current page. This value can be retrieved from `GET` [Get list of products for a query](https://developers.vtex.com/docs/api-reference/intelligent-search-api#get-/product_search/-facets-?endpoint=get-/product_search/-facets-)."
+                    },
+                    "count": {
+                        "type": "number",
+                        "title": "count",
+                        "description": "Number of products returned per page. This value can be retrieved from `GET` [Get list of products for a query](https://developers.vtex.com/docs/api-reference/intelligent-search-api#get-/product_search/-facets-?endpoint=get-/product_search/-facets-)."
+                    },
+                    "locale": {
+                        "type": "string",
+                        "title": "locale",
+                        "description": "Shopper's locale."
                     },
                     "operator": {
                         "type": "string",
@@ -443,7 +578,7 @@
                 "type": "object",
                 "required": [
                     "type",
-                    "productId",
+                    "product",
                     "position",
                     "text",
                     "anonymous",
@@ -456,15 +591,25 @@
                         "description": "Type of event, which can be one of the following: `page.cart`, `page.empty_cart`, `search.query`, `page.confirmation`, `session.ping`, `search.click`, `search.autocomplete.query`, or `search.autocomplete.click`.",
                         "example": "search.autocomplete.click"
                     },
-                    "productId": {
+                    "product": {
                         "type": "string",
                         "description": "Unique identifier of the clicked product.",
                         "example": "12345"
                     },
                     "position": {
                         "type": "integer",
-                        "description": "Position of the clicked product on the search results page.",
+                        "description": "Position of the clicked product within the list of search results. This is useful to identify which product was clicked in case there are multiple products displayed on the same page. The position should start at 0 for the first product in the list.",
                         "example": 1
+                    },
+                    "page": {
+                        "type": "string",
+                        "title": "page",
+                        "description": "Page number on which the clicked product was displayed. This is useful in case there are multiple pages of search results, allowing to identify on which page the click happened."
+                    },
+                    "clickType": {
+                        "type": "string",
+                        "title": "clickType",
+                        "description": "Type of click event."
                     },
                     "url": {
                         "type": "string",
@@ -481,8 +626,32 @@
                     "agent": {
                         "type": "string",
                         "title": "agent",
-                        "description": "A string that represents the HTTP User-Agent of the device that made the request.",
+                        "description": "HTTP User-Agent of the device that made the request.",
                         "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0"
+                    },
+                    "device": {
+                        "type": "string",
+                        "title": "device",
+                        "description": "Device type. It can take on one of two values: \"mobile\" or \"desktop\". If specified, it takes precedence over the value specified in agent.",
+                        "enum": [
+                            "mobile",
+                            "desktop"
+                        ]
+                    },
+                    "ab": {
+                        "type": "string",
+                        "title": "ab",
+                        "description": "A/B test variant that the shopper is currently participating in. It is used to determine which variant of an A/B test the shopper saw when the event occurred. This property is optional, and its value is not predefined, as it is specific to each A/B test."
+                    },
+                    "vtexSession": {
+                        "type": "string",
+                        "title": "vtexSession",
+                        "description": "Current navigation session using the VtexRCSessionIdv7 cookie."
+                    },
+                    "vtexMac": {
+                        "type": "string",
+                        "title": "vtexMac",
+                        "description": "Anonymous shopper information using the VtexRCMacIdv7 cookie."
                     },
                     "anonymous": {
                         "$ref": "#/components/schemas/UserIdentification/properties/anonymous"
@@ -500,9 +669,7 @@
                     "session",
                     "anonymous",
                     "type",
-                    "misspelled",
                     "text",
-                    "match",
                     "operator"
                 ],
                 "properties": {
@@ -521,8 +688,32 @@
                     "agent": {
                         "type": "string",
                         "title": "agent",
-                        "description": "A string that represents the HTTP User-Agent of the device that made the request.",
+                        "description": "HTTP User-Agent of the device that made the request.",
                         "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0"
+                    },
+                    "device": {
+                        "type": "string",
+                        "title": "device",
+                        "description": "Device type. It can take on one of two values: \"mobile\" or \"desktop\". If specified, it takes precedence over the value specified in agent.",
+                        "enum": [
+                            "mobile",
+                            "desktop"
+                        ]
+                    },
+                    "ab": {
+                        "type": "string",
+                        "title": "ab",
+                        "description": "A/B test variant that the shopper is currently participating in. It is used to determine which variant of an A/B test the shopper saw when the event occurred. This property is optional, and its value is not predefined, as it is specific to each A/B test."
+                    },
+                    "vtexSession": {
+                        "type": "string",
+                        "title": "vtexSession",
+                        "description": "Current navigation session using the VtexRCSessionIdv7 cookie."
+                    },
+                    "vtexMac": {
+                        "type": "string",
+                        "title": "vtexMac",
+                        "description": "Anonymous shopper information using the VtexRCMacIdv7 cookie."
                     },
                     "type": {
                         "type": "string",
@@ -538,20 +729,75 @@
                     },
                     "misspelled": {
                         "type": "boolean",
+                        "nullable": true,
                         "title": "misspelled",
-                        "description": "Indicates whether the query has a typo (`true`) or not (`false`).",
+                        "description": "Indicates whether the search query has any spelling mistakes or not. This value can be retrieved from `GET` [Get list of products for a query](https://developers.vtex.com/docs/api-reference/intelligent-search-api#get-/product_search/-facets-?endpoint=get-/product_search/-facets-).",
                         "example": true
                     },
                     "match": {
                         "type": "number",
                         "title": "match",
-                        "description": "Amount of products retrieved by the search.",
+                        "description": "Number of products retrieved by the search query. This value can be retrieved from `GET` [Get list of products for a query](https://developers.vtex.com/docs/api-reference/intelligent-search-api#get-/product_search/-facets-?endpoint=get-/product_search/-facets-).",
                         "example": 396
+                    },
+                    "products": {
+                        "oneOf": [
+                            {
+                                "type": "array",
+                                "title": "products",
+                                "description": "List of product IDs contained in a search result page. This value can be retrieved from `GET` [Get list of products for a query](https://developers.vtex.com/docs/api-reference/intelligent-search-api#get-/product_search/-facets-?endpoint=get-/product_search/-facets-).",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            {
+                                "type": "array",
+                                "title": "products",
+                                "description": "List of products contained in a search result page with their positions. This value can be retrieved from `GET` [Get list of products for a query](https://developers.vtex.com/docs/api-reference/intelligent-search-api#get-/product_search/-facets-?endpoint=get-/product_search/-facets-).",
+                                "items": {
+                                    "type": "object",
+                                    "required": [
+                                        "id",
+                                        "local",
+                                        "global"
+                                    ],
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "description": "Unique identifier of the product."
+                                        },
+                                        "local": {
+                                            "type": "number",
+                                            "description": "Position in the current page."
+                                        },
+                                        "global": {
+                                            "type": "number",
+                                            "description": "Position in the result set."
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "page": {
+                        "type": "number",
+                        "title": "page",
+                        "description": "Index of the current page. This value can be retrieved from `GET` [Get list of products for a query](https://developers.vtex.com/docs/api-reference/intelligent-search-api#get-/product_search/-facets-?endpoint=get-/product_search/-facets-)."
+                    },
+                    "count": {
+                        "type": "number",
+                        "title": "count",
+                        "description": "Number of products returned per page. This value can be retrieved from `GET` [Get list of products for a query](https://developers.vtex.com/docs/api-reference/intelligent-search-api#get-/product_search/-facets-?endpoint=get-/product_search/-facets-)."
+                    },
+                    "locale": {
+                        "type": "string",
+                        "title": "locale",
+                        "description": "Shopper's locale."
                     },
                     "operator": {
                         "type": "string",
                         "title": "operator",
-                        "description": "Identifies the type of operator used on the search. The possible values are: `and`, `or`.",
+                        "description": "Identifies the type of operator used on the search.",
                         "example": "and",
                         "enum": [
                             "and",
@@ -564,18 +810,19 @@
                 "type": "object",
                 "description": "Product information.",
                 "required": [
-                    "productId",
+                    "product",
                     "quantity"
                 ],
                 "properties": {
-                    "productId": {
+                    "product": {
                         "type": "string",
-                        "description": "Unique identifier of the product.",
+                        "description": "Unique identifier for a product in the shopper's shopping cart.",
                         "example": "ABC123"
                     },
                     "quantity": {
                         "type": "number",
                         "description": "Quantity of the product.",
+                        "minimum": 1,
                         "example": 2
                     }
                 }
@@ -584,12 +831,11 @@
                 "type": "object",
                 "description": "Product information.",
                 "required": [
-                    "productId",
-                    "price",
+                    "product",
                     "quantity"
                 ],
                 "properties": {
-                    "productId": {
+                    "product": {
                         "type": "string",
                         "description": "Unique identifier of the product.",
                         "example": "ABC123"
@@ -602,7 +848,8 @@
                     },
                     "quantity": {
                         "type": "number",
-                        "description": "Quantity of the product.",
+                        "description": "Quantity of the product that was purchased.",
+                        "minimum": 1,
                         "example": 3
                     }
                 }
