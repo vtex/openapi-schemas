@@ -26,58 +26,54 @@
                 "operationId": "GetArchives",
                 "parameters": [
                     {
-                        "name": "Accept",
-                        "in": "header",
-                        "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand.",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "default": "application/json"
-                        }
-                    },
-                    {
-                        "name": "Content-Type",
-                        "in": "header",
-                        "description": "Type of the content being sent.",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "default": "application/json"
-                        }
-                    },
-                    {
                         "name": "Authorization",
                         "in": "header",
-                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "description": "API Token for authentication. Format: `Token {your-token}`",
                         "required": true,
                         "style": "simple",
                         "schema": {
                             "type": "string",
-                            "example": "Tokend54f9136c0700705de49cdd58c31f7d7346949f7"
+                            "example": "Token 54f9136c0700705de49cdd58c31f7d7346949f7"
                         }
                     },
                     {
-                        "name": "page",
+                        "name": "archive_type",
                         "in": "query",
-                        "description": "Page number for pagination",
+                        "description": "Type of the archive.",
                         "required": false,
-                        "style": "simple",
                         "schema": {
-                            "type": "integer",
-                            "default": 1
+                            "type": "string",
+                            "example": "message"
                         }
                     },
                     {
-                        "name": "limit",
+                        "name": "before",
                         "in": "query",
-                        "description": "Number of results per page",
+                        "description": "Start date of the archive. Follows the UTC time format: `YYYY-MM-DDT`.",
                         "required": false,
-                        "style": "simple",
                         "schema": {
-                            "type": "integer",
-                            "default": 25
+                            "type": "string",
+                            "example": "2021-01-01T00:00:00Z"
+                        }
+                    },
+                    {
+                        "name": "after",
+                        "in": "query",
+                        "description": "End date of the archive. Follows the UTC time format: `YYYY-MM-DDT`.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "2021-01-01T00:00:00Z"
+                        }
+                    },
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Period of the archive. Can be `daily` or `monthly`.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "daily"
                         }
                     }
                 ],
@@ -87,7 +83,76 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object"
+                                    "type": "object",
+                                    "required": [
+                                        "next",
+                                        "previous",
+                                        "count",
+                                        "results"
+                                    ],
+                                    "properties": {
+                                        "next": {
+                                            "$ref": "#/components/schemas/NextPage"
+                                        },
+                                        "previous": {
+                                            "$ref": "#/components/schemas/PreviousPage"
+                                        },
+                                        "count": {
+                                            "$ref": "#/components/schemas/Count"
+                                        },
+                                        "results": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "List of archives of messages and runs.",
+                                                "properties": {
+                                                    "archive_type": {
+                                                        "type": "string",
+                                                        "description": "Type of the archive.",
+                                                        "enum": [
+                                                            "message",
+                                                            "run"
+                                                        ],
+                                                        "example": "message"
+                                                    },
+                                                    "start_date": {
+                                                        "type": "string",
+                                                        "description": "Start date of the archive. Follows the UTC time format: `YYYY-MM-DDT`.",
+                                                        "example": "2021-01-01"
+                                                    },
+                                                    "period": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "daily",
+                                                            "monthly"
+                                                        ],
+                                                        "description": "Period of the archive.",
+                                                        "example": "daily"
+                                                    },
+                                                    "record_count": {
+                                                        "type": "integer",
+                                                        "description": "Number of records in the archive.",
+                                                        "example": 100
+                                                    },
+                                                    "size": {
+                                                        "type": "integer",
+                                                        "description": "Size of the gzipped archive in bytes.",
+                                                        "example": 1000000
+                                                    },
+                                                    "hash": {
+                                                        "type": "string",
+                                                        "description": "MD5 hash of the gzipped archive.",
+                                                        "example": "feca9988b7772c003204a28bd741d0d0"
+                                                    },
+                                                    "download_url": {
+                                                        "type": "string",
+                                                        "description": "URL to download the archive.",
+                                                        "example": "https://flows.weni.ai/api/v2/archives/1234567890/download"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -7588,7 +7653,23 @@
             }
         },
         "schemas": {
-
+           "NextPage": {
+            "type": "string",
+            "description": "URL of the next page. You can use this URL to make a new request and see the results of the following page.",
+            "nullable": true,
+            "example": "http://flows.weni.ai/api/v2/archives.json?cursor=cD0yMDE1LTExLTExKzExJTNBM40NjQlMkIwMCUzRv"
+           },
+           "PreviousPage": {
+            "type": "string",
+            "description": "URL of the previous page. You can use this URL to make a new request and see the results of the previous page.",
+            "nullable": true,
+            "example": "http://flows.weni.ai/api/v2/archives.json?cursor=cD0yMDE1LTExLTExKzExJTNBM40NjQlMkIwMCUzRv"
+           },
+           "Count": {
+            "type": "integer",
+            "description": "Total number of results in the current page.",
+            "example": 100
+           }
         }
     },
     "tags": [
