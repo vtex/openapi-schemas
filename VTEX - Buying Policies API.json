@@ -32,7 +32,7 @@
                 ],
                 "summary": "Create authorization dimension",
                 "operationId": "CreateAuthorizationDimension",
-                "description": "Creates a new authorization dimension with its associated rules.\n\nDimensions contain a `unitId` field that allows grouping of dimensions by units or business areas, enabling more granular authorization control. This field is automatically filled based on the unit relative to the user creating the dimension.\n\nIf you make this request using an appKey/appToken pair, you must explicitly send the `unitId` field in the request body root.\n\n>ℹ️ While the API supports creating multiple dimensions per unit, the Buyer's Portal frontend limits each unit to one dimension. It is recommended to maintain this structure (one dimension per unit) for consistency with the portal's design.\n\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Buying Policies | authorization | **Create_Authorization_Dimension** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "description": "Creates a new authorization dimension with its associated rules.\n\nDimensions contain a `unitId` field that allows grouping of dimensions by units or business areas, enabling more granular authorization control. This field is automatically filled based on the unit relative to the user creating the dimension.\n\nIf you make this request using an appKey/appToken pair, you must explicitly send the `unitId` field in the request body root.\n\n> ⚠️ While the API supports creating multiple dimensions per unit, the Buyer's Portal frontend limits each unit to one dimension. It is recommended to maintain this structure (one dimension per unit) for consistency with the portal's design.\n\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Buying Policies | authorization | **Create_Authorization_Dimension** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
                 "parameters": [
                     {
                         "name": "accountName",
@@ -56,7 +56,38 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/CreateDimensionRequest"
+                                "type": "object",
+                                "required": [
+                                    "name",
+                                    "requireAllRulesAcceptance",
+                                    "priority",
+                                    "ruleCollection"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Name of the dimension. The Buyer's Portal frontend always sends `\"default\"` for this field."
+                                    },
+                                    "requireAllRulesAcceptance": {
+                                        "type": "boolean",
+                                        "description": "When set as `true`, all listed rules must be accepted for the dimension to be approved. When set as `false`, the first matching rule that evaluates to true will be executed."
+                                    },
+                                    "unitId": {
+                                        "type": "string",
+                                        "description": "Identifier of the organization unit this dimension belongs to. Each unit can have one dimension. This field is required when using `appKey/appToken` authentication."
+                                    },
+                                    "priority": {
+                                        "type": "integer",
+                                        "description": "Dimension priority controls which organization unit's policies are evaluated in which order. Lower priority numbers are evaluated first. For hierarchical policies, assign descending priorities by hierarchy level (e.g., 9999 = top unit, 9998 = child units, 9997 = grandchild units) so lower-level org units are checked first. Sibling units share the same priority."
+                                    },
+                                    "ruleCollection": {
+                                        "type": "array",
+                                        "description": "List of rules that define conditions and actions.",
+                                        "items": {
+                                            "$ref": "#/components/schemas/RuleRequest"
+                                        }
+                                    }
+                                }
                             },
                             "example": {
                                 "name": "default",
@@ -371,41 +402,6 @@
                     "message": {
                         "type": "string",
                         "description": "Error message describing what went wrong."
-                    }
-                }
-            },
-            "CreateDimensionRequest": {
-                "type": "object",
-                "description": "Request body for creating an authorization dimension.",
-                "required": [
-                    "name",
-                    "requireAllRulesAcceptance",
-                    "priority",
-                    "ruleCollection"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "Name of the dimension. The Buyer's Portal frontend always sends `\"default\"` for this field."
-                    },
-                    "requireAllRulesAcceptance": {
-                        "type": "boolean",
-                        "description": "Whether all listed rules must be accepted for the dimension to be approved. If `false`, the first matching rule that evaluates to true will be executed. Always `false` for ODP to enable bypass functionality."
-                    },
-                    "unitId": {
-                        "type": "string",
-                        "description": "Identifier of the organization unit this dimension belongs to. Each unit can have one dimension. This field is required when using `appKey/appToken` authentication."
-                    },
-                    "priority": {
-                        "type": "integer",
-                        "description": "Dimension priority controls which organization unit's policies are evaluated in which order. Lower priority numbers are evaluated first. For hierarchical policies, assign descending priorities by hierarchy level (e.g., 9999 = top unit, 9998 = child units, 9997 = grandchild units) so lower-level org units are checked first. Sibling units share the same priority."
-                    },
-                    "ruleCollection": {
-                        "type": "array",
-                        "description": "List of rules that define conditions and actions.",
-                        "items": {
-                            "$ref": "#/components/schemas/RuleRequest"
-                        }
                     }
                 }
             },
