@@ -1024,7 +1024,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/CreateRuleRequestBody"
+                                "$ref": "#/components/schemas/CreateUpdateRuleRequestBody"
                             },
                             "example": {
                                 "name": "User Approval - Many approvers",
@@ -1173,7 +1173,7 @@
                             "schema": {
                                 "type": "array",
                                 "items": {
-                                    "$ref": "#/components/schemas/CreateRuleRequestBody"
+                                    "$ref": "#/components/schemas/CreateUpdateRuleRequestBody"
                                 }
                             },
                             "example": [
@@ -1423,7 +1423,7 @@
                     "Rules"
                 ],
                 "summary": "Update dimension rule",
-                "description": "Updates a specific rule within an authorization dimension.\n\n## Approval dynamic\n\nRules are evaluated based on their `effectType`:\n\n- `effectType: 0` → Automatic approval when the expression is true.\n- `effectType: 1` → Automatic denial when the expression is true.\n- `effectType: 2` → Pending, requires manual authorization via `/callback` endpoint.\n\nFor pending rules, the `scoreInterval` defines thresholds used during manual authorization. When calling `/callback` with a score value, the system compares it against these thresholds: scores ≥ `scoreInterval.accept` accept the rule, scores ≤ `scoreInterval.deny` deny it, and scores in between bypass it.\n\n### Rule priority in buying policies\n\nWithin each dimension (org unit), rules are evaluated in ascending priority order. Use fixed priorities by policy type:\n\n- Priority `1` = bypass (`effectType: 0`) - checked first, approves and stops evaluation.\n- Priority `2` = deny (`effectType: 1`) - checked second, denies and stops evaluation.\n- Priority `3` = sequential workflow (`effectType: 2`) - checked last, requires approval.\n\nThis ensures bypass rules can immediately approve orders without checking deny or approval rules. Requires the dimension's `requireAllRulesAcceptance: false`.\n\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Buying Policies | authorization | **Update_Authorization_Dimension_Rule** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "description": "Updates a specific rule within an authorization dimension.\n\nFor more information about approval dynamic, and dimension and rule priorities, see the [Buying Policies API overview](https://developers.vtex.com/docs/api-reference/buying-policies-api).\n\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Buying Policies | authorization | **Update_Authorization_Dimension_Rule** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/accountName"
@@ -1445,7 +1445,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/UpdateRuleRequestBody"
+                                "$ref": "#/components/schemas/CreateUpdateRuleRequestBody"
                             },
                             "example": {
                                 "name": "User Approval - Many approvers",
@@ -2208,119 +2208,9 @@
                     }
                 }
             },
-            "CreateRuleRequestBody": {
+            "CreateUpdateRuleRequestBody": {
                 "type": "object",
-                "description": "Request body for creating a rule, or updating existing ones.",
-                "required": [
-                    "name",
-                    "priority",
-                    "trigger",
-                    "scoreInterval"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "Name of the rule."
-                    },
-                    "priority": {
-                        "type": "integer",
-                        "description": "Rule priority controls which policy type is checked first within the org unit. Lower numbers are evaluated first. Use fixed priorities: `1` = bypass (effectType: 0), `2` = deny (effectType: 1), `3` = sequential workflow (effectType: 2). This ensures bypass rules can immediately approve orders."
-                    },
-                    "trigger": {
-                        "type": "object",
-                        "description": "Defines the condition and effect that trigger the rule.",
-                        "required": [
-                            "condition",
-                            "effect"
-                        ],
-                        "properties": {
-                            "condition": {
-                                "type": "object",
-                                "description": "Condition that must be met to trigger the rule.",
-                                "required": [
-                                    "conditionType",
-                                    "description"
-                                ],
-                                "properties": {
-                                    "conditionType": {
-                                        "type": "integer",
-                                        "description": "Type of condition. Type `2` defines that the rule condition is set by an expression (see field `expression`). The Buyer's Portal frontend always sends `2` for this field."
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "description": "Description of the condition being evaluated."
-                                    },
-                                    "expression": {
-                                        "type": "string",
-                                        "description": "JSONata expression that defines the condition logic. The expression is evaluated against the order payload, which includes fields like `orderId`, `items`, `value`, `budgetData`, `marketPlaceOrderId`, and other order properties. See [JSONata documentation](https://jsonata.org/) for expression syntax and available operators."
-                                    }
-                                }
-                            },
-                            "effect": {
-                                "type": "object",
-                                "description": "Effect to apply when the condition is met.",
-                                "required": [
-                                    "description",
-                                    "effectType"
-                                ],
-                                "properties": {
-                                    "description": {
-                                        "type": "string",
-                                        "description": "Description of the effect to be applied if condition is met."
-                                    },
-                                    "effectType": {
-                                        "type": "integer",
-                                        "description": "Type of effect. Possible values are: `0` (approve), `1` (deny), or `2` (pending, which means it requires manual approval/denial).",
-                                        "enum": [
-                                            0,
-                                            1,
-                                            2
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "scoreInterval": {
-                        "type": "object",
-                        "description": "Defines acceptance and denial thresholds used during manual authorization via the endpoints [accept](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/commercial-authorizations/-orderAuthId-/accept) or [deny rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/commercial-authorizations/-orderAuthId-/deny). The Buyer's Portal frontend always sends `accept: 10` and `deny: 5` for these values.",
-                        "required": [
-                            "accept",
-                            "deny"
-                        ],
-                        "properties": {
-                            "accept": {
-                                "type": "number",
-                                "description": "Minimum score required to accept the rule. The Buyer's Portal frontend always sends `10` for this field."
-                            },
-                            "deny": {
-                                "type": "number",
-                                "description": "Maximum score to deny the rule. The Buyer's Portal frontend always sends `5` for this field."
-                            }
-                        }
-                    },
-                    "authorizationData": {
-                        "type": "object",
-                        "description": "Defines required authorizers and whether all must approve. Only applicable for rules with `effectType: 2` (pending). Supports both `unit` and `user` authorizers.",
-                        "properties": {
-                            "requireAllApprovals": {
-                                "type": "boolean",
-                                "description": "When set as `true`, all authorizers must approve. When set as `false`, approval from any single authorizer is sufficient."
-                            },
-                            "authorizers": {
-                                "type": "array",
-                                "description": "List of entities that can authorize the action.",
-                                "items": {
-                                    "$ref": "#/components/schemas/Authorizer"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "UpdateRuleRequestBody": {
-                "type": "object",
-                "description": "Request body for updating a single rule within a dimension.",
+                "description": "Object for creating or updating rules.",
                 "required": [
                     "name",
                     "priority",
