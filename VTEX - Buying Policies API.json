@@ -95,7 +95,7 @@
                                     "type": "array",
                                     "items": {
                                         "type": "object",
-                                        "description": "Response object for getting authorization dimension information.",
+                                        "description": "Authorization dimension information.",
                                         "properties": {
                                             "id": {
                                                 "type": "string",
@@ -137,7 +137,109 @@
                                                 "type": "array",
                                                 "description": "Collection of rules contained in this dimension.",
                                                 "items": {
-                                                    "$ref": "#/components/schemas/GetRuleResponse"
+                                                    "type": "object",
+                                                    "description": "Rule object in the GET response containing conditions, actions, and additional metadata for authorization.",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "description": "Unique identifier of the rule."
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "description": "Name of the rule."
+                                                        },
+                                                        "status": {
+                                                            "type": "string",
+                                                            "description": "Current status of the rule.",
+                                                            "nullable": true
+                                                        },
+                                                        "priority": {
+                                                            "type": "integer",
+                                                            "description": "Evaluation priority for the rule."
+                                                        },
+                                                        "trigger": {
+                                                            "type": "object",
+                                                            "description": "Contains the trigger condition and effect logic.",
+                                                            "properties": {
+                                                                "condition": {
+                                                                    "type": "object",
+                                                                    "description": "Condition that must be met to trigger the rule.",
+                                                                    "properties": {
+                                                                        "conditionType": {
+                                                                            "type": "integer",
+                                                                            "description": "Type of condition (e.g., `2` for expression-based)."
+                                                                        },
+                                                                        "description": {
+                                                                            "type": "string",
+                                                                            "description": "Description of the condition."
+                                                                        },
+                                                                        "expression": {
+                                                                            "type": "string",
+                                                                            "description": "JSONata expression that defines the condition logic."
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "effect": {
+                                                                    "type": "object",
+                                                                    "description": "Effect to apply when the condition is met.",
+                                                                    "properties": {
+                                                                        "description": {
+                                                                            "type": "string",
+                                                                            "description": "Description of the effect."
+                                                                        },
+                                                                        "effectType": {
+                                                                            "type": "integer",
+                                                                            "description": "Type of effect: `0` (approve), `1` (deny), or `2` (pending).",
+                                                                            "enum": [
+                                                                                0,
+                                                                                1,
+                                                                                2
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        },
+                                                        "timeout": {
+                                                            "type": "number",
+                                                            "description": "Time in milliseconds to wait for rule evaluation."
+                                                        },
+                                                        "notification": {
+                                                            "type": "boolean",
+                                                            "description": "Whether a notification should be triggered."
+                                                        },
+                                                        "scoreInterval": {
+                                                            "type": "object",
+                                                            "description": "Score range for accepting or denying the rule.",
+                                                            "properties": {
+                                                                "accept": {
+                                                                    "type": "number",
+                                                                    "description": "Minimum score required to accept the rule."
+                                                                },
+                                                                "deny": {
+                                                                    "type": "number",
+                                                                    "description": "Maximum score to deny the rule."
+                                                                }
+                                                            }
+                                                        },
+                                                        "authorizationData": {
+                                                            "type": "object",
+                                                            "description": "Defines required authorizers and whether all must approve (only present for rules with `effectType: 2`).",
+                                                            "properties": {
+                                                                "requireAllApprovals": {
+                                                                    "type": "boolean",
+                                                                    "description": "Whether all authorizers must approve."
+                                                                },
+                                                                "authorizers": {
+                                                                    "type": "array",
+                                                                    "description": "List of entities that can authorize the action.",
+                                                                    "items": {
+                                                                        "$ref": "#/components/schemas/Authorizer"
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                             },
                                             "creationDate": {
@@ -2050,111 +2152,6 @@
                     "creationEnvironment": {
                         "type": "string",
                         "description": "Environment (e.g., `stable`, `beta`) where the dimension was created."
-                    }
-                }
-            },
-            "GetRuleResponse": {
-                "type": "object",
-                "description": "Rule object in the GET response containing conditions, actions, and additional metadata for authorization.",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "Unique identifier of the rule."
-                    },
-                    "name": {
-                        "type": "string",
-                        "description": "Name of the rule."
-                    },
-                    "status": {
-                        "type": "string",
-                        "description": "Current status of the rule.",
-                        "nullable": true
-                    },
-                    "priority": {
-                        "type": "integer",
-                        "description": "Evaluation priority for the rule."
-                    },
-                    "trigger": {
-                        "type": "object",
-                        "description": "Contains the trigger condition and effect logic.",
-                        "properties": {
-                            "condition": {
-                                "type": "object",
-                                "description": "Condition that must be met to trigger the rule.",
-                                "properties": {
-                                    "conditionType": {
-                                        "type": "integer",
-                                        "description": "Type of condition (e.g., `2` for expression-based)."
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "description": "Description of the condition."
-                                    },
-                                    "expression": {
-                                        "type": "string",
-                                        "description": "JSONata expression that defines the condition logic."
-                                    }
-                                }
-                            },
-                            "effect": {
-                                "type": "object",
-                                "description": "Effect to apply when the condition is met.",
-                                "properties": {
-                                    "description": {
-                                        "type": "string",
-                                        "description": "Description of the effect."
-                                    },
-                                    "effectType": {
-                                        "type": "integer",
-                                        "description": "Type of effect: `0` (approve), `1` (deny), or `2` (pending).",
-                                        "enum": [
-                                            0,
-                                            1,
-                                            2
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "timeout": {
-                        "type": "number",
-                        "description": "Time in milliseconds to wait for rule evaluation."
-                    },
-                    "notification": {
-                        "type": "boolean",
-                        "description": "Whether a notification should be triggered."
-                    },
-                    "scoreInterval": {
-                        "type": "object",
-                        "description": "Score range for accepting or denying the rule.",
-                        "properties": {
-                            "accept": {
-                                "type": "number",
-                                "description": "Minimum score required to accept the rule."
-                            },
-                            "deny": {
-                                "type": "number",
-                                "description": "Maximum score to deny the rule."
-                            }
-                        }
-                    },
-                    "authorizationData": {
-                        "type": "object",
-                        "description": "Defines required authorizers and whether all must approve (only present for rules with `effectType: 2`).",
-                        "properties": {
-                            "requireAllApprovals": {
-                                "type": "boolean",
-                                "description": "Whether all authorizers must approve."
-                            },
-                            "authorizers": {
-                                "type": "array",
-                                "description": "List of entities that can authorize the action.",
-                                "items": {
-                                    "$ref": "#/components/schemas/Authorizer"
-                                }
-                            }
-                        }
                     }
                 }
             },
