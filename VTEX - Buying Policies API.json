@@ -824,6 +824,155 @@
                 }
             }
         },
+        "/{accountName}/authorization-dimensions/{dimensionId}/rules": {
+            "post": {
+                "tags": [
+                    "Rules"
+                ],
+                "summary": "Create dimension rule",
+                "description": "Registers a new dimension rule.\n\n## Approval dynamic\n\nRules are evaluated based on their `effectType`:\n\n- `effectType: 0` → Automatic approval when the expression is true.\n- `effectType: 1` → Automatic denial when the expression is true.\n- `effectType: 2` → Pending, requires manual authorization via `/callback` endpoint.\n\nFor pending rules, the `scoreInterval` defines thresholds used during manual authorization. When calling `/callback` with a score value, the system compares it against these thresholds: scores ≥ `scoreInterval.accept` accept the rule, scores ≤ `scoreInterval.deny` deny it, and scores in between bypass it.\n\n### Rule priority in buying policies\n\nWithin each dimension (org unit), rules are evaluated in ascending priority order. Use fixed priorities by policy type:\n\n- Priority `1` = bypass (`effectType: 0`) - checked first, approves and stops evaluation.\n- Priority `2` = deny (`effectType: 1`) - checked second, denies and stops evaluation.\n- Priority `3` = sequential workflow (`effectType: 2`) - checked last, requires approval.\n\nThis ensures bypass rules can immediately approve orders without checking deny or approval rules. Requires the dimension's `requireAllRulesAcceptance: false`.\n\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Buying Policies | authorization | **Create_Authorization_Dimension_Rule** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/accountName"
+                    },
+                    {
+                        "$ref": "#/components/parameters/dimensionId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateRuleRequestBody"
+                            },
+                            "example": {
+                                "name": "User Approval - Many approvers",
+                                "priority": 1,
+                                "trigger": {
+                                    "condition": {
+                                        "conditionType": 2,
+                                        "description": "Users 8f6b3712-4c05-4ce5-8057-63fd0d69a587 and 8f6b3712-4c05-4ce5-8057-63fd0d69a588 needs to approve orders above $150",
+                                        "expression": "$.openTextField.value = 'ODP use cases' and $.value > 30000"
+                                    },
+                                    "effect": {
+                                        "description": "Orders with value above $150 must be approved",
+                                        "effectType": 2
+                                    }
+                                },
+                                "authorizationData": {
+                                    "requireAllApprovals": true,
+                                    "authorizers": [
+                                        {
+                                            "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a587",
+                                            "type": "user"
+                                        },
+                                        {
+                                            "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a588",
+                                            "type": "user"
+                                        }
+                                    ]
+                                },
+                                "scoreInterval": {
+                                    "accept": 10,
+                                    "deny": 5
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RuleResponse"
+                                },
+                                "example": {
+                                    "id": "202cd02c-e36f-4f79-85f4-91210fac8b98",
+                                    "name": "User Approval - Many approvers",
+                                    "status": null,
+                                    "priority": 1,
+                                    "trigger": {
+                                        "condition": {
+                                            "conditionType": 2,
+                                            "description": "Users 8f6b3712-4c05-4ce5-8057-63fd0d69a587 and 8f6b3712-4c05-4ce5-8057-63fd0d69a588 needs to approve orders above $150",
+                                            "expression": "$.openTextField.value = 'ODP use cases' and $.value > 30000"
+                                        },
+                                        "effect": {
+                                            "description": "Orders with value above $150 must be approved",
+                                            "effectType": 2
+                                        }
+                                    },
+                                    "scoreInterval": {
+                                        "accept": 10,
+                                        "deny": 5
+                                    },
+                                    "authorizationData": {
+                                        "requireAllApprovals": true,
+                                        "authorizers": [
+                                            {
+                                                "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a587",
+                                                "type": "user"
+                                            },
+                                            {
+                                                "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a588",
+                                                "type": "user"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Invalid request body."
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Access denied. Missing required permissions."
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Dimension not found."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/{accountName}/authorization-dimensions/{dimensionId}/rules/{ruleId}": {
             "put": {
                 "tags": [
@@ -1021,155 +1170,6 @@
                                 },
                                 "example": {
                                     "message": "Dimension or rule not found."
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/{accountName}/authorization-dimensions/{dimensionId}/rules": {
-            "post": {
-                "tags": [
-                    "Rules"
-                ],
-                "summary": "Create dimension rule",
-                "description": "Registers a new dimension rule.\n\n## Approval dynamic\n\nRules are evaluated based on their `effectType`:\n\n- `effectType: 0` → Automatic approval when the expression is true.\n- `effectType: 1` → Automatic denial when the expression is true.\n- `effectType: 2` → Pending, requires manual authorization via `/callback` endpoint.\n\nFor pending rules, the `scoreInterval` defines thresholds used during manual authorization. When calling `/callback` with a score value, the system compares it against these thresholds: scores ≥ `scoreInterval.accept` accept the rule, scores ≤ `scoreInterval.deny` deny it, and scores in between bypass it.\n\n### Rule priority in buying policies\n\nWithin each dimension (org unit), rules are evaluated in ascending priority order. Use fixed priorities by policy type:\n\n- Priority `1` = bypass (`effectType: 0`) - checked first, approves and stops evaluation.\n- Priority `2` = deny (`effectType: 1`) - checked second, denies and stops evaluation.\n- Priority `3` = sequential workflow (`effectType: 2`) - checked last, requires approval.\n\nThis ensures bypass rules can immediately approve orders without checking deny or approval rules. Requires the dimension's `requireAllRulesAcceptance: false`.\n\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Buying Policies | authorization | **Create_Authorization_Dimension_Rule** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
-                "parameters": [
-                    {
-                        "$ref": "#/components/parameters/accountName"
-                    },
-                    {
-                        "$ref": "#/components/parameters/dimensionId"
-                    },
-                    {
-                        "$ref": "#/components/parameters/Content-Type"
-                    },
-                    {
-                        "$ref": "#/components/parameters/Accept"
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/CreateRuleRequestBody"
-                            },
-                            "example": {
-                                "name": "User Approval - Many approvers",
-                                "priority": 1,
-                                "trigger": {
-                                    "condition": {
-                                        "conditionType": 2,
-                                        "description": "Users 8f6b3712-4c05-4ce5-8057-63fd0d69a587 and 8f6b3712-4c05-4ce5-8057-63fd0d69a588 needs to approve orders above $150",
-                                        "expression": "$.openTextField.value = 'ODP use cases' and $.value > 30000"
-                                    },
-                                    "effect": {
-                                        "description": "Orders with value above $150 must be approved",
-                                        "effectType": 2
-                                    }
-                                },
-                                "authorizationData": {
-                                    "requireAllApprovals": true,
-                                    "authorizers": [
-                                        {
-                                            "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a587",
-                                            "type": "user"
-                                        },
-                                        {
-                                            "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a588",
-                                            "type": "user"
-                                        }
-                                    ]
-                                },
-                                "scoreInterval": {
-                                    "accept": 10,
-                                    "deny": 5
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/RuleResponse"
-                                },
-                                "example": {
-                                    "id": "202cd02c-e36f-4f79-85f4-91210fac8b98",
-                                    "name": "User Approval - Many approvers",
-                                    "status": null,
-                                    "priority": 1,
-                                    "trigger": {
-                                        "condition": {
-                                            "conditionType": 2,
-                                            "description": "Users 8f6b3712-4c05-4ce5-8057-63fd0d69a587 and 8f6b3712-4c05-4ce5-8057-63fd0d69a588 needs to approve orders above $150",
-                                            "expression": "$.openTextField.value = 'ODP use cases' and $.value > 30000"
-                                        },
-                                        "effect": {
-                                            "description": "Orders with value above $150 must be approved",
-                                            "effectType": 2
-                                        }
-                                    },
-                                    "scoreInterval": {
-                                        "accept": 10,
-                                        "deny": 5
-                                    },
-                                    "authorizationData": {
-                                        "requireAllApprovals": true,
-                                        "authorizers": [
-                                            {
-                                                "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a587",
-                                                "type": "user"
-                                            },
-                                            {
-                                                "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a588",
-                                                "type": "user"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
-                                },
-                                "example": {
-                                    "message": "Invalid request body."
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
-                                },
-                                "example": {
-                                    "message": "Access denied. Missing required permissions."
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
-                                },
-                                "example": {
-                                    "message": "Dimension not found."
                                 }
                             }
                         }
