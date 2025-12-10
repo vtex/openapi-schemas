@@ -27,6 +27,294 @@
     ],
     "paths": {
         "/{accountName}/authorization-dimensions": {
+            "post": {
+                "tags": [
+                    "Dimensions"
+                ],
+                "summary": "Create dimension",
+                "description": "Creates a new authorization dimension with its associated rules.\n\nDimensions contain a `unitId` field that allows grouping of dimensions by units or business areas, enabling more granular authorization control. This field is automatically filled based on the unit relative to the user creating the dimension.\n\nIf you make this request using an appKey/appToken pair, you must explicitly send the `unitId` field in the request body root.\n\n> ⚠️ While the API supports creating multiple dimensions per unit, the Buyer's Portal frontend limits each unit to one dimension. It is recommended to maintain this structure (one dimension per unit) for consistency with the portal's design.\n\n## Approval dynamic\n\nRules are evaluated based on their `effectType`:\n\n- `effectType: 0` → Automatic approval when the expression is true.\n- `effectType: 1` → Automatic denial when the expression is true.\n- `effectType: 2` → Pending, requires manual authorization via `/callback` endpoint.\n\nFor pending rules, the `scoreInterval` defines thresholds used during manual authorization. When calling `/callback` with a score value, the system compares it against these thresholds: scores ≥ `scoreInterval.accept` accept the rule, scores ≤ `scoreInterval.deny` deny it, and scores in between bypass it.\n\n### Hierarchical buying policies configuration\n\nEach organization unit has one dimension. To enforce policies from lowest to highest hierarchy levels:\n\n### Dimension priority\n\nControls org unit evaluation order:\n\n- Assign descending values by hierarchy level: top unit = 9999, child units = 9998, grandchild units = 9997.\n- Sibling units share the same priority.\n- System evaluates in ascending order, so lower hierarchy units are checked first.\n\n### Rule priority\n\nControls policy type order within each org unit:\n\n- `1` = bypass (effectType: 0) - checked first, approves and stops evaluation.\n- `2` = decline (effectType: 1) - checked second, denies and stops evaluation.\n- `3` = sequential workflow (effectType: 2) - checked last, requires approval.\n\n>❗ Set `requireAllRulesAcceptance: false` so the first matching rule executes and stops further evaluation, enabling bypass functionality.\n\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Buying Policies | authorization | **Create_Authorization_Dimension** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/accountName"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateUpdateDimensionRequestBody"
+                            },
+                            "example": {
+                                "name": "default",
+                                "requireAllRulesAcceptance": false,
+                                "priority": 9999,
+                                "unitId": "654c12d6-6b22-4483-rt83-eb0865sdf88e",
+                                "ruleCollection": [
+                                    {
+                                        "name": "Approve title",
+                                        "priority": 1,
+                                        "trigger": {
+                                            "condition": {
+                                                "conditionType": 2,
+                                                "description": "Approve condition description",
+                                                "expression": "openTextField.value = 'approved'"
+                                            },
+                                            "effect": {
+                                                "description": "Approve condition description",
+                                                "effectType": 0
+                                            }
+                                        },
+                                        "scoreInterval": {
+                                            "accept": 10,
+                                            "deny": 5
+                                        }
+                                    },
+                                    {
+                                        "name": "Deny title",
+                                        "priority": 2,
+                                        "trigger": {
+                                            "condition": {
+                                                "conditionType": 2,
+                                                "description": "Deny condition description",
+                                                "expression": "openTextField.value = 'denied'"
+                                            },
+                                            "effect": {
+                                                "description": "Deny condition description",
+                                                "effectType": 1
+                                            }
+                                        },
+                                        "scoreInterval": {
+                                            "accept": 10,
+                                            "deny": 5
+                                        }
+                                    },
+                                    {
+                                        "name": "Pending title",
+                                        "authorizationData": {
+                                            "authorizers": [
+                                                {
+                                                    "type": "unit",
+                                                    "id": "0aac12d6-6b22-4483-bd83-eb086c42888e"
+                                                }
+                                            ]
+                                        },
+                                        "priority": 3,
+                                        "trigger": {
+                                            "condition": {
+                                                "conditionType": 2,
+                                                "description": "Pending condition description",
+                                                "expression": "openTextField.value = 'pending'"
+                                            },
+                                            "effect": {
+                                                "description": "Pending condition description",
+                                                "effectType": 2
+                                            }
+                                        },
+                                        "scoreInterval": {
+                                            "accept": 10,
+                                            "deny": 5
+                                        }
+                                    },
+                                    {
+                                        "name": "Sequential approval title",
+                                        "priority": 3,
+                                        "trigger": {
+                                            "condition": {
+                                                "conditionType": 2,
+                                                "description": "Sequential approval condition description",
+                                                "expression": "openTextField.value = 'sequential-approval'"
+                                            },
+                                            "effect": {
+                                                "description": "Sequential approval condition description",
+                                                "effectType": 2
+                                            }
+                                        },
+                                        "scoreInterval": {
+                                            "accept": 10,
+                                            "deny": 5
+                                        },
+                                        "authorizationData": {
+                                            "requireAllApprovals": true,
+                                            "authorizers": [
+                                                {
+                                                    "id": "0aac12d6-6b22-4483-bd83-eb086c42888e",
+                                                    "type": "unit"
+                                                },
+                                                {
+                                                    "id": "5c969024-5c87-40f6-a89a-01172c5ae363",
+                                                    "type": "user"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DimensionResponse"
+                                },
+                                "example": {
+                                    "id": "c20ececf-660f-4656-a802-9ba607e3585b",
+                                    "name": "default",
+                                    "unitId": "654c12d6-6b22-4483-rt83-eb0865sdf88e",
+                                    "status": null,
+                                    "priority": 9999,
+                                    "requireAllRulesAcceptance": false,
+                                    "ruleCollection": [
+                                        {
+                                            "id": "ad7742c2-8916-4bd1-86b3-b81f21f9db7e",
+                                            "name": "Approve title",
+                                            "status": null,
+                                            "priority": 1,
+                                            "trigger": {
+                                                "condition": {
+                                                    "conditionType": 2,
+                                                    "description": "Approve condition description",
+                                                    "expression": "openTextField.value = 'approved'"
+                                                },
+                                                "effect": {
+                                                    "description": "Approve condition description",
+                                                    "effectType": 0
+                                                }
+                                            },
+                                            "scoreInterval": {
+                                                "accept": 10,
+                                                "deny": 5
+                                            }
+                                        },
+                                        {
+                                            "id": "bf8853d3-a027-5ce2-97c4-c92g32g0ec8g",
+                                            "name": "Deny title",
+                                            "status": null,
+                                            "priority": 2,
+                                            "trigger": {
+                                                "condition": {
+                                                    "conditionType": 2,
+                                                    "description": "Deny condition description",
+                                                    "expression": "openTextField.value = 'denied'"
+                                                },
+                                                "effect": {
+                                                    "description": "Deny condition description",
+                                                    "effectType": 1
+                                                }
+                                            },
+                                            "scoreInterval": {
+                                                "accept": 10,
+                                                "deny": 5
+                                            }
+                                        },
+                                        {
+                                            "id": "cg9964e4-b138-6df3-a8d5-da3h43h1fd9h",
+                                            "name": "Pending title",
+                                            "status": null,
+                                            "priority": 3,
+                                            "trigger": {
+                                                "condition": {
+                                                    "conditionType": 2,
+                                                    "description": "Pending condition description",
+                                                    "expression": "openTextField.value = 'pending'"
+                                                },
+                                                "effect": {
+                                                    "description": "Pending condition description",
+                                                    "effectType": 2
+                                                }
+                                            },
+                                            "scoreInterval": {
+                                                "accept": 10,
+                                                "deny": 5
+                                            },
+                                            "authorizationData": {
+                                                "authorizers": [
+                                                    {
+                                                        "type": "unit",
+                                                        "id": "0aac12d6-6b22-4483-bd83-eb086c42888e"
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "id": "dh0075f5-c249-7eg4-b9e6-eb4i54i2ge0i",
+                                            "name": "Sequential approval title",
+                                            "status": null,
+                                            "priority": 3,
+                                            "trigger": {
+                                                "condition": {
+                                                    "conditionType": 2,
+                                                    "description": "Sequential approval condition description",
+                                                    "expression": "openTextField.value = 'sequential-approval'"
+                                                },
+                                                "effect": {
+                                                    "description": "Sequential approval condition description",
+                                                    "effectType": 2
+                                                }
+                                            },
+                                            "scoreInterval": {
+                                                "accept": 10,
+                                                "deny": 5
+                                            },
+                                            "authorizationData": {
+                                                "requireAllApprovals": true,
+                                                "authorizers": [
+                                                    {
+                                                        "id": "0aac12d6-6b22-4483-bd83-eb086c42888e",
+                                                        "type": "unit"
+                                                    },
+                                                    {
+                                                        "id": "5c969024-5c87-40f6-a89a-01172c5ae363",
+                                                        "type": "user"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "creationDate": "2025-06-10T19:11:14.7103786Z",
+                                    "creationVersion": "2.0.7",
+                                    "creationEnvironment": "stable"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Invalid request body."
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Access denied. Missing required permissions."
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "get": {
                 "tags": [
                     "Dimensions"
@@ -387,294 +675,6 @@
                                         "creationEnvironment": "stable"
                                     }
                                 ]
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
-                                },
-                                "example": {
-                                    "message": "Access denied. Missing required permissions."
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "Dimensions"
-                ],
-                "summary": "Create dimension",
-                "description": "Creates a new authorization dimension with its associated rules.\n\nDimensions contain a `unitId` field that allows grouping of dimensions by units or business areas, enabling more granular authorization control. This field is automatically filled based on the unit relative to the user creating the dimension.\n\nIf you make this request using an appKey/appToken pair, you must explicitly send the `unitId` field in the request body root.\n\n> ⚠️ While the API supports creating multiple dimensions per unit, the Buyer's Portal frontend limits each unit to one dimension. It is recommended to maintain this structure (one dimension per unit) for consistency with the portal's design.\n\n## Approval dynamic\n\nRules are evaluated based on their `effectType`:\n\n- `effectType: 0` → Automatic approval when the expression is true.\n- `effectType: 1` → Automatic denial when the expression is true.\n- `effectType: 2` → Pending, requires manual authorization via `/callback` endpoint.\n\nFor pending rules, the `scoreInterval` defines thresholds used during manual authorization. When calling `/callback` with a score value, the system compares it against these thresholds: scores ≥ `scoreInterval.accept` accept the rule, scores ≤ `scoreInterval.deny` deny it, and scores in between bypass it.\n\n### Hierarchical buying policies configuration\n\nEach organization unit has one dimension. To enforce policies from lowest to highest hierarchy levels:\n\n### Dimension priority\n\nControls org unit evaluation order:\n\n- Assign descending values by hierarchy level: top unit = 9999, child units = 9998, grandchild units = 9997.\n- Sibling units share the same priority.\n- System evaluates in ascending order, so lower hierarchy units are checked first.\n\n### Rule priority\n\nControls policy type order within each org unit:\n\n- `1` = bypass (effectType: 0) - checked first, approves and stops evaluation.\n- `2` = decline (effectType: 1) - checked second, denies and stops evaluation.\n- `3` = sequential workflow (effectType: 2) - checked last, requires approval.\n\n>❗ Set `requireAllRulesAcceptance: false` so the first matching rule executes and stops further evaluation, enabling bypass functionality.\n\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Buying Policies | authorization | **Create_Authorization_Dimension** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
-                "parameters": [
-                    {
-                        "$ref": "#/components/parameters/accountName"
-                    },
-                    {
-                        "$ref": "#/components/parameters/Content-Type"
-                    },
-                    {
-                        "$ref": "#/components/parameters/Accept"
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/CreateUpdateDimensionRequestBody"
-                            },
-                            "example": {
-                                "name": "default",
-                                "requireAllRulesAcceptance": false,
-                                "priority": 9999,
-                                "unitId": "654c12d6-6b22-4483-rt83-eb0865sdf88e",
-                                "ruleCollection": [
-                                    {
-                                        "name": "Approve title",
-                                        "priority": 1,
-                                        "trigger": {
-                                            "condition": {
-                                                "conditionType": 2,
-                                                "description": "Approve condition description",
-                                                "expression": "openTextField.value = 'approved'"
-                                            },
-                                            "effect": {
-                                                "description": "Approve condition description",
-                                                "effectType": 0
-                                            }
-                                        },
-                                        "scoreInterval": {
-                                            "accept": 10,
-                                            "deny": 5
-                                        }
-                                    },
-                                    {
-                                        "name": "Deny title",
-                                        "priority": 2,
-                                        "trigger": {
-                                            "condition": {
-                                                "conditionType": 2,
-                                                "description": "Deny condition description",
-                                                "expression": "openTextField.value = 'denied'"
-                                            },
-                                            "effect": {
-                                                "description": "Deny condition description",
-                                                "effectType": 1
-                                            }
-                                        },
-                                        "scoreInterval": {
-                                            "accept": 10,
-                                            "deny": 5
-                                        }
-                                    },
-                                    {
-                                        "name": "Pending title",
-                                        "authorizationData": {
-                                            "authorizers": [
-                                                {
-                                                    "type": "unit",
-                                                    "id": "0aac12d6-6b22-4483-bd83-eb086c42888e"
-                                                }
-                                            ]
-                                        },
-                                        "priority": 3,
-                                        "trigger": {
-                                            "condition": {
-                                                "conditionType": 2,
-                                                "description": "Pending condition description",
-                                                "expression": "openTextField.value = 'pending'"
-                                            },
-                                            "effect": {
-                                                "description": "Pending condition description",
-                                                "effectType": 2
-                                            }
-                                        },
-                                        "scoreInterval": {
-                                            "accept": 10,
-                                            "deny": 5
-                                        }
-                                    },
-                                    {
-                                        "name": "Sequential approval title",
-                                        "priority": 3,
-                                        "trigger": {
-                                            "condition": {
-                                                "conditionType": 2,
-                                                "description": "Sequential approval condition description",
-                                                "expression": "openTextField.value = 'sequential-approval'"
-                                            },
-                                            "effect": {
-                                                "description": "Sequential approval condition description",
-                                                "effectType": 2
-                                            }
-                                        },
-                                        "scoreInterval": {
-                                            "accept": 10,
-                                            "deny": 5
-                                        },
-                                        "authorizationData": {
-                                            "requireAllApprovals": true,
-                                            "authorizers": [
-                                                {
-                                                    "id": "0aac12d6-6b22-4483-bd83-eb086c42888e",
-                                                    "type": "unit"
-                                                },
-                                                {
-                                                    "id": "5c969024-5c87-40f6-a89a-01172c5ae363",
-                                                    "type": "user"
-                                                }
-                                            ]
-                                        }
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/DimensionResponse"
-                                },
-                                "example": {
-                                    "id": "c20ececf-660f-4656-a802-9ba607e3585b",
-                                    "name": "default",
-                                    "unitId": "654c12d6-6b22-4483-rt83-eb0865sdf88e",
-                                    "status": null,
-                                    "priority": 9999,
-                                    "requireAllRulesAcceptance": false,
-                                    "ruleCollection": [
-                                        {
-                                            "id": "ad7742c2-8916-4bd1-86b3-b81f21f9db7e",
-                                            "name": "Approve title",
-                                            "status": null,
-                                            "priority": 1,
-                                            "trigger": {
-                                                "condition": {
-                                                    "conditionType": 2,
-                                                    "description": "Approve condition description",
-                                                    "expression": "openTextField.value = 'approved'"
-                                                },
-                                                "effect": {
-                                                    "description": "Approve condition description",
-                                                    "effectType": 0
-                                                }
-                                            },
-                                            "scoreInterval": {
-                                                "accept": 10,
-                                                "deny": 5
-                                            }
-                                        },
-                                        {
-                                            "id": "bf8853d3-a027-5ce2-97c4-c92g32g0ec8g",
-                                            "name": "Deny title",
-                                            "status": null,
-                                            "priority": 2,
-                                            "trigger": {
-                                                "condition": {
-                                                    "conditionType": 2,
-                                                    "description": "Deny condition description",
-                                                    "expression": "openTextField.value = 'denied'"
-                                                },
-                                                "effect": {
-                                                    "description": "Deny condition description",
-                                                    "effectType": 1
-                                                }
-                                            },
-                                            "scoreInterval": {
-                                                "accept": 10,
-                                                "deny": 5
-                                            }
-                                        },
-                                        {
-                                            "id": "cg9964e4-b138-6df3-a8d5-da3h43h1fd9h",
-                                            "name": "Pending title",
-                                            "status": null,
-                                            "priority": 3,
-                                            "trigger": {
-                                                "condition": {
-                                                    "conditionType": 2,
-                                                    "description": "Pending condition description",
-                                                    "expression": "openTextField.value = 'pending'"
-                                                },
-                                                "effect": {
-                                                    "description": "Pending condition description",
-                                                    "effectType": 2
-                                                }
-                                            },
-                                            "scoreInterval": {
-                                                "accept": 10,
-                                                "deny": 5
-                                            },
-                                            "authorizationData": {
-                                                "authorizers": [
-                                                    {
-                                                        "type": "unit",
-                                                        "id": "0aac12d6-6b22-4483-bd83-eb086c42888e"
-                                                    }
-                                                ]
-                                            }
-                                        },
-                                        {
-                                            "id": "dh0075f5-c249-7eg4-b9e6-eb4i54i2ge0i",
-                                            "name": "Sequential approval title",
-                                            "status": null,
-                                            "priority": 3,
-                                            "trigger": {
-                                                "condition": {
-                                                    "conditionType": 2,
-                                                    "description": "Sequential approval condition description",
-                                                    "expression": "openTextField.value = 'sequential-approval'"
-                                                },
-                                                "effect": {
-                                                    "description": "Sequential approval condition description",
-                                                    "effectType": 2
-                                                }
-                                            },
-                                            "scoreInterval": {
-                                                "accept": 10,
-                                                "deny": 5
-                                            },
-                                            "authorizationData": {
-                                                "requireAllApprovals": true,
-                                                "authorizers": [
-                                                    {
-                                                        "id": "0aac12d6-6b22-4483-bd83-eb086c42888e",
-                                                        "type": "unit"
-                                                    },
-                                                    {
-                                                        "id": "5c969024-5c87-40f6-a89a-01172c5ae363",
-                                                        "type": "user"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    ],
-                                    "creationDate": "2025-06-10T19:11:14.7103786Z",
-                                    "creationVersion": "2.0.7",
-                                    "creationEnvironment": "stable"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
-                                },
-                                "example": {
-                                    "message": "Invalid request body."
-                                }
                             }
                         }
                     },
