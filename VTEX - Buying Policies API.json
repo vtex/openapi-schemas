@@ -1,0 +1,2816 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Buying Policies API",
+        "description": "The Buying Policies system supports dynamic rules that merchants can configure to suit their specific authorization processes. It provides a mechanism for users to register custom rule expressions, offering greater flexibility and extensibility.\r\n\r\nThe approval process is hierarchical and uses a priority-based evaluation system.\r\n\r\n## Organization unit evaluation (dimension priority)\r\n\r\n- Each organization unit has one dimension containing its buying policies.\r\n\r\n- Dimensions are evaluated in ascending priority order (lower numbers first).\r\n\r\n- To enforce policies from lowest to highest hierarchy levels, assign descending priorities by hierarchy:\r\n\r\n    - Top-level unit = 9999 (evaluated last)\r\n    - Child units = 9998 (evaluated second)\r\n    - Grandchild units = 9997 (evaluated first)\r\n\r\n- Sibling units share the same priority.\r\n\r\n- System checks lower-level org units first, then moves up the hierarchy.\r\n\r\n## Policy type evaluation (rule priority)\r\n\r\nWithin each org unit's dimension, rules are evaluated in ascending priority order with fixed assignments:\r\n\r\n- Priority `1` = bypass (`effectType: 0`) - checked first, approves and stops evaluation.\r\n- Priority `2` = deny (`effectType: 1`) - checked second, denies and stops evaluation.\r\n- Priority `3` = sequential workflow (`effectType: 2`) - checked last, requires approval.\r\n\r\n>❗ The dimension must have `requireAllRulesAcceptance: false` so the first matching rule executes and stops further evaluation, enabling bypass functionality.\r\n\r\n## Authorization dynamics and score fields\r\n\r\n### Rule evaluation flow\r\n\r\nWhen an order is submitted, authorization rules are evaluated in two stages.\r\n\r\n#### Stage 1: Rule triggering\r\n\r\n- Rules are evaluated in priority order (bypass → deny → sequential workflow).\r\n- The rule's expression is evaluated against the order data.\r\n- If the expression is `true`, the rule is triggered and executes immediately, stopping further evaluation.\r\n- The `effectType` determines what happens:\r\n  - `0` (bypass) → Automatic approval, order proceeds.\r\n  - `1` (deny) → Automatic denial, order is blocked.\r\n  - `2` (sequential workflow) → Pending, requires manual authorization.\r\n- If no rules trigger, the system moves to the next org unit's dimension (if any).\r\n\r\n#### Stage 2: Manual authorization for pending rules\r\n\r\nRules with `effectType: 2` require manual approval/denial via the [Accept or deny rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/commercial-authorizations/-orderAuthId-/callback) endpoint.\r\n\r\n### The score system\r\n\r\nThe `scoreInterval` object defines decision thresholds:\r\n\r\n```json\r\n\"scoreInterval\": {\r\n    \"accept\": 10,\r\n    \"deny\": 5\r\n}\r\n```\r\n\r\nWhen calling the approval and denial endpoints, you provide a score value that determines the outcome:\r\n\r\n| Score Value | Condition | Outcome |\r\n| :--- | :--- | :--- |\r\n| score ≥ `scoreInterval.accept` | score ≥ 10 | Accepted |\r\n| score ≤ `scoreInterval.deny` | score ≤ 5 | Denied |\r\n| Between thresholds | 5 < score < 10 | Bypassed |\r\n\r\n>⚠️ The score is not the result of the rule's expression. It's a separate value you send when manually authorizing/denying a pending rule.\r\n\r\n**Example:** With `accept: 10` and `deny: 5`:\r\n\r\n- Sending `score: 100` → Rule accepted.\r\n- Sending `score: 0` → Rule denied.\r\n- Sending `score: 8` → Rule bypassed (doesn't affect authorization).\r\n\r\n## Index\r\n\r\n### Dimensions\r\n\r\n- `POST` [Create dimension](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/-accountName-/authorization-dimensions)\r\n- `GET` [Get dimensions information](https://developers.vtex.com/docs/api-reference/buying-policies-api#get-/-accountName-/authorization-dimensions)\r\n- `PUT` [Update dimension](https://developers.vtex.com/docs/api-reference/buying-policies-api#put-/-accountName-/authorization-dimensions/-dimensionId-)\r\n- `DELETE` [Delete dimension](https://developers.vtex.com/docs/api-reference/buying-policies-api#delete-/-accountName-/authorization-dimensions/-dimensionId-)\r\n\r\n### Rules\r\n\r\n- `POST` [Create dimension rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/-accountName-/authorization-dimensions/-dimensionId-/rules)\r\n- `PUT` [Update all dimension rules](https://developers.vtex.com/docs/api-reference/buying-policies-api#put-/-accountName-/authorization-dimensions/-dimensionId-/rules)\r\n- `PUT` [Update dimension rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#put-/-accountName-/authorization-dimensions/-dimensionId-/rules/-ruleId-)\r\n- `DELETE` [Delete dimension rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#delete-/-accountName-/authorization-dimensions/-dimensionId-/rules/-ruleId-)\r\n\r\n### Manual authorization\r\n\r\n- `POST` [Accept or deny rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/commercial-authorizations/-orderAuthId-/callback)\r\n\r\n## Common parameters\r\n\r\n| **Parameter name** | **Description** | **Type** |\r\n| :---: | :--- | :--- |\r\n| `{{accountName}}` | Name of the VTEX account. Used as part of the URL. | Server variable. |\r\n| `{{environment}}` | Environment to use. Used as part of the URL. The default value is `vtexcommercestable`. | Server variable. |\r\n| `X-VTEX-API-AppKey` | Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys). | Authentication header. Must be used together with `X-VTEX-API-AppToken`. Not necessary when using `VtexIdclientAutCookie`. |\r\n| `X-VTEX-API-AppToken` | Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys). | Authentication header. Must be used together with `X-VTEX-API-AppKey`. Not necessary when using `VtexIdclientAutCookie`. |\r\n| `VtexIdclientAutCookie` | [User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours. | Authentication header. Not necessary when using `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken`. |",
+        "contact": {},
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "https://{accountName}.{environment}.com.br",
+            "description": "VTEX server URL.",
+            "variables": {
+                "accountName": {
+                    "description": "Name of the VTEX account. Used as part of the URL.",
+                    "default": "apiexamples"
+                },
+                "environment": {
+                    "description": "Environment to use. Used as part of the URL.",
+                    "enum": [
+                        "vtexcommercestable"
+                    ],
+                    "default": "vtexcommercestable"
+                }
+            }
+        },
+        {
+            "url": "https://{accountName}.myvtex.com",
+            "description": "VTEX server URL for the accept or deny rule endpoint.",
+            "variables": {
+                "accountName": {
+                    "description": "Name of the VTEX account. Used as part of the URL.",
+                    "default": "apiexamples"
+        }
+            }
+        }
+    ],
+    "paths": {
+        "/{accountName}/authorization-dimensions": {
+            "servers": [
+                {
+                    "url": "https://{accountName}.{environment}.com.br",
+                    "description": "VTEX server URL.",
+                    "variables": {
+                        "accountName": {
+                            "description": "Name of the VTEX account. Used as part of the URL.",
+                            "default": "apiexamples"
+                        },
+                        "environment": {
+                            "description": "Environment to use. Used as part of the URL.",
+                            "enum": [
+                                "vtexcommercestable"
+                            ],
+                            "default": "vtexcommercestable"
+                        }
+                    }
+                }
+            ],
+            "post": {
+                "tags": [
+                    "Dimensions"
+                ],
+                "summary": "Create dimension",
+                "description": "Creates a new authorization dimension with its associated rules.\n\nDimensions contain a `unitId` field that allows grouping of dimensions by units or business areas, enabling more granular authorization control. This field is automatically filled based on the unit relative to the user creating the dimension.\n\nIf you make this request using an appKey/appToken pair, you must explicitly send the `unitId` field in the request body root.\n\n>❗ While the API supports creating multiple dimensions per unit, the Buyer's Portal frontend limits each unit to one dimension. It is recommended to maintain this structure (one dimension per unit) for consistency with the portal's design.\n\n## Approval dynamic\n\nRules are evaluated based on their `effectType`:\n\n- `effectType: 0` → Automatic approval when the expression is `true`.\n- `effectType: 1` → Automatic denial when the expression is `true`.\n- `effectType: 2` → Pending, requires manual authorization using the [Accept or deny rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/commercial-authorizations/-orderAuthId-/callback) endpoint.\n\nFor pending rules, the `scoreInterval` defines thresholds used during manual authorization. When calling the callback endpoints with a score value, the system compares it against these thresholds:\r\n- Scores ≥ `scoreInterval.accept` accept the rule.\r\n- Scores ≤ `scoreInterval.deny` deny it.\r\n- Scores in between bypass it.\n\n## Hierarchical configuration\n\nEach organization unit has one dimension. To enforce policies from lowest to highest hierarchy levels.\n\n## Dimension priority\n\nControls org unit evaluation order:\n\n- Assign descending values by hierarchy level: top unit = 9999, child units = 9998, grandchild units = 9997.\n- Sibling units share the same priority.\n- System evaluates in ascending order, so lower hierarchy units are checked first.\n\n## Rule priority\n\nWithin each dimension (org unit), rules are evaluated in ascending priority order. Use fixed priorities by policy type:\n\n- `1` = bypass (effectType: 0) - checked first, approves and stops evaluation.\n- `2` = deny (effectType: 1) - checked second, denies and stops evaluation.\n- `3` = sequential workflow (effectType: 2) - checked last, requires approval.\n\n>❗ Set `requireAllRulesAcceptance: false` so the first matching rule executes and stops further evaluation. This enables bypass rules to immediately approve orders without checking deny or approval rules.\n\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Manage Buying Policies | OMS | **ManageBuyingPolicies** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/accountName"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateUpdateDimensionRequestBody"
+                            },
+                            "example": {
+                                "name": "default",
+                                "requireAllRulesAcceptance": false,
+                                "priority": 9999,
+                                "unitId": "654c12d6-6b22-4483-bd83-eb086c42888e",
+                                "ruleCollection": [
+                                    {
+                                        "name": "Approve title",
+                                        "priority": 1,
+                                        "trigger": {
+                                            "condition": {
+                                                "conditionType": 2,
+                                                "description": "Approve condition description",
+                                                "expression": "openTextField.value = 'approved'"
+                                            },
+                                            "effect": {
+                                                "description": "Approve condition description",
+                                                "effectType": 0
+                                            }
+                                        },
+                                        "scoreInterval": {
+                                            "accept": 10,
+                                            "deny": 5
+                                        }
+                                    },
+                                    {
+                                        "name": "Deny title",
+                                        "priority": 2,
+                                        "trigger": {
+                                            "condition": {
+                                                "conditionType": 2,
+                                                "description": "Deny condition description",
+                                                "expression": "openTextField.value = 'denied'"
+                                            },
+                                            "effect": {
+                                                "description": "Deny condition description",
+                                                "effectType": 1
+                                            }
+                                        },
+                                        "scoreInterval": {
+                                            "accept": 10,
+                                            "deny": 5
+                                        }
+                                    },
+                                    {
+                                        "name": "Pending title",
+                                        "authorizationData": {
+                                            "authorizers": [
+                                                {
+                                                    "type": "unit",
+                                                    "id": "0aac12d6-6b22-4483-bd83-eb086c42888e"
+                                                }
+                                            ]
+                                        },
+                                        "priority": 3,
+                                        "trigger": {
+                                            "condition": {
+                                                "conditionType": 2,
+                                                "description": "Pending condition description",
+                                                "expression": "openTextField.value = 'pending'"
+                                            },
+                                            "effect": {
+                                                "description": "Pending condition description",
+                                                "effectType": 2
+                                            }
+                                        },
+                                        "scoreInterval": {
+                                            "accept": 10,
+                                            "deny": 5
+                                        }
+                                    },
+                                    {
+                                        "name": "Sequential approval title",
+                                        "priority": 3,
+                                        "trigger": {
+                                            "condition": {
+                                                "conditionType": 2,
+                                                "description": "Sequential approval condition description",
+                                                "expression": "openTextField.value = 'sequential-approval'"
+                                            },
+                                            "effect": {
+                                                "description": "Sequential approval condition description",
+                                                "effectType": 2
+                                            }
+                                        },
+                                        "scoreInterval": {
+                                            "accept": 10,
+                                            "deny": 5
+                                        },
+                                        "authorizationData": {
+                                            "requireAllApprovals": true,
+                                            "authorizers": [
+                                                {
+                                                    "id": "0aac12d6-6b22-4483-bd83-eb086c42888e",
+                                                    "type": "unit"
+                                                },
+                                                {
+                                                    "id": "5c969024-5c87-40f6-a89a-01172c5ae363",
+                                                    "type": "user"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DimensionResponse"
+                                },
+                                "example": {
+                                    "id": "c20ececf-660f-4656-a802-9ba607e3585b",
+                                    "name": "default",
+                                    "unitId": "654c12d6-6b22-4483-bd83-eb086c42888e",
+                                    "status": null,
+                                    "priority": 9999,
+                                    "requireAllRulesAcceptance": false,
+                                    "ruleCollection": [
+                                        {
+                                            "id": "ad7742c2-8916-4bd1-86b3-b81f21f9db7e",
+                                            "name": "Approve title",
+                                            "status": null,
+                                            "priority": 1,
+                                            "trigger": {
+                                                "condition": {
+                                                    "conditionType": 2,
+                                                    "description": "Approve condition description",
+                                                    "expression": "openTextField.value = 'approved'"
+                                                },
+                                                "effect": {
+                                                    "description": "Approve condition description",
+                                                    "effectType": 0
+                                                }
+                                            },
+                                            "scoreInterval": {
+                                                "accept": 10,
+                                                "deny": 5
+                                            }
+                                        },
+                                        {
+                                            "id": "bf8853d3-a027-5ce2-97c4-c92032a0ec80",
+                                            "name": "Deny title",
+                                            "status": null,
+                                            "priority": 2,
+                                            "trigger": {
+                                                "condition": {
+                                                    "conditionType": 2,
+                                                    "description": "Deny condition description",
+                                                    "expression": "openTextField.value = 'denied'"
+                                                },
+                                                "effect": {
+                                                    "description": "Deny condition description",
+                                                    "effectType": 1
+                                                }
+                                            },
+                                            "scoreInterval": {
+                                                "accept": 10,
+                                                "deny": 5
+                                            }
+                                        },
+                                        {
+                                            "id": "c09964e4-b138-6df3-a8d5-da3043a1fd90",
+                                            "name": "Pending title",
+                                            "status": null,
+                                            "priority": 3,
+                                            "trigger": {
+                                                "condition": {
+                                                    "conditionType": 2,
+                                                    "description": "Pending condition description",
+                                                    "expression": "openTextField.value = 'pending'"
+                                                },
+                                                "effect": {
+                                                    "description": "Pending condition description",
+                                                    "effectType": 2
+                                                }
+                                            },
+                                            "scoreInterval": {
+                                                "accept": 10,
+                                                "deny": 5
+                                            },
+                                            "authorizationData": {
+                                                "authorizers": [
+                                                    {
+                                                        "type": "unit",
+                                                        "id": "0aac12d6-6b22-4483-bd83-eb086c42888e"
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "id": "d00075f5-c249-7e04-b9e6-eb4154a20e01",
+                                            "name": "Sequential approval title",
+                                            "status": null,
+                                            "priority": 3,
+                                            "trigger": {
+                                                "condition": {
+                                                    "conditionType": 2,
+                                                    "description": "Sequential approval condition description",
+                                                    "expression": "openTextField.value = 'sequential-approval'"
+                                                },
+                                                "effect": {
+                                                    "description": "Sequential approval condition description",
+                                                    "effectType": 2
+                                                }
+                                            },
+                                            "scoreInterval": {
+                                                "accept": 10,
+                                                "deny": 5
+                                            },
+                                            "authorizationData": {
+                                                "requireAllApprovals": true,
+                                                "authorizers": [
+                                                    {
+                                                        "id": "0aac12d6-6b22-4483-bd83-eb086c42888e",
+                                                        "type": "unit"
+                                                    },
+                                                    {
+                                                        "id": "5c969024-5c87-40f6-a89a-01172c5ae363",
+                                                        "type": "user"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "creationDate": "2025-06-10T19:11:14.7103786Z",
+                                    "creationVersion": "2.0.7",
+                                    "creationEnvironment": "stable"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Invalid request body."
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Access denied. Missing required permissions."
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Dimensions"
+                ],
+                "summary": "Get dimensions information",
+                "description": "Retrieves a list with dimensions information. You can optionally filter the results using query parameters.\r\n## Filtering behavior\r\n- **Exact matching:** Only records with exact matches are returned (case-insensitive).\r\n- **Multiple values:** You can pass multiple values for the same parameter by repeating it in the query string. For example, `https://api.vtexcommercestable.com.br/{accountName}/authorization-dimensions?name=Dimension name&name=Dimension other name`.\n- **Combined filters:** Different filter types can be combined using AND logic. For example, `https://api.vtexcommercestable.com.br/{accountName}/authorization-dimensions?unitId=3ad21b0b-597e-4871-9ce9-9862e67012e7&name=Dimension name`.\r\n- **No filters:** All dimensions are returned.\r\n\r\n>ℹ️ For more information about approval dynamic, and dimension and rule priorities, see the [Buying Policies API overview](https://developers.vtex.com/docs/api-reference/buying-policies-api).\r\n\r\n## Permissions\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| View Buying Policies | OMS | **ViewBuyingPolicies** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/accountName"
+                    },
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "description": "Filters by dimension ID(s). Supports exact matching, case-insensitive. You can pass multiple values by repeating the parameter.",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "example": "c20ececf-660f-4656-a802-9ba607e3585b"
+                            }
+                        }
+                    },
+                    {
+                        "name": "unitId",
+                        "in": "query",
+                        "description": "Filters by organizational unit ID(s). Supports exact matching, case-insensitive. You can pass multiple values by repeating the parameter.",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "example": "654c12d6-6b22-4483-bd83-eb086c42888e"
+                            }
+                        }
+                    },
+                    {
+                        "name": "name",
+                        "in": "query",
+                        "description": "Filters by dimension name(s). Supports exact matching, case-insensitive. You can pass multiple values by repeating the parameter.",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "example": "default"
+                            }
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "description": "Authorization dimension information.",
+                                        "properties": {
+                                            "id": {
+                                                "type": "string",
+                                                "description": "Unique identifier of the dimension."
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "description": "Name of the authorization dimension."
+                                            },
+                                            "unitId": {
+                                                "type": "string",
+                                                "description": "Identifier of the business unit this dimension belongs to."
+                                            },
+                                            "status": {
+                                                "type": "string",
+                                                "description": "Current status of the dimension.",
+                                                "nullable": true,
+                                                "enum": [
+                                                    null,
+                                                    "accepted",
+                                                    "denied",
+                                                    "pending",
+                                                    "ignored"
+                                                ]
+                                            },
+                                            "priority": {
+                                                "type": "integer",
+                                                "description": "Execution priority of the dimension. Lower numbers are evaluated first."
+                                            },
+                                            "requireAllRulesAcceptance": {
+                                                "type": "boolean",
+                                                "description": "Whether all listed rules must be accepted for the dimension to be approved."
+                                            },
+                                            "shouldSimulate": {
+                                                "type": "boolean",
+                                                "description": "Indicates if the rules should be simulated instead of enforced."
+                                            },
+                                            "ruleCollection": {
+                                                "type": "array",
+                                                "description": "Collection of rules contained in this dimension.",
+                                                "items": {
+                                                    "type": "object",
+                                                    "description": "Rule object containing conditions, actions, and additional metadata for authorization.",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "description": "Unique identifier of the rule."
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "description": "Name of the rule."
+                                                        },
+                                                        "status": {
+                                                            "type": "string",
+                                                            "description": "Current status of the rule.",
+                                                            "nullable": true,
+                                                            "enum": [
+                                                                null,
+                                                                "accepted",
+                                                                "denied",
+                                                                "pending"
+                                                            ]
+                                                        },
+                                                        "priority": {
+                                                            "type": "integer",
+                                                            "description": "Evaluation priority for the rule."
+                                                        },
+                                                        "trigger": {
+                                                            "type": "object",
+                                                            "description": "Contains the trigger condition and effect logic.",
+                                                            "properties": {
+                                                                "condition": {
+                                                                    "type": "object",
+                                                                    "description": "Condition that must be met to trigger the rule.",
+                                                                    "properties": {
+                                                                        "conditionType": {
+                                                                            "type": "integer",
+                                                                            "description": "Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).",
+                                                                            "enum": [
+                                                                                0,
+                                                                                1,
+                                                                                2
+                                                                            ]
+                                                                        },
+                                                                        "description": {
+                                                                            "type": "string",
+                                                                            "description": "Description of the condition."
+                                                                        },
+                                                                        "expression": {
+                                                                            "type": "string",
+                                                                            "description": "JSONata expression that defines the condition logic."
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "effect": {
+                                                                    "type": "object",
+                                                                    "description": "Effect to apply when the condition is met.",
+                                                                    "properties": {
+                                                                        "description": {
+                                                                            "type": "string",
+                                                                            "description": "Description of the effect."
+                                                                        },
+                                                                        "effectType": {
+                                                                            "type": "integer",
+                                                                            "description": "Type of effect: `0` (approve), `1` (deny), or `2` (pending).",
+                                                                            "enum": [
+                                                                                0,
+                                                                                1,
+                                                                                2
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        },
+                                                        "timeout": {
+                                                            "type": "number",
+                                                            "description": "Time in milliseconds to wait for rule evaluation."
+                                                        },
+                                                        "notification": {
+                                                            "type": "boolean",
+                                                            "description": "Whether a notification should be triggered (`true`) or not (`false`)."
+                                                        },
+                                                        "scoreInterval": {
+                                                            "type": "object",
+                                                            "description": "Score range for accepting or denying the rule.",
+                                                            "properties": {
+                                                                "accept": {
+                                                                    "type": "number",
+                                                                    "description": "Minimum score required to accept the rule."
+                                                                },
+                                                                "deny": {
+                                                                    "type": "number",
+                                                                    "description": "Maximum score to deny the rule."
+                                                                }
+                                                            }
+                                                        },
+                                                        "authorizationData": {
+                                                            "type": "object",
+                                                            "description": "Defines required authorizers and whether all must approve (only present for rules with `effectType: 2`).",
+                                                            "properties": {
+                                                                "requireAllApprovals": {
+                                                                    "type": "boolean",
+                                                                    "description": "Whether all authorizers must approve (`true`) or not (`false`)."
+                                                                },
+                                                                "authorizers": {
+                                                                    "type": "array",
+                                                                    "description": "List of entities that can authorize the action.",
+                                                                    "items": {
+                                                                        "$ref": "#/components/schemas/Authorizer"
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "creationDate": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "description": "Date and time of dimension creation in the format `YYYY-MM-DDThh:mm:ssZ`."
+                                            },
+                                            "creationVersion": {
+                                                "type": "string",
+                                                "description": "Version of the system that created the dimension."
+                                            },
+                                            "creationEnvironment": {
+                                                "type": "string",
+                                                "description": "Environment where the dimension was created (e.g., `stable`, `beta`)."
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": "c20ececf-660f-4656-a802-9ba607e3585b",
+                                        "name": "default",
+                                        "unitId": "654c12d6-6b22-4483-bd83-eb086c42888e",
+                                        "status": null,
+                                        "priority": 9999,
+                                        "requireAllRulesAcceptance": false,
+                                        "shouldSimulate": true,
+                                        "ruleCollection": [
+                                            {
+                                                "id": "ad7742c2-8916-4bd1-86b3-b81f21f9db7e",
+                                                "name": "Approve title",
+                                                "status": null,
+                                                "priority": 1,
+                                                "trigger": {
+                                                    "condition": {
+                                                        "conditionType": 2,
+                                                        "description": "Approve condition description",
+                                                        "expression": "openTextField.value = 'approved'"
+                                                    },
+                                                    "effect": {
+                                                        "description": "Approve condition description",
+                                                        "effectType": 0
+                                                    }
+                                                },
+                                                "timeout": 5000,
+                                                "notification": false,
+                                                "scoreInterval": {
+                                                    "accept": 10,
+                                                    "deny": 5
+                                                }
+                                            },
+                                            {
+                                                "id": "bf8853d3-a027-5ce2-97c4-c92032a0ec80",
+                                                "name": "Deny title",
+                                                "status": null,
+                                                "priority": 2,
+                                                "trigger": {
+                                                    "condition": {
+                                                        "conditionType": 2,
+                                                        "description": "Deny condition description",
+                                                        "expression": "openTextField.value = 'denied'"
+                                                    },
+                                                    "effect": {
+                                                        "description": "Deny condition description",
+                                                        "effectType": 1
+                                                    }
+                                                },
+                                                "timeout": 500,
+                                                "notification": true,
+                                                "scoreInterval": {
+                                                    "accept": 10,
+                                                    "deny": 5
+                                                }
+                                            },
+                                            {
+                                                "id": "c09964e4-b138-6df3-a8d5-da3043a1fd90",
+                                                "name": "Pending title",
+                                                "status": null,
+                                                "priority": 3,
+                                                "trigger": {
+                                                    "condition": {
+                                                        "conditionType": 2,
+                                                        "description": "Pending condition description",
+                                                        "expression": "openTextField.value = 'pending'"
+                                                    },
+                                                    "effect": {
+                                                        "description": "Pending condition description",
+                                                        "effectType": 2
+                                                    }
+                                                },
+                                                "timeout": 5000,
+                                                "notification": false,
+                                                "scoreInterval": {
+                                                    "accept": 10,
+                                                    "deny": 5
+                                                },
+                                                "authorizationData": {
+                                                    "authorizers": [
+                                                        {
+                                                            "type": "unit",
+                                                            "id": "0aac12d6-6b22-4483-bd83-eb086c42888e"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "id": "d00075f5-c249-7e04-b9e6-eb4154a20e01",
+                                                "name": "Sequential approval title",
+                                                "status": null,
+                                                "priority": 3,
+                                                "trigger": {
+                                                    "condition": {
+                                                        "conditionType": 2,
+                                                        "description": "Sequential approval condition description",
+                                                        "expression": "openTextField.value = 'sequential-approval'"
+                                                    },
+                                                    "effect": {
+                                                        "description": "Sequential approval condition description",
+                                                        "effectType": 2
+                                                    }
+                                                },
+                                                "timeout": 5000,
+                                                "notification": false,
+                                                "scoreInterval": {
+                                                    "accept": 10,
+                                                    "deny": 5
+                                                },
+                                                "authorizationData": {
+                                                    "requireAllApprovals": true,
+                                                    "authorizers": [
+                                                        {
+                                                            "id": "0aac12d6-6b22-4483-bd83-eb086c42888e",
+                                                            "type": "unit"
+                                                        },
+                                                        {
+                                                            "id": "5c969024-5c87-40f6-a89a-01172c5ae363",
+                                                            "type": "user"
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ],
+                                        "creationDate": "2025-06-10T19:11:14.7103786Z",
+                                        "creationVersion": "2.0.7",
+                                        "creationEnvironment": "stable"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Access denied. Missing required permissions."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{accountName}/authorization-dimensions/{dimensionId}": {
+            "servers": [
+                {
+                    "url": "https://{accountName}.{environment}.com.br",
+                    "description": "VTEX server URL.",
+                    "variables": {
+                        "accountName": {
+                            "description": "Name of the VTEX account. Used as part of the URL.",
+                            "default": "apiexamples"
+                        },
+                        "environment": {
+                            "description": "Environment to use. Used as part of the URL.",
+                            "enum": [
+                                "vtexcommercestable"
+                            ],
+                            "default": "vtexcommercestable"
+                        }
+                    }
+                }
+            ],
+            "put": {
+                "tags": [
+                    "Dimensions"
+                ],
+                "summary": "Update dimension",
+                "description": "Updates a specific authorization dimension.\r\n\r\n>ℹ️ For more information about approval dynamic, and dimension and rule priorities, see the [Buying Policies API overview](https://developers.vtex.com/docs/api-reference/buying-policies-api).\r\n\r\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Manage Buying Policies | OMS | **ManageBuyingPolicies** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/accountName"
+                    },
+                    {
+                        "$ref": "#/components/parameters/dimensionId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateUpdateDimensionRequestBody"
+                            },
+                            "example": {
+                                "name": "default",
+                                "requireAllRulesAcceptance": false,
+                                "priority": 9999,
+                                "unitId": "654c12d6-6b22-4483-bd83-eb086c42888e",
+                                "ruleCollection": [
+                                    {
+                                        "name": "Approve title",
+                                        "priority": 1,
+                                        "trigger": {
+                                            "condition": {
+                                                "conditionType": 2,
+                                                "description": "Approve condition description",
+                                                "expression": "openTextField.value = 'approved'"
+                                            },
+                                            "effect": {
+                                                "description": "Approve condition description",
+                                                "effectType": 0
+                                            }
+                                        },
+                                        "scoreInterval": {
+                                            "accept": 10,
+                                            "deny": 5
+                                        }
+                                    },
+                                    {
+                                        "name": "Deny title",
+                                        "priority": 2,
+                                        "trigger": {
+                                            "condition": {
+                                                "conditionType": 2,
+                                                "description": "Deny condition description",
+                                                "expression": "openTextField.value = 'denied'"
+                                            },
+                                            "effect": {
+                                                "description": "Deny condition description",
+                                                "effectType": 1
+                                            }
+                                        },
+                                        "scoreInterval": {
+                                            "accept": 10,
+                                            "deny": 5
+                                        }
+                                    },
+                                    {
+                                        "name": "Pending title",
+                                        "authorizationData": {
+                                            "authorizers": [
+                                                {
+                                                    "type": "unit",
+                                                    "id": "0aac12d6-6b22-4483-bd83-eb086c42888e"
+                                                }
+                                            ]
+                                        },
+                                        "priority": 3,
+                                        "trigger": {
+                                            "condition": {
+                                                "conditionType": 2,
+                                                "description": "Pending condition description",
+                                                "expression": "openTextField.value = 'pending'"
+                                            },
+                                            "effect": {
+                                                "description": "Pending condition description",
+                                                "effectType": 2
+                                            }
+                                        },
+                                        "scoreInterval": {
+                                            "accept": 10,
+                                            "deny": 5
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DimensionResponse"
+                                },
+                                "example": {
+                                    "id": "c20ececf-660f-4656-a802-9ba607e3585b",
+                                    "name": "default",
+                                    "unitId": "654c12d6-6b22-4483-bd83-eb086c42888e",
+                                    "status": null,
+                                    "priority": 9999,
+                                    "requireAllRulesAcceptance": false,
+                                    "ruleCollection": [
+                                        {
+                                            "id": "ad7742c2-8916-4bd1-86b3-b81f21f9db7e",
+                                            "name": "Approve title",
+                                            "status": null,
+                                            "priority": 1,
+                                            "trigger": {
+                                                "condition": {
+                                                    "conditionType": 2,
+                                                    "description": "Approve condition description",
+                                                    "expression": "openTextField.value = 'approved'"
+                                                },
+                                                "effect": {
+                                                    "description": "Approve condition description",
+                                                    "effectType": 0
+                                                }
+                                            },
+                                            "scoreInterval": {
+                                                "accept": 10,
+                                                "deny": 5
+                                            }
+                                        },
+                                        {
+                                            "id": "bf8853d3-a027-5ce2-97c4-c92032a0ec80",
+                                            "name": "Deny title",
+                                            "status": null,
+                                            "priority": 2,
+                                            "trigger": {
+                                                "condition": {
+                                                    "conditionType": 2,
+                                                    "description": "Deny condition description",
+                                                    "expression": "openTextField.value = 'denied'"
+                                                },
+                                                "effect": {
+                                                    "description": "Deny condition description",
+                                                    "effectType": 1
+                                                }
+                                            },
+                                            "scoreInterval": {
+                                                "accept": 10,
+                                                "deny": 5
+                                            }
+                                        },
+                                        {
+                                            "id": "c09964e4-b138-6df3-a8d5-da3043a1fd90",
+                                            "name": "Pending title",
+                                            "status": null,
+                                            "priority": 3,
+                                            "trigger": {
+                                                "condition": {
+                                                    "conditionType": 2,
+                                                    "description": "Pending condition description",
+                                                    "expression": "openTextField.value = 'pending'"
+                                                },
+                                                "effect": {
+                                                    "description": "Pending condition description",
+                                                    "effectType": 2
+                                                }
+                                            },
+                                            "scoreInterval": {
+                                                "accept": 10,
+                                                "deny": 5
+                                            },
+                                            "authorizationData": {
+                                                "authorizers": [
+                                                    {
+                                                        "type": "unit",
+                                                        "id": "0aac12d6-6b22-4483-bd83-eb086c42888e"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "creationDate": "2025-06-10T19:11:14.7103786Z",
+                                    "creationVersion": "2.0.7",
+                                    "creationEnvironment": "stable"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Invalid request body."
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Access denied. Missing required permissions."
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Dimension not found."
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Dimensions"
+                ],
+                "summary": "Delete dimension",
+                "description": "Deletes a specific dimension by its ID.\r\n\r\n>ℹ️ For more information about approval dynamic, and dimension and rule priorities, see the [Buying Policies API overview](https://developers.vtex.com/docs/api-reference/buying-policies-api).\r\n\r\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Manage Buying Policies | OMS | **ManageBuyingPolicies** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/accountName"
+                    },
+                    {
+                        "$ref": "#/components/parameters/dimensionId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content\n\nDimension successfully deleted."
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Access denied. Missing required permissions."
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Dimension not found."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{accountName}/authorization-dimensions/{dimensionId}/rules": {
+            "servers": [
+                {
+                    "url": "https://{accountName}.{environment}.com.br",
+                    "description": "VTEX server URL.",
+                    "variables": {
+                        "accountName": {
+                            "description": "Name of the VTEX account. Used as part of the URL.",
+                            "default": "apiexamples"
+                        },
+                        "environment": {
+                            "description": "Environment to use. Used as part of the URL.",
+                            "enum": [
+                                "vtexcommercestable"
+                            ],
+                            "default": "vtexcommercestable"
+                        }
+                    }
+                }
+            ],
+            "post": {
+                "tags": [
+                    "Rules"
+                ],
+                "summary": "Create dimension rule",
+                "description": "Registers a new dimension rule.\r\n\r\n>ℹ️ For more information about approval dynamic, and dimension and rule priorities, see the [Buying Policies API overview](https://developers.vtex.com/docs/api-reference/buying-policies-api).\r\n\r\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Manage Buying Policies | OMS | **ManageBuyingPolicies** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/accountName"
+                    },
+                    {
+                        "$ref": "#/components/parameters/dimensionId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateUpdateRuleRequestBody"
+                            },
+                            "example": {
+                                "name": "User Approval - Many approvers",
+                                "priority": 1,
+                                "trigger": {
+                                    "condition": {
+                                        "conditionType": 2,
+                                        "description": "Users 8f6b3712-4c05-4ce5-8057-63fd0d69a587 and 8f6b3712-4c05-4ce5-8057-63fd0d69a588 need to approve orders above $150",
+                                        "expression": "$.openTextField.value = 'ODP use cases' and $.value > 30000"
+                                    },
+                                    "effect": {
+                                        "description": "Orders with value above $150 must be approved",
+                                        "effectType": 2
+                                    }
+                                },
+                                "authorizationData": {
+                                    "requireAllApprovals": true,
+                                    "authorizers": [
+                                        {
+                                            "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a587",
+                                            "type": "user"
+                                        },
+                                        {
+                                            "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a588",
+                                            "type": "user"
+                                        }
+                                    ]
+                                },
+                                "scoreInterval": {
+                                    "accept": 10,
+                                    "deny": 5
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RuleResponse"
+                                },
+                                "example": {
+                                    "id": "202cd02c-e36f-4f79-85f4-91210fac8b98",
+                                    "name": "User Approval - Many approvers",
+                                    "status": null,
+                                    "priority": 1,
+                                    "trigger": {
+                                        "condition": {
+                                            "conditionType": 2,
+                                            "description": "Users 8f6b3712-4c05-4ce5-8057-63fd0d69a587 and 8f6b3712-4c05-4ce5-8057-63fd0d69a588 need to approve orders above $150",
+                                            "expression": "$.openTextField.value = 'ODP use cases' and $.value > 30000"
+                                        },
+                                        "effect": {
+                                            "description": "Orders with value above $150 must be approved",
+                                            "effectType": 2
+                                        }
+                                    },
+                                    "scoreInterval": {
+                                        "accept": 10,
+                                        "deny": 5
+                                    },
+                                    "authorizationData": {
+                                        "requireAllApprovals": true,
+                                        "authorizers": [
+                                            {
+                                                "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a587",
+                                                "type": "user"
+                                            },
+                                            {
+                                                "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a588",
+                                                "type": "user"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Invalid request body."
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Access denied. Missing required permissions."
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Dimension not found."
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Rules"
+                ],
+                "summary": "Update all dimension rules",
+                "description": "Replaces all existing rules in a dimension with the provided array of rules.\r\n\r\n>ℹ️ For more information about approval dynamic, and dimension and rule priorities, see the [Buying Policies API overview](https://developers.vtex.com/docs/api-reference/buying-policies-api).\r\n\r\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Manage Buying Policies | OMS | **ManageBuyingPolicies** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/accountName"
+                    },
+                    {
+                        "$ref": "#/components/parameters/dimensionId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/CreateUpdateRuleRequestBody"
+                                }
+                            },
+                            "example": [
+                                {
+                                    "name": "Accounting Limit - Max spend limit per order",
+                                    "priority": 1,
+                                    "trigger": {
+                                        "condition": {
+                                            "conditionType": 2,
+                                            "description": "Match orders with value >= 10000 ($100)",
+                                            "expression": "$.openTextField.value = 'ODP use cases' and $.value >= 10000"
+                                        },
+                                        "effect": {
+                                            "description": "Orders with value above $100 need to be manually approved",
+                                            "effectType": 2
+                                        }
+                                    },
+                                    "authorizationData": {
+                                        "authorizers": [
+                                            {
+                                                "id": "0aac12d6-6b22-4483-bd83-eb086c42888e",
+                                                "type": "unit"
+                                            }
+                                        ]
+                                    },
+                                    "scoreInterval": {
+                                        "accept": 10,
+                                        "deny": 5
+                                    }
+                                },
+                                {
+                                    "name": "User Approval - Only one approver",
+                                    "priority": 1,
+                                    "trigger": {
+                                        "condition": {
+                                            "conditionType": 2,
+                                            "description": "User 8f6b3712-4c05-4ce5-8057-63fd0d69a587 needs to approve orders above $150",
+                                            "expression": "$.openTextField.value = 'ODP use cases' and $.value > 15000"
+                                        },
+                                        "effect": {
+                                            "description": "Orders with value above $150 must be approved",
+                                            "effectType": 2
+                                        }
+                                    },
+                                    "authorizationData": {
+                                        "authorizers": [
+                                            {
+                                                "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a587",
+                                                "type": "user"
+                                            }
+                                        ]
+                                    },
+                                    "scoreInterval": {
+                                        "accept": 10,
+                                        "deny": 5
+                                    }
+                                },
+                                {
+                                    "name": "User Approval - Many approvers",
+                                    "priority": 1,
+                                    "trigger": {
+                                        "condition": {
+                                            "conditionType": 2,
+                                            "description": "Users 8f6b3712-4c05-4ce5-8057-63fd0d69a587 and 8f6b3712-4c05-4ce5-8057-63fd0d69a588 need to approve orders above $150",
+                                            "expression": "$.openTextField.value = 'ODP use cases' and $.value > 30000"
+                                        },
+                                        "effect": {
+                                            "description": "Orders with value above $150 must be approved",
+                                            "effectType": 2
+                                        }
+                                    },
+                                    "authorizationData": {
+                                        "requireAllApprovals": true,
+                                        "authorizers": [
+                                            {
+                                                "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a587",
+                                                "type": "user"
+                                            },
+                                            {
+                                                "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a588",
+                                                "type": "user"
+                                            }
+                                        ]
+                                    },
+                                    "scoreInterval": {
+                                        "accept": 10,
+                                        "deny": 5
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/RuleResponse"
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": "202cd02c-e36f-4f79-85f4-91210fac8b98",
+                                        "name": "Accounting Limit - Max spend limit per order",
+                                        "status": null,
+                                        "priority": 1,
+                                        "trigger": {
+                                            "condition": {
+                                                "conditionType": 2,
+                                                "description": "Match orders with value >= 10000 ($100)",
+                                                "expression": "$.openTextField.value = 'ODP use cases' and $.value >= 10000"
+                                            },
+                                            "effect": {
+                                                "description": "Orders with value above $100 need to be manually approved",
+                                                "effectType": 2
+                                            }
+                                        },
+                                        "scoreInterval": {
+                                            "accept": 10,
+                                            "deny": 5
+                                        },
+                                        "authorizationData": {
+                                            "authorizers": [
+                                                {
+                                                    "id": "0aac12d6-6b22-4483-bd83-eb086c42888e",
+                                                    "type": "unit"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "id": "303de13d-f470-5080-9605-02321abd9c09",
+                                        "name": "User Approval - Only one approver",
+                                        "status": null,
+                                        "priority": 1,
+                                        "trigger": {
+                                            "condition": {
+                                                "conditionType": 2,
+                                                "description": "User 8f6b3712-4c05-4ce5-8057-63fd0d69a587 needs to approve orders above $150",
+                                                "expression": "$.openTextField.value = 'ODP use cases' and $.value > 15000"
+                                            },
+                                            "effect": {
+                                                "description": "Orders with value above $150 must be approved",
+                                                "effectType": 2
+                                            }
+                                        },
+                                        "scoreInterval": {
+                                            "accept": 10,
+                                            "deny": 5
+                                        },
+                                        "authorizationData": {
+                                            "authorizers": [
+                                                {
+                                                    "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a587",
+                                                    "type": "user"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "id": "414ef24e-0580-6091-a706-13432ace0d10",
+                                        "name": "User Approval - Many approvers",
+                                        "status": null,
+                                        "priority": 1,
+                                        "trigger": {
+                                            "condition": {
+                                                "conditionType": 2,
+                                                "description": "Users 8f6b3712-4c05-4ce5-8057-63fd0d69a587 and 8f6b3712-4c05-4ce5-8057-63fd0d69a588 need to approve orders above $150",
+                                                "expression": "$.openTextField.value = 'ODP use cases' and $.value > 30000"
+                                            },
+                                            "effect": {
+                                                "description": "Orders with value above $150 must be approved",
+                                                "effectType": 2
+                                            }
+                                        },
+                                        "scoreInterval": {
+                                            "accept": 10,
+                                            "deny": 5
+                                        },
+                                        "authorizationData": {
+                                            "requireAllApprovals": true,
+                                            "authorizers": [
+                                                {
+                                                    "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a587",
+                                                    "type": "user"
+                                                },
+                                                {
+                                                    "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a588",
+                                                    "type": "user"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Invalid request body."
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Access denied. Missing required permissions."
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Dimension not found."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{accountName}/authorization-dimensions/{dimensionId}/rules/{ruleId}": {
+            "servers": [
+                {
+                    "url": "https://{accountName}.{environment}.com.br",
+                    "description": "VTEX server URL.",
+                    "variables": {
+                        "accountName": {
+                            "description": "Name of the VTEX account. Used as part of the URL.",
+                            "default": "apiexamples"
+                        },
+                        "environment": {
+                            "description": "Environment to use. Used as part of the URL.",
+                            "enum": [
+                                "vtexcommercestable"
+                            ],
+                            "default": "vtexcommercestable"
+                        }
+                    }
+                }
+            ],
+            "put": {
+                "tags": [
+                    "Rules"
+                ],
+                "summary": "Update dimension rule",
+                "description": "Updates a specific rule within an authorization dimension.\r\n\r\n>ℹ️ For more information about approval dynamic, and dimension and rule priorities, see the [Buying Policies API overview](https://developers.vtex.com/docs/api-reference/buying-policies-api).\r\n\r\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Manage Buying Policies | OMS | **ManageBuyingPolicies** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/accountName"
+                    },
+                    {
+                        "$ref": "#/components/parameters/dimensionId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/ruleId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateUpdateRuleRequestBody"
+                            },
+                            "example": {
+                                "name": "User Approval - Many approvers",
+                                "priority": 1,
+                                "trigger": {
+                                    "condition": {
+                                        "conditionType": 2,
+                                        "description": "Users 8f6b3712-4c05-4ce5-8057-63fd0d69a587 and 8f6b3712-4c05-4ce5-8057-63fd0d69a588 need to approve orders above $150",
+                                        "expression": "$.openTextField.value = 'ODP use cases' and $.value > 30000"
+                                    },
+                                    "effect": {
+                                        "description": "Orders with value above $150 must be approved",
+                                        "effectType": 2
+                                    }
+                                },
+                                "authorizationData": {
+                                    "requireAllApprovals": true,
+                                    "authorizers": [
+                                        {
+                                            "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a587",
+                                            "type": "user"
+                                        },
+                                        {
+                                            "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a588",
+                                            "type": "user"
+                                        }
+                                    ]
+                                },
+                                "scoreInterval": {
+                                    "accept": 10,
+                                    "deny": 5
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RuleResponse"
+                                },
+                                "example": {
+                                    "id": "bf2ed52d-b128-4099-b3e3-43153e85b463",
+                                    "name": "User Approval - Many approvers",
+                                    "status": null,
+                                    "priority": 1,
+                                    "trigger": {
+                                        "condition": {
+                                            "conditionType": 2,
+                                            "description": "Users 8f6b3712-4c05-4ce5-8057-63fd0d69a587 and 8f6b3712-4c05-4ce5-8057-63fd0d69a588 need to approve orders above $150",
+                                            "expression": "$.openTextField.value = 'ODP use cases' and $.value > 30000"
+                                        },
+                                        "effect": {
+                                            "description": "Orders with value above $150 must be approved",
+                                            "effectType": 2
+                                        }
+                                    },
+                                    "scoreInterval": {
+                                        "accept": 10,
+                                        "deny": 5
+                                    },
+                                    "authorizationData": {
+                                        "requireAllApprovals": true,
+                                        "authorizers": [
+                                            {
+                                                "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a587",
+                                                "type": "user"
+                                            },
+                                            {
+                                                "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a588",
+                                                "type": "user"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Invalid request body."
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Access denied. Missing required permissions."
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Dimension or rule not found."
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Rules"
+                ],
+                "summary": "Delete dimension rule",
+                "description": "Deletes a specific dimension rule.\r\n\r\n>ℹ️ For more information about approval dynamic, and dimension and rule priorities, see the [Buying Policies API overview](https://developers.vtex.com/docs/api-reference/buying-policies-api).\r\n\r\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Manage Buying Policies | OMS | **ManageBuyingPolicies** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/accountName"
+                    },
+                    {
+                        "$ref": "#/components/parameters/dimensionId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/ruleId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content\n\nRule successfully deleted."
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Access denied. Missing required permissions."
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Dimension or rule not found."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/commercial-authorizations/{orderAuthId}/callback": {
+            "servers": [
+                {
+                    "url": "https://{accountName}.myvtex.com",
+                    "description": "VTEX server URL for the accept or deny rule endpoint.",
+                    "variables": {
+                        "accountName": {
+                            "description": "Name of the VTEX account. Used as part of the URL.",
+                            "default": "apiexamples"
+                }
+                    }
+                }
+            ],
+            "post": {
+                "tags": [
+                    "Manual authorization"
+                ],
+                "summary": "Accept or deny rule",
+                "description": "Accepts or denies a pending dimension rule, a manual approval required for rules with `effectType: 2` (pending).\n\nWhen a rule requires manual authorization, you call this endpoint with a score value that is compared against the rule's `scoreInterval` thresholds.\n\nThe score value is configured using the [Create dimension](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/-accountName-/authorization-dimensions) and [Update dimension](https://developers.vtex.com/docs/api-reference/buying-policies-api#put-/-accountName-/authorization-dimensions/-dimensionId-) endpoints, and mean the following:\n\n- If score ≥ `scoreInterval.accept`, the rule is accepted.\n- If score ≤ `scoreInterval.deny`, the rule is denied.\n- If the score falls between these values, the rule is bypassed.\n\nThe score is independent of the rule's expression evaluation. It's a value you provide to determine the authorization outcome.\n\n>ℹ️ The frontend/BFF fixes `scoreInterval` values as `accept: 10` and `deny: 5` for all rules, but these thresholds can be configured differently when creating dimensions via API. When using the standard frontend values, a score of `10` or higher will accept the rule.\r\n\r\nFor more information about approval dynamic, and dimension and rule priorities, see the [Buying Policies API overview](https://developers.vtex.com/docs/api-reference/buying-policies-api).\r\n\r\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Approve Orders | My Account / OMS | **ApproveOrders** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/orderAuthId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "params"
+                                ],
+                                "properties": {
+                                    "params": {
+                                        "type": "object",
+                                        "description": "Information to deny or accept a rule from a given dimension.",
+                                        "required": [
+                                            "score",
+                                            "dimensionId",
+                                            "ruleId"
+                                        ],
+                                        "properties": {
+                                            "score": {
+                                                "type": "integer",
+                                                "description": "Score value to determine the authorization outcome. The score is compared against the rule's `scoreInterval` thresholds: scores ≥ `scoreInterval.accept` accept the rule, scores ≤ `scoreInterval.deny` deny it. For standard frontend values (`accept: 10`, `deny: 5`), use `10` to accept or `0` to deny a rule."
+                                            },
+                                            "dimensionId": {
+                                                "type": "string",
+                                                "description": "Identifier of the dimension being evaluated."
+                                            },
+                                            "ruleId": {
+                                                "type": "string",
+                                                "description": "Identifier of the rule associated with the dimension."
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "example": {
+                                "params": {
+                                    "score": 10,
+                                    "dimensionId": "d88e44b1-2791-4770-a9e3-d0fdc1a1c1fd",
+                                    "ruleId": "2448612d-bbbf-4bc5-8b8c-b1c3f4f638e3"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "description": "Unique identifier of the approval request."
+                                        },
+                                        "orderId": {
+                                            "type": "string",
+                                            "description": "Identifier of the order linked to this approval process."
+                                        },
+                                        "workflowInstanceId": {
+                                            "type": "string",
+                                            "description": "Identifier of the workflow instance."
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "description": "Current status of the authorization.",
+                                            "nullable": true,
+                                            "enum": [
+                                                null,
+                                                "accepted",
+                                                "denied",
+                                                "pending"
+                                            ]
+                                        },
+                                        "units": {
+                                            "type": "array",
+                                            "description": "List of unit identifiers related to the approval request.",
+                                            "items": {
+                                                "type": "string",
+                                                "description": "Unit identifier."
+                                            }
+                                        },
+                                        "callbackEndpoint": {
+                                            "type": "string",
+                                            "description": "Callback URL for order authorization status updates."
+                                        },
+                                        "totalOrderValueDesiredBySeller": {
+                                            "type": "number",
+                                            "description": "Total value of the order as expected by the seller."
+                                        },
+                                        "marketPlacePaymentValue": {
+                                            "type": "number",
+                                            "description": "Value of the order payment in the marketplace."
+                                        },
+                                        "itemCollection": {
+                                            "type": "array",
+                                            "description": "List of items in the order.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Item in the order authorization.",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "description": "Unique identifier of the item in the approval process."
+                                                    },
+                                                    "sku": {
+                                                        "type": "string",
+                                                        "description": "SKU identifier of the item."
+                                                    },
+                                                    "price": {
+                                                        "type": "number",
+                                                        "description": "Item price."
+                                                    },
+                                                    "totalSystemDiscount": {
+                                                        "type": "number",
+                                                        "description": "Discount automatically applied by the system."
+                                                    },
+                                                    "totalManualDiscount": {
+                                                        "type": "number",
+                                                        "description": "Discount manually applied."
+                                                    },
+                                                    "quantity": {
+                                                        "type": "integer",
+                                                        "description": "Quantity of the item."
+                                                    },
+                                                    "additionalInfo": {
+                                                        "type": "object",
+                                                        "description": "Additional information about the item.",
+                                                        "properties": {
+                                                            "commercialCondition": {
+                                                                "type": "string",
+                                                                "description": "Commercial condition identifier."
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "additionalInfo": {
+                                            "type": "object",
+                                            "description": "Extra information related to the request.",
+                                            "properties": {
+                                                "userProfileId": {
+                                                    "type": "string",
+                                                    "description": "Identifier of the user profile linked to this approval request."
+                                                }
+                                            }
+                                        },
+                                        "dimensionStatus": {
+                                            "type": "array",
+                                            "description": "Approval status details per dimension.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Approval status details for a dimension.",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "description": "Unique identifier of the dimension status record."
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "description": "Dimension name."
+                                                    },
+                                                    "unitId": {
+                                                        "type": "string",
+                                                        "description": "Unit identifier related to this dimension."
+                                                    },
+                                                    "userProfileId": {
+                                                        "type": "string",
+                                                        "description": "User profile identifier related to this dimension."
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "description": "Current status of the dimension.",
+                                                        "nullable": true,
+                                                        "enum": [
+                                                            null,
+                                                            "accepted",
+                                                            "denied",
+                                                            "pending"
+                                                        ]
+                                                    },
+                                                    "score": {
+                                                        "type": "integer",
+                                                        "description": "Score assigned to the dimension."
+                                                    },
+                                                    "priority": {
+                                                        "type": "integer",
+                                                        "description": "Priority of this dimension (lower = higher priority)."
+                                                    },
+                                                    "shouldSimulate": {
+                                                        "type": "boolean",
+                                                        "description": "Indicates if this dimension should be simulated before application."
+                                                    },
+                                                    "ruleCollection": {
+                                                        "type": "array",
+                                                        "description": "Rules applied to this dimension.",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "description": "Information about a rule within a dimension.",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string",
+                                                                    "description": "Unique identifier of the rule."
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "description": "Rule name."
+                                                                },
+                                                                "status": {
+                                                                    "type": "string",
+                                                                    "description": "Current status of the rule.",
+                                                                    "nullable": true,
+                                                                    "enum": [
+                                                                        null,
+                                                                        "accepted",
+                                                                        "denied",
+                                                                        "pending"
+                                                                    ]
+                                                                },
+                                                                "doId": {
+                                                                    "type": "string",
+                                                                    "nullable": true,
+                                                                    "description": "Optional decision object identifier."
+                                                                },
+                                                                "score": {
+                                                                    "type": "integer",
+                                                                    "description": "Score assigned to the rule."
+                                                                },
+                                                                "priority": {
+                                                                    "type": "integer",
+                                                                    "description": "Rule priority (lower = higher priority)."
+                                                                },
+                                                                "trigger": {
+                                                                    "type": "object",
+                                                                    "description": "Trigger condition and effect for the rule.",
+                                                                    "properties": {
+                                                                        "condition": {
+                                                                            "type": "object",
+                                                                            "description": "Condition that triggers the rule.",
+                                                                            "properties": {
+                                                                                "conditionType": {
+                                                                                    "type": "integer",
+                                                                                    "description": "Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).",
+                                                                                    "enum": [
+                                                                                        0,
+                                                                                        1,
+                                                                                        2
+                                                                                    ]
+                                                                                },
+                                                                                "description": {
+                                                                                    "type": "string",
+                                                                                    "description": "Human-readable description of the condition."
+                                                                                },
+                                                                                "expression": {
+                                                                                    "type": "string",
+                                                                                    "description": "Expression used to evaluate the condition."
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        "effect": {
+                                                                            "type": "object",
+                                                                            "description": "Effect applied when the condition is met.",
+                                                                            "properties": {
+                                                                                "description": {
+                                                                                    "type": "string",
+                                                                                    "description": "Description of the effect."
+                                                                                },
+                                                                                "effectType": {
+                                                                                    "type": "integer",
+                                                                                    "description": "Type of effect: `0` (approve), `1` (deny), or `2` (pending)."
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "timeout": {
+                                                                    "type": "integer",
+                                                                    "description": "Timeout (in ms) for rule evaluation."
+                                                                },
+                                                                "notification": {
+                                                                    "type": "boolean",
+                                                                    "description": "Indicates if notifications are enabled for this rule (`true`) or disabled (`false`)."
+                                                                },
+                                                                "scoreInterval": {
+                                                                    "type": "object",
+                                                                    "description": "Score thresholds for decision making.",
+                                                                    "properties": {
+                                                                        "accept": {
+                                                                            "type": "integer",
+                                                                            "description": "Minimum score for acceptance."
+                                                                        },
+                                                                        "deny": {
+                                                                            "type": "integer",
+                                                                            "description": "Maximum score for denial."
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "authorizationData": {
+                                                                    "type": "object",
+                                                                    "description": "Data related to authorization requirements.",
+                                                                    "properties": {
+                                                                        "requireAllApprovals": {
+                                                                            "type": "boolean",
+                                                                            "description": "If `true`, all authorizers must approve."
+                                                                        },
+                                                                        "authorizers": {
+                                                                            "type": "array",
+                                                                            "description": "List of authorizers for the rule.",
+                                                                            "items": {
+                                                                                "type": "object",
+                                                                                "description": "Authorizer information in callback response.",
+                                                                                "properties": {
+                                                                                    "id": {
+                                                                                        "type": "string",
+                                                                                        "description": "Identifier of the authorizer."
+                                                                                    },
+                                                                                    "type": {
+                                                                                        "type": "string",
+                                                                                        "description": "Type of authorizer (e.g., `Unit`, `user`)."
+                                                                                    },
+                                                                                    "authorizationDate": {
+                                                                                        "type": "string",
+                                                                                        "format": "date-time",
+                                                                                        "description": "Date when authorization occurred in the format `YYYY-MM-DDThh:mm:ssZ`."
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "isUserAuthorized": {
+                                                                    "type": "boolean",
+                                                                    "description": "Whether the current user is authorized."
+                                                                },
+                                                                "isUserNextAuthorizer": {
+                                                                    "type": "boolean",
+                                                                    "description": "Whether the current user is the next required authorizer."
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "creationDate": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "description": "Timestamp of when the dimension status was created in the format `YYYY-MM-DDThh:mm:ssZ`."
+                                                    },
+                                                    "creationVersion": {
+                                                        "type": "string",
+                                                        "description": "Version of the system at creation time."
+                                                    },
+                                                    "creationEnvironment": {
+                                                        "type": "string",
+                                                        "description": "Environment in which the record was created (e.g., `stable`)."
+                                                    },
+                                                    "requireAllRulesAcceptance": {
+                                                        "type": "boolean",
+                                                        "description": "If `true`, all rules must be accepted for approval."
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "creationVersion": {
+                                            "type": "string",
+                                            "description": "Version of the system at creation time."
+                                        },
+                                        "creationEnvironment": {
+                                            "type": "string",
+                                            "description": "Environment in which the approval request was created (e.g., `stable`)."
+                                        },
+                                        "userProfileId": {
+                                            "type": "string",
+                                            "description": "Identifier of the user profile that created the approval request."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "id": "6f6d7472-e4d0-4004-a1d2-6d4ccc7e696a",
+                                    "orderId": "1557790634097-01",
+                                    "workflowInstanceId": "9f578326-ec7b-42e5-9e4f-212a07aa5697",
+                                    "status": "accepted",
+                                    "units": [
+                                        "f9078fd1-3c6d-4103-8658-77155edaf940"
+                                    ],
+                                    "callbackEndpoint": "http://checkout.vtexcommerce.com.br/api/checkout/pvt/order-auth/1557790634097-01/callback?an=b2bfaststoredev",
+                                    "totalOrderValueDesiredBySeller": 0,
+                                    "marketPlacePaymentValue": 0,
+                                    "itemCollection": [
+                                        {
+                                            "id": "77a7b09f-da69-4392-8ac6-7cee0acf7e0f",
+                                            "sku": "88",
+                                            "price": 33.99,
+                                            "totalSystemDiscount": -3.4,
+                                            "totalManualDiscount": 0,
+                                            "quantity": 1,
+                                            "additionalInfo": {
+                                                "commercialCondition": "1"
+                                            }
+                                        }
+                                    ],
+                                    "additionalInfo": {
+                                        "userProfileId": "69c9e480-850b-11f0-b37f-c3162b6f2b91"
+                                    },
+                                    "dimensionStatus": [
+                                        {
+                                            "id": "d88e44b1-2791-4770-a9e3-d0fdc1a1c1fd",
+                                            "name": "Compras faturamento B2B - vtexcommercestable",
+                                            "unitId": "f9078fd1-3c6d-4103-8658-77155edaf940",
+                                            "userProfileId": "69c9e480-850b-11f0-b37f-c3162b6f2b91",
+                                            "status": "accepted",
+                                            "score": 100,
+                                            "priority": 1,
+                                            "shouldSimulate": false,
+                                            "ruleCollection": [
+                                                {
+                                                    "id": "2448612d-bbbf-4bc5-8b8c-b1c3f4f638e3",
+                                                    "name": "Pending title",
+                                                    "status": "accepted",
+                                                    "score": 100,
+                                                    "priority": 1,
+                                                    "trigger": {
+                                                        "condition": {
+                                                            "conditionType": 2,
+                                                            "description": "Pending condition description",
+                                                            "expression": "$count(budgetData.unitAllocations.*[budgetId='0198f73a-68a1-7296-ae88-ffe9586c3528']) > 0"
+                                                        },
+                                                        "effect": {
+                                                            "description": "Pending condition description",
+                                                            "effectType": 2
+                                                        }
+                                                    },
+                                                    "timeout": 0,
+                                                    "notification": false,
+                                                    "scoreInterval": {
+                                                        "accept": 10,
+                                                        "deny": 5
+                                                    },
+                                                    "authorizationData": {
+                                                        "requireAllApprovals": false,
+                                                        "authorizers": [
+                                                            {
+                                                                "id": "f9078fd1-3c6d-4103-8658-77155edaf940",
+                                                                "type": "Unit",
+                                                                "authorizationDate": "2025-08-29T19:07:52.4705074Z"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "isUserAuthorized": true,
+                                                    "isUserNextAuthorizer": false
+                                                }
+                                            ],
+                                            "creationDate": "2025-08-29T19:07:42.7281514Z",
+                                            "creationVersion": "2.1.5",
+                                            "creationEnvironment": "stable",
+                                            "requireAllRulesAcceptance": false
+                                        }
+                                    ],
+                                    "creationVersion": "2.1.5",
+                                    "creationEnvironment": "stable",
+                                    "userProfileId": "69c9e480-850b-11f0-b37f-c3162b6f2b91"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Invalid request body."
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Access denied. Missing required permissions."
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Order authorization not found."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "security": [
+        {
+            "appKey": [],
+            "appToken": []
+        },
+        {
+            "VtexIdclientAutCookie": []
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "VtexIdclientAutCookie": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "VtexIdclientAutCookie",
+                "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
+            }
+        },
+        "parameters": {
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "accountName": {
+                "name": "accountName",
+                "in": "path",
+                "description": "Name of the VTEX account.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "apiexamples"
+                }
+            },
+            "dimensionId": {
+                "name": "dimensionId",
+                "in": "path",
+                "description": "Unique identifier for the authorization dimension.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "c20ececf-660f-4656-a802-9ba607e3585b"
+                }
+            },
+            "ruleId": {
+                "name": "ruleId",
+                "in": "path",
+                "description": "Unique identifier for the dimension rule.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "bf2ed52d-b128-4099-b3e3-43153e85b463"
+                }
+            },
+            "orderAuthId": {
+                "name": "orderAuthId",
+                "in": "path",
+                "description": "Unique identifier for the order authorization request.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "6f6d7472-e4d0-4004-a1d2-6d4ccc7e696a"
+                }
+            }
+        },
+        "schemas": {
+            "CreateUpdateDimensionRequestBody": {
+                "type": "object",
+                "description": "Request body for creating or updating a dimension.",
+                "required": [
+                    "name",
+                    "requireAllRulesAcceptance",
+                    "priority",
+                    "ruleCollection"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the dimension."
+                    },
+                    "requireAllRulesAcceptance": {
+                        "type": "boolean",
+                        "description": "When set as `true`, all listed rules must be accepted for the dimension to be approved. When set as `false`, the first matching rule that evaluates to `true` will be executed."
+                    },
+                    "unitId": {
+                        "type": "string",
+                        "description": "Identifier of the organization unit this dimension belongs to. Each unit can have one dimension. This field is required when using `appKey/appToken` authentication."
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "description": "Dimension priority controls which organization unit's policies are evaluated in which order. Lower priority numbers are evaluated first. For hierarchical policies, assign descending priorities by hierarchy level (e.g., 9999 = top unit, 9998 = child units, 9997 = grandchild units) so lower-level org units are checked first. Sibling units share the same priority."
+                    },
+                    "ruleCollection": {
+                        "type": "array",
+                        "description": "List of rules that define conditions and actions.",
+                        "items": {
+                            "type": "object",
+                            "description": "Rule object that defines conditions and actions for authorization.",
+                            "required": [
+                                "name",
+                                "priority",
+                                "trigger",
+                                "scoreInterval"
+                            ],
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Name of the rule."
+                                },
+                                "priority": {
+                                    "type": "integer",
+                                    "description": "Rule priority controls which policy type is checked first within the org unit. Lower numbers are evaluated first. You can have bypass rules and immediately approve orders by matching effect types with fixed priorities: `1` = bypass (effectType: 0), `2` = deny (effectType: 1), `3` = sequential workflow (effectType: 2)."
+                                },
+                                "trigger": {
+                                    "type": "object",
+                                    "description": "Defines the condition and effect that trigger the rule.",
+                                    "required": [
+                                        "condition",
+                                        "effect"
+                                    ],
+                                    "properties": {
+                                        "condition": {
+                                            "type": "object",
+                                            "description": "Condition that must be met to trigger the rule.",
+                                            "required": [
+                                                "conditionType",
+                                                "description",
+                                                "expression"
+                                            ],
+                                            "properties": {
+                                                "conditionType": {
+                                                    "type": "integer",
+                                                    "description": "Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).",
+                                                    "enum": [
+                                                        0,
+                                                        1,
+                                                        2
+                                                    ]
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "description": "Description of the condition."
+                                                },
+                                                "expression": {
+                                                    "type": "string",
+                                                    "description": "JSONata expression that defines the condition logic. The expression is evaluated against the order payload, which includes fields like `orderId`, `items`, `value`, `budgetData`, `marketPlaceOrderId`, and other order properties. See [JSONata documentation](https://jsonata.org/) for expression syntax and available operators."
+                                                }
+                                            }
+                                        },
+                                        "effect": {
+                                            "type": "object",
+                                            "description": "Effect to apply when the condition is met.",
+                                            "required": [
+                                                "description",
+                                                "effectType"
+                                            ],
+                                            "properties": {
+                                                "description": {
+                                                    "type": "string",
+                                                    "description": "Description of the effect."
+                                                },
+                                                "effectType": {
+                                                    "type": "integer",
+                                                    "description": "Type of effect. Possible values are: `0` (approve), `1` (deny), or `2` (pending, which means it requires manual approval).",
+                                                    "enum": [
+                                                        0,
+                                                        1,
+                                                        2
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "scoreInterval": {
+                                    "type": "object",
+                                    "description": "Defines acceptance and denial thresholds used during manual authorization via the [Accept or deny rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/commercial-authorizations/-orderAuthId-/callback) endpoint.",
+                                    "required": [
+                                        "accept",
+                                        "deny"
+                                    ],
+                                    "properties": {
+                                        "accept": {
+                                            "type": "number",
+                                            "description": "Minimum score required to accept the rule."
+                                        },
+                                        "deny": {
+                                            "type": "number",
+                                            "description": "Maximum score to deny the rule."
+                                        }
+                                    }
+                                },
+                                "authorizationData": {
+                                    "type": "object",
+                                    "description": "Defines required authorizers and whether all must approve. Only applicable for rules with `effectType: 2` (pending). Supports both `unit` and `user` authorizers.",
+                                    "properties": {
+                                        "requireAllApprovals": {
+                                            "type": "boolean",
+                                            "description": "When set as `true`, all authorizers must approve. When set as `false`, approval from any single authorizer is sufficient."
+                                        },
+                                        "authorizers": {
+                                            "type": "array",
+                                            "description": "List of entities that can authorize the action.",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Authorizer"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "CreateUpdateRuleRequestBody": {
+                "type": "object",
+                "description": "Object for creating or updating rules.",
+                "required": [
+                    "name",
+                    "priority",
+                    "trigger",
+                    "scoreInterval"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the rule."
+                    },
+                    "priority": {
+                        "type": "integer",
+                                    "description": "Rule priority controls which policy type is checked first within the org unit. Lower numbers are evaluated first. You can have bypass rules and immediately approve orders by matching effect types with fixed priorities: `1` = bypass (effectType: 0), `2` = deny (effectType: 1), `3` = sequential workflow (effectType: 2)."
+                    },
+                    "trigger": {
+                        "type": "object",
+                        "description": "Defines the condition and effect that trigger the rule.",
+                        "required": [
+                            "condition",
+                            "effect"
+                        ],
+                        "properties": {
+                            "condition": {
+                                "type": "object",
+                                "description": "Condition that must be met to trigger the rule.",
+                                "required": [
+                                    "conditionType",
+                                    "description"
+                                ],
+                                "properties": {
+                                    "conditionType": {
+                                        "type": "integer",
+                                        "description": "Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).",
+                                        "enum": [
+                                            0,
+                                            1,
+                                            2
+                                        ]
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": "Description of the condition being evaluated."
+                                    },
+                                    "expression": {
+                                        "type": "string",
+                                        "description": "JSONata expression that defines the condition logic. The expression is evaluated against the order payload, which includes fields like `orderId`, `items`, `value`, `budgetData`, `marketPlaceOrderId`, and other order properties. See [JSONata documentation](https://jsonata.org/) for expression syntax and available operators."
+                                    }
+                                }
+                            },
+                            "effect": {
+                                "type": "object",
+                                "description": "Effect to apply when the condition is met.",
+                                "required": [
+                                    "description",
+                                    "effectType"
+                                ],
+                                "properties": {
+                                    "description": {
+                                        "type": "string",
+                                        "description": "Description of the effect to be applied if condition is met."
+                                    },
+                                    "effectType": {
+                                        "type": "integer",
+                                        "description": "Type of effect. Possible values are: `0` (approve), `1` (deny), or `2` (pending, which means it requires manual approval/denial).",
+                                        "enum": [
+                                            0,
+                                            1,
+                                            2
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "scoreInterval": {
+                        "type": "object",
+                        "description": "Defines acceptance and denial thresholds used during manual authorization via the [Accept or deny rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/commercial-authorizations/-orderAuthId-/callback) endpoint.",
+                        "required": [
+                            "accept",
+                            "deny"
+                        ],
+                        "properties": {
+                            "accept": {
+                                "type": "number",
+                                "description": "Minimum score required to accept the rule."
+                            },
+                            "deny": {
+                                "type": "number",
+                                "description": "Maximum score to deny the rule."
+                            }
+                        }
+                    },
+                    "authorizationData": {
+                        "type": "object",
+                        "description": "Defines required authorizers and whether all must approve. Only applicable for rules with `effectType: 2` (pending). Supports both `unit` and `user` authorizers.",
+                        "properties": {
+                            "requireAllApprovals": {
+                                "type": "boolean",
+                                "description": "When set as `true`, all authorizers must approve. When set as `false`, approval from any single authorizer is sufficient."
+                            },
+                            "authorizers": {
+                                "type": "array",
+                                "description": "List of entities that can authorize the action.",
+                                "items": {
+                                    "$ref": "#/components/schemas/Authorizer"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "description": "Error response object.",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "description": "Error message describing what went wrong."
+                    }
+                }
+            },
+            "Authorizer": {
+                "type": "object",
+                "description": "Entity that can authorize an action.",
+                "required": [
+                    "type",
+                    "id"
+                ],
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "description": "Type of authorizer (e.g., `unit`, `user`).",
+                        "enum": [
+                            "unit",
+                            "user"
+                        ]
+                    },
+                    "id": {
+                        "type": "string",
+                        "description": "Unique identifier of the authorizer."
+                    }
+                }
+            },
+            "DimensionResponse": {
+                "type": "object",
+                "description": "Response object for an authorization dimension.",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique identifier of the dimension."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the authorization dimension."
+                    },
+                    "unitId": {
+                        "type": "string",
+                        "description": "Identifier of the business unit this dimension belongs to. If this field is not provided in the request body, the value will default to the business unit associated with the user token from the `VtexIdclientAutCookie`."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Current status of the dimension.",
+                        "nullable": true,
+                        "enum": [
+                            null,
+                            "accepted",
+                            "denied",
+                            "pending",
+                            "ignored"
+                        ]
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "description": "Execution priority of the dimension. Lower numbers are evaluated first."
+                    },
+                    "requireAllRulesAcceptance": {
+                        "type": "boolean",
+                        "description": "Whether all listed rules must be accepted for the dimension to be approved."
+                    },
+                    "ruleCollection": {
+                        "type": "array",
+                        "description": "Collection of rules contained in this dimension.",
+                        "items": {
+                            "$ref": "#/components/schemas/RuleResponse"
+                        }
+                    },
+                    "creationDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date and time of dimension creation in the format `YYYY-MM-DDThh:mm:ssZ`."
+                    },
+                    "creationVersion": {
+                        "type": "string",
+                        "description": "Version of the system that created the dimension."
+                    },
+                    "creationEnvironment": {
+                        "type": "string",
+                        "description": "Environment where the dimension was created (e.g., `stable`, `beta`)."
+                    }
+                }
+            },
+            "RuleResponse": {
+                "type": "object",
+                "description": "Rule object in the response containing conditions and actions for authorization.",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique identifier of the rule."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the rule."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Current status of the rule.",
+                        "nullable": true,
+                        "enum": [
+                            null,
+                            "accepted",
+                            "denied",
+                            "pending"
+                        ]
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "description": "Evaluation priority for the rule."
+                    },
+                    "trigger": {
+                        "type": "object",
+                        "description": "Contains the trigger condition and effect logic.",
+                        "properties": {
+                            "condition": {
+                                "type": "object",
+                                "description": "Condition that must be met to trigger the rule.",
+                                "properties": {
+                                    "conditionType": {
+                                        "type": "integer",
+                                        "description": "Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).",
+                                        "enum": [
+                                            0,
+                                            1,
+                                            2
+                                        ]
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": "Description of the condition."
+                                    },
+                                    "expression": {
+                                        "type": "string",
+                                        "description": "JSONata expression that defines the condition logic."
+                                    }
+                                }
+                            },
+                            "effect": {
+                                "type": "object",
+                                "description": "Effect to apply when the condition is met.",
+                                "properties": {
+                                    "description": {
+                                        "type": "string",
+                                        "description": "Description of the effect."
+                                    },
+                                    "effectType": {
+                                        "type": "integer",
+                                        "description": "Type of effect: `0` (approve), `1` (deny), or `2` (pending).",
+                                        "enum": [
+                                            0,
+                                            1,
+                                            2
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "scoreInterval": {
+                        "type": "object",
+                        "description": "Score range for accepting or denying the rule.",
+                        "properties": {
+                            "accept": {
+                                "type": "number",
+                                "description": "Minimum score required to accept the rule."
+                            },
+                            "deny": {
+                                "type": "number",
+                                "description": "Maximum score to deny the rule."
+                            }
+                        }
+                    },
+                    "authorizationData": {
+                        "type": "object",
+                        "description": "Defines required authorizers and whether all must approve (only present for rules with `effectType: 2`).",
+                        "properties": {
+                            "requireAllApprovals": {
+                                "type": "boolean",
+                                "description": "Whether all authorizers must approve."
+                            },
+                            "authorizers": {
+                                "type": "array",
+                                "description": "List of entities that can authorize the action.",
+                                "items": {
+                                    "$ref": "#/components/schemas/Authorizer"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Dimensions"
+        },
+        {
+            "name": "Rules"
+        },
+        {
+            "name": "Manual authorization"
+        }
+    ]
+}
