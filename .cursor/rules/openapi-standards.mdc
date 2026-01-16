@@ -1,0 +1,514 @@
+---
+globs: *.json
+---
+# VTEX OpenAPI 3.0 Standards
+
+When working with OpenAPI schemas, follow these VTEX standards:
+
+## Required Structure
+
+```json
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "X.Y.Z",
+    "title": "API Name",
+    "description": "Escaped markdown overview"
+  },
+  "servers": [...],
+  "paths": {...},
+  "components": {...},
+  "security": [...],
+  "tags": [...]
+}
+```
+
+## Server Configuration
+
+```json
+"servers": [{
+  "url": "https://{accountName}.{environment}.com.br",
+  "variables": {
+    "accountName": {
+      "default": "apiexamples",
+      "description": "Name of the VTEX account. Used as part of the URL."
+    },
+    "environment": {
+      "enum": ["vtexcommercestable"],
+      "default": "vtexcommercestable",
+      "description": "Environment to use. Used as part of the URL."
+    }
+  }
+}]
+```
+
+## Security Schemes
+
+**Discover from source code:** Analyze the actual authentication mechanisms used in the API code, including:
+- Controller attributes (e.g., `[VtexAuthorize]`, `[AllowAnonymous]`, `[Authorize]`)
+- Middleware configurations
+- Authentication header requirements
+- Security filters or interceptors
+
+### Common VTEX Security Schemes
+
+**Standard VTEX APIs typically use:**
+```json
+"security": [
+  {
+    "appKey": [],
+    "appToken": []
+  },
+  {
+    "VtexIdclientAutCookie": []
+  }
+]
+```
+
+With these security schemes defined:
+```json
+"securitySchemes": {
+  "appKey": {
+    "type": "apiKey",
+    "in": "header",
+    "name": "X-VTEX-API-AppKey",
+    "description": "Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+  },
+  "appToken": {
+    "type": "apiKey",
+    "in": "header",
+    "name": "X-VTEX-API-AppToken",
+    "description": "Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+  },
+  "VtexIdclientAutCookie": {
+    "type": "apiKey",
+    "in": "header",
+    "name": "VtexIdclientAutCookie",
+    "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
+  }
+}
+```
+
+**No authentication (public endpoints):**
+```json
+"security": []
+```
+Omit the `security` array at the endpoint level if the endpoint is public.
+
+### Per-Endpoint Security
+
+Different endpoints may have different security requirements. Override at the operation level:
+
+```json
+"paths": {
+  "/public/endpoint": {
+    "get": {
+      "security": [],  // Public endpoint
+      ...
+    }
+  },
+  "/protected/endpoint": {
+    "post": {
+      "security": [
+        {
+          "appKey": [],
+          "appToken": []
+        }
+      ],  // Requires API key
+      ...
+    }
+  }
+}
+```
+
+### Endpoint Summaries
+
+- Summaries should describe what the operation does, not include the HTTP method
+- HTTP methods are already part of the OpenAPI structure and will be displayed separately
+- If the same path supports multiple methods, write summaries that describe the operation's purpose
+- **DON'T**: "Get user (GET)", "Create user (POST)"
+- **DO**: "Get user details", "Create new user"
+
+## Permissions Section
+
+Every endpoint description must include a `## Permissions` section using escaped markdown (`\r\n`). Choose one of the following templates:
+
+### Option A - Resources Required
+
+```
+## Permissions
+
+Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+| **Product** | **Category** | **Resource** |
+| --------------- | ----------------- | ----------------- |
+| {product-name} | {category-name} | **{resource-name}** |
+
+There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+```
+
+### Option B - No Authentication or Resources Required
+
+```
+## Permissions
+
+This endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+```
+
+### Option C - Authentication required (specified in the security parameter), but no Resources Required
+
+```
+## Permissions
+
+This endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+```
+
+### Option D - External Services
+
+```
+## Permissions
+
+Check with your service provider to know what permissions are needed.
+```
+
+## Field Requirements
+
+- **descriptions**: Required for all fields, endpoints, parameters
+- **examples**: Provide realistic values at schema level only (see Examples section below)
+- **types**: Use correct OpenAPI types
+- **formats**: Specify when applicable (date-time, int32, double, etc.)
+- **required**: List all mandatory fields
+
+## Examples
+
+**IMPORTANT:** Examples must be provided at the **schema level**, not at the field level.
+
+### Request Bodies
+
+**DO:** Provide examples parallel to the schema
+```json
+"requestBody": {
+  "content": {
+    "application/json": {
+      "schema": {
+        "type": "object",
+        "required": ["name", "email"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "User's full name."
+          },
+          "email": {
+            "type": "string",
+            "description": "User's email address."
+          },
+          "age": {
+            "type": "integer",
+            "description": "User's age.",
+            "nullable": true
+          }
+        }
+      },
+      "example": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "age": 30
+      }
+    }
+  }
+}
+```
+
+**DON'T:** Add examples at the field level in request bodies
+```json
+// ❌ INCORRECT - Do not do this
+"properties": {
+  "name": {
+    "type": "string",
+    "description": "User's full name.",
+    "example": "John Doe"  // ❌ Remove field-level examples
+  }
+}
+```
+
+### Response Bodies
+
+**DO:** Provide examples parallel to the schema (same as request bodies)
+```json
+"responses": {
+  "200": {
+    "description": "OK",
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique identifier."
+            },
+            "name": {
+              "type": "string",
+              "description": "User's name."
+            }
+          }
+        },
+        "example": {
+          "id": "123",
+          "name": "John Doe"
+        }
+      }
+    }
+  }
+}
+```
+
+**For multiple examples:** Use the `examples` object (plural)
+```json
+"responses": {
+  "200": {
+    "description": "OK",
+    "content": {
+      "application/json": {
+        "schema": { ... },
+        "examples": {
+          "success": {
+            "summary": "Successful response",
+            "value": { ... }
+          },
+          "partial": {
+            "summary": "Partial success",
+            "value": { ... }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## Common Parameters
+
+### Content-Type Header
+
+**Always include `Content-Type` in parameters for:**
+- POST requests with a request body
+- PUT requests with a request body
+- PATCH requests with a request body
+
+**Do NOT include `Content-Type` for:**
+- GET requests
+- DELETE requests (unless they have a request body)
+
+**When to use `$ref`:**
+- Use `$ref` to `#/components/parameters/Content-Type` when the content type is `application/json`
+
+**When to define inline:**
+- Define the parameter inline (not as `$ref`) when the content type is different, such as:
+  - `multipart/form-data`
+  - `application/x-www-form-urlencoded`
+  - `text/plain`
+  - Any other non-JSON content type
+
+Example for multipart/form-data:
+```json
+{
+  "name": "Content-Type",
+  "in": "header",
+  "description": "Type of the content being sent.",
+  "required": true,
+  "style": "simple",
+  "schema": {
+    "type": "string",
+    "example": "multipart/form-data"
+  }
+}
+```
+
+### Accept Header
+
+**Always include `Accept` in parameters for:**
+- All endpoints that return a response body (GET, POST, PUT, PATCH, DELETE)
+
+**Use `$ref`:**
+- Always use `$ref` to `#/components/parameters/Accept` for consistency
+
+### Examples
+
+**Example 1: POST with JSON (use $ref for Content-Type)**
+```json
+"post": {
+  "parameters": [
+    {
+      "$ref": "#/components/parameters/Content-Type"
+    },
+    {
+      "$ref": "#/components/parameters/Accept"
+    }
+  ],
+  "requestBody": {
+    "content": {
+      "application/json": { ... }
+    }
+  }
+}
+```
+
+**Example 2: POST with multipart/form-data (inline Content-Type)**
+```json
+"post": {
+  "parameters": [
+    {
+      "name": "Content-Type",
+      "in": "header",
+      "description": "Type of the content being sent.",
+      "required": true,
+      "style": "simple",
+      "schema": {
+        "type": "string",
+        "example": "multipart/form-data"
+      }
+    },
+    {
+      "$ref": "#/components/parameters/Accept"
+    }
+  ],
+  "requestBody": {
+    "content": {
+      "multipart/form-data": { ... }
+    }
+  }
+}
+```
+
+**Example 3: GET (no Content-Type, only Accept)**
+```json
+"get": {
+  "parameters": [
+    {
+      "$ref": "#/components/parameters/Accept"
+    }
+  ]
+}
+```
+
+**Example 4: PUT with JSON (use $ref for Content-Type)**
+```json
+"put": {
+  "parameters": [
+    {
+      "$ref": "#/components/parameters/Content-Type"
+    },
+    {
+      "$ref": "#/components/parameters/Accept"
+    }
+  ],
+  "requestBody": {
+    "content": {
+      "application/json": { ... }
+    }
+  }
+}
+```
+
+**Example 5: DELETE (no Content-Type, only Accept)**
+```json
+"delete": {
+  "parameters": [
+    {
+      "$ref": "#/components/parameters/Accept"
+    }
+  ]
+}
+```
+
+## Validation
+
+- Must be valid JSON
+- Must conform to OpenAPI 3.0 specification
+- No comments in production files (.json, not .jsonc)
+- Passes all .spectral.yml rules
+
+## Review Rules
+
+Apply the following rules when generating or reviewing API documentation:
+
+### no-empty-descriptions
+
+No empty descriptions allowed. Make sure that this description is a valid string that does not start with a line break (\n or \r). If this description is inside an example, please fill it with a valid value. All description fields must contain valid, non-empty text. Descriptions cannot be empty strings or start with line breaks.
+
+### must-end-descriptions-with-period
+
+All field descriptions must end with a period (`.`) or with an unordered list, even if its items don't end in periods. For consistency and readability, all property descriptions must end with a period or with an unordered list format.
+
+### properties-description
+
+Each request or response body property must contain a description. All properties in request and response body schemas must include a description field that explains the property's purpose, format, and any relevant constraints. This rule applies even to root level objects or arrays.
+
+### parameters-description
+
+Each parameter must contain a description. Every parameter (path, query, header, or cookie) in the API must include a description field explaining its purpose and usage.
+
+### must-include-response-examples
+
+At least one example should be included for each API response. Each API response must contain at least one example to help developers understand the expected response format and data structure.
+
+### must-include-response-schemas
+
+Each API response must contain a schema. Every API response must define a schema that describes the structure and data types of the response body.
+
+### array-items
+
+Each array field must contain an "items" property. When a schema property is defined as type "array", it must include an "items" property that defines the type and structure of the array elements.
+
+### endpoint-permissions
+
+Endpoint descriptions must include a "Permissions" section, with information about License Manager resources and roles. Endpoint descriptions should document the required permissions, including License Manager resources and roles needed to access the endpoint. This should be included in a dedicated "## Permissions" section.
+
+### request-body-items-type
+
+Each request body array "items" property must contain a type. Array items in request body schemas should explicitly define their type to ensure clarity and proper validation.
+
+### response-body-items-type
+
+Each array "items property" in the response body schema must contain a type. Array items in response body schemas should explicitly define their type to ensure clarity and proper validation.
+
+### request-body-properties-example
+
+Request body examples must always be provided and they should be at the schema level only, never at the field/property level. Add the `example` field parallel to the `schema` field in the request body, not inside individual properties.
+
+### response-body-objects-arrays-example
+
+Response body fields should not contain the "example" field. The response example corresponds to the whole schema. In response bodies, examples should be provided at the schema level rather than at individual property levels. This ensures consistency and makes the response structure clearer.
+
+### status-code-description
+
+Status code descriptions must use Title Case without a period. When the endpoint has an accompanying message, combine the HTTP status code and the accompanying message in the same response, following the format `200 OK\n\nProduct created successfully.`.
+
+### tags-in-sentence-case
+
+Tags should use sentence case.
+
+### use-ref-in-request-and-response-bodies
+
+Use "$ref" in request and response bodies only for identical schemas. Do not use it in items of arrays.
+
+### use-ref-in-parameters
+
+Use "$ref" in parameters only for identical schemas.
+
+### create-example-schemas-parallel-to-main-schema
+
+Create example schemas for request and response bodies in parallel with the main schema.
+
+### discard-operationid-fields
+
+Do not generate "operationId" fields.
+
+### keep-strings-formats
+
+Keep "formats" for string types such as "date-time" and "uri".
