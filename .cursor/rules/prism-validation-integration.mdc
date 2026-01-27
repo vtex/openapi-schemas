@@ -1,0 +1,464 @@
+---
+alwaysApply: false
+---
+
+# Prism Validation Integration Guide
+
+## Overview
+
+This document describes how to integrate Prism validation into the OpenAPI generation and review workflows. Prism validation ensures that generated or reviewed OpenAPI specifications are functionally correct by testing them with a mock server.
+
+## 🔧 Prism Security Validation Strategy
+
+### The Challenge
+
+By default, Prism enforces security schemes strictly, resulting in 401 errors for any request without valid credentials. This prevents schema validation because Prism blocks requests before testing the schemas.
+
+### The Solution
+
+Use **relaxed security validation** mode with Prism's `--errors` flag:
+
+```bash
+npx @stoplight/prism-cli mock "spec.json" -p 4010 --errors
+```
+
+**What this does:**
+- Allows Prism to return documented error responses (401, 403, 422, etc.) instead of blocking requests
+- Validates that error responses are properly defined in the OpenAPI spec
+- Enables schema validation even for secured endpoints
+- Returns success responses (200-299) when using `Prefer: code=200` header
+
+### Request Headers Strategy
+
+**Use the `Prefer` header to control Prism responses:**
+
+```
+Prefer: code=200          # Request success responses
+Prefer: example=myExample # Select specific example
+Prefer: dynamic=true      # Generate dynamic mock data
+```
+
+**Example request:**
+```powershell
+Invoke-WebRequest -Uri "http://127.0.0.1:4010/api/endpoint" `
+    -Headers @{"Accept"="application/json"; "Prefer"="code=200"}
+```
+
+### Interpreting Results
+
+| Response Code | Interpretation | Action |
+|--------------|----------------|--------|
+| 200-299 | ✅ Schema valid | Success - schema is correct and complete |
+| 401, 403 | ✅ Error documented | Success - error response is defined in spec |
+| 422 | ⚠️ Validation error | Warning - missing parameters or invalid request |
+| 500 | ❌ Schema issue | Failure - response schema incomplete or invalid |
+| Connection error | ❌ Prism issue | Failure - Prism not running or spec syntax error |
+
+**Key Insight:** With `--errors` flag, 401/403 responses are VALID results that confirm error handling is documented.
+
+## Integration Points
+
+### 1. Post-Generation Validation
+
+**When:** After generating a new OpenAPI specification
+**Purpose:** Verify that the generated spec is syntactically correct and produces valid mock responses
+
+**Workflow:**
+
+```mermaid
+graph LR
+    A[Generate OpenAPI] --> B[Save Spec File]
+    B --> C[Run Prism Validation]
+    C --> D{Validation Passed?}
+    D -->|Yes| E[Mark as Ready for Review]
+    D -->|No| F[Auto-Fix Issues]
+    F --> C
+```
+
+**Implementation:**
+
+Add to `generate-openapi.md` command:
+
+```markdown
+## Step 6: Validate Generated Specification
+
+After generating the OpenAPI specification:
+
+1. Run Prism validation automatically:
+   - Use the `/run-prism-validation` command
+   - Pass the generated filename
+   - Review validation results
+
+2. If critical issues are found:
+   - Apply auto-fixes for common issues
+   - Document issues that require manual review
+   - Re-run validation to confirm fixes
+
+3. Generate validation report:
+   - Save report in `tests/prism/` folder
+   - Include validation status in generation summary
+   - Link to validation report in final output
+
+**Example:**
+```
+Generated: VTEX - New API.json
+Running validation...
+Validation: ✅ Passed (12/12 endpoints successful)
+Report: tests/prism/[AI generated] new-api.md
+```
+```
+
+### 2. Pre-Review Validation
+
+**When:** Before starting manual review of an OpenAPI specification
+**Purpose:** Identify technical issues before human review, saving reviewer time
+
+**Workflow:**
+
+```mermaid
+graph LR
+    A[Load OpenAPI Spec] --> B[Run Prism Validation]
+    B --> C[Generate Issue Report]
+    C --> D[Begin Manual Review]
+    D --> E[Fix Issues]
+    E --> F[Re-validate]
+```
+
+**Implementation:**
+
+Add to `review-openapi.md` command:
+
+```markdown
+## Step 1: Pre-Review Validation
+
+Before starting the manual review:
+
+1. Run automated Prism validation:
+   ```
+   /run-prism-validation {filename}
+   ```
+
+2. Review validation report for:
+   - Critical technical issues
+   - Missing required fields
+   - Invalid examples
+   - Security scheme problems
+
+3. Prioritize manual review based on validation results:
+   - Focus on endpoints that failed validation
+   - Verify auto-generated fixes
+   - Review complex security requirements
+
+4. Include validation summary in review report:
+   ```markdown
+   ## Pre-Review Validation
+   
+   Prism validation completed with:
+   - ✅ 45 endpoints passed
+   - ⚠️ 3 endpoints with warnings
+   - ❌ 2 endpoints failed
+   
+   Critical issues requiring attention:
+   1. Missing response schema for POST /api/endpoint
+   2. Invalid security scheme on GET /api/secure
+   ```
+```
+
+### 3. PR Change Validation
+
+**When:** Analyzing PR changes to OpenAPI specifications
+**Purpose:** Verify that changes don't break existing endpoints or introduce new issues
+
+**Workflow:**
+
+```mermaid
+graph LR
+    A[Detect OpenAPI Changes] --> B[Extract Changed Endpoints]
+    B --> C[Validate Changed Endpoints]
+    C --> D[Compare with Previous Results]
+    D --> E[Generate Diff Report]
+```
+
+**Implementation:**
+
+Add to `analyze-pr-changes-openapi.md` command:
+
+```markdown
+## Step 4: Validate Changed Endpoints
+
+For OpenAPI specification changes:
+
+1. Run focused validation on changed endpoints only:
+   - Extract list of modified endpoints from PR diff
+   - Run Prism validation on those endpoints
+   - Compare results with previous validation (if available)
+
+2. Generate validation diff report:
+   ```markdown
+   ## Validation Impact Analysis
+   
+   ### Newly Added Endpoints
+   - POST /api/new-feature
+     - ✅ Validation: Passed
+     - Mock response: 200 OK
+   
+   ### Modified Endpoints
+   - GET /api/existing
+     - Previous: ✅ Passed
+     - Current: ⚠️ Warning (new security requirement)
+     - Impact: Breaking change - requires authentication
+   
+   ### Removed Endpoints
+   - DELETE /api/deprecated
+     - ⚠️ Breaking change - document deprecation
+   ```
+
+3. Assess breaking changes:
+   - Flag endpoints that now fail validation
+   - Identify new authentication requirements
+   - Note response schema changes
+```
+
+### 4. Continuous Validation (Future)
+
+**When:** On every commit/PR to OpenAPI specification files
+**Purpose:** Catch issues early in the development process
+
+**Workflow:**
+
+```mermaid
+graph LR
+    A[Commit OpenAPI Changes] --> B[CI/CD Trigger]
+    B --> C[Run Prism Validation]
+    C --> D{Issues Found?}
+    D -->|Yes| E[Block PR / Notify]
+    D -->|No| F[Allow Merge]
+```
+
+**Implementation Notes:**
+
+- Set up GitHub Actions workflow
+- Run validation on every PR
+- Export results as JSON for programmatic checks
+- Set quality gates (e.g., require 80% success rate)
+
+## Configuration
+
+### Validation Levels
+
+Define different validation levels for different scenarios:
+
+#### Level 1: Quick Validation (Generation)
+- Test only core endpoints (GET, POST for main resources)
+- Skip optional parameters
+- Focus on schema validation
+- **Use case:** Fast feedback during generation
+
+#### Level 2: Standard Validation (Review)
+- Test all endpoints with default parameters
+- Include security headers
+- Validate response schemas
+- **Use case:** Pre-review checks
+
+#### Level 3: Comprehensive Validation (Release)
+- Test all endpoints with multiple parameter combinations
+- Test edge cases (boundary values, empty requests)
+- Validate all response codes
+- Check example accuracy
+- **Use case:** Final validation before release
+
+### Command Flags
+
+Extend the `/run-prism-validation` command with validation levels:
+
+```
+/run-prism-validation {filename} --level quick
+/run-prism-validation {filename} --level standard
+/run-prism-validation {filename} --level comprehensive
+```
+
+## Auto-Fix Strategy
+
+### Safe Auto-Fixes (Apply Automatically)
+
+1. **Missing Content-Type Headers**
+   - Add `Content-Type: application/json` to request examples
+
+2. **Empty Response Descriptions**
+   - Add generic descriptions like "Successful operation"
+
+3. **Missing Example Values**
+   - Generate examples based on schema types
+
+4. **Inconsistent Naming**
+   - Fix parameter name mismatches between spec and examples
+
+### Manual Review Required
+
+1. **Security Scheme Changes**
+   - Require explicit user confirmation
+
+2. **Response Schema Modifications**
+   - Review impact on consumers
+
+3. **Required Field Changes**
+   - Assess backwards compatibility
+
+4. **Endpoint Removal**
+   - Document as breaking change
+
+## Report Integration
+
+### Validation Report Location
+
+```
+tests/prism/
+├── [Dev Portal] api-name.md          # Production APIs
+├── [AI generated] api-name.md        # Generated APIs
+└── validation-history/
+    └── api-name/
+        ├── 2025-01-15-validation.md  # Historical reports
+        ├── 2025-01-20-validation.md
+        └── latest.md                  # Symlink to latest
+```
+
+### Report Linking
+
+Link validation reports in main workflow outputs:
+
+**In Generation Report:**
+```markdown
+## Validation Results
+
+✅ Prism validation passed with 95% success rate.
+
+📊 [View detailed validation report](../tests/prism/[AI generated] api-name.md)
+```
+
+**In Review Report:**
+```markdown
+## Pre-Review Validation
+
+⚠️ 3 issues found during automated validation.
+
+📊 [View validation report](../tests/prism/[Dev Portal] api-name.md)
+
+### Issues Requiring Attention
+1. [Critical] Missing response schema on POST /endpoint
+2. [High] Invalid security scheme
+3. [Medium] Example doesn't match schema
+```
+
+## Metrics & Monitoring
+
+### Track Over Time
+
+Monitor validation metrics to track API quality:
+
+```markdown
+## Validation Metrics Dashboard
+
+### Overall Health Trend
+- Week 1: 85% endpoints passing
+- Week 2: 90% endpoints passing
+- Week 3: 95% endpoints passing ⬆️
+
+### Common Issues
+1. Security schema problems (40% of failures)
+2. Missing response definitions (30% of failures)
+3. Invalid examples (20% of failures)
+
+### Top Performing APIs
+1. License Manager API - 100% pass rate
+2. VTEX ID API - 98% pass rate
+3. Catalog API - 95% pass rate
+```
+
+## Implementation Checklist
+
+- [x] Create `/run-prism-validation` command
+- [x] Add `--errors` flag to Prism startup for relaxed security validation
+- [x] Add `Prefer: code=200` header usage to request success responses
+- [x] Document how to interpret 401/403 as valid responses
+- [x] Add troubleshooting guide for common Prism errors
+- [x] Create quick reference with testing patterns
+- [ ] Update `generate-openapi.md` with validation step
+- [ ] Update `review-openapi.md` with pre-validation step
+- [ ] Update `analyze-pr-changes-openapi.md` with diff validation
+- [ ] Implement auto-fix for common issues
+- [ ] Add validation level flags
+- [ ] Create validation history tracking
+- [ ] Set up metrics dashboard
+
+## Best Practices
+
+1. **Always Validate After Generation**
+   - Don't skip validation to save time
+   - Address critical issues immediately
+
+2. **Review Auto-Fixes**
+   - Don't blindly accept all auto-fixes
+   - Understand the changes being made
+
+3. **Track Validation History**
+   - Keep historical validation reports
+   - Monitor trends over time
+
+4. **Use Appropriate Validation Level**
+   - Quick for iteration
+   - Comprehensive for releases
+
+5. **Integrate with CI/CD**
+   - Automate validation in pipelines
+   - Block merges on critical failures
+
+6. **Use `--errors` Flag for Schema Validation**
+   - Bypass security enforcement to focus on schema correctness
+   - Treat 401/403 responses as valid when documented in spec
+
+7. **Use `Prefer` Headers for Targeted Testing**
+   - `Prefer: code=200` to test success responses
+   - `Prefer: dynamic=true` for varied mock data
+
+## Future Enhancements
+
+### Phase 1: Current Implementation ✅
+- Manual command execution
+- Comprehensive markdown reports
+- Issue identification
+- Relaxed security validation with `--errors`
+- Prefer header support
+
+### Phase 2: Auto-Fix Implementation 🚧
+- Automatic fixes for common issues
+- User confirmation for critical changes
+- Validation re-run after fixes
+
+### Phase 3: Workflow Integration 📋
+- Add validation to generate/review commands
+- Automatic validation on workflow completion
+- Link reports in workflow outputs
+
+### Phase 4: CI/CD Integration 🔮
+- GitHub Actions workflow
+- PR validation checks
+- Quality gates
+- Metrics dashboard
+
+## Summary
+
+Prism validation should be an integral part of the OpenAPI lifecycle:
+
+1. **Generate** → Validate → Fix → Review
+2. **Review** → Pre-validate → Manual review → Post-validate
+3. **PR Analysis** → Validate changes → Assess impact → Report
+
+By integrating validation at each step, we ensure high-quality API specifications and catch issues early in the development process.
+
+### Key Takeaways
+
+- Use `--errors` flag to enable relaxed security validation
+- Use `Prefer: code=200` header to request success responses
+- Treat 401/403 responses as valid when documented in the spec
+- Focus validation on schema correctness rather than authentication
+- Automate validation in all workflows for consistency
