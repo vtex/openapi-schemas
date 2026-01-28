@@ -3,9 +3,7 @@
 ## Overview
 Update the dev portal navigation file based on changes made to an OpenAPI specification file. This command uses git to detect what changed in the OAS and applies corresponding updates to the navigation structure.
 
-**Prerequisites:** This command requires that both the `openapi-schemas` and `devportal` repositories are cloned to the same parent directory in your local workspace. This is necessary because the command references files across repositories using relative paths (e.g., `../devportal/public/navigation.json`).
-
-**Example workflow:** When an OpenAPI schema is updated (e.g., [PR #1590](https://github.com/vtex/openapi-schemas/pull/1590) adding a new endpoint to update allocation linked entity), this command can be used to automatically generate the corresponding navigation updates for the dev portal (resulting in [PR #1171](https://github.com/vtex/devportal/pull/1171) adding the new endpoint to the Budgets API navigation).
+This command requires that both the `openapi-schemas` and `devportal` repositories are cloned to the same parent directory in your local workspace.
 
 ## Steps
 
