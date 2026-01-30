@@ -33,7 +33,7 @@ published: VTEX - Session Manager API.json
 1. **Extract codebase name** from generated file path:
    - **Pattern 1**: `**/{{codebase-name}}-openapi.json` → extract from filename
    - **Pattern 2**: `**/{{codebase-name}}/{{codebase-name}}-openapi.json` → extract from folder name
-   - Examples: 
+   - Examples:
      - `b2b-bulk-import-openapi.json` → `b2b-bulk-import`
      - `tests\generation\2025-10-28-Claude-4-Sonnet-Cursor\b2b-bulk-import\b2b-bulk-import-openapi.json` → `b2b-bulk-import`
 
@@ -46,7 +46,7 @@ published: VTEX - Session Manager API.json
    - Remove Endpoints Coverage (25%)
    - Redistribute proportionally among remaining criteria:
      - Parameters: 15% → 20%
-     - Request Bodies: 15% → 20% 
+     - Request Bodies: 15% → 20%
      - Response Schemas: 15% → 20%
      - Spectral: 25% → 33%
      - Components: 2% → 3%
@@ -54,7 +54,7 @@ published: VTEX - Session Manager API.json
 
 ## Instructions
 
-Perform a comprehensive comparison between the generated and published OpenAPI schemas using the evaluation criteria below. 
+Perform a comprehensive comparison between the generated and published OpenAPI schemas using the evaluation criteria below.
 
 **Important**: For Spectral compliance evaluation (criterion 5), run Spectral linting exactly once with NO retries or fixes:
 
@@ -85,7 +85,7 @@ The goal is to evaluate the schema's current quality, not to improve it during r
 
 Compare `paths` objects:
 
-- **Score Calculation**: 
+- **Score Calculation**:
   - Base score: `(matching_endpoints / total_published_endpoints) × 100`
   - Cap at 100 (extra endpoints don't reduce score)
   - Missing critical endpoints: -10 points each
@@ -182,7 +182,7 @@ Run Spectral linting ONCE to validate schema quality and standards compliance:
   - **Single run only** - no retries, no fixes, no iterations
   - **Assessment mode** - evaluate current state, don't improve it
   - **Accept results as-is** - this measures the schema's production readiness
-- **Score Calculation**: 
+- **Score Calculation**:
   - Primary: `spectral lint "{generated-schema}" --ruleset .spectral.yml --format json`
   - Alternative: `/spectral {generated-schema-path}` command if terminal unavailable
   - Calculate: Start at 100, deduct points based on severity:
@@ -212,7 +212,7 @@ Run Spectral linting ONCE to validate schema quality and standards compliance:
 Spectral Compliance: 85/100 (85%)
 - Command used: `/spectral {generated-schema-path}`
 - Errors: 2 (-10 points)
-- Warnings: 3 (-6 points)  
+- Warnings: 3 (-6 points)
 - Info: 2 (-1 point)
 - Total issues: 7
 - Pass rate: 0 issues = 100%, 1-5 issues = 80-99%, 6-10 issues = 60-79%
@@ -286,13 +286,13 @@ Metadata & Documentation: 90/100 (90%)
 ### Overall Score Calculation
 
 ```
-Overall Score = 
-  (Endpoints × 0.25) + 
-  (Parameters × 0.15) + 
-  (Request Bodies × 0.15) + 
-  (Response Schemas × 0.15) + 
-  (Spectral Compliance × 0.25) + 
-  (Components × 0.02) + 
+Overall Score =
+  (Endpoints × 0.25) +
+  (Parameters × 0.15) +
+  (Request Bodies × 0.15) +
+  (Response Schemas × 0.15) +
+  (Spectral Compliance × 0.25) +
+  (Components × 0.02) +
   (Metadata × 0.03)
 ```
 
@@ -301,7 +301,7 @@ Overall Score =
 - **Parameters, Request Bodies, Response Schemas (15% each)**: Core API contract - equal importance for usability
 - **Components (2%) & Metadata (3%)**: Minimal weight - nice to have but not critical
 
-### Output Forma
+### Output Format
 
 **IMPORTANT**: Keep the main report concise and actionable, with detailed analysis sections linked at the end.
 
@@ -331,7 +331,7 @@ Overall Score =
 ### ✅ Strengths
 - [Top 2-3 positive findings only]
 
-### ❌ Critical Issues  
+### ❌ Critical Issues
 1. **[Issue]** - [Impact] - [Quick fix]
 2. **[Issue]** - [Impact] - [Quick fix]
 3. **[Issue]** - [Impact] - [Quick fix]
@@ -339,7 +339,7 @@ Overall Score =
 ### 📊 Spectral Issues: XX total (Errors: X | Warnings: X | Info: X)
 **Top 3 Rules Violated:**
 1. `rule-name` (X instances) - [Fix]
-2. `rule-name` (X instances) - [Fix]  
+2. `rule-name` (X instances) - [Fix]
 3. `rule-name` (X instances) - [Fix]
 
 ---
@@ -350,7 +350,7 @@ Overall Score =
 1. [Action with specific fix]
 2. [Action with specific fix]
 
-### ⚠️ Medium Priority  
+### ⚠️ Medium Priority
 1. [Action with specific fix]
 2. [Action with specific fix]
 
@@ -377,7 +377,7 @@ Overall Score =
 ## 🎓 AI Generation Insights
 
 **What worked well**: [1-2 patterns]
-**Common issues**: [1-2 patterns]  
+**Common issues**: [1-2 patterns]
 **Recommendation for future**: [1 key insight]
 
 ---
@@ -485,7 +485,7 @@ Overall Score =
 ### Statistics
 - Total issues: XX
   - **Errors: XX (-5 points each)** - High Impact (Critical standards violations)
-  - **Warnings: XX (-2 points each)** - Medium Impact (Best practice violations)  
+  - **Warnings: XX (-2 points each)** - Medium Impact (Best practice violations)
   - **Info: XX (-0.5 points each)** - Low Impact (Suggestions)
 - Score: 100 - penalties = XX/100
 - Pass status: ✅ PASSED (0 errors) / ⚠️ NEEDS ATTENTION (warnings only) / ❌ FAILED (1+ errors)
@@ -565,7 +565,7 @@ Overall Score =
 ### Objective Scoring Principles
 
 1. **Extra functionality is NOT penalized** - Generated schemas with additional endpoints/features get bonus consideration
-2. **Missing critical elements ARE penalized** - Core functionality gaps reduce scores significantly  
+2. **Missing critical elements ARE penalized** - Core functionality gaps reduce scores significantly
 3. **Quality over quantity** - A well-documented subset beats a poorly documented superset
 4. **Standards compliance matters** - Spectral issues directly impact production readiness
 
@@ -574,7 +574,7 @@ Overall Score =
 **Grades reflect production readiness, NOT comparison to published schema:**
 
 - **90-100 Excellent**: Ready for tech writing review and publication
-- **80-89 Good**: Minor fixes needed, mostly standards compliance  
+- **80-89 Good**: Minor fixes needed, mostly standards compliance
 - **70-79 Fair**: Several quality issues, needs development iteration
 - **60-69 Poor**: Significant gaps in core functionality or quality
 - **<60 Failing**: Major structural problems, requires substantial rework
@@ -593,7 +593,7 @@ When published schema unavailable:
 - **Redistribute proportionally**:
   - Parameters: 15% → 20%
   - Request Bodies: 15% → 20%
-  - Response Schemas: 15% → 20%  
+  - Response Schemas: 15% → 20%
   - Spectral: 25% → 33%
   - Components: 2% → 3%
   - Metadata: 3% → 4%
