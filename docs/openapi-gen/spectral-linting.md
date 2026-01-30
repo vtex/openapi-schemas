@@ -150,7 +150,7 @@ Spectral catches issues AI-generated schemas frequently have:
 
 ## Spectral Scoring
 
-```
+```markdown
 Spectral Score = 100 - (errors × 5) - (warnings × 2) - (info × 0.5)
 
 Where:
