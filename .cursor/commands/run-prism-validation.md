@@ -117,7 +117,7 @@ try {
         } `
         -Body $body `
         -ErrorAction SilentlyContinue
-    
+
     Write-Host "Status: $($response.StatusCode)"
     Write-Host "Body: $($response.Content)"
 } catch {
@@ -330,9 +330,9 @@ For each failed or problematic endpoint:
 
    ```md
    ### Issue: {endpoint} - {issue-description}
-   
+
    **Severity:** {Critical/High/Medium/Low}
-   
+
    **Current State:**
    ```json
    {current schema or example}
