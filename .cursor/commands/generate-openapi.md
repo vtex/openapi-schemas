@@ -29,11 +29,11 @@ Analyze code repositories and create OpenAPI schemas with complete endpoint docu
    - **Skip if**: All `codebase_name` values are empty strings (no source code available)
 
    **Derive Variables:**
-   - `{{codebase_name}}`: 
+   - `{{codebase_name}}`:
      - Single repo: Use `repo.codebase_name`
      - Multi-repo: Derive from `documentation` filename (remove "VTEX - " prefix and ".json" suffix, convert to lowercase with hyphens)
      - Example: "VTEX - Ads API.json" → "ads-api"
-   - `{{organization}}`: 
+   - `{{organization}}`:
      - Single repo: Use `repo.organization`
      - Multi-repo: Use first repo's `organization` (typically all repos share same org)
 
@@ -75,13 +75,13 @@ Analyze code repositories and create OpenAPI schemas with complete endpoint docu
    - Generate escaped markdown overview in `info.description` of the generated OpenAPI schema file `output.generate-openapi-output.openapi_filename`
    - Generate the overview only after `paths` is ready with all the endpoints
    - Use the `templates.api_overview_template` as a structure reference
-   
+
    **Build the Index section:**
    - Iterate through ALL paths in the `paths` object
    - For each path in `paths`:
      - Extract: HTTP method(s), path, summary, tags
      - Add to Index under appropriate category/tag
-   
+
    **Index Entry Format:**
    - Template: `\r\n- ``{METHOD}``[Summary](https://developers.vtex.com/docs/api-reference/{API_NAME_LOWERCASE}#{METHOD_LOWERCASE}-{ENDPOINT_PATH})`
    - Note: The double backticks ``{METHOD}`` are literal markdown formatting characters that will appear in the output
@@ -100,7 +100,7 @@ Analyze code repositories and create OpenAPI schemas with complete endpoint docu
      - GET endpoint: `\r\n- ``GET`` [Get session](https://developers.vtex.com/docs/api-reference/session-manager-api#get-/api/sessions/-token-)`
      - POST endpoint: `\r\n- ``POST`` [Create order modifications](https://developers.vtex.com/docs/api-reference/orders-api#post-/api/order-system/orders/-changeOrderId-/changes)`
      - PATCH endpoint: `\r\n- ``PATCH`` [Update session](https://developers.vtex.com/docs/api-reference/session-manager-api#patch-/api/sessions/-token-)`
-   
+
    **Complete Overview Structure:**
    - Group Index entries by tags/categories
    - Include ALL endpoints found in `paths` section - DO NOT add hypothetical or missing endpoints
@@ -152,7 +152,7 @@ Per `output.generate-openapi-output`:
 
 **Template Variables:**
 - `{{directory}}`: `generated-docs/{{yyyy-mm-dd}}-{{model_name}}-Cursor/{{codebase_name}}`
-- `{{codebase_name}}`: 
+- `{{codebase_name}}`:
   - Single repo: `repo.codebase_name` from config
   - Multi-repo: Derived from `documentation` filename (e.g., "VTEX - Ads API.json" → "ads-api")
 
@@ -172,7 +172,7 @@ Per `output.generate-openapi-output`:
 **After Prism validation runs automatically**, an additional file will be created:
 
 - `tests/prism/[prefix] {api-name} - {date}.md` - Prism validation report with test results for all endpoints
-  - **Prefix**: 
+  - **Prefix**:
     - Use `[Dev Portal]` if the API has a corresponding published schema in `openapi-schemas` (indicated by `codebases[].documentation` field in config.json)
     - Use `[AI generated]` if the API does NOT have a corresponding published schema (no `documentation` field or empty `documentation` field)
   - `{api-name}`: Use the codebase_name (e.g., "session", "ads-api") or the API name from the documentation filename (e.g., "Session Manager API", "Ads API")
