@@ -2,12 +2,12 @@ The License Manager API allows you to create users, modify their names and email
 
 ## Common parameters
 
-|Attribute name | Description |
-|:------------|--------------|
-|`accountName` | Account name in VTEX License Manager. |
-|`environment` | Environment on which you want to run the query, e.g. `vtexcommercestable`. |
-|`userId`      | Unique user identification string. |
-|`roleId`      | Integer that represents a role, can be obtained from the [Get List of Roles](https://developers.vtex.com/docs/api-reference/license-manager-api#get-/api/license-manager/site/pvt/roles/list/paged) endpoint. |
+| Attribute name | Description |
+| :------------- | ----------- |
+| `accountName` | Account name in VTEX License Manager. |
+| `environment` | Environment on which you want to run the query, e.g. `vtexcommercestable`. |
+| `userId` | Unique user identification string. |
+| `roleId` | Integer that represents a role, can be obtained from the [Get List of Roles](https://developers.vtex.com/docs/api-reference/license-manager-api#get-/api/license-manager/site/pvt/roles/list/paged) endpoint. |
 
 ## Index
 
