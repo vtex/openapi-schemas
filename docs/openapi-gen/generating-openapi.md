@@ -62,11 +62,13 @@ The command will:
 You can limit generation to specific APIs by passing codebase names as parameters.
 
 **Single API:**
+
 ```
 /generate-openapi vcs.sku-binding
 ```
 
 **Multiple APIs (comma-separated):**
+
 ```
 /generate-openapi b2b-bulk-import, audience-manager
 ```
@@ -76,10 +78,12 @@ You can limit generation to specific APIs by passing codebase names as parameter
 Some APIs are documented from multiple source repositories. The command automatically handles this:
 
 **Example: VTEX Ads API**
+
 - Uses both `newtail-retail-media-api` (campaign management) and `newtail-retail-media-adserver-api` (ad serving)
 - Both repositories are cloned and analyzed together
 - Single unified OpenAPI schema is generated combining endpoints from both
 - Configuration in `config.json`:
+
   ```json
   {
     "repo": [

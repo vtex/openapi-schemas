@@ -26,8 +26,8 @@ Execute automated validation using [Spectral](https://docs.stoplight.io/docs/spe
 3. Run the following command, replacing placeholders with actual values:
 
   ```bash
-spectral lint '{openapi-file-path}' -f json -o spectral/{api-name}_SPECTRAL_ERRORS.json --ruleset .spectral.yml
-```
+  spectral lint '{openapi-file-path}' -f json -o spectral/{api-name}_SPECTRAL_ERRORS.json --ruleset .spectral.yml
+  ```
 
 ### Spectral review
 

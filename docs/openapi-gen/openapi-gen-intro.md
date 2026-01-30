@@ -100,7 +100,7 @@ Run automated quality checks on OpenAPI schemas using Context7 MCP to simulate S
 2. **Open in Cursor IDE**
 
 3. **Run a command**
-   
+
    **Generate API schemas:**
    - Type `/generate-openapi` to generate OpenAPI schemas for all APIs in config.json
    - Type `/generate-openapi {repository-name}` to generate a single OpenAPI
@@ -110,10 +110,10 @@ Run automated quality checks on OpenAPI schemas using Context7 MCP to simulate S
    - Type `/review-openapi` to review all existing OpenAPI schemas against the implemented code
    - Type `/review-openapi {repository-name}` to review a single OpenAPI
    - Type `/review-openapi {repository-name-1}, {repository-name-2}, {repository-name-n}` for multiple APIs or multiple repository APIs
-   
+
    **Analyze PR changes:**
    - Type `/analyze-pr-changes-openapi <PR_URL>` to analyze a specific pull request
-   
+
    **Rate schema quality:**
    - Type `/rate-openapi` to compare generated schemas against published versions
    - Specify codebase name, date, and model when prompted

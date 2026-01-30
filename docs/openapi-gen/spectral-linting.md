@@ -30,7 +30,7 @@
 ### What It Does
 
 1. **Simulates Spectral** - Uses Context7 MCP to access Spectral documentation and simulate linting
-2. **Identifies issues** - Systematically checks all custom rules against OpenAPI content  
+2. **Identifies issues** - Systematically checks all custom rules against OpenAPI content
 3. **Auto-fixes issues** - Automatically corrects descriptions, formatting, etc.
 4. **Re-validates** - Simulates Spectral again to verify all fixes
 5. **Reports results** - Shows standardized pass rate and remaining issues
@@ -46,7 +46,7 @@
   2. Apply `.spectral.yml` overrides (some rules disabled, others added/modified)
   3. Final ruleset combines standard rules with VTEX-specific customizations
 - **Focus**: Descriptions, examples, schemas, formatting, VTEX standards
-- **Severity Levels**: 
+- **Severity Levels**:
   - **Error** (critical) - Must fix before publication
   - **Warning** (best practice) - Should fix for quality
   - **Info** (suggestion) - Nice to have
@@ -56,16 +56,19 @@
 ## Why Use Spectral?
 
 ### 1. Automated Quality Validation
+
 - No manual checking of descriptions, examples, formats
 - Consistent enforcement across all schemas
 - Catches issues humans might miss
 
 ### 2. VTEX-Specific Standards
+
 - Enforces company conventions (sentence case, permissions docs)
 - Validates required sections (## Permissions)
 - Ensures professional documentation quality
 
 ### 3. Quick Fixes
+
 - Auto-fixes many common issues
 - Saves time compared to manual editing
 - Reduces review iterations
@@ -73,6 +76,7 @@
 ### 4. Common AI Generation Issues
 
 Spectral catches issues AI-generated schemas frequently have:
+
 - ❌ Empty or invalid descriptions
 - ❌ Missing property descriptions
 - ❌ Missing response examples
@@ -85,44 +89,51 @@ Spectral catches issues AI-generated schemas frequently have:
 ## Using the Spectral Command
 
 1. **Generate or locate your schema**
+
    ```
    /generate-openapi session
    ```
 
 2. **Run Spectral**
+
    ```
    /spectral generated-docs/2025-10-31-Claude-4-Sonnet-Cursor/session/session-openapi.json
    ```
 
 3. **Review iterative results**
+
    ```markdown
    ## 🔍 SPECTRAL LINT RESULTS
 
    ### Attempt 1/3 - Initial Scan:
    - **Errors**: 10
-   - **Warnings**: 12  
+   - **Warnings**: 12
    - **Info**: 3
    - **Total Issues**: 25
 
    ### Issues Found:
    #### ❌ ERROR: `must-end-descriptions-with-period`
    **Location**: Line 1775 (exact line number in file)
-   **Issue**: Description doesn't end with period  
+   **Issue**: Description doesn't end with period
    **Fix**: Add missing period to description
 
    ### Fixes Applied (Attempt 1):
+
    ✅ Fixed empty descriptions (10) at lines 45, 67, 89...
    ✅ Fixed missing property descriptions (8) at lines 123, 156...
 
    ### Attempt 2/3 - Re-scan After Fixes:
+
    - **Errors**: 2 (remaining)
    - **Warnings**: 0 (remaining)
    - **Total Issues**: 2 (remaining)
 
    ### Attempt 3/3 - Final Fixes:
+
    ✅ Fixed remaining issues at lines 234, 456
 
    ### Final Results:
+
    - **Initial Issues**: 25
    - **Final Issues**: 0
    - **Issues Fixed**: 25
@@ -133,6 +144,7 @@ Spectral catches issues AI-generated schemas frequently have:
    ```
 
 4. **Manual fixes (if max attempts reached)**
+
    ```markdown
    ⚠️ SPECTRAL INCOMPLETE - Manual fixes needed (see below)
 

@@ -14,6 +14,7 @@ Rate AI-generated OpenAPI schemas by comparing them against official published s
 ## Quick Start
 
 1. Run the command, providing file paths, as exemplified:
+
    ```
    /rate-openapi
    generated: generated-docs/2025-10-28-Claude-4-Sonnet-Cursor/session/session-openapi.json
@@ -26,10 +27,10 @@ Rate AI-generated OpenAPI schemas by comparing them against official published s
 
 ## 📊 Scoring System
 
-### Rating Criteria 
+### Rating Criteria
 
 | Criterion | Weight | What it Measures |
-|-----------|--------|------------------|
+| --------- | ------ | ---------------- |
 | **Endpoints Coverage** | 20% | All endpoints present? |
 | **Parameters Completeness** | 17% | All parameters correct? |
 | **Request Bodies Accuracy** | 17% | Request schemas complete? |
@@ -41,15 +42,15 @@ Rate AI-generated OpenAPI schemas by comparing them against official published s
 ### Overall Score Formula
 
 ```
-Score = (Endpoints × 0.20) + (Parameters × 0.17) + (Request × 0.17) + 
-        (Response × 0.16) + (Spectral × 0.20) + (Components × 0.05) + 
+Score = (Endpoints × 0.20) + (Parameters × 0.17) + (Request × 0.17) +
+        (Response × 0.16) + (Spectral × 0.20) + (Components × 0.05) +
         (Metadata × 0.05)
 ```
 
 ### Grading Scale
 
 | Score | Grade | Status | Action |
-|-------|-------|--------|--------|
+| ----- | ----- | ------ | ------ |
 | 90-100 | A | ✅ Excellent | Minor polish → Tech writing review |
 | 80-89 | B | ✅ Good | Fix critical → Tech writing review |
 | 70-79 | C | ⚠️ Fair | Major fixes → Tech writing review |
@@ -61,7 +62,7 @@ Score = (Endpoints × 0.20) + (Parameters × 0.17) + (Request × 0.17) +
 ### Target Metrics
 
 | Metric | Target |
-|--------|--------|
+| ------ | ------ |
 | Endpoints Coverage | ≥ 95% |
 | Parameters Completeness | ≥ 90% |
 | Request Bodies Accuracy | ≥ 85% |
@@ -74,12 +75,14 @@ Score = (Endpoints × 0.20) + (Parameters × 0.17) + (Request × 0.17) +
 ## 🔍 Criteria summary
 
 ### 1. Endpoints Coverage (25%)
+
 - ✅ All paths + methods present
 - ❌ Missing endpoints
 - ⚠️ Extra/hallucinated endpoints
 - 🔄 Path differences
 
 ### 2. Parameters Completeness (15%)
+
 - ✅ Path parameters (e.g., `{id}`, `{accountName}`)
 - ✅ Query parameters (e.g., `?page=1&limit=10`)
 - ✅ Header parameters (`Content-Type`, `Accept`, etc.)
@@ -87,6 +90,7 @@ Score = (Endpoints × 0.20) + (Parameters × 0.17) + (Request × 0.17) +
 - 📝 Parameter descriptions
 
 ### 3. Request Bodies Accuracy (15%)
+
 - ✅ All fields present
 - ✅ Correct data types
 - ✅ Nested objects complete
@@ -95,6 +99,7 @@ Score = (Endpoints × 0.20) + (Parameters × 0.17) + (Request × 0.17) +
 - 📄 Field descriptions
 
 ### 4. Response Schemas Accuracy (15%)
+
 - ✅ All status codes (200, 201, 400, 401, 403, 404, 500)
 - ✅ Response body schemas complete
 - ✅ All response fields present
@@ -102,6 +107,7 @@ Score = (Endpoints × 0.20) + (Parameters × 0.17) + (Request × 0.17) +
 - 📝 Examples at schema level
 
 ### 5. Spectral Compliance (25%)
+
 - ✅ No linting errors (descriptions, schemas, etc.)
 - ✅ Minimal warnings (best practices)
 - ✅ VTEX-specific rules compliance
@@ -111,12 +117,14 @@ Score = (Endpoints × 0.20) + (Parameters × 0.17) + (Request × 0.17) +
 - **Weight**: 25% (highest priority - equal to endpoints)
 
 ### 6. Schema Components (2%)
+
 - ✅ Reusable schemas in `components`
 - ✅ Proper `$ref` usage
 - ✅ Parameter definitions
 - ✅ Security schemes
 
 ### 7. Metadata & Documentation (3%)
+
 - ✅ Title, description, version
 - ✅ Server configurations
 - ✅ Tags organization
@@ -127,9 +135,11 @@ Score = (Endpoints × 0.20) + (Parameters × 0.17) + (Request × 0.17) +
 ## Understanding Your Report
 
 ### 1. Overall Score
+
 Quick overview showing total score and breakdown by criterion.
 
 ### 2. Detailed Findings
+
 Each criterion section shows:
 - Statistics (counts and percentages)
 - Specific issues with examples
@@ -137,9 +147,11 @@ Each criterion section shows:
 - Impact assessment (High/Medium/Low)
 
 ### 3. Top Issues
+
 Prioritized list of critical problems to fix first.
 
 ### 4. Recommendations
+
 - **High Priority**: Must fix
 - **Medium Priority**: Should fix for quality
 - **Low Priority**: Nice to have
@@ -151,11 +163,13 @@ Prioritized list of critical problems to fix first.
 ### Low Endpoints Coverage (< 90%)
 
 **Causes**:
+
 - AI didn't explore entire codebase
 - Non-standard routing patterns
 - Controllers in unexpected locations
 
 **Solutions**:
+
 - Provide explicit list of controller files
 - Review route configuration files
 - Use more specific codebase search
@@ -165,11 +179,13 @@ Prioritized list of critical problems to fix first.
 ### Low Parameters Completeness (< 85%)
 
 **Causes**:
+
 - Parameters defined in attributes/decorators
 - Implicit parameters (accountName, environment)
 - Inherited parameters from base controllers
 
 **Solutions**:
+
 - Review controller base classes
 - Check authentication middleware
 - Review VTEX-specific conventions
@@ -179,11 +195,13 @@ Prioritized list of critical problems to fix first.
 ### Incomplete Response Schemas (< 80%)
 
 **Causes**:
+
 - Response types not explicitly defined
 - Dynamic/runtime field generation
 - Partial responses based on permissions
 
 **Solutions**:
+
 - Provide example API responses (Postman)
 - Review response DTO classes
 - Check for response mappers/transformers
@@ -193,11 +211,13 @@ Prioritized list of critical problems to fix first.
 ### Low Spectral Compliance (< 90%)
 
 **Causes**:
+
 - Empty or missing descriptions
 - Missing permissions documentation
 - Incorrect formatting
 
 **Solutions**:
+
 - Run `/spectral` command for auto-fixes
 - Add meaningful descriptions
 - Include "## Permissions" sections
@@ -217,7 +237,7 @@ Prioritized list of critical problems to fix first.
 ## 📊 Overall Score: 82/100 (Grade: B)
 
 | Criteria | Score | Weighted |
-|----------|-------|----------|
+| -------- | ----- | -------- |
 | Endpoints | 85/100 | 21.25 |
 | Parameters | 78/100 | 11.70 |
 | Request Bodies | 80/100 | 12.00 |
@@ -256,4 +276,3 @@ Prioritized list of critical problems to fix first.
 - **Configuration**: `rating-config.json`
 - **Spectral Guide**: [spectral-linting.md](./spectral-linting.md)
 - **System Summary**: [RATING-SYSTEM-SUMMARY.md](../RATING-SYSTEM-SUMMARY.md)
-
