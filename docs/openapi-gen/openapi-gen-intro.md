@@ -1,4 +1,4 @@
-# openapi-gen
+# OpenAPI Generation Introduction
 
 Automate API documentation generation, review, and maintenance using AI agents.
 
