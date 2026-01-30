@@ -133,7 +133,7 @@ Spectral catches issues AI-generated schemas frequently have:
    ```
 
 4. **Manual fixes (if max attempts reached)**
-   ```
+   ```markdown
    ⚠️ SPECTRAL INCOMPLETE - Manual fixes needed (see below)
 
    ### Manual Fix Instructions:
