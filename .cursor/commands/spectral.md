@@ -62,7 +62,7 @@ Use this standardized format for all Spectral reports. **ALWAYS provide detailed
 
 ### Attempt 1/3 - Initial Scan:
 - **Errors**: X
-- **Warnings**: Y  
+- **Warnings**: Y
 - **Info**: Z
 - **Total Issues**: N
 
@@ -70,14 +70,14 @@ Use this standardized format for all Spectral reports. **ALWAYS provide detailed
 
 #### ❌ ERROR: `rule-name`
 **Location**: Line X (exact line number in file)
-**Path**: `$.path.to.issue`  
-**Issue**: Brief description  
+**Path**: `$.path.to.issue`
+**Issue**: Brief description
 **Fix**: What needs to be changed
 
 #### ⚠️ WARNING: `rule-name`
 **Location**: Line X (exact line number in file)
-**Path**: `$.path.to.issue`  
-**Issue**: Brief description  
+**Path**: `$.path.to.issue`
+**Issue**: Brief description
 **Fix**: What needs to be changed
 
 ### Fixes Applied (Attempt 1):
@@ -132,7 +132,6 @@ The `.spectral.yml` file:
 - **Extends**: `spectral:oas` (standard OpenAPI rules)
 - **Disables**: `path-params`, `operation-operationId`, `oas3-examples-value-or-externalValue`, `oas3-unused-component`, `info-contact`
 - **Sets Custom VTEX-specific rules**
-
 
 ## Fallback Method
 
