@@ -144,7 +144,7 @@ Before concluding that an endpoint/method was removed or replaced:
 1. **Check Final State**: Read the actual file in the PR branch (`pr-{pr_number}`) to verify what exists after the PR
 2. **Verify Method Existence**: Use `grep` or file reading to confirm if methods/endpoints still exist in the final code
 3. **Check File Locations**: Ensure changes are in the same file - diffs can show unrelated changes side-by-side
-4. **Avoid Diff Misinterpretation**: 
+4. **Avoid Diff Misinterpretation**:
    - A `-` block followed by a `+` block does NOT always mean replacement
    - Methods might be reordered (appearing as removed/added but both exist)
    - Unrelated changes in different parts of the file can appear adjacent in diffs
@@ -241,7 +241,7 @@ grep -r "HttpPost.*cancel" src/  # Check if route exists
 5. **⚠️ For Model Field Changes (CRITICAL):**
    - **First**: Check if field exists in OpenAPI schema
    - **If NOT in schema**: This is internal refactoring, NOT an API change
-   - **If IN schema**: 
+   - **If IN schema**:
      - Verify if it's in request/response and if it's required
      - **Locate exact position** (line numbers, JSON path, or unique context)
      - **Note the exact location** for targeted editing
@@ -304,7 +304,7 @@ Instead of generating the entire schema, make **targeted edits** to only the sec
    ```bash
    # Instead of outputting entire schema, create a patch file or targeted edits
    # Document changes like:
-   # 
+   #
    # Line 5070-5076: Added field to request body
    # Line 13395-13398: Removed field from response schema
    ```
