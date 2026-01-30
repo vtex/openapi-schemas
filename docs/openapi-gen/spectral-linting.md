@@ -95,7 +95,7 @@ Spectral catches issues AI-generated schemas frequently have:
    ```
 
 3. **Review iterative results**
-   ```
+   ```markdown
    ## 🔍 SPECTRAL LINT RESULTS
 
    ### Attempt 1/3 - Initial Scan:
