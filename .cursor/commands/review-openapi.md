@@ -113,12 +113,12 @@ Compare existing OpenAPI documentation with source code, identify gaps, and gene
    - **Required**: This step is mandatory and ensures the updated OpenAPI spec is testable and properly structured
    - **Note**: If Prism validation reveals issues, review the validation report and fix the OpenAPI spec. The validation report will be saved automatically.
 
-6. **Spectral Checks**
+7. **Spectral Checks**
    - Read: `.spectral.yml`
    - Run `/spectral {openapi_filename}.json` against the generated OpenAPI using the rules defined in `.spectral.yml`
    - Log each correction along with the line numbers that changed in a report
 
-7. **Spectral Correction**
+8. **Spectral Correction**
    - Fix every Spectral violation in the schema
    - Re-run Spectral and repeat until the OpenAPI file passes without errors
 
