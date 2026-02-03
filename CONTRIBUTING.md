@@ -1,4 +1,4 @@
-# Contributing Guide
+# External contribution guide
 Thanks for your interest in contributing to [VTEX API Documentation](https://github.com/vtex/openapi-schemas#readme)! Here are a few general guidelines on contributing and reporting bugs to VTEX that we ask you to first look at.
 
 ## Contributing

@@ -4,7 +4,7 @@ This documentation comprises VTEX's public APIs as OpenAPI 3.0 JSON schemas. Fil
 
 ## Table of Contents
 
-- [Contributing with the documentation](#contributing-with-the-documentation)
+- [External contributions](#external-contributions)
 - [Code of Conduct](#code-of-conduct)
 - [API Slug Mapping](#api-slug-mapping)
 - [VTEX APIs](#vtex-apis)
@@ -13,12 +13,12 @@ This documentation comprises VTEX's public APIs as OpenAPI 3.0 JSON schemas. Fil
   - [Authentication](#authentication)
     - [Security schemes](#security-schemes)
     - [Security requirement](#security-requirement)
-  - [Adding a new file](#adding-a-new-file)
+- [AI-Powered Documentation](#ai-powered-documentation-vtex-internal)
 - [GitHub Actions](#github-actions)
   - [Spectral Linter](#spectral-linter)
   - [Postman Collection Converter](#postman-collection-converter)
 
-## Contributing with the documentation
+## External contributions
 
 Please check our [Contributing Guide](CONTRIBUTING.md) for more information about how to contribute with this repository.
 
@@ -172,9 +172,32 @@ The `security` object we use at VTEX is:
     ]
 ```
 
-### Adding a new file
+## AI-Powered Documentation
 
-After creating a file for a new API reference in this repository, read [this step-by-step](https://github.com/vtexdocs/dev-portal-content#how-to-publish-a-new-api-reference-and-add-it-to-navigation) to publish it on our Developer Portal.
+> ⚠️ These tools are available exclusively for VTEX technical writers working in Cursor IDE. External contributors should follow the [Contributing Guide](CONTRIBUTING.md) for manual contributions.
+
+This repository includes Cursor IDE commands for automated OpenAPI generation and maintenance:
+
+### Available Commands
+
+- **`/generate-openapi`** - Generate OpenAPI schemas from source code
+- **`/review-openapi`** - Review and update existing OpenAPI schemas
+- **`/rate-openapi`** - Evaluate schema quality with automated scoring
+- **`/analyze-pr-changes`** - Analyze PR changes for API impacts
+- **`/spectral`** - Run Spectral linting and validate schemas
+
+### Documentation
+
+Complete guides are available in the [`docs/openapi-gen/`](docs/openapi-gen/) directory:
+
+- [OpenAPI Generation Introduction](docs/openapi-gen/openapi-gen-intro.md) - Overview of all commands
+- [Generating OpenAPI](docs/openapi-gen/generating-openapi.md) - Generate schemas from code
+- [Reviewing OpenAPI](docs/openapi-gen/reviewing-openapi.md) - Update existing schemas
+- [Rating Generated OpenAPI](docs/openapi-gen/rating-generated-openapi.md) - Quality evaluation
+- [Analyzing PR Changes](docs/openapi-gen/analyzing-pr-changes-openapi.md) - PR impact analysis
+- [Spectral Linting](docs/openapi-gen/spectral-linting.md) - Schema validation
+
+Learn more in the [OpenAPI Generation Introduction](docs/openapi-gen/openapi-gen-intro.md).
 
 ## GitHub Actions
 
