@@ -1,0 +1,701 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Fulfillment Recommendations API",
+        "description": "The Fulfillment Recommendations API provides real-time recommendations for delivery and pickup options based on product availability, user location, and fulfillment context. This API helps optimize the customer experience by suggesting the best fulfillment options for each product. Key features include smart recommendations, batch processing, context-awareness, flexible requests, and conditional tags.\r\n\r\n## Index\r\n\r\n### Fulfillment Recommendations\r\n\r\n- `POST` [Search fulfillment recommendations](https://developers.vtex.com/docs/api-reference/fulfillment-recommendations-api#post-/api/fulfillment-recommendation/_search)\r\n- `GET` [Get fulfillment recommendations](https://developers.vtex.com/docs/api-reference/fulfillment-recommendations-api#get-/api/fulfillment-recommendation)",
+        "contact": {},
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "https://{accountName}.{environment}.com.br",
+            "description": "VTEX server URL.",
+            "variables": {
+                "accountName": {
+                    "description": "Name of the VTEX account. Used as part of the URL.",
+                    "default": "apiexamples"
+                },
+                "environment": {
+                    "description": "Environment to use. Used as part of the URL.",
+                    "enum": [
+                        "vtexcommercestable"
+                    ],
+                    "default": "vtexcommercestable"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/api/fulfillment-recommendation/_search": {
+            "post": {
+                "tags": [
+                    "Fulfillment recommendations"
+                ],
+                "summary": "Search fulfillment recommendations",
+                "description": "Retrieves intelligent delivery and pickup recommendations for a batch of products. The response contains recommendations for each requested product, including available delivery and pickup options with timing information and selection criteria tags (e.g., fastest, nearest).\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Logistics | Logistics access | **Logistics full access** |\r\n| Logistics | Logistics access | **Logistics shipping full access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--sjGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| Logistics - Full access | Logistics full access |\r\n| Logistics - Full access | Logistics shipping full access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or API keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "x-vtex-flow",
+                        "in": "header",
+                        "description": "Flow identifier for request tracking and optimization. Common values include `navigation` for browsing flows.",
+                        "required": false,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "navigation"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FulfillmentRecommendationRequest"
+                            },
+                            "example": {
+                                "products": [
+                                    {
+                                        "productId": "123",
+                                        "itemId": "123-1"
+                                    },
+                                    {
+                                        "productId": "456",
+                                        "itemId": "456-1"
+                                    }
+                                ],
+                                "deliveryZonesHash": "abc123def456",
+                                "pickupsHash": "xyz789uvw012"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FulfillmentRecommendationResponse"
+                                },
+                                "example": {
+                                    "recommendations": [
+                                        {
+                                            "productId": "123",
+                                            "recommendations": {
+                                                "delivery": [
+                                                    {
+                                                        "id": "express-delivery",
+                                                        "name": "Express Delivery",
+                                                        "slaTimeTarget": {
+                                                            "from": 0,
+                                                            "to": 4,
+                                                            "unit": "h"
+                                                        },
+                                                        "conditions": [
+                                                            "fastest"
+                                                        ]
+                                                    },
+                                                    {
+                                                        "id": "standard-delivery",
+                                                        "name": "Standard Delivery",
+                                                        "slaTimeTarget": {
+                                                            "from": 1,
+                                                            "to": 3,
+                                                            "unit": "d"
+                                                        },
+                                                        "conditions": []
+                                                    }
+                                                ],
+                                                "pickup": [
+                                                    {
+                                                        "id": "store-downtown",
+                                                        "name": "Downtown Store",
+                                                        "slaTimeTarget": {
+                                                            "from": 0,
+                                                            "to": 2,
+                                                            "unit": "h"
+                                                        },
+                                                        "conditions": [
+                                                            "nearest"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "productId": "456",
+                                            "itemId": "456-1",
+                                            "recommendations": {
+                                                "delivery": [
+                                                    {
+                                                        "id": "standard-delivery",
+                                                        "name": "Standard Delivery",
+                                                        "slaTimeTarget": {
+                                                            "from": 2,
+                                                            "to": 5,
+                                                            "unit": "d"
+                                                        },
+                                                        "conditions": [
+                                                            "fastest"
+                                                        ]
+                                                    }
+                                                ],
+                                                "pickup": []
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "examples": {
+                                    "The products array cannot be empty.": {
+                                        "value": {
+                                            "message": "The products array cannot be empty."
+                                        }
+                                    },
+                                    "The maximum number of products allowed is 20.": {
+                                        "value": {
+                                            "message": "The maximum number of products allowed is 20."
+                                        }
+                                    },
+                                    "The product list cannot be empty.": {
+                                        "value": {
+                                            "message": "The product list cannot be empty."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Invalid or missing authentication credentials."
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Request origin not allowed."
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Request limit exceeded. Please try again later."
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "An unexpected error occurred on the server."
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "appKey": [],
+                        "appToken": []
+                    },
+                    {
+                        "VtexIdclientAutCookie": []
+                    }
+                ],
+                "deprecated": false
+            }
+        },
+        "/api/fulfillment-recommendation": {
+            "get": {
+                "tags": [
+                    "Fulfillment recommendations"
+                ],
+                "summary": "Get fulfillment recommendations",
+                "description": "Retrieves intelligent delivery and pickup recommendations for products using query parameters. This method supports caching, bookmarking, and browser optimizations. The response contains recommendations for each requested product, including available delivery and pickup options with timing information and selection criteria tags (e.g., fastest, nearest).\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Logistics | Logistics access | **Logistics viewer** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| Logistics - Read only | Logistics viewer |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or API keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "products[0].productId",
+                        "in": "query",
+                        "description": "The unique identifier of the first product. Use index notation for multiple products (e.g., `products[0].productId`, `products[1].productId`).",
+                        "required": true,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "123"
+                        }
+                    },
+                    {
+                        "name": "products[0].itemId",
+                        "in": "query",
+                        "description": "The specific SKU ID for the first product. If omitted, all SKUs for the product are evaluated. Use index notation for multiple SKUs (e.g., `products[0].itemId`, `products[1].itemId`).",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "123-1"
+                        }
+                    },
+                    {
+                        "name": "deliveryZonesHash",
+                        "in": "query",
+                        "description": "Hash representing the user's delivery context, which is a part of the fulfillment context.",
+                        "required": true,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "abc123def456"
+                        }
+                    },
+                    {
+                        "name": "pickupsHash",
+                        "in": "query",
+                        "description": "Hash representing the user's pickup context, which is a part of the fulfillment context.",
+                        "required": true,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "xyz789uvw012"
+                        }
+                    },
+                    {
+                        "name": "x-vtex-flow",
+                        "in": "header",
+                        "description": "Flow identifier for request tracking and optimization. Common values include `navigation` for browsing flows.",
+                        "required": false,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "navigation"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FulfillmentRecommendationResponse"
+                                },
+                                "example": {
+                                    "recommendations": [
+                                        {
+                                            "productId": "123",
+                                            "recommendations": {
+                                                "delivery": [
+                                                    {
+                                                        "id": "express-delivery",
+                                                        "name": "Express Delivery",
+                                                        "slaTimeTarget": {
+                                                            "from": 0,
+                                                            "to": 4,
+                                                            "unit": "h"
+                                                        },
+                                                        "conditions": [
+                                                            "fastest"
+                                                        ]
+                                                    },
+                                                    {
+                                                        "id": "standard-delivery",
+                                                        "name": "Standard Delivery",
+                                                        "slaTimeTarget": {
+                                                            "from": 1,
+                                                            "to": 3,
+                                                            "unit": "d"
+                                                        },
+                                                        "conditions": []
+                                                    }
+                                                ],
+                                                "pickup": [
+                                                    {
+                                                        "id": "store-downtown",
+                                                        "name": "Downtown Store",
+                                                        "slaTimeTarget": {
+                                                            "from": 0,
+                                                            "to": 2,
+                                                            "unit": "h"
+                                                        },
+                                                        "conditions": [
+                                                            "nearest"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "productId": "456",
+                                            "itemId": "456-1",
+                                            "recommendations": {
+                                                "delivery": [
+                                                    {
+                                                        "id": "standard-delivery",
+                                                        "name": "Standard Delivery",
+                                                        "slaTimeTarget": {
+                                                            "from": 2,
+                                                            "to": 5,
+                                                            "unit": "d"
+                                                        },
+                                                        "conditions": [
+                                                            "fastest"
+                                                        ]
+                                                    }
+                                                ],
+                                                "pickup": []
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "code": "Unauthorized",
+                                    "message": "Invalid or missing authentication credentials."
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "code": "RateLimitExceeded",
+                                    "message": "Request limit exceeded. Please try again later."
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "code": "InternalError",
+                                    "message": "An unexpected error occurred on the server."
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "appKey": [],
+                        "appToken": []
+                    },
+                    {
+                        "VtexIdclientAutCookie": []
+                    }
+                ],
+                "deprecated": false
+            }
+        }
+    },
+    "components": {
+        "parameters": {
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "default": "application/json"
+                }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "default": "application/json"
+                }
+            }
+        },
+        "schemas": {
+            "FulfillmentRecommendationRequest": {
+                "type": "object",
+                "description": "Request body for fulfillment recommendation queries.",
+                "required": [
+                    "products",
+                    "deliveryZonesHash",
+                    "pickupsHash"
+                ],
+                "properties": {
+                    "products": {
+                        "type": "array",
+                        "description": "Array of products to get fulfillment recommendations for. Must contain between 1 and 20 products.",
+                        "minItems": 1,
+                        "maxItems": 20,
+                        "items": {
+                            "type": "object",
+                            "description": "Product information for recommendation request.",
+                            "required": [
+                                "productId"
+                            ],
+                            "properties": {
+                                "productId": {
+                                    "type": "string",
+                                    "description": "The unique identifier of the product.",
+                                    "nullable": false
+                                },
+                                "itemId": {
+                                    "type": "string",
+                                    "description": "The specific SKU ID. If omitted, all SKUs for the product are evaluated."
+                                }
+                            }
+                        }
+                    },
+                    "deliveryZonesHash": {
+                        "type": "string",
+                        "description": "Hash representing the user's delivery context, which is a part of the fulfillment context."
+                    },
+                    "pickupsHash": {
+                        "type": "string",
+                        "description": "Hash representing the user's pickup context, which is a part of the fulfillment context."
+                    }
+                }
+            },
+            "FulfillmentRecommendationResponse": {
+                "type": "object",
+                "description": "Response containing fulfillment recommendations for requested products.",
+                "properties": {
+                    "recommendations": {
+                        "type": "array",
+                        "description": "Array of fulfillment recommendations, with one entry corresponding to each product in the request.",
+                        "minItems": 1,
+                        "maxItems": 20,
+                        "items": {
+                            "type": "object",
+                            "description": "Fulfillment recommendation for a single product.",
+                            "required": [
+                                "productId",
+                                "recommendations"
+                            ],
+                            "properties": {
+                                "productId": {
+                                    "type": "string",
+                                    "description": "The unique identifier of the product.",
+                                    "nullable": false
+                                },
+                                "recommendations": {
+                                    "type": "object",
+                                    "description": "Object containing delivery and pickup options recommendations.",
+                                    "required": [
+                                        "delivery",
+                                        "pickup"
+                                    ],
+                                    "properties": {
+                                        "delivery": {
+                                            "type": "array",
+                                            "description": "Array of delivery option recommendations. An empty array indicates no delivery options are available for the current context.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Delivery option recommendation.",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "description": "The unique identifier for the specific delivery option (SLA)."
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "description": "A human-readable name for the delivery option (e.g., \"Express Delivery\")."
+                                                    },
+                                                    "slaTimeTarget": {
+                                                        "type": "object",
+                                                        "description": "Object defining the time window for fulfillment.",
+                                                        "properties": {
+                                                            "from": {
+                                                                "type": "number",
+                                                                "description": "Minimum time for fulfillment."
+                                                            },
+                                                            "to": {
+                                                                "type": "number",
+                                                                "description": "Maximum time for fulfillment."
+                                                            },
+                                                            "unit": {
+                                                                "type": "string",
+                                                                "description": "Time unit: `h` for hours or `d` for days.",
+                                                                "enum": [
+                                                                    "h",
+                                                                    "d"
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "conditions": {
+                                                        "type": "array",
+                                                        "description": "Tags indicating why the option was selected (e.g., `fastest`, `nearest`).",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "Condition tag (e.g., `fastest`, `nearest`)."
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "pickup": {
+                                            "type": "array",
+                                            "description": "Array of pickup option recommendations. An empty array indicates no pickup options are available for the current context.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Pickup option recommendation.",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "description": "The unique identifier for the specific pickup option (Store)."
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "description": "A human-readable name for the pickup option (e.g., \"Downtown Store\")."
+                                                    },
+                                                    "slaTimeTarget": {
+                                                        "type": "object",
+                                                        "description": "Object defining the time window for fulfillment.",
+                                                        "properties": {
+                                                            "from": {
+                                                                "type": "number",
+                                                                "description": "Minimum time for fulfillment."
+                                                            },
+                                                            "to": {
+                                                                "type": "number",
+                                                                "description": "Maximum time for fulfillment."
+                                                            },
+                                                            "unit": {
+                                                                "type": "string",
+                                                                "description": "Time unit: `h` for hours or `d` for days.",
+                                                                "enum": [
+                                                                    "h",
+                                                                    "d"
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "conditions": {
+                                                        "type": "array",
+                                                        "description": "Tags indicating why the option was selected (e.g., `fastest`, `nearest`).",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "Condition tag (e.g., `fastest`, `nearest`)."
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "description": "Error response structure.",
+                "required": [
+                    "message"
+                ],
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "description": "Descriptive message of the error."
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "VtexIdclientAutCookie": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "VtexIdclientAutCookie",
+                "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Fulfillment recommendations"
+        }
+    ]
+}
