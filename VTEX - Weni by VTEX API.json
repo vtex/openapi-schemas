@@ -1,0 +1,3248 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Weni by VTEX API",
+        "description": "Weni Flows lets you visually build interactive SMS applications and launch them anywhere in the world. We provide a RESTful JSON API for you to interact with your data from outside applications.\n\n## API Overview\n\nAll endpoints follow standard REST conventions. You can list a set of resources by making a `GET` request to the endpoint, create or update resources by making a `POST` or `PUT` request, or delete a resource with a `DELETE` request.\n\nTo use the endpoint simply append `.json` to the URL. For example `/api/v2/flows` will return the documentation for that endpoint but a request to `/api/v2/flows.json` will return a JSON list of flows.\n\n## Authentication\n\nAll API requests require authentication using an API Token. Include the token in the Authorization header:\n\n```\nAuthorization: Token {your-token}\n```\n\nYou can obtain your API token by logging into your Weni Fluxos account.\n\n## Rate Limiting\n\n- **429**: You have exceeded the rate limit for this endpoint.\n\n## Common Response Codes\n\n- **200**: Success\n- **400**: Bad Request - The request was invalid\n- **401**: Unauthorized - Authentication credentials were not provided or are invalid\n- **404**: The resource was not found (returned by `POST` and `DELETE` methods)\n- **429**: You have exceeded the rate limit for this endpoint",
+        "contact": {},
+        "version": "2.0"
+    },
+    "servers": [
+        {
+            "url": "https://flows.weni.ai",
+            "description": "Weni Flows API server"
+        }
+    ],
+    "security": [
+        {
+            "ApiKeyAuth": []
+        }
+    ],
+    "paths": {
+        "/api/v2/archives": {
+            "get": {
+                "tags": [
+                    "Archives"
+                ],
+                "summary": "Get Weni Flows archives",
+                "description": "List the data archives of messages and runs associated with your account.",
+                "operationId": "GetArchives",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: `Token {your-token}`",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "Token 54f9136c0700705de49cdd58c31f7d7346949f7"
+                        }
+                    },
+                    {
+                        "name": "archive_type",
+                        "in": "query",
+                        "description": "Type of the archive. The following values are accepted:\r\n- `message`\r\n- `run`",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "message"
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/Before"
+                    },
+                    {
+                        "$ref": "#/components/parameters/After"
+                    },
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Period of the archive. The following values are accepted:\r\n- `daily`\r\n- `monthly`",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "daily"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "next",
+                                        "previous",
+                                        "count",
+                                        "results"
+                                    ],
+                                    "properties": {
+                                        "next": {
+                                            "$ref": "#/components/schemas/NextPage"
+                                        },
+                                        "previous": {
+                                            "$ref": "#/components/schemas/PreviousPage"
+                                        },
+                                        "count": {
+                                            "$ref": "#/components/schemas/Count"
+                                        },
+                                        "results": {
+                                            "type": "object",
+                                            "description": "List of archives of messages and runs.",
+                                            "properties": {
+                                                "archive_type": {
+                                                    "type": "string",
+                                                    "description": "Type of the archive.",
+                                                    "enum": [
+                                                        "message",
+                                                        "run"
+                                                    ],
+                                                    "example": "message"
+                                                },
+                                                "start_date": {
+                                                    "type": "string",
+                                                    "description": "Start date of the archive. Follows the UTC time format: `YYYY-MM-DDT`.",
+                                                    "example": "2021-01-01"
+                                                },
+                                                "period": {
+                                                    "type": "string",
+                                                    "description": "Period of the archive. The following values are accepted:\r\n- `daily`\r\n- `monthly`",
+                                                    "example": "daily"
+                                                },
+                                                "record_count": {
+                                                    "type": "integer",
+                                                    "description": "Number of records in the archive.",
+                                                    "example": 100
+                                                },
+                                                "size": {
+                                                    "type": "integer",
+                                                    "description": "Size of the gzipped archive in bytes.",
+                                                    "example": 1000000
+                                                },
+                                                "hash": {
+                                                    "type": "string",
+                                                    "description": "MD5 hash of the gzipped archive.",
+                                                    "example": "feca9988b7772c003204a28bd741d0d0"
+                                                },
+                                                "download_url": {
+                                                    "type": "string",
+                                                    "description": "URL to download the archive.",
+                                                    "example": "https://flows.weni.ai/api/v2/archives/1234567890/download"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/boundaries": {
+            "get": {
+                "tags": [
+                    "Boundaries"
+                ],
+                "summary": "Get Weni Flows boundaries",
+                "description": "List the administrative boundaries for your organization.",
+                "operationId": "GetBoundaries",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: `Token {your-token}`",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "Token 54f9136c0700705de49cdd58c31f7d7346949f7"
+                        }
+                    },
+                    {
+                        "name": "geometry",
+                        "in": "query",
+                        "description": "Geometry of the boundaries, in the GeoJSON MultiPolygon format. To include the geometry in the response, set this parameter to `true`. \r\n > ⚠️ Including the geometry in the response may produce a very large result. We recommend caching the results on the client's side.",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "next": {
+                                            "$ref": "#/components/schemas/NextPage"
+                                        },
+                                        "previous": {
+                                            "$ref": "#/components/schemas/PreviousPage"
+                                        },
+                                        "count": {
+                                            "$ref": "#/components/schemas/Count"
+                                        },
+                                        "results": {
+                                            "type": "object",
+                                            "description": "List with the results of administrative boundaries.",
+                                            "properties": {
+                                                "osm_id": {
+                                                    "type": "string",
+                                                    "description": "OSM ID for this boundary prefixed with the element type.",
+                                                    "example": "1708283"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "description": "Name of the administrative boundary.",
+                                                    "example": "Belo Horizonte"
+                                                },
+                                                "parent": {
+                                                    "type": "object",
+                                                    "description": "The ID of the containing parent of this boundary,",
+                                                    "nullable": true,
+                                                    "properties": {
+                                                        "osm_id": {
+                                                            "type": "string",
+                                                            "description": "OSM ID for the parent boundary prefixed with the element type.",
+                                                            "example": "1708283"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "description": "Name of the parent boundary.",
+                                                            "example": "Brazil"
+                                                        }
+                                                    }
+                                                },
+                                                "level": {
+                                                    "type": "integer",
+                                                    "description": "Refers to the level of the administrative boundary. The value `0` indicates that the boundary is a country, the value `1` indicates that the boundary is a state, and the value `2` indicates that the boundary is a city, and the value `4` indicates that the boundary is a district.",
+                                                    "example": 1
+                                                },
+                                                "aliases": {
+                                                    "type": "array",
+                                                    "description": "List of aliases for the administrative boundary.",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "description": "Alias for the administrative boundary.",
+                                                        "example": "Belo Horizonte (MG)"
+                                                    }
+                                                },
+                                                "geometry": {
+                                                    "type": "object",
+                                                    "description": "Geometry of the boundary, in the GeoJSON MultiPolygon format.",
+                                                    "nullable": true,
+                                                    "properties": {
+                                                        "type": {
+                                                            "type": "string",
+                                                            "description": "Type of the geometry.",
+                                                            "example": "MultiPolygon"
+                                                        },
+                                                        "coordinates": {
+                                                            "type": "array",
+                                                            "description": "List of coordinates that make part of the geometry.",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "description": "Coordinates that make part of the geometry.",
+                                                                "example": [[7.5251021, 5.0504713], [7.5330272, 5.0423498]]
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/broadcasts": {
+            "get": {
+                "tags": [
+                    "Broadcasts"
+                ],
+                "summary": "Get Weni Flows broadcasts",
+                "description": "Send new message broadcasts and list existing broadcasts in your account.",
+                "operationId": "GetBroadcasts",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "description": "The ID of the broadcast.",
+                        "required": false,
+                        "style": "form",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/Before"
+                    },
+                    {
+                        "$ref": "#/components/parameters/After"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "next": {
+                                            "$ref": "#/components/schemas/NextPage"
+                                        },
+                                        "previous": {
+                                            "$ref": "#/components/schemas/PreviousPage"
+                                        },
+                                         "results": {
+                                            "type": "object",
+                                            "description": "List of message broadcasts.",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "description": "The ID of the broadcast.",
+                                                    "example": 1234567890
+                                                },
+                                                "urns": {
+                                                    "type": "array",
+                                                    "description": "List of URNs that receive the broadcast.",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "description": "URNs of the recipient.",
+                                                        "example": [
+                                                            "tel:+250788123123",
+                                                            "tel:+250788123124"
+                                                        ]
+                                                    }
+                                                },
+                                                "contacts": {
+                                                    "type": "array",
+                                                    "description": "List of contacts that received the broadcast.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "description": "Information of the contact that received the broadcast.",
+                                                        "properties": {
+                                                            "uuid": {
+                                                                "type": "string",
+                                                                "description": "UUID of the contact.",
+                                                                "example": "09d23a05-47fe-11e4-bfe9-b8f6b119e9ab"
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "description": "Name of the contact.",
+                                                                "example": "John"
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "groups": {
+                                                    "type": "array",
+                                                    "description": "List of groups that received the broadcast.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "description": "Information about the groups that received the broadcast.",
+                                                        "example": [
+                                                            "Group 1",
+                                                            "Group 2"
+                                                        ] 
+                                                    }
+                                                },
+                                                "text": {
+                                                    "type": "string",
+                                                    "description": "The text of the broadcast.",
+                                                    "example": "Hello, world."
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "description": "The status of the broadcast.",
+                                                    "enum": [
+                                                        "queued",
+                                                        "sent",
+                                                        "failed"
+                                                    ],
+                                                    "example": "sent"
+                                                },
+                                                "created_on": {
+                                                    "type": "string",
+                                                    "description": "The date when the broadcast was created in the UTC time format: `YYYY-MM-DDT`.",
+                                                    "example": "2025-12-25T17:28:12.123456Z"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Broadcasts"
+                ],
+                "summary": "Post Weni Flows broadcasts",
+                "description": "Create and send new broadcasts.",
+                "operationId": "PostBroadcasts",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "text": {
+                                        "type": "string",
+                                        "description": "The text of the broadcast. You can send a text of up to 640 characters per request.",
+                                        "example": "Hello @contact.name"
+                                    },
+                                    "urns": {
+                                        "type": "array",
+                                        "description": "List of URNs that will receive the broadcast. You can send up to 100 URNs per request.",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "URNs of the recipient.",
+                                            "example": [
+                                                "tel:+250788123123",
+                                                "tel:+250788123124"
+                                            ]
+                                        }
+                                    },
+                                    "contacts": {
+                                        "type": "array",
+                                        "description": "The UUIDs of the contacts that will receive the broadcast. You can send up to 100 UUIDS per request.",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "UUID of the contact.",
+                                            "example": "09d23a05-47fe-11e4-bfe9-b8f6b119e9ab"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "description": "The ID of the broadcast.",
+                                            "example": 1234567890
+                                        },
+                                        "urns": {
+                                            "type": "array",
+                                            "description": "List of URNs that will receive the broadcast.",
+                                            "items": {
+                                                "type": "string",
+                                                "description": "URNs of the recipient.",
+                                                "example": [
+                                                    "tel:+250788123123",
+                                                    "tel:+250788123124"
+                                                ]
+                                            }
+                                        },
+                                        "contacts": {
+                                            "type": "array",
+                                            "description": "List of contacts that will receive the broadcast.",
+                                            "items": {
+                                                "type": "string",
+                                                "description": "UUID of the contact.",
+                                                "example": "09d23a05-47fe-11e4-bfe9-b8f6b119e9ab"
+                                            }
+                                        },
+                                        "groups": {
+                                            "type": "array",
+                                            "description": "List of groups that will receive the broadcast.",
+                                            "items": {
+                                                "type": "string",
+                                                "description": "Group of the recipient.",
+                                                "example": "Group 1"
+                                            }
+                                        },
+                                        "text": {
+                                            "type": "string",
+                                            "description": "The text of the broadcast.",
+                                            "example": "Hello, world."
+                                        },
+                                        "created_on": {
+                                            "type": "string",
+                                            "description": "The date when the broadcast was created in the UTC time format: `YYYY-MM-DDT`.",
+                                            "example": "2025-12-25T17:28:12.123456Z"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/campaigns": {
+            "get": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Get Weni Flows campaigns",
+                "description": "List existing campaigns in your account from most recent to oldest.",
+                "operationId": "GetCampaigns",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/Before"
+                    },
+                    {
+                        "$ref": "#/components/parameters/After"
+                    },
+                    {
+                        "name": "uuid",
+                        "in": "query",
+                        "description": "The UUID of the campaign.",
+                        "required": false,
+                        "style": "form",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "next": {
+                                            "$ref": "#/components/schemas/NextPage"
+                                        },
+                                        "previous": {
+                                            "$ref": "#/components/schemas/PreviousPage"
+                                        },
+                                        "results": {
+                                            "type": "object",
+                                            "properties": {
+                                                "uuid": {
+                                                    "type": "string",
+                                                    "description": "UUID of the campaign.",
+                                                    "example": "09d23a05-47fe-11e4-bfe9-b8f6b119e9ab"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "description": "Name of the campaign.",
+                                                    "example": "Reminders"
+                                                },
+                                                "archived": {
+                                                    "type": "boolean",
+                                                    "description": "Defines if the campaign is archived (`true`) or not (`false`).",
+                                                    "example": false
+                                                },
+                                                "group": {
+                                                    "type": "object",
+                                                    "description": "Information about the group that the campaign belongs to.",
+                                                    "properties": {
+                                                        "uuid": {
+                                                            "type": "string",
+                                                            "description": "UUID of the group.",
+                                                            "example": "09d23a05-47fe-11e4-bfe9-b8f6b119e9ab"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "description": "Name of the group.",
+                                                            "example": "Reporters"
+                                                        }
+                                                    }
+                                                },
+                                                "created_on": {
+                                                    "type": "string",
+                                                    "description": "The date when the campaign was created in the UTC time format: `YYYY-MM-DDT`.",
+                                                    "example": "2025-12-24T19:11:21.088Z"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Post Weni Flows campaigns",
+                "description": "Create a new campaign using the name of the campaign and the group that the campaign belongs to. > ⚠️ Don't specify a UUID for the campaign, this will be generated by the API.",
+                "operationId": "PostCampaigns",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "PUT campaigns",
+                "description": "List, create, or update campaigns",
+                "operationId": "PUTCampaigns",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/campaign_events": {
+            "get": {
+                "tags": [
+                    "Campaign Events"
+                ],
+                "summary": "GET campaign_events",
+                "description": "List, create, update or delete campaign events",
+                "operationId": "GETCampaignEvents",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Campaign Events"
+                ],
+                "summary": "POST campaign_events",
+                "description": "List, create, update or delete campaign events",
+                "operationId": "POSTCampaignEvents",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Campaign Events"
+                ],
+                "summary": "PUT campaign_events",
+                "description": "List, create, update or delete campaign events",
+                "operationId": "PUTCampaignEvents",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Campaign Events"
+                ],
+                "summary": "DELETE campaign_events",
+                "description": "List, create, update or delete campaign events",
+                "operationId": "DELETECampaignEvents",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/channels": {
+            "get": {
+                "tags": [
+                    "Channels"
+                ],
+                "summary": "GET channels",
+                "description": "List channels",
+                "operationId": "GETChannels",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/channel_events": {
+            "get": {
+                "tags": [
+                    "Channel Events"
+                ],
+                "summary": "GET channel_events",
+                "description": "List channel events",
+                "operationId": "GETChannelEvents",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/classifiers": {
+            "get": {
+                "tags": [
+                    "Classifiers"
+                ],
+                "summary": "GET classifiers",
+                "description": "List classifiers",
+                "operationId": "GETClassifiers",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/contacts": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "GET contacts",
+                "description": "List, create, update or delete contacts",
+                "operationId": "GETContacts",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "POST contacts",
+                "description": "List, create, update or delete contacts",
+                "operationId": "POSTContacts",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "PUT contacts",
+                "description": "List, create, update or delete contacts",
+                "operationId": "PUTContacts",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "DELETE contacts",
+                "description": "List, create, update or delete contacts",
+                "operationId": "DELETEContacts",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/contact_actions": {
+            "post": {
+                "tags": [
+                    "Contact Actions"
+                ],
+                "summary": "POST contact_actions",
+                "description": "Perform bulk contact actions",
+                "operationId": "POSTContactActions",
+                "parameters": [
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "description": "Type of the content being sent.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    },
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/contact_templates": {
+            "get": {
+                "tags": [
+                    "Contact Templates"
+                ],
+                "summary": "GET contact_templates",
+                "description": "List contact data with templates messages",
+                "operationId": "GETContactTemplates",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/definitions": {
+            "get": {
+                "tags": [
+                    "Definitions"
+                ],
+                "summary": "GET definitions",
+                "description": "Export flow definitions, campaigns, and triggers",
+                "operationId": "GETDefinitions",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/fields": {
+            "get": {
+                "tags": [
+                    "Fields"
+                ],
+                "summary": "GET fields",
+                "description": "List, create or update contact fields",
+                "operationId": "GETFields",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Fields"
+                ],
+                "summary": "POST fields",
+                "description": "List, create or update contact fields",
+                "operationId": "POSTFields",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Fields"
+                ],
+                "summary": "PUT fields",
+                "description": "List, create or update contact fields",
+                "operationId": "PUTFields",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/flow_starts": {
+            "get": {
+                "tags": [
+                    "Flow Starts"
+                ],
+                "summary": "GET flow_starts",
+                "description": "List flow starts and start contacts in flows",
+                "operationId": "GETFlowStarts",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Flow Starts"
+                ],
+                "summary": "POST flow_starts",
+                "description": "List flow starts and start contacts in flows",
+                "operationId": "POSTFlowStarts",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/flows": {
+            "get": {
+                "tags": [
+                    "Flows"
+                ],
+                "summary": "GET flows",
+                "description": "List flows",
+                "operationId": "GETFlows",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/globals": {
+            "get": {
+                "tags": [
+                    "Globals"
+                ],
+                "summary": "GET globals",
+                "description": "List globals",
+                "operationId": "GETGlobals",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/groups": {
+            "get": {
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "GET groups",
+                "description": "List, create, update or delete contact groups",
+                "operationId": "GETGroups",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "POST groups",
+                "description": "List, create, update or delete contact groups",
+                "operationId": "POSTGroups",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "PUT groups",
+                "description": "List, create, update or delete contact groups",
+                "operationId": "PUTGroups",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "DELETE groups",
+                "description": "List, create, update or delete contact groups",
+                "operationId": "DELETEGroups",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/labels": {
+            "get": {
+                "tags": [
+                    "Labels"
+                ],
+                "summary": "GET labels",
+                "description": "List, create, update or delete message labels",
+                "operationId": "GETLabels",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Labels"
+                ],
+                "summary": "POST labels",
+                "description": "List, create, update or delete message labels",
+                "operationId": "POSTLabels",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Labels"
+                ],
+                "summary": "PUT labels",
+                "description": "List, create, update or delete message labels",
+                "operationId": "PUTLabels",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Labels"
+                ],
+                "summary": "DELETE labels",
+                "description": "List, create, update or delete message labels",
+                "operationId": "DELETELabels",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/messages": {
+            "get": {
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "GET messages",
+                "description": "List messages",
+                "operationId": "GETMessages",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/message_actions": {
+            "post": {
+                "tags": [
+                    "Message Actions"
+                ],
+                "summary": "POST message_actions",
+                "description": "Perform bulk message actions",
+                "operationId": "POSTMessageActions",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/runs": {
+            "get": {
+                "tags": [
+                    "Runs"
+                ],
+                "summary": "GET runs",
+                "description": "List flow runs",
+                "operationId": "GETRuns",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/products": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "GET products",
+                "description": "List current WhatsApp products on your account",
+                "operationId": "GETProducts",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/resthooks": {
+            "get": {
+                "tags": [
+                    "Resthooks"
+                ],
+                "summary": "GET resthooks",
+                "description": "List resthooks",
+                "operationId": "GETResthooks",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/resthook_events": {
+            "get": {
+                "tags": [
+                    "Resthook Events"
+                ],
+                "summary": "GET resthook_events",
+                "description": "List resthook events",
+                "operationId": "GETResthookEvents",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/resthook_subscribers": {
+            "get": {
+                "tags": [
+                    "Resthook Subscribers"
+                ],
+                "summary": "GET resthook_subscribers",
+                "description": "List, create or delete subscribers on your resthooks",
+                "operationId": "GETResthookSubscribers",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Resthook Subscribers"
+                ],
+                "summary": "POST resthook_subscribers",
+                "description": "List, create or delete subscribers on your resthooks",
+                "operationId": "POSTResthookSubscribers",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Resthook Subscribers"
+                ],
+                "summary": "DELETE resthook_subscribers",
+                "description": "List, create or delete subscribers on your resthooks",
+                "operationId": "DELETEResthookSubscribers",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/templates": {
+            "get": {
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "GET templates",
+                "description": "List current WhatsApp templates on your account",
+                "operationId": "GETTemplates",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/ticketers": {
+            "get": {
+                "tags": [
+                    "Ticketers"
+                ],
+                "summary": "GET ticketers",
+                "description": "List ticketing services",
+                "operationId": "GETTicketers",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/tickets": {
+            "get": {
+                "tags": [
+                    "Tickets"
+                ],
+                "summary": "GET tickets",
+                "description": "List tickets",
+                "operationId": "GETTickets",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/ticket_actions": {
+            "post": {
+                "tags": [
+                    "Ticket Actions"
+                ],
+                "summary": "POST ticket_actions",
+                "description": "Perform bulk ticket actions",
+                "operationId": "POSTTicketActions",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/topics": {
+            "get": {
+                "tags": [
+                    "Topics"
+                ],
+                "summary": "GET topics",
+                "description": "List and create topics",
+                "operationId": "GETTopics",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Topics"
+                ],
+                "summary": "POST topics",
+                "description": "List and create topics",
+                "operationId": "POSTTopics",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v2/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "GET users",
+                "description": "List user logins",
+                "operationId": "GETUsers",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/workspace": {
+            "get": {
+                "tags": [
+                    "Workspace"
+                ],
+                "summary": "GET workspace",
+                "description": "View your workspace",
+                "operationId": "GETWorkspace",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        },
+        "/api/v2/intelligences": {
+            "get": {
+                "tags": [
+                    "Intelligences"
+                ],
+                "summary": "GET intelligences",
+                "description": "View your intelligences",
+                "operationId": "GETIntelligences",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "API Token for authentication. Format: Token {your-token}",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+                    },
+                    "404": {
+                        "description": "Not Found - The resource was not found"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded - You have exceeded the rate limit for this endpoint"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "ApiKeyAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "Authorization",
+                "description": "API Token authentication. Format: Token {your-token}"
+            }
+        },
+        "parameters": {
+            "Before": {
+                "name": "before",
+                "in": "query",
+                "description": "Start date of the archive. Follows the UTC time format: `YYYY-MM-DDT`.",
+                "required": false,
+                "style": "form",
+                "schema": {
+                    "type": "string",
+                    "example": "2025-11-20T00:00:00"
+                }
+            },
+            "After": {
+                "name": "after",
+                "in": "query",
+                "description": "End date of the archive. Follows the UTC time format: `YYYY-MM-DDT`.",
+                "required": false,
+                "style": "form",
+                "schema": {
+                    "type": "string",
+                    "example": "2025-11-20T00:00:00"
+                }
+            }
+        },
+        "schemas": {
+           "NextPage": {
+            "type": "string",
+            "description": "URL of the next page. You can use this URL to make a new request and see the results of the following page.",
+            "nullable": true,
+            "example": "http://flows.weni.ai/api/v2/archives.json?cursor=cD0yMDE1LTExLTExKzExJTNBM40NjQlMkIwMCUzRv"
+           },
+           "PreviousPage": {
+            "type": "string",
+            "description": "URL of the previous page. You can use this URL to make a new request and see the results of the previous page.",
+            "nullable": true,
+            "example": "http://flows.weni.ai/api/v2/archives.json?cursor=cD0yMDE1LTExLTExKzExJTNBM40NjQlMkIwMCUzRv"
+           },
+           "Count": {
+            "type": "integer",
+            "description": "Total number of results in the current page.",
+            "example": 100
+           }
+        }
+    },
+    "tags": [
+        {
+            "name": "Archives"
+        },
+        {
+            "name": "Boundaries"
+        },
+        {
+            "name": "Broadcasts"
+        },  
+        {
+            "name": "Campaigns" 
+        },
+        {
+            "name": "Campaign Events"
+        },
+        {
+            "name": "Channels"
+        },
+        {
+            "name": "Channel Events"
+        },
+        {
+            "name": "Classifiers"
+        },
+        {
+            "name": "Contacts"
+        },
+        {
+            "name": "Contact Actions"
+        },
+        {
+            "name": "Contact Templates"
+        },
+        {
+            "name": "Definitions"
+        },
+        {
+            "name": "Fields"
+        },
+        {
+            "name": "Flow Starts"
+        },
+        {
+            "name": "Flows"
+        },
+        {
+            "name": "Globals"
+        },
+        {
+            "name": "Groups"
+        },
+        {
+            "name": "Labels"
+        },
+        {
+            "name": "Messages"
+        },
+        {
+            "name": "Message Actions"
+        },
+        {
+            "name": "Runs"
+        },
+        {
+            "name": "Products"
+        },
+        {
+            "name": "Resthooks"
+        },
+        {
+            "name": "Resthook Events"
+        },
+        {
+            "name": "Resthook Subscribers"
+        },
+        {
+            "name": "Templates"
+        },
+        {
+            "name": "Ticketers"
+        },
+        {
+            "name": "Tickets"
+        },
+        {
+            "name": "Ticket Actions"
+        },
+        {
+            "name": "Topics"
+        },
+        {
+            "name": "Users"
+        },
+        {
+            "name": "Workspace"
+        },
+        {
+            "name": "Intelligences"
+        }
+    ]
+}
