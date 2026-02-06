@@ -7,12 +7,19 @@ on:
       - "clients/*/config.yaml"
       - "tools/apim-gen/src/**"
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   generate:
     name: Generate APIM-compatible specs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-node@v4
         with:
@@ -34,7 +41,8 @@ jobs:
       - name: Check for changes in output
         id: check-changes
         run: |
-          if git diff --quiet clients/*/output/; then
+          git add clients/*/output/ 2>/dev/null || true
+          if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
