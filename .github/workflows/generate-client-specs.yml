@@ -1,0 +1,58 @@
+name: Generate Client OpenAPI Specs
+
+on:
+  pull_request:
+    paths:
+      - "VTEX - *.json"
+      - "clients/*/config.yaml"
+      - "tools/apim-gen/src/**"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  generate:
+    name: Generate APIM-compatible specs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: tools/apim-gen
+
+      - name: Generate specs for all clients
+        run: |
+          for config in clients/*/config.yaml; do
+            client_dir=$(dirname "$config")
+            echo "::group::Generating specs for $client_dir"
+            npx tsx tools/apim-gen/src/cli.ts generate "$config"
+            echo "::endgroup::"
+          done
+
+      - name: Check for changes in output
+        id: check-changes
+        run: |
+          git add clients/*/output/ 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit generated specs
+        if: steps.check-changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add clients/*/output/
+          git commit -m "chore: regenerate client OpenAPI specs"
+          git push
