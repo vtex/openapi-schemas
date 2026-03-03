@@ -653,7 +653,7 @@
                     "Schemas"
                 ],
                 "summary": "Save schema by name",
-                "description": "Creates or edits a data entity schema. Learn more about [Master Data schemas](https://developers.vtex.com/vtex-rest-api/docs/master-data-schema-lifecycle).\r\n\r\n> Note that if you send a `schemaName` that does not exist for that data entity, this request will create it.\r\n\r\nThis request can also be used to [create or edit Master Data v2 triggers](https://developers.vtex.com/vtex-rest-api/docs/setting-up-triggers-in-master-data-v2).\r\n\r\n> Each Master Data v2 data entity can have up to 60 schemas. \r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>\u2757 To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "description": "Creates or edits a data entity schema. Learn more about [Master Data schemas](https://developers.vtex.com/vtex-rest-api/docs/master-data-schema-lifecycle).\r\n\r\n> Note that if you send a `schemaName` that does not exist for that data entity, this request will create it.\r\n\r\nThis request can also be used to [create or edit Master Data v2 triggers](https://developers.vtex.com/vtex-rest-api/docs/setting-up-triggers-in-master-data-v2).\r\n\r\n> Each Master Data v2 data entity can have up to 60 schemas.\r\n\r\n## Indexing fields for search, scroll and sort\r\n\r\nTo filter or sort by a field in [Search documents](https://developers.vtex.com/docs/api-reference/master-data-api-v2#get-/api/dataentities/-dataEntityName-/search) or [Scroll documents](https://developers.vtex.com/docs/api-reference/master-data-api-v2#get-/api/dataentities/-dataEntityName-/scroll), add that field to the `v-indexed` array in the schema. This is the schema-level index (separate from the [indices](https://developers.vtex.com/docs/api-reference/master-data-api-v2#get-/api/dataentities/-dataEntityName-/indices) endpoint).\r\n\r\n- `v-indexed`: Array of property names that Master Data v2 must index for `/search`, `/scroll`, and `_sort`. Use it whenever you want to use `_where`, `_sort`, or range filters (e.g. `_where=postalCode between 10000 AND 20000`) on that field. Indexing runs asynchronously after the schema is saved.\r\n- `filterable` and `searchable`: Apply to the UI (e.g. Master Data v1/CRM-style behavior). They do **not** create the index used by `/search`; only `v-indexed` does.\r\n\r\n**Example request body with `v-indexed`:**\r\n\r\n```json\r\n{\r\n  \"properties\": {\r\n    \"skuId\": { \"type\": \"string\" },\r\n    \"postalCode\": { \"type\": \"string\" }\r\n  },\r\n  \"v-indexed\": [\"postalCode\"]\r\n}\r\n```\r\n\r\n> ℹ️ Use `v-indexed` when you need fields to be filterable/sortable in `/search`. Use the [/indices](https://developers.vtex.com/docs/api-reference/master-data-api-v2#put-/api/dataentities/-dataEntityName-/indices) endpoint when you need entity-level uniqueness, composite keys, or relationships between entities.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>\u2757 To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
                 "operationId": "Saveschemabyname",
                 "parameters": [
                     {
@@ -664,16 +664,37 @@
                     }
                 ],
                 "requestBody": {
-                    "description": "Request body for saving schema",
+                    "description": "JSON Schema of the data entity. Include `v-indexed` with an array of property names when you will filter or sort by those fields in /search or /scroll.",
                     "content": {
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/SaveschemabynameRequest"
                             },
-                            "example": {
-                                "properties": {
-                                    "name": {
-                                        "type": "string"
+                            "examples": {
+                                "minimal": {
+                                    "summary": "Minimal schema",
+                                    "value": {
+                                        "properties": {
+                                            "name": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "withVIndexed": {
+                                    "summary": "Schema with v-indexed for filter and sort",
+                                    "value": {
+                                        "properties": {
+                                            "skuId": {
+                                                "type": "string"
+                                            },
+                                            "postalCode": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "v-indexed": [
+                                            "postalCode"
+                                        ]
                                     }
                                 }
                             }
@@ -1254,7 +1275,7 @@
                     "properties"
                 ],
                 "type": "object",
-                "description": "Schema.",
+                "description": "JSON Schema of the data entity. Add `v-indexed` with an array of property names to make those fields filterable and sortable in /search and /scroll.",
                 "properties": {
                     "properties": {
                         "type": "object",
@@ -1282,6 +1303,13 @@
                                 }
                             }
                         }
+                    },
+                    "v-indexed": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Names of properties to index for /search, /scroll, and _sort. Required for reliable filtering (e.g. _where=field=value) and sorting (_sort=field ASC). Indexing is asynchronous after schema save."
                     }
                 }
             },
