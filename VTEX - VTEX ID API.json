@@ -57,24 +57,14 @@
                 "tags": [
                     "Storefront users"
                 ],
-                "summary": "Create storefront user with username",
-                "description": "Registers a new storefront user in VTEX ID using a unique login key (username) as `identifier`.\n\n The created user is not linked to any Organization Unit and does not have storefront permissions.\n\nOnce a storefront user is added, it cannot be edited or removed. If incorrect data is uploaded, create a new username.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| VTEX ID | User Management | **Create User** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>\u2757 To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "summary": "Create storefront user",
+                "description": "Creates a new storefront user in VTEX ID with one or more authentication identifiers (username, email, or phone number).\n\nThe created user is not linked to any Organization Unit and does not have storefront permissions.\r\n\r\n## Notes and limitations\r\n\r\n- There are currently **no APIs for updating authentication identifiers**. For update-related needs, contact our [Support](https://support.vtex.com/hc/en-us/).\r\n- Although `phoneNumber` can be registered and used for authentication, it is **not yet supported for password recovery**.\r\n- Once a storefront user is added, authentication identifiers cannot be edited or removed. If incorrect data is uploaded, you must create a new user.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| VTEX ID | User Management | **Create User** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>\u2757 To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
                     },
                     {
                         "$ref": "#/components/parameters/Accept"
-                    },
-                    {
-                        "name": "isLegacyPassword",
-                        "in": "query",
-                        "description": "Defines whether the storefront user should recover their password via an external service (`true`) or define a new password on first login (`false`, default).",
-                        "required": false,
-                        "schema": {
-                            "type": "boolean",
-                            "default": false
-                        }
                     }
                 ],
                 "requestBody": {
@@ -83,33 +73,61 @@
                             "schema": {
                                 "type": "object",
                                 "required": [
-                                    "identifier",
-                                    "identifierType"
+                                    "identifiers"
                                 ],
                                 "properties": {
-                                    "identifier": {
-                                        "type": "string",
-                                        "description": "Unique login key (username) for the user. Case-insensitive string (3-70 characters, accepts special characters and whitespace) used for login."
-                                    },
-                                    "identifierType": {
-                                        "type": "string",
-                                        "enum": [
-                                            "username"
-                                        ],
-                                        "description": "Type of identifier. Only `username` is supported."
+                                    "identifiers": {
+                                        "type": "array",
+                                        "description": "Array of authentication identifiers for the user. You can provide one or more identifiers of different types (username, email, phoneNumber).",
+                                        "minItems": 1,
+                                        "items": {
+                                            "type": "object",
+                                            "description": "Authentication identifier object containing the type and value.",
+                                            "required": [
+                                                "type",
+                                                "value"
+                                            ],
+                                            "properties": {
+                                                "type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "username",
+                                                        "email",
+                                                        "phoneNumber"
+                                                    ],
+                                                    "description": "Type of authentication identifier. Accepted values are `username`, `email`, or `phoneNumber`. Note that phone numbers can be used for authentication but are not yet supported for password recovery."
+                                                },
+                                                "value": {
+                                                    "type": "string",
+                                                    "description": "The actual identifier value. For `username`: case-insensitive string (3-70 characters, accepts special characters and whitespace). For `email`: valid email address format. For `phoneNumber`: valid phone number format."
+                                                }
+                                            }
+                                        }
                                     }
-                                },
-                                "example": {
-                                    "identifier": "john.doe_2025",
-                                    "identifierType": "username"
                                 }
+                            },
+                            "example": {
+                                "identifiers": [
+                                    {
+                                        "type": "username",
+                                        "value": "beneson_test_21"
+                                    },
+                                    {
+                                        "type": "email",
+                                        "value": "beneson2010@gmail.com"
+                                    },
+                                    {
+                                        "type": "phoneNumber",
+                                        "value": "415-602-8838"
+                                    }
+                                ]
                             }
                         }
                     }
                 },
                 "responses": {
                     "201": {
-                        "description": "User created successfully.",
+                        "description": "Created\n\nUser created successfully.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -117,41 +135,23 @@
                                     "properties": {
                                         "userId": {
                                             "type": "string",
-                                            "description": "Unique user identifier (GUID).",
-                                            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                                            "description": "Unique user identifier (GUID)."
+                                        },
+                                        "identifier": {
+                                            "type": "string",
+                                            "description": "Primary identifier used for the user (typically the first one provided in the request)."
                                         }
                                     }
                                 },
                                 "example": {
                                     "userId": "f0a15a42-f7fc-4b09-a9ab-fabc76d9f332",
-                                    "identifier": "john.doe_2025"
+                                    "identifier": "beneson_test_21"
                                 }
                             }
                         }
                     },
                     "400": {
-                        "description": "Bad Request - Invalid request or identifier type.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - Invalid access token."
-                    },
-                    "403": {
-                        "description": "Forbidden - Insufficient permissions."
-                    },
-                    "409": {
-                        "description": "Conflict - User already exists.",
+                        "description": "Bad Request \n\n Invalid request format, missing required fields, or unsupported identifier type.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -159,10 +159,37 @@
                                     "properties": {
                                         "error": {
                                             "type": "string",
-                                            "description": "Error message.",
-                                            "example": "User already exists"
+                                            "description": "Error message describing what went wrong."
                                         }
                                     }
+                                },
+                                "example": {
+                                    "error": "Invalid identifier type"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized\n\nInvalid or missing authentication credentials."
+                    },
+                    "403": {
+                        "description": "Forbidden\n\nInsufficient permissions to create users."
+                    },
+                    "409": {
+                        "description": "Conflict\n\nOne or more of the provided identifiers already exist for another user.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "description": "Error message indicating which identifier already exists."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "error": "User already exists"
                                 }
                             }
                         }
@@ -203,7 +230,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK - User found.",
+                        "description": "OK\n\nUser found.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -243,7 +270,7 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized - Not authenticated."
+                        "description": "Unauthorized\n\nNot authenticated."
                     }
                 },
                 "security": [
@@ -296,6 +323,10 @@
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/credentials"
+                            },
+                            "example": {
+                                "appkey": "vtexappkey-example-YSWQFZ",
+                                "apptoken": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjA1MTZFN0IwMDNFODMxRTg0QkFDOTg2NzBCNUM2QTRERTlBN0RFNkUiLCJ0eXAiOiJqd3QifQ.eyJzdWIiOiJwZWRyby5jb3N0YUB2dGV4LmNvbS5iciIsImFjY291bnQiOiJhcHBsaWFuY2V0aGVtZSIsImF1ZGllbmNlIjoiYWRtaW4iLCJzZXNzIjoiZjU3YjMyMGItMWE3YS00YzlkLWJkNDMtZTE4NDdhYmE1MTE1IiwiZXhwIjoxNjE2NzY3Mjc4LCJ1c2VySWQiOiJmYjU0MmU1MS01NDg4LTRjMzQtOGQxNy1lZDhmY2Y1OTdhOTQiLCJpYXQiOjE2MwerY2ODA4NzgsImlzcyI6InRva2VuLWVtaXR0ZXIiLCJqdGkiOiJmYTI0YWJiOC03Y2E5LTQ3NjUtYmYzNC1kMmvU5YTgzYjYxZmUifQ.23rn-2dEdAAYXJX2exrxDEdbieyKWsVKABeSUNeFWyhz7xRd7d5EcxwiMLjM3bRaBOKrAA9Op7ocn89c45qQ"
                             }
                         }
                     }
@@ -385,28 +416,30 @@
                                 "properties": {
                                     "providerId": {
                                         "type": "string",
-                                        "description": "Name of the [OAuth provider](https://developers.vtex.com/docs/guides/login-integration-guide-webstore-oauth2) set up in your Admin panel.",
-                                        "example": "custom-oauth-provider"
+                                        "description": "Name of the [OAuth provider](https://developers.vtex.com/docs/guides/login-integration-guide-webstore-oauth2) set up in your Admin panel."
                                     },
                                     "accessToken": {
                                         "type": "string",
-                                        "description": "Access token obtained from your frontend via OAuth integration corresponding with the indicated `providerId`.",
-                                        "example": "dsfDShdgfhDFI1NiIsIrtyZCI6IjFBRjI5MUUwRDY0MERENTlEQTkzRTg0REMxNjQyNjA3ODZEQjY3ODAiLCJ0eXAiOiJqd3QifQ.eyJzdWIiOiJ2dGV4YXBwa2V5LXZ0ZXhoZWxwLVdWQ0FCVCIsImFjY291bdg465DATU4GVscCIsImF1MBllbmNlIjoiYWRtaW4iLCJleHAiOjE2Njk3NzA3MzcsInVzZXJJZCI6IjM5MjNhMmUy5khmMTctNGNiYy04YzU3LWQ3OGFkNmUxYTU2NiIsImlhdCI6MTY2OTc0OTEzNywiaXNzIjoidG9rZW4tZW1HgoRlciIsImp0aSI6IjNiNjAxODA2LTExMzEtNDcwYS05MWJjLTVhM2JhOThiYWQyNiJ9.Q7N8MFa1FMJsQUpxBY29oije4aa-654fgjLFLl6LUY3Wei3MRUVUMRQWkey6Kug8iFPonZ1L-PaFmwfzSz3TCQ"
+                                        "description": "Access token obtained from your frontend via OAuth integration corresponding with the indicated `providerId`."
                                     },
                                     "duration": {
                                         "type": "integer",
                                         "description": "Duration of the token that will be returned, in minutes. The maximum value is `120`. The default is `60` when the duration isn't defined.",
-                                        "example": 90,
                                         "default": 60
                                     }
                                 }
+                            },
+                            "example": {
+                                "providerId": "custom-oauth-provider",
+                                "accessToken": "dsfDShdgfhDFI1NiIsIrtyZCI6IjFBRjI5MUUwRDY0MERENTlEQTkzRTg0REMxNjQyNjA3ODZEQjY3ODAiLCJ0eXAiOiJqd3QifQ.eyJzdWIiOiJ2dGV4YXBwa2V5LXZ0ZXhoZWxwLVdWQ0FCVCIsImFjY291bdg465DATU4GVscCIsImF1MBllbmNlIjoiYWRtaW4iLCJleHAiOjE2Njk3NzA3MzcsInVzZXJJZCI6IjM5MjNhMmUy5khmMTctNGNiYy04YzU3LWQ3OGFkNmUxYTU2NiIsImlhdCI6MTY2OTc0OTEzNywiaXNzIjoidG9rZW4tZW1HgoRlciIsImp0aSI6IjNiNjAxODA2LTExMzEtNDcwYS05MWJjLTVhM2JhOThiYWQyNiJ9.Q7N8MFa1FMJsQUpxBY29oije4aa-654fgjLFLl6LUY3Wei3MRUVUMRQWkey6Kug8iFPonZ1L-PaFmwfzSz3TCQ",
+                                "duration": 90
                             }
                         }
                     }
                 },
                 "responses": {
                     "200": {
-                        "description": "200 - OK",
+                        "description": "OK",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -479,10 +512,12 @@
                                 "properties": {
                                     "token": {
                                         "description": "Value of the `VtexIdclientAutCookie`, [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours.",
-                                        "type": "string",
-                                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                                        "type": "string"
                                     }
                                 }
+                            },
+                            "example": {
+                                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
                             }
                         }
                     }
@@ -601,15 +636,17 @@
                                 "properties": {
                                     "isActive": {
                                         "type": "boolean",
-                                        "description": "Defines if password access is active (`true`) or not (`false`).",
-                                        "example": true
+                                        "description": "Defines if password access is active (`true`) or not (`false`)."
                                     },
                                     "allowRepeated": {
                                         "type": "boolean",
-                                        "description": "Defines if passwords can be repeated (`true`) or not (`false`).",
-                                        "example": false
+                                        "description": "Defines if passwords can be repeated (`true`) or not (`false`)."
                                     }
                                 }
+                            },
+                            "example": {
+                                "isActive": true,
+                                "allowRepeated": false
                             }
                         }
                     }
@@ -755,13 +792,13 @@
                         }
                     },
                     "400": {
-                        "description": "Invalid API key or API key not owned by tenant"
+                        "description": "Bad Request\n\nInvalid API key or API key not owned by tenant."
                     },
                     "409": {
-                        "description": "Conflict - Already has a renewed token pending"
+                        "description": "Conflict\n\nAlready has a renewed token pending."
                     },
                     "500": {
-                        "description": "Unknown server error"
+                        "description": "Internal Server Error\n\nUnknown server error."
                     }
                 }
             }
@@ -829,13 +866,13 @@
                         }
                     },
                     "400": {
-                        "description": "Invalid API key or API key not owned by tenant"
+                        "description": "Bad Request\n\nInvalid API key or API key not owned by tenant."
                     },
                     "404": {
-                        "description": "No renewed API token was found"
+                        "description": "Not Found\n\nNo renewed API token was found."
                     },
                     "500": {
-                        "description": "Unknown server error"
+                        "description": "Internal Server Error\n\nUnknown server error."
                     }
                 }
             }
@@ -874,14 +911,14 @@
                                 "schema": {
                                     "type": "string",
                                     "description": "User ID.",
-                                    "example": "1f6c17e5-06f9-44a9-a459-b3686e03fa9d",
                                     "nullable": true
-                                }
+                                },
+                                "example": "1f6c17e5-06f9-44a9-a459-b3686e03fa9d"
                             }
                         }
                     },
                     "401": {
-                        "description": "Unauthorized. Invalid or missing VtexIdclientAutCookie."
+                        "description": "Unauthorized\n\nInvalid or missing VtexIdclientAutCookie."
                     }
                 },
                 "security": [
@@ -1126,7 +1163,7 @@
                         "description": "OK"
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Bad Request",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1216,6 +1253,10 @@
                                         "description": "User email."
                                     }
                                 }
+                            },
+                            "example": {
+                                "accessKey": "123456",
+                                "login": "user@example.com"
                             }
                         }
                     }
@@ -1227,9 +1268,9 @@
                             "Set-Cookie": {
                                 "description": "Refresh token.",
                                 "schema": {
-                                    "type": "string",
-                                    "example": "vid_rt=QiEOQKuzdRjukvSnsn7F8h1wwkrqq8wWlkk7bXA5LSbTHkbKbYEfDJ7MGb6_pllGWd1VQ-JxQI7UDLvYrCUH9o7i1rOSeSG8zJewZw; expires=Thu, 27 Mar 2025 10:22:49 GMT; domain=apiexamples.myvtex.com; path=/api/vtexid/refreshtoken/webstore; secure; samesite=strict; httponly"
-                                }
+                                    "type": "string"
+                                },
+                                "example": "vid_rt=QiEOQKuzdRjukvSnsn7F8h1wwkrqq8wWlkk7bXA5LSbTHkbKbYEfDJ7MGb6_pllGWd1VQ-JxQI7UDLvYrCUH9o7i1rOSeSG8zJewZw; expires=Thu, 27 Mar 2025 10:22:49 GMT; domain=apiexamples.myvtex.com; path=/api/vtexid/refreshtoken/webstore; secure; samesite=strict; httponly"
                             }
                         },
                         "content": {
@@ -1259,7 +1300,7 @@
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Bad Request",
                         "content": {
                             "application/json": {
                                 "schema": {

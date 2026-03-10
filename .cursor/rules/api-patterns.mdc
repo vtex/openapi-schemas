@@ -1,0 +1,130 @@
+---
+description: Common API code patterns to recognize
+---
+# API Code Patterns
+
+When analyzing code for API documentation:
+
+## C# / ASP.NET Core
+
+### Controllers
+
+```csharp
+[Route("api/[controller]")]
+[ApiController]
+public class ProductsController : ControllerBase
+{
+    [HttpGet("{id}")]
+    [ProducesResponseType(200)]
+    public ActionResult<Product> Get(int id)
+}
+```
+
+### Parameter Attributes
+
+- `[FromRoute]` - Path parameter
+- `[FromQuery]` - Query string
+- `[FromBody]` - Request body
+- `[FromHeader]` - Header value
+
+## Node.js / Express
+
+### Routes
+
+```javascript
+app.get('/api/products/:id', (req, res) => {})
+app.post('/api/products', (req, res) => {})
+```
+
+## Rust / Actix
+
+### Serialization
+
+```rust
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Product {
+    #[serde(rename = "productId")]
+    pub id: String,
+}
+```
+
+## Common Patterns
+
+### Authentication & Security
+
+Identify authentication from code patterns:
+
+#### VTEX Standard Authentication
+
+**Attribute patterns:**
+```csharp
+[VtexAuthorize]                          // Requires VTEX authentication
+[VtexAuthorize("ResourceName")]          // Requires specific License Manager resource
+[AllowAnonymous]                         // Public endpoint, no auth required
+```
+
+**Headers:**
+- `X-VTEX-API-AppKey` + `X-VTEX-API-AppToken` (API keys)
+- `VtexIdclientAutCookie` (User token)
+
+**OpenAPI mapping:**
+- `[VtexAuthorize]` → Use standard VTEX security schemes (appKey/appToken + VtexIdclientAutCookie)
+- `[AllowAnonymous]` → Set `"security": []` for that endpoint
+- No attribute → Check controller-level or middleware configuration
+
+#### ASP.NET Core Standard Authentication
+
+**Attribute patterns:**
+```csharp
+[Authorize]                              // Requires authentication (default scheme)
+[Authorize(Policy = "PolicyName")]       // Requires specific policy
+[Authorize(Roles = "Admin")]             // Requires specific role
+[AllowAnonymous]                         // Public endpoint
+```
+
+**Common schemes:**
+- Bearer token: `Authorization: Bearer {token}`
+- Cookie authentication
+- Basic authentication
+
+#### Node.js / Express
+
+**Middleware patterns:**
+```javascript
+app.use(jwt({ secret: '...' }))          // JWT middleware
+router.use(authMiddleware)               // Custom auth
+router.get('/public', ...)               // No middleware = public
+router.get('/protected', auth, ...)      // With auth middleware
+```
+
+#### API Keys in Headers
+
+Look for header validation:
+```csharp
+Request.Headers["X-API-Key"]
+Request.Headers["Authorization"]
+context.Request.Headers["X-Custom-Auth"]
+```
+
+#### Security Decision Tree
+
+1. **Check controller/method attributes** for auth decorators
+2. **Look at middleware** registration in startup/configuration
+3. **Check base classes** for inherited auth requirements
+4. **Examine header validation** in the code
+5. **Review startup configuration** for auth services
+
+### Response Types
+
+- 200: Success
+- 201: Created
+- 400: Bad Request
+- 401: Unauthorized
+- 404: Not Found
+- 500: Server Error
+
+### Pagination
+
+- Query params: page, pageSize, limit, offset
+- Response fields: total, hasMore, nextPage
