@@ -1,0 +1,1209 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "version": "1.0.0",
+        "title": "VTEX Shopee Integration API",
+        "description": "The VTEX Shopee Integration API provides endpoints for handling Shopee order webhooks, reprocessing order synchronization workflows, querying Shopee order data, and receiving VTEX marketplace order callbacks."
+    },
+    "servers": [
+        {
+            "url": "https://{accountName}.{environment}.com.br",
+            "description": "VTEX server URL.",
+            "variables": {
+                "accountName": {
+                    "description": "Name of the VTEX account. Used as part of the URL.",
+                    "default": "apiexamples"
+                },
+                "environment": {
+                    "description": "Environment to use. Used as part of the URL.",
+                    "enum": [
+                        "vtexcommercestable"
+                    ],
+                    "default": "vtexcommercestable"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/api/shopeeintegration/order/hook": {
+            "post": {
+                "tags": [
+                    "Shopee orders"
+                ],
+                "summary": "Receive Shopee order webhook",
+                "description": "Receives Shopee webhook notifications and queues order messages for asynchronous processing.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| Checkout         | CheckoutResources | **Orders Full Access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| OMS - Full access | View order |\r\n| Checkout Admin | View order |\r\n| IntegrationProfile - Fulfillment Oms | View order |\r\n| OMS - Full access | Orders Full Access |\r\n| Checkout Admin | Orders Full Access |\r\n| IntegrationProfile - Fulfillment Oms | Orders Full Access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "security": [],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ShopeeOrderHookRequest"
+                            },
+                            "example": {
+                                "code": 3,
+                                "shopId": 123456789,
+                                "data": {
+                                    "orderSn": "240101ABC123",
+                                    "status": "READY_TO_SHIP"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "200 OK\n\nWebhook processed successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GenericSuccessResponse"
+                                },
+                                "example": {
+                                    "message": "Webhook processed successfully."
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "400 Bad Request\n\nInvalid webhook payload.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Invalid JSON payload."
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "500 Internal Server Error\n\nUnexpected error while processing the webhook.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Unexpected error while processing the webhook."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/shopeeintegration/order/shipping/label/legacy": {
+            "get": {
+                "tags": [
+                    "Shopee orders"
+                ],
+                "summary": "Download legacy shipping label",
+                "description": "Downloads a legacy shipping label for the given Shopee order.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| Checkout         | CheckoutResources | **Orders Full Access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| OMS - Full access | View order |\r\n| Checkout Admin | View order |\r\n| IntegrationProfile - Fulfillment Oms | View order |\r\n| OMS - Full access | Orders Full Access |\r\n| Checkout Admin | Orders Full Access |\r\n| IntegrationProfile - Fulfillment Oms | Orders Full Access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "security": [],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AccountNameQuery"
+                    },
+                    {
+                        "$ref": "#/components/parameters/ShopeeOrderIdQuery"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "200 OK\n\nLegacy shipping label retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShippingLabelLegacyResponse"
+                                },
+                                "example": {
+                                    "orderId": "240101ABC123",
+                                    "labelFormat": "PDF",
+                                    "labelUrl": "https://storage.example.com/shopee/labels/240101ABC123.pdf",
+                                    "labelContentBase64": null
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "400 Bad Request\n\nMissing or invalid query parameters.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Account name (an) is required."
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "500 Internal Server Error\n\nUnexpected error while downloading the label.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Unexpected error while downloading the label."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/shopeeintegration/order/{orderId}": {
+            "get": {
+                "tags": [
+                    "Shopee orders"
+                ],
+                "summary": "Get Shopee order details",
+                "description": "Gets order details from Shopee for the informed account and order identifier.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| Checkout         | CheckoutResources | **Orders Full Access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| OMS - Full access | View order |\r\n| Checkout Admin | View order |\r\n| IntegrationProfile - Fulfillment Oms | View order |\r\n| OMS - Full access | Orders Full Access |\r\n| Checkout Admin | Orders Full Access |\r\n| IntegrationProfile - Fulfillment Oms | Orders Full Access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AccountNameQuery"
+                    },
+                    {
+                        "$ref": "#/components/parameters/OrderIdPath"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "200 OK\n\nShopee order details retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShopeeOrderDetailsResponse"
+                                },
+                                "example": {
+                                    "orderId": "240101ABC123",
+                                    "accountName": "store01",
+                                    "status": "READY_TO_SHIP",
+                                    "createdAt": "2026-03-12T13:00:00Z",
+                                    "updatedAt": "2026-03-12T13:15:00Z",
+                                    "totalAmount": 259.9,
+                                    "currency": "BRL",
+                                    "items": [
+                                        {
+                                            "sku": "SKU-001",
+                                            "name": "Running Shoes",
+                                            "quantity": 1,
+                                            "unitPrice": 259.9
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "400 Bad Request\n\nMissing account name or order identifier.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Account name (an) and OrderId is required."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/shopeeintegration/order/reprocess/readytoship": {
+            "post": {
+                "tags": [
+                    "Shopee orders"
+                ],
+                "summary": "Reprocess ready-to-ship orders",
+                "description": "Forces creation and invoicing of Shopee orders in READY_TO_SHIP status for a given time window.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| Checkout         | CheckoutResources | **Orders Full Access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| OMS - Full access | View order |\r\n| Checkout Admin | View order |\r\n| IntegrationProfile - Fulfillment Oms | View order |\r\n| OMS - Full access | Orders Full Access |\r\n| Checkout Admin | Orders Full Access |\r\n| IntegrationProfile - Fulfillment Oms | Orders Full Access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AccountNameQuery"
+                    },
+                    {
+                        "$ref": "#/components/parameters/TimeWindowQuery"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "200 OK\n\nReady-to-ship reprocessing completed successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReadyToShipSyncResponse"
+                                },
+                                "example": {
+                                    "message": "Ready-to-ship reprocessing completed successfully.",
+                                    "accountName": "store01",
+                                    "timeWindow": 15
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "400 Bad Request\n\nInvalid request for reprocessing ready-to-ship orders.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Not able to reprocess all Ready to Ship orders."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/shopeeintegration/order/reprocess/cancelled": {
+            "post": {
+                "tags": [
+                    "Shopee orders"
+                ],
+                "summary": "Reprocess cancelled orders",
+                "description": "Forces VTEX OMS cancellation for Shopee orders in CANCELLED status for a given time window.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| Checkout         | CheckoutResources | **Orders Full Access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| OMS - Full access | View order |\r\n| Checkout Admin | View order |\r\n| IntegrationProfile - Fulfillment Oms | View order |\r\n| OMS - Full access | Orders Full Access |\r\n| Checkout Admin | Orders Full Access |\r\n| IntegrationProfile - Fulfillment Oms | Orders Full Access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AccountNameQuery"
+                    },
+                    {
+                        "$ref": "#/components/parameters/TimeWindowQuery"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "200 OK\n\nCancelled orders reprocessing completed successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CancelledSyncResponse"
+                                },
+                                "example": {
+                                    "message": "Cancelled orders reprocessing completed successfully.",
+                                    "accountName": "store01",
+                                    "timeWindow": 15
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "400 Bad Request\n\nInvalid request for reprocessing cancelled orders.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Not able to reprocess all Cancelled orders."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/shopeeintegration/order/pvt/{orderId}/escrow": {
+            "get": {
+                "tags": [
+                    "Shopee orders"
+                ],
+                "summary": "Get order escrow details",
+                "description": "Gets escrow details for a Shopee order.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| Checkout         | CheckoutResources | **Orders Full Access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| OMS - Full access | View order |\r\n| Checkout Admin | View order |\r\n| IntegrationProfile - Fulfillment Oms | View order |\r\n| OMS - Full access | Orders Full Access |\r\n| Checkout Admin | Orders Full Access |\r\n| IntegrationProfile - Fulfillment Oms | Orders Full Access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AccountNameQuery"
+                    },
+                    {
+                        "$ref": "#/components/parameters/OrderIdPath"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "200 OK\n\nEscrow details retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EscrowDetailsResponse"
+                                },
+                                "example": {
+                                    "orderId": "240101ABC123",
+                                    "releaseStatus": "HOLDING",
+                                    "escrowAmount": 259.9,
+                                    "currency": "BRL",
+                                    "lastUpdated": "2026-03-12T13:30:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "400 Bad Request\n\nInvalid request for escrow details.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Invalid request for escrow details."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/shopeeintegration/order/pvt/{orderId}/build": {
+            "get": {
+                "tags": [
+                    "Shopee orders"
+                ],
+                "summary": "Build VTEX order payload",
+                "description": "Builds and formats a Shopee order payload to the VTEX fulfillment format.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| Checkout         | CheckoutResources | **Orders Full Access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| OMS - Full access | View order |\r\n| Checkout Admin | View order |\r\n| IntegrationProfile - Fulfillment Oms | View order |\r\n| OMS - Full access | Orders Full Access |\r\n| Checkout Admin | Orders Full Access |\r\n| IntegrationProfile - Fulfillment Oms | Orders Full Access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AccountNameQuery"
+                    },
+                    {
+                        "$ref": "#/components/parameters/OrderIdPath"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "200 OK\n\nOrder build generated successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderBuildResponse"
+                                },
+                                "example": {
+                                    "orderId": "240101ABC123",
+                                    "vtexOrderId": "VTX-123456",
+                                    "status": "READY_TO_FULFILL",
+                                    "items": [
+                                        {
+                                            "sku": "SKU-001",
+                                            "name": "Running Shoes",
+                                            "quantity": 1,
+                                            "price": 259.9
+                                        }
+                                    ],
+                                    "shippingData": {
+                                        "carrierName": "Shopee Xpress",
+                                        "trackingNumber": "BR123456789",
+                                        "shippingEstimateDate": "2026-03-15T18:00:00Z"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "400 Bad Request\n\nInvalid request for order build.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Invalid request for order build."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/shopeeintegration/order/pvt/orderfrom/config": {
+            "get": {
+                "tags": [
+                    "Shopee orders"
+                ],
+                "summary": "Configure seller order form apps",
+                "description": "Creates or updates marketplace order form app settings for the informed account.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| Checkout         | CheckoutResources | **Orders Full Access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| OMS - Full access | View order |\r\n| Checkout Admin | View order |\r\n| IntegrationProfile - Fulfillment Oms | View order |\r\n| OMS - Full access | Orders Full Access |\r\n| Checkout Admin | Orders Full Access |\r\n| IntegrationProfile - Fulfillment Oms | Orders Full Access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AccountNameQuery"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "200 OK\n\nOrder form app settings updated successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderFormConfigResponse"
+                                },
+                                "example": {
+                                    "message": "Order Form atualizado com sucesso.",
+                                    "accountName": "store01"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "404 Not Found\n\nShopee credentials were not found for the account.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Shopee credentials were not found for the account."
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "400 Bad Request\n\nInvalid request for order form configuration.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Invalid request for order form configuration."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/shopeeintegration/{accountName}/pvt/orders/{mktplaceOrderId}/cancel": {
+            "post": {
+                "tags": [
+                    "VTEX order callbacks"
+                ],
+                "summary": "Cancel marketplace order",
+                "description": "Receives a VTEX cancellation callback and queues the marketplace order cancellation flow.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| Checkout         | CheckoutResources | **Orders Full Access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| OMS - Full access | View order |\r\n| Checkout Admin | View order |\r\n| IntegrationProfile - Fulfillment Oms | View order |\r\n| OMS - Full access | Orders Full Access |\r\n| Checkout Admin | Orders Full Access |\r\n| IntegrationProfile - Fulfillment Oms | Orders Full Access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "security": [],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AccountNamePath"
+                    },
+                    {
+                        "$ref": "#/components/parameters/MarketplaceOrderIdPath"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "200 OK\n\nCancellation callback accepted successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GenericSuccessResponse"
+                                },
+                                "example": {
+                                    "message": "Cancellation callback accepted successfully."
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "400 Bad Request\n\nInvalid cancellation callback request.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Invalid cancellation callback request."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/shopeeintegration/{accountName}/pub/orders/{mktplaceOrderId}/invoice": {
+            "post": {
+                "tags": [
+                    "VTEX order callbacks"
+                ],
+                "summary": "Invoice marketplace order via public route",
+                "description": "Receives a VTEX invoice callback on the public route and queues invoice processing.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| Checkout         | CheckoutResources | **Orders Full Access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| OMS - Full access | View order |\r\n| Checkout Admin | View order |\r\n| IntegrationProfile - Fulfillment Oms | View order |\r\n| OMS - Full access | Orders Full Access |\r\n| Checkout Admin | Orders Full Access |\r\n| IntegrationProfile - Fulfillment Oms | Orders Full Access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "security": [],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AccountNamePath"
+                    },
+                    {
+                        "$ref": "#/components/parameters/MarketplaceOrderIdPath"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VTEXInvoiceOrderRequest"
+                            },
+                            "example": {
+                                "invoiceNumber": "NF-123456",
+                                "invoiceDate": "2026-03-12T13:45:00Z",
+                                "invoiceValue": 259.9,
+                                "trackingNumber": "BR123456789",
+                                "trackingUrl": "https://tracking.example.com/BR123456789"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "200 OK\n\nInvoice callback accepted successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GenericSuccessResponse"
+                                },
+                                "example": {
+                                    "message": "Invoice callback accepted successfully."
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "400 Bad Request\n\nInvalid invoice callback request.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Invalid invoice callback request."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/shopeeintegration/{accountName}/pvt/orders/{mktplaceOrderId}/invoice": {
+            "post": {
+                "tags": [
+                    "VTEX order callbacks"
+                ],
+                "summary": "Invoice marketplace order via private route",
+                "description": "Receives a VTEX invoice callback on the private route and queues invoice processing.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| Checkout         | CheckoutResources | **Orders Full Access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| OMS - Full access | View order |\r\n| Checkout Admin | View order |\r\n| IntegrationProfile - Fulfillment Oms | View order |\r\n| OMS - Full access | Orders Full Access |\r\n| Checkout Admin | Orders Full Access |\r\n| IntegrationProfile - Fulfillment Oms | Orders Full Access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "security": [],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AccountNamePath"
+                    },
+                    {
+                        "$ref": "#/components/parameters/MarketplaceOrderIdPath"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VTEXInvoiceOrderRequest"
+                            },
+                            "example": {
+                                "invoiceNumber": "NF-123456",
+                                "invoiceDate": "2026-03-12T13:45:00Z",
+                                "invoiceValue": 259.9,
+                                "trackingNumber": "BR123456789",
+                                "trackingUrl": "https://tracking.example.com/BR123456789"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "200 OK\n\nInvoice callback accepted successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GenericSuccessResponse"
+                                },
+                                "example": {
+                                    "message": "Invoice callback accepted successfully."
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "400 Bad Request\n\nInvalid invoice callback request.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Invalid invoice callback request."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/shopeeintegration/{accountName}/pub/orders/{mktplaceOrderId}/cancelDelivery": {
+            "post": {
+                "tags": [
+                    "VTEX order callbacks"
+                ],
+                "summary": "Cancel marketplace delivery",
+                "description": "Cancels delivery for a marketplace order received through VTEX callback.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| Checkout         | CheckoutResources | **Orders Full Access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| OMS - Full access | View order |\r\n| Checkout Admin | View order |\r\n| IntegrationProfile - Fulfillment Oms | View order |\r\n| OMS - Full access | Orders Full Access |\r\n| Checkout Admin | Orders Full Access |\r\n| IntegrationProfile - Fulfillment Oms | Orders Full Access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "security": [],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AccountNamePath"
+                    },
+                    {
+                        "$ref": "#/components/parameters/MarketplaceOrderIdPath"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "200 OK\n\nDelivery cancellation completed successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GenericSuccessResponse"
+                                },
+                                "example": {
+                                    "message": "Delivery cancellation completed successfully."
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "400 Bad Request\n\nInvalid delivery cancellation request.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Conta não encontrada."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "security": [
+        {
+            "appKey": [],
+            "appToken": []
+        },
+        {
+            "VtexIdclientAutCookie": []
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "VtexIdclientAutCookie": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "VtexIdclientAutCookie",
+                "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
+            }
+        },
+        "parameters": {
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "AccountNameQuery": {
+                "name": "an",
+                "in": "query",
+                "description": "Account name used by the Shopee integration.",
+                "required": true,
+                "schema": {
+                    "type": "string",
+                    "example": "store01"
+                }
+            },
+            "ShopeeOrderIdQuery": {
+                "name": "shopeeOrderId",
+                "in": "query",
+                "description": "Shopee order identifier.",
+                "required": true,
+                "schema": {
+                    "type": "string",
+                    "example": "240101ABC123"
+                }
+            },
+            "OrderIdPath": {
+                "name": "orderId",
+                "in": "path",
+                "description": "Shopee order identifier.",
+                "required": true,
+                "schema": {
+                    "type": "string",
+                    "example": "240101ABC123"
+                }
+            },
+            "TimeWindowQuery": {
+                "name": "timeWindow",
+                "in": "query",
+                "description": "Time window in days to look back when reprocessing orders.",
+                "required": false,
+                "schema": {
+                    "type": "integer",
+                    "format": "int32",
+                    "default": 15,
+                    "minimum": 1,
+                    "example": 15
+                }
+            },
+            "AccountNamePath": {
+                "name": "accountName",
+                "in": "path",
+                "description": "VTEX account name.",
+                "required": true,
+                "schema": {
+                    "type": "string",
+                    "example": "store01"
+                }
+            },
+            "MarketplaceOrderIdPath": {
+                "name": "mktplaceOrderId",
+                "in": "path",
+                "description": "Marketplace order identifier.",
+                "required": true,
+                "schema": {
+                    "type": "string",
+                    "example": "MKT-123456"
+                }
+            }
+        },
+        "schemas": {
+            "GenericSuccessResponse": {
+                "type": "object",
+                "description": "Generic success response payload.",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "description": "Result message."
+                    }
+                }
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "description": "Generic error response payload.",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "description": "Error message."
+                    },
+                    "stackTrace": {
+                        "type": "string",
+                        "description": "Stack trace when available.",
+                        "nullable": true
+                    }
+                }
+            },
+            "ShopeeOrderHookRequest": {
+                "type": "object",
+                "description": "Webhook payload sent by Shopee.",
+                "required": [
+                    "code",
+                    "shopId",
+                    "data"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Shopee webhook event code."
+                    },
+                    "shopId": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "Shopee shop identifier."
+                    },
+                    "data": {
+                        "type": "object",
+                        "description": "Order payload details.",
+                        "required": [
+                            "orderSn",
+                            "status"
+                        ],
+                        "properties": {
+                            "orderSn": {
+                                "type": "string",
+                                "description": "Shopee order serial number."
+                            },
+                            "status": {
+                                "type": "string",
+                                "description": "Shopee order status."
+                            }
+                        }
+                    }
+                }
+            },
+            "ShippingLabelLegacyResponse": {
+                "type": "object",
+                "description": "Legacy shipping label response payload.",
+                "properties": {
+                    "orderId": {
+                        "type": "string",
+                        "description": "Shopee order identifier."
+                    },
+                    "labelFormat": {
+                        "type": "string",
+                        "description": "Label file format."
+                    },
+                    "labelUrl": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Download URL for the legacy label."
+                    },
+                    "labelContentBase64": {
+                        "type": "string",
+                        "description": "Legacy label content in base64 when available.",
+                        "nullable": true
+                    }
+                }
+            },
+            "ShopeeOrderDetailsResponse": {
+                "type": "object",
+                "description": "Shopee order details payload.",
+                "properties": {
+                    "orderId": {
+                        "type": "string",
+                        "description": "Shopee order identifier."
+                    },
+                    "accountName": {
+                        "type": "string",
+                        "description": "VTEX account name associated with the order."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Current Shopee order status."
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date and time when the order was created."
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date and time when the order was last updated."
+                    },
+                    "totalAmount": {
+                        "type": "number",
+                        "format": "double",
+                        "description": "Order total amount."
+                    },
+                    "currency": {
+                        "type": "string",
+                        "description": "Currency code."
+                    },
+                    "items": {
+                        "type": "array",
+                        "description": "Order item list.",
+                        "items": {
+                            "$ref": "#/components/schemas/ShopeeOrderItem"
+                        }
+                    }
+                }
+            },
+            "ShopeeOrderItem": {
+                "type": "object",
+                "description": "Shopee order item payload.",
+                "properties": {
+                    "sku": {
+                        "type": "string",
+                        "description": "Item SKU."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Item name."
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Purchased quantity."
+                    },
+                    "unitPrice": {
+                        "type": "number",
+                        "format": "double",
+                        "description": "Unit price."
+                    }
+                }
+            },
+            "ReadyToShipSyncResponse": {
+                "type": "object",
+                "description": "Ready-to-ship reprocessing result payload.",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "description": "Result message."
+                    },
+                    "accountName": {
+                        "type": "string",
+                        "description": "Account name used for reprocessing."
+                    },
+                    "timeWindow": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Time window used for reprocessing in days."
+                    }
+                }
+            },
+            "CancelledSyncResponse": {
+                "type": "object",
+                "description": "Cancelled orders reprocessing result payload.",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "description": "Result message."
+                    },
+                    "accountName": {
+                        "type": "string",
+                        "description": "Account name used for reprocessing."
+                    },
+                    "timeWindow": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Time window used for reprocessing in days."
+                    }
+                }
+            },
+            "EscrowDetailsResponse": {
+                "type": "object",
+                "description": "Escrow detail payload for a Shopee order.",
+                "properties": {
+                    "orderId": {
+                        "type": "string",
+                        "description": "Shopee order identifier."
+                    },
+                    "releaseStatus": {
+                        "type": "string",
+                        "description": "Escrow release status."
+                    },
+                    "escrowAmount": {
+                        "type": "number",
+                        "format": "double",
+                        "description": "Escrow amount."
+                    },
+                    "currency": {
+                        "type": "string",
+                        "description": "Currency code."
+                    },
+                    "lastUpdated": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date and time of the latest escrow update."
+                    }
+                }
+            },
+            "OrderBuildResponse": {
+                "type": "object",
+                "description": "Order build payload converted to VTEX fulfillment format.",
+                "properties": {
+                    "orderId": {
+                        "type": "string",
+                        "description": "Shopee order identifier."
+                    },
+                    "vtexOrderId": {
+                        "type": "string",
+                        "description": "Generated VTEX order identifier."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Order processing status."
+                    },
+                    "items": {
+                        "type": "array",
+                        "description": "Built order items.",
+                        "items": {
+                            "$ref": "#/components/schemas/OrderBuildItem"
+                        }
+                    },
+                    "shippingData": {
+                        "type": "object",
+                        "description": "Shipping information for the built order.",
+                        "properties": {
+                            "carrierName": {
+                                "type": "string",
+                                "description": "Carrier name."
+                            },
+                            "trackingNumber": {
+                                "type": "string",
+                                "description": "Tracking number."
+                            },
+                            "shippingEstimateDate": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Estimated shipping date."
+                            }
+                        }
+                    }
+                }
+            },
+            "OrderBuildItem": {
+                "type": "object",
+                "description": "Built order item payload.",
+                "properties": {
+                    "sku": {
+                        "type": "string",
+                        "description": "Item SKU."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Item name."
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Item quantity."
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "double",
+                        "description": "Item total price."
+                    }
+                }
+            },
+            "OrderFormConfigResponse": {
+                "type": "object",
+                "description": "Order form configuration result payload.",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "description": "Configuration result message."
+                    },
+                    "accountName": {
+                        "type": "string",
+                        "description": "Account name used for the configuration."
+                    }
+                }
+            },
+            "VTEXInvoiceOrderRequest": {
+                "type": "object",
+                "description": "Invoice callback payload received from VTEX.",
+                "required": [
+                    "invoiceNumber",
+                    "invoiceDate",
+                    "invoiceValue"
+                ],
+                "properties": {
+                    "invoiceNumber": {
+                        "type": "string",
+                        "description": "Invoice number."
+                    },
+                    "invoiceDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Invoice issuance date and time."
+                    },
+                    "invoiceValue": {
+                        "type": "number",
+                        "format": "double",
+                        "description": "Invoice amount."
+                    },
+                    "trackingNumber": {
+                        "type": "string",
+                        "description": "Tracking number associated with the invoice.",
+                        "nullable": true
+                    },
+                    "trackingUrl": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Tracking URL associated with the invoice.",
+                        "nullable": true
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Shopee orders"
+        },
+        {
+            "name": "VTEX order callbacks"
+        }
+    ]
+}
