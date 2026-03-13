@@ -1,0 +1,430 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Bulk Pricing API",
+        "description": "The Bulk Pricing API addresses the performance limitations of per-item API calls by implementing an asynchronous, fault-tolerant processing model optimized to maintain data consistency while maximizing throughput.\r\n\r\nThis API enables high-throughput, asynchronous processing of large-scale pricing updates via CSV file uploads. The workflow involves three main steps:\r\n\r\n1. **Start a batch import** by sending a `POST` request specifying the import type (`base-prices` or `fixed-prices`). The API returns a pre-signed upload URL and a batch ID.\r\n2. **Upload the CSV file** directly to the pre-signed URL using the `PUT` method and headers provided in the response.\r\n3. **Check batch status** to monitor processing progress and retrieve error details if needed.\r\n\r\n## Index\r\n\r\n### Batch imports\r\n\r\n- `POST` [Import prices](https://developers.vtex.com/docs/api-reference/bulk-pricing-api#post-/api/price-importer/pvt/import/-importType-)\r\n\r\n### Batch status\r\n\r\n- `GET` [Get batch status](https://developers.vtex.com/docs/api-reference/bulk-pricing-api#get-/api/price-importer/pvt/batches/-batchId-)\r\n- `GET` [Get batch errors](https://developers.vtex.com/docs/api-reference/bulk-pricing-api#get-/api/price-importer/pvt/batches/-batchId-/errors)\r\n\r\n## Common parameters in the documentation\r\n\r\n| Parameter name | Description | Type |\r\n| - | - | - |\r\n| `{{accountName}}` | Name of the VTEX account. Used as part of the URL. | Server variable. |\r\n| `{{environment}}` | Environment to use. The default value is `vtexcommercestable`. Used in the URL. | Server variable. |\r\n| `X-VTEX-API-AppKey` | Unique identifier of the API key. Must be used together with `X-VTEX-API-AppToken`. | Authentication header |\r\n| `X-VTEX-API-AppToken` | Secret token of the API key. Must be used together with `X-VTEX-API-AppKey`. | Authentication header |\r\n| `VtexIdclientAutCookie` | User token valid for 24 hours. Alternative to `appKey` + `appToken`. | Authentication header |",
+        "contact": {},
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "https://{accountName}.{environment}.com.br",
+            "description": "VTEX server URL.",
+            "variables": {
+                "accountName": {
+                    "description": "Name of the VTEX account. Used as part of the URL.",
+                    "default": "apiexamples"
+                },
+                "environment": {
+                    "description": "Environment to use. Used as part of the URL.",
+                    "enum": [
+                        "vtexcommercestable"
+                    ],
+                    "default": "vtexcommercestable"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/api/price-importer/pvt/import/{importType}": {
+            "post": {
+                "tags": [
+                    "Batch imports"
+                ],
+                "summary": "Import prices",
+                "description": "Starts an asynchronous batch pricing import job. Send a request specifying the import type (`base-prices` for base prices or `fixed-prices` for fixed prices) and the file metadata. The API returns a pre-signed upload URL and a unique batch ID to track the import.\r\n\r\nAfter receiving the response, upload the CSV file directly to the pre-signed URL using the `PUT` method and the headers specified in the `upload` object. The maximum file size is 500 MB.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Pricing | Price List | **Modify prices** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "importType",
+                        "in": "path",
+                        "description": "Type of price import. Use `base-prices` for base prices or `fixed-prices` for fixed prices.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "base-prices",
+                                "fixed-prices"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "an",
+                        "in": "query",
+                        "description": "Tenant account identifier. Can be sent as a query string or identified through the host URL.",
+                        "required": false,
+                        "style": "form",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "output",
+                        "in": "query",
+                        "description": "Output notification method for when the import job finishes. The target email or webhook URL is configured separately.",
+                        "required": false,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "none",
+                                "email",
+                                "webhook"
+                            ],
+                            "default": "none"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "contentLengthBytes"
+                                ],
+                                "properties": {
+                                    "contentType": {
+                                        "type": "string",
+                                        "description": "MIME type of the file. Must be `text/csv`."
+                                    },
+                                    "contentLengthBytes": {
+                                        "type": "integer",
+                                        "description": "File size in bytes. Used for upload validation."
+                                    }
+                                }
+                            },
+                            "example": {
+                                "contentType": "text/csv",
+                                "contentLengthBytes": 524288000
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "batchId": {
+                                            "type": "string",
+                                            "format": "uuid",
+                                            "description": "Unique identifier for the batch job."
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "description": "Initial status of the batch job. Returns `AWAITING_UPLOAD` indicating the batch was created and is waiting for the file upload."
+                                        },
+                                        "upload": {
+                                            "type": "object",
+                                            "description": "Pre-signed upload details used to upload the CSV file directly to storage.",
+                                            "properties": {
+                                                "method": {
+                                                    "type": "string",
+                                                    "description": "HTTP method to use for the upload. Always `PUT`."
+                                                },
+                                                "url": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "Pre-signed URL for the CSV file upload."
+                                                },
+                                                "headers": {
+                                                    "type": "object",
+                                                    "description": "Required headers for the upload request."
+                                                },
+                                                "expiresAt": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "description": "URL expiration timestamp in ISO 8601 format."
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "batchId": "550e8400-e29b-41d4-a716-446655440000",
+                                    "status": "AWAITING_UPLOAD",
+                                    "upload": {
+                                        "method": "PUT",
+                                        "url": "https://pricing-bucket.s3.amazonaws.com/imports/550e8400.csv?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=600",
+                                        "headers": {
+                                            "Content-Type": "text/csv"
+                                        },
+                                        "expiresAt": "2026-01-12T20:10:00Z"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "413": {
+                        "description": "Payload Too Large\n\nFile exceeds the 500 MB size limit."
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity\n\nValidation error in the file or its rows."
+                    },
+                    "429": {
+                        "description": "Too Many Requests\n\nThe rate limit has been exceeded."
+                    },
+                    "503": {
+                        "description": "Service Unavailable\n\nRetry with exponential backoff."
+                    }
+                }
+            }
+        },
+        "/api/price-importer/pvt/batches/{batchId}": {
+            "get": {
+                "tags": [
+                    "Batch status"
+                ],
+                "summary": "Get batch status",
+                "description": "Retrieves the current status and metadata of a batch pricing import job.\r\n\r\nThe `status` field indicates the current processing stage and can have the following values:\r\n\r\n- `AWAITING_UPLOAD`: Batch created, waiting for file upload.\r\n- `RECEIVED`: Waiting for processing.\r\n- `VALIDATING`: An initial file validation is being performed.\r\n- `PROCESSING`: Batch is being processed.\r\n- `DOCUMENTING`: The import results are being generated.\r\n- `COMPLETED`: All rows processed successfully.\r\n- `COMPLETED_WITH_ERRORS`: Processing finished with some row errors.\r\n- `FAILED`: Processing failed.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Pricing | Price List | **Read prices** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "batchId",
+                        "in": "path",
+                        "description": "Unique identifier of the batch job.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "batchId": {
+                                            "type": "string",
+                                            "format": "uuid",
+                                            "description": "Unique identifier for the batch job."
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "description": "Type of price import job.",
+                                            "enum": [
+                                                "base",
+                                                "fixed"
+                                            ]
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "description": "Current processing status of the batch job.",
+                                            "enum": [
+                                                "AWAITING_UPLOAD",
+                                                "RECEIVED",
+                                                "VALIDATING",
+                                                "PROCESSING",
+                                                "DOCUMENTING",
+                                                "COMPLETED",
+                                                "COMPLETED_WITH_ERRORS",
+                                                "FAILED"
+                                            ]
+                                        },
+                                        "stages": {
+                                            "type": "array",
+                                            "description": "Historical information regarding the past stages and their starting times.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Stage entry with historical processing information."
+                                            }
+                                        },
+                                        "outputs": {
+                                            "type": "array",
+                                            "description": "List of outputs where the results should be sent after the job is finished (email, webhook, or both).",
+                                            "items": {
+                                                "type": "string",
+                                                "description": "Output destination identifier."
+                                            }
+                                        },
+                                        "bytesProcessed": {
+                                            "type": "integer",
+                                            "description": "Amount of bytes processed so far."
+                                        },
+                                        "bytesTotal": {
+                                            "type": "integer",
+                                            "description": "Total amount of bytes in the uploaded file."
+                                        },
+                                        "errorCount": {
+                                            "type": "integer",
+                                            "description": "Number of rows that failed to be imported due to errors."
+                                        },
+                                        "createdAt": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "description": "Batch creation timestamp in ISO 8601 format."
+                                        },
+                                        "startedAt": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "description": "Processing batch start timestamp in ISO 8601 format."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "batchId": "550e8400-e29b-41d4-a716-446655440000",
+                                    "type": "base",
+                                    "status": "PROCESSING",
+                                    "outputs": [
+                                        "webhook:https://www.example.com/callback",
+                                        "email:user@example.com"
+                                    ],
+                                    "bytesProcessed": 8500000,
+                                    "bytesTotal": 13800000,
+                                    "errorCount": 0,
+                                    "createdAt": "2026-01-12T20:00:00Z",
+                                    "startedAt": "2026-01-12T20:01:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                }
+            }
+        },
+        "/api/price-importer/pvt/batches/{batchId}/errors": {
+            "get": {
+                "tags": [
+                    "Batch status"
+                ],
+                "summary": "Get batch errors",
+                "description": "Retrieves a pre-signed URL containing a CSV file with the errors from a batch pricing import job. The CSV file has the same format as the import file, with two additional columns: `Error Code` and `Error Message`.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Pricing | Price List | **Read prices** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "batchId",
+                        "in": "path",
+                        "description": "Unique identifier of the batch job.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "url": {
+                                            "type": "string",
+                                            "format": "uri",
+                                            "description": "Pre-signed URL containing a CSV file with error details. The CSV includes the same columns as the import file plus `Error Code` and `Error Message`."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "url": "https://pricing-bucket.s3.amazonaws.com/errors/550e8400-e29b-41d4-a716-446655440000.csv?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=600"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                }
+            }
+        }
+    },
+    "security": [
+        {
+            "appKey": [],
+            "appToken": []
+        },
+        {
+            "VtexIdclientAutCookie": []
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "VtexIdclientAutCookie": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "VtexIdclientAutCookie",
+                "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
+            }
+        },
+        "parameters": {
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Batch imports"
+        },
+        {
+            "name": "Batch status"
+        }
+    ]
+}
