@@ -1,0 +1,74 @@
+# This workflow is designed for the vtex/openapi-schemas repository.
+# Copy this file to vtex/openapi-schemas/.github/workflows/index-openapi.yml
+
+name: Index OpenAPI Endpoints
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '*.json'
+  workflow_dispatch:
+    inputs:
+      full_reindex:
+        description: 'Reindex all OpenAPI schemas'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  index-endpoints:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Compute changed files
+        id: changed
+        run: |
+          if [ "${{ github.event.inputs.full_reindex }}" = "true" ] || [ "${{ github.event_name }}" = "workflow_dispatch" -a "${{ github.event.inputs.full_reindex }}" = "true" ]; then
+            FILES=$(ls VTEX\ -\ *.json 2>/dev/null | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          else
+            FILES=$(git diff --name-only --diff-filter=ACMR HEAD~1 HEAD -- '*.json' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          fi
+          echo "files=$FILES" >> $GITHUB_OUTPUT
+          echo "count=$(echo $FILES | jq length)" >> $GITHUB_OUTPUT
+
+      - name: Exit early if no files
+        run: |
+          if [ "${{ steps.changed.outputs.count }}" = "0" ]; then
+            echo "No changed files"
+            exit 0
+          fi
+
+      - name: POST to indexing endpoint
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${{ secrets.INDEXING_URL }}/api/index-openapi" \
+            -H "Content-Type: application/json" \
+            -H "X-Internal-Access-Key: ${{ secrets.INTERNAL_ACCESS_KEY }}" \
+            --max-time 120 \
+            -d "{\"files\": ${{ steps.changed.outputs.files }}}")
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          echo "HTTP Status: $HTTP_CODE"
+          echo "Response: $BODY"
+          
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Indexing failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+          
+          FAILED=$(echo "$BODY" | jq -r '.failed // 0')
+          if [ "$FAILED" != "0" ]; then
+            echo "::warning::$FAILED file(s) failed to index"
+            echo "$BODY" | jq '.errors'
+          fi
+          
+          echo "$BODY" | jq '{processed, failed, endpoints_indexed, duration_ms}'
