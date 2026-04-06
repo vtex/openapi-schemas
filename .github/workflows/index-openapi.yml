@@ -47,12 +47,15 @@ jobs:
           fi
 
       - name: POST to indexing endpoint
+        env:
+          FILES_JSON: ${{ steps.changed.outputs.files }}
         run: |
+          echo "{\"files\": ${FILES_JSON}}" > /tmp/payload.json
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${{ secrets.INDEXING_URL }}/api/index-openapi" \
             -H "Content-Type: application/json" \
             -H "X-Internal-Access-Key: ${{ secrets.INTERNAL_ACCESS_KEY }}" \
             --max-time 120 \
-            -d "{\"files\": ${{ steps.changed.outputs.files }}}")
+            -d @/tmp/payload.json)
           
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
           BODY=$(echo "$RESPONSE" | sed '$d')
