@@ -1,10 +1,10 @@
 {
   "_": {
-    "postman_id": "d1940926-7357-40b4-80f3-1a17f9aed7ab"
+    "postman_id": "52d962a7-11b6-4014-8140-ae632acd4346"
   },
   "item": [
     {
-      "id": "13010d5a-e77d-4a4f-a083-7f6437240f3e",
+      "id": "61fe0d15-3f0c-4536-b0a4-faecf9ce55a4",
       "name": "Dimensions",
       "description": {
         "content": "",
@@ -12,12 +12,12 @@
       },
       "item": [
         {
-          "id": "f6baab90-0e77-4edc-9835-ff2903f28b8d",
+          "id": "0ba355a3-a5fd-424d-a994-766203a701f0",
           "name": "Create dimension",
           "request": {
             "name": "Create dimension",
             "description": {
-              "content": "Creates a new authorization dimension with its associated rules.\n\nDimensions contain a `unitId` field that allows grouping of dimensions by units or business areas, enabling more granular authorization control. This field is automatically filled based on the unit relative to the user creating the dimension.\n\nIf you make this request using an appKey/appToken pair, you must explicitly send the `unitId` field in the request body root.\n\n>❗ While the API supports creating multiple dimensions per unit, the Buyer's Portal frontend limits each unit to one dimension. It is recommended to maintain this structure (one dimension per unit) for consistency with the portal's design.\n\n## Approval dynamic\n\nRules are evaluated based on their `effectType`:\n\n- `effectType: 0` → Automatic approval when the expression is `true`.\n- `effectType: 1` → Automatic denial when the expression is `true`.\n- `effectType: 2` → Pending, requires manual authorization using the [Accept or deny rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/commercial-authorizations/-orderAuthId-/callback) endpoint.\n\nFor pending rules, the `scoreInterval` defines thresholds used during manual authorization. When calling the callback endpoints with a score value, the system compares it against these thresholds:\r\n- Scores ≥ `scoreInterval.accept` accept the rule.\r\n- Scores ≤ `scoreInterval.deny` deny it.\r\n- Scores in between bypass it.\n\n## Hierarchical configuration\n\nEach organization unit has one dimension. To enforce policies from lowest to highest hierarchy levels.\n\n## Dimension priority\n\nControls org unit evaluation order:\n\n- Assign descending values by hierarchy level: top unit = 9999, child units = 9998, grandchild units = 9997.\n- Sibling units share the same priority.\n- System evaluates in ascending order, so lower hierarchy units are checked first.\n\n## Rule priority\n\nWithin each dimension (org unit), rules are evaluated in ascending priority order. Use fixed priorities by policy type:\n\n- `1` = bypass (effectType: 0) - checked first, approves and stops evaluation.\n- `2` = deny (effectType: 1) - checked second, denies and stops evaluation.\n- `3` = sequential workflow (effectType: 2) - checked last, requires approval.\n\n>❗ Set `requireAllRulesAcceptance: false` so the first matching rule executes and stops further evaluation. This enables bypass rules to immediately approve orders without checking deny or approval rules.\n\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Manage Buying Policies | OMS | **ManageBuyingPolicies** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+              "content": "Creates a new authorization dimension with its associated rules.\n\nDimensions contain a `unitId` field that allows grouping of dimensions by units or business areas, enabling more granular authorization control. This field is automatically filled based on the unit relative to the user creating the dimension.\n\nIf you make this request using an appKey/appToken pair, you must explicitly send the `unitId` field in the request body root.\n\n>❗ While the API supports creating multiple dimensions per unit, the Buyer's Portal frontend limits each unit to one dimension. It is recommended to maintain this structure (one dimension per unit) for consistency with the portal's design.\n\n## Approval dynamic\n\nRules are evaluated based on their `effectType`:\n\n- `effectType: 0` → Automatic approval when the expression is `true`.\n- `effectType: 1` → Automatic denial when the expression is `true`.\n- `effectType: 2` → Pending, requires manual authorization using the [Accept or deny rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/commercial-authorizations/-orderAuthId-/callback) endpoint.\n\nFor pending rules, the `scoreInterval` defines thresholds used during manual authorization. When calling the callback endpoints with a score value, the system compares it against these thresholds:\r\n- Scores ≥ `scoreInterval.accept` accept the rule.\r\n- Scores ≤ `scoreInterval.deny` deny it.\r\n- Scores in between bypass it.\n\n## Hierarchical configuration\n\nEach organization unit has one dimension. To enforce policies from lowest to highest hierarchy levels.\n\n## Dimension priority\n\nControls org unit evaluation order:\n\n- Assign descending values by hierarchy level: top unit = 9999, child units = 9998, grandchild units = 9997.\n- Sibling units share the same priority.\n- System evaluates in ascending order, so lower hierarchy units are checked first.\n\n## Rule priority\n\nWithin each dimension (org unit), rules are evaluated in ascending priority order (lower numbers first). Rules must be organized in the following order, with sequential priority values:\n\n1. **Bypass rules** (`effectType: 0`) — checked first, approve and stop evaluation.\n2. **Deny rules** (`effectType: 1`) — checked after all bypass rules, deny and stop evaluation.\n3. **Sequential workflow rules** (`effectType: 2`) — checked last, require manual approval.\n\nPriority values are not fixed to specific numbers. They must be assigned sequentially across all rules, keeping the group order above. For example, with 2 bypass rules, 3 deny rules, and 2 approval rules, priorities would be: `1` and `2` for bypass, `3`, `4`, and `5` for deny, `6` and `7` for approval.\n\n>❗ Set `requireAllRulesAcceptance: false` so the first matching rule executes and stops further evaluation. This enables bypass rules to immediately approve orders without checking deny or approval rules.\n\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| Manage Buying Policies | OMS | **ManageBuyingPolicies** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\n\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
               "type": "text/plain"
             },
             "url": {
@@ -87,7 +87,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "86f2142e-8ce4-4d22-8d36-009e5092589a",
+              "id": "c4919c6c-8e0b-483f-b8a9-179116f32e9b",
               "name": "OK",
               "originalRequest": {
                 "url": {
@@ -164,7 +164,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "6af454dc-5127-4a59-b568-1a603206a83c",
+              "id": "8f9d57e4-1101-4a4d-8945-4289053b3149",
               "name": "Bad Request",
               "originalRequest": {
                 "url": {
@@ -241,7 +241,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "1ba356ca-ce68-445e-ae5e-03da86be061b",
+              "id": "6c35189d-25c7-4c00-b34d-24bf2b71c22e",
               "name": "Forbidden",
               "originalRequest": {
                 "url": {
@@ -319,13 +319,13 @@
             {
               "listen": "test",
               "script": {
-                "id": "e8804270-92d5-4a94-a75f-2bedc563c2d1",
+                "id": "90a3419a-10f7-4a76-b8b8-ab1d8e5a1f82",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[POST]::/:accountName/authorization-dimensions - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
                   "// Validate if response header has matching content-type\npm.test(\"[POST]::/:accountName/authorization-dimensions - Content-Type is application/json\", function () {\n   pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\n});\n",
                   "// Validate if response has JSON Body \npm.test(\"[POST]::/:accountName/authorization-dimensions - Response has JSON Body\", function () {\n    pm.response.to.have.jsonBody();\n});\n",
-                  "// Response Validation\nconst schema = {\"type\":\"object\",\"description\":\"Response object for an authorization dimension.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the dimension.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the authorization dimension.\"},\"unitId\":{\"type\":\"string\",\"description\":\"Identifier of the business unit this dimension belongs to. If this field is not provided in the request body, the value will default to the business unit associated with the user token from the `VtexIdclientAutCookie`.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the dimension.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\",\"ignored\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Execution priority of the dimension. Lower numbers are evaluated first.\"},\"requireAllRulesAcceptance\":{\"type\":\"boolean\",\"description\":\"Whether all listed rules must be accepted for the dimension to be approved.\"},\"ruleCollection\":{\"type\":\"array\",\"description\":\"Collection of rules contained in this dimension.\",\"items\":{\"type\":\"object\",\"description\":\"Rule object in the response containing conditions and actions for authorization.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the rule.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the rule.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the rule.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Evaluation priority for the rule.\"},\"trigger\":{\"type\":\"object\",\"description\":\"Contains the trigger condition and effect logic.\",\"properties\":{\"condition\":{\"type\":\"object\",\"description\":\"Condition that must be met to trigger the rule.\",\"properties\":{\"conditionType\":{\"type\":\"integer\",\"description\":\"Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).\",\"enum\":[0,1,2]},\"description\":{\"type\":\"string\",\"description\":\"Description of the condition.\"},\"expression\":{\"type\":\"string\",\"description\":\"JSONata expression that defines the condition logic.\"}}},\"effect\":{\"type\":\"object\",\"description\":\"Effect to apply when the condition is met.\",\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Description of the effect.\"},\"effectType\":{\"type\":\"integer\",\"description\":\"Type of effect: `0` (approve), `1` (deny), or `2` (pending).\",\"enum\":[0,1,2]}}}}},\"scoreInterval\":{\"type\":\"object\",\"description\":\"Score range for accepting or denying the rule.\",\"properties\":{\"accept\":{\"type\":\"number\",\"description\":\"Minimum score required to accept the rule.\"},\"deny\":{\"type\":\"number\",\"description\":\"Maximum score to deny the rule.\"}}},\"authorizationData\":{\"type\":\"object\",\"description\":\"Defines required authorizers and whether all must approve (only present for rules with `effectType: 2`).\",\"properties\":{\"requireAllApprovals\":{\"type\":\"boolean\",\"description\":\"Whether all authorizers must approve.\"},\"authorizers\":{\"type\":\"array\",\"description\":\"List of entities that can authorize the action.\",\"items\":{\"type\":\"object\",\"description\":\"Entity that can authorize an action.\",\"required\":[\"type\",\"id\"],\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"Type of authorizer, which can be `unit` or `user`. Organization Account only displays `unit` authorizers.\",\"enum\":[\"unit\",\"user\"]},\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the authorizer.\"}}}}}}}}},\"creationDate\":{\"type\":\"string\",\"format\":\"date-time\",\"description\":\"Date and time of dimension creation in the format `YYYY-MM-DDThh:mm:ssZ`.\"},\"creationVersion\":{\"type\":\"string\",\"description\":\"Version of the system that created the dimension.\"},\"creationEnvironment\":{\"type\":\"string\",\"description\":\"Environment where the dimension was created (e.g., `stable`, `beta`).\"}}}\n\n// Validate if response matches JSON schema \npm.test(\"[POST]::/:accountName/authorization-dimensions - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
+                  "// Response Validation\nconst schema = {\"type\":\"object\",\"description\":\"Response object for an authorization dimension.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the dimension.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the authorization dimension.\"},\"unitId\":{\"type\":\"string\",\"description\":\"Identifier of the business unit this dimension belongs to. If this field is not provided in the request body, the value will default to the business unit associated with the user token from the `VtexIdclientAutCookie`.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the dimension.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\",\"ignored\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Execution priority of the dimension. Lower numbers are evaluated first.\"},\"requireAllRulesAcceptance\":{\"type\":\"boolean\",\"description\":\"Whether all listed rules must be accepted for the dimension to be approved.\"},\"ruleCollection\":{\"type\":\"array\",\"description\":\"Collection of rules contained in this dimension.\",\"items\":{\"type\":\"object\",\"description\":\"Rule object in the response containing conditions and actions for authorization.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the rule.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the rule.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the rule.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Evaluation priority for the rule.\"},\"trigger\":{\"type\":\"object\",\"description\":\"Contains the trigger condition and effect logic.\",\"properties\":{\"condition\":{\"type\":\"object\",\"description\":\"Condition that must be met to trigger the rule.\",\"properties\":{\"conditionType\":{\"type\":\"integer\",\"description\":\"Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).\",\"enum\":[0,1,2]},\"description\":{\"type\":\"string\",\"description\":\"Description of the condition.\"},\"expression\":{\"type\":\"string\",\"description\":\"JSONata expression that defines the condition logic.\"}}},\"effect\":{\"type\":\"object\",\"description\":\"Effect to apply when the condition is met.\",\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Description of the effect.\"},\"effectType\":{\"type\":\"integer\",\"description\":\"Type of effect: `0` (approve), `1` (deny), or `2` (pending).\",\"enum\":[0,1,2]}}}}},\"scoreInterval\":{\"type\":\"object\",\"description\":\"Score range for accepting or denying the rule.\",\"properties\":{\"accept\":{\"type\":\"number\",\"description\":\"Minimum score required to accept the rule.\"},\"deny\":{\"type\":\"number\",\"description\":\"Maximum score to deny the rule.\"}}},\"authorizationData\":{\"type\":\"object\",\"description\":\"Defines required authorizers and whether all must approve (only present for rules with `effectType: 2`).\",\"properties\":{\"requireAllApprovals\":{\"type\":\"boolean\",\"description\":\"Whether all authorizers must approve.\"},\"authorizers\":{\"type\":\"array\",\"description\":\"List of entities that can authorize the action.\",\"items\":{\"type\":\"object\",\"description\":\"Entity that can authorize an action.\",\"required\":[\"type\",\"id\"],\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"Type of authorizer. For Organization Account, it's always `unit`.\"},\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the authorizer.\"}}}}}}}}},\"creationDate\":{\"type\":\"string\",\"format\":\"date-time\",\"description\":\"Date and time of dimension creation in the format `YYYY-MM-DDThh:mm:ssZ`.\"},\"creationVersion\":{\"type\":\"string\",\"description\":\"Version of the system that created the dimension.\"},\"creationEnvironment\":{\"type\":\"string\",\"description\":\"Environment where the dimension was created (e.g., `stable`, `beta`).\"}}}\n\n// Validate if response matches JSON schema \npm.test(\"[POST]::/:accountName/authorization-dimensions - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
                 ]
               }
             }
@@ -335,7 +335,7 @@
           }
         },
         {
-          "id": "8de1c184-b8b9-4dcd-bc9b-6dcb4d80b99a",
+          "id": "35053913-2ac2-4971-849c-8bd0833b559f",
           "name": "Get dimensions information",
           "request": {
             "name": "Get dimensions information",
@@ -443,7 +443,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "939df451-9d54-42bb-8d9b-fc30cce432db",
+              "id": "1d2554b9-446b-4a5b-8bdf-9e9d7635760c",
               "name": "OK",
               "originalRequest": {
                 "url": {
@@ -526,7 +526,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "62e0684f-c57b-4f33-9af8-2b3d2afabe04",
+              "id": "795726f3-e09c-467c-9c86-d5a0b4b2da16",
               "name": "Forbidden",
               "originalRequest": {
                 "url": {
@@ -610,13 +610,13 @@
             {
               "listen": "test",
               "script": {
-                "id": "0bbcfbf3-ce36-4e3c-be1c-910ee4aaecc9",
+                "id": "2c32148e-fbe5-46ab-811e-6ad25c449d36",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[GET]::/:accountName/authorization-dimensions - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
                   "// Validate if response header has matching content-type\npm.test(\"[GET]::/:accountName/authorization-dimensions - Content-Type is application/json\", function () {\n   pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\n});\n",
                   "// Validate if response has JSON Body \npm.test(\"[GET]::/:accountName/authorization-dimensions - Response has JSON Body\", function () {\n    pm.response.to.have.jsonBody();\n});\n",
-                  "// Response Validation\nconst schema = {\"type\":\"array\",\"items\":{\"type\":\"object\",\"description\":\"Authorization dimension information.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the dimension.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the authorization dimension.\"},\"unitId\":{\"type\":\"string\",\"description\":\"Identifier of the business unit this dimension belongs to.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the dimension.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\",\"ignored\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Execution priority of the dimension. Lower numbers are evaluated first.\"},\"requireAllRulesAcceptance\":{\"type\":\"boolean\",\"description\":\"Whether all listed rules must be accepted for the dimension to be approved.\"},\"shouldSimulate\":{\"type\":\"boolean\",\"description\":\"Indicates if the rules should be simulated instead of enforced.\"},\"ruleCollection\":{\"type\":\"array\",\"description\":\"Collection of rules contained in this dimension.\",\"items\":{\"type\":\"object\",\"description\":\"Rule object containing conditions, actions, and additional metadata for authorization.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the rule.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the rule.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the rule.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Evaluation priority for the rule.\"},\"trigger\":{\"type\":\"object\",\"description\":\"Contains the trigger condition and effect logic.\",\"properties\":{\"condition\":{\"type\":\"object\",\"description\":\"Condition that must be met to trigger the rule.\",\"properties\":{\"conditionType\":{\"type\":\"integer\",\"description\":\"Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).\",\"enum\":[0,1,2]},\"description\":{\"type\":\"string\",\"description\":\"Description of the condition.\"},\"expression\":{\"type\":\"string\",\"description\":\"JSONata expression that defines the condition logic.\"}}},\"effect\":{\"type\":\"object\",\"description\":\"Effect to apply when the condition is met.\",\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Description of the effect.\"},\"effectType\":{\"type\":\"integer\",\"description\":\"Type of effect: `0` (approve), `1` (deny), or `2` (pending).\",\"enum\":[0,1,2]}}}}},\"timeout\":{\"type\":\"number\",\"description\":\"Time in milliseconds to wait for rule evaluation.\"},\"notification\":{\"type\":\"boolean\",\"description\":\"Whether a notification should be triggered (`true`) or not (`false`).\"},\"scoreInterval\":{\"type\":\"object\",\"description\":\"Score range for accepting or denying the rule.\",\"properties\":{\"accept\":{\"type\":\"number\",\"description\":\"Minimum score required to accept the rule.\"},\"deny\":{\"type\":\"number\",\"description\":\"Maximum score to deny the rule.\"}}},\"authorizationData\":{\"type\":\"object\",\"description\":\"Defines required authorizers and whether all must approve (only present for rules with `effectType: 2`).\",\"properties\":{\"requireAllApprovals\":{\"type\":\"boolean\",\"description\":\"Whether all authorizers must approve (`true`) or not (`false`).\"},\"authorizers\":{\"type\":\"array\",\"description\":\"List of entities that can authorize the action.\",\"items\":{\"type\":\"object\",\"description\":\"Entity that can authorize an action.\",\"required\":[\"type\",\"id\"],\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"Type of authorizer, which can be `unit` or `user`. Organization Account only displays `unit` authorizers.\",\"enum\":[\"unit\",\"user\"]},\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the authorizer.\"}}}}}}}}},\"creationDate\":{\"type\":\"string\",\"format\":\"date-time\",\"description\":\"Date and time of dimension creation in the format `YYYY-MM-DDThh:mm:ssZ`.\"},\"creationVersion\":{\"type\":\"string\",\"description\":\"Version of the system that created the dimension.\"},\"creationEnvironment\":{\"type\":\"string\",\"description\":\"Environment where the dimension was created (e.g., `stable`, `beta`).\"}}}}\n\n// Validate if response matches JSON schema \npm.test(\"[GET]::/:accountName/authorization-dimensions - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
+                  "// Response Validation\nconst schema = {\"type\":\"array\",\"items\":{\"type\":\"object\",\"description\":\"Authorization dimension information.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the dimension.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the authorization dimension.\"},\"unitId\":{\"type\":\"string\",\"description\":\"Identifier of the business unit this dimension belongs to.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the dimension.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\",\"ignored\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Execution priority of the dimension. Lower numbers are evaluated first.\"},\"requireAllRulesAcceptance\":{\"type\":\"boolean\",\"description\":\"Whether all listed rules must be accepted for the dimension to be approved.\"},\"shouldSimulate\":{\"type\":\"boolean\",\"description\":\"Indicates if the rules should be simulated instead of enforced.\"},\"ruleCollection\":{\"type\":\"array\",\"description\":\"Collection of rules contained in this dimension.\",\"items\":{\"type\":\"object\",\"description\":\"Rule object containing conditions, actions, and additional metadata for authorization.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the rule.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the rule.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the rule.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Sequential evaluation priority for the rule. Lower numbers are evaluated first. Rules must be ordered: bypass (`effectType: 0`) first, then deny (`effectType: 1`), then sequential workflow (`effectType: 2`).\"},\"trigger\":{\"type\":\"object\",\"description\":\"Contains the trigger condition and effect logic.\",\"properties\":{\"condition\":{\"type\":\"object\",\"description\":\"Condition that must be met to trigger the rule.\",\"properties\":{\"conditionType\":{\"type\":\"integer\",\"description\":\"Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).\",\"enum\":[0,1,2]},\"description\":{\"type\":\"string\",\"description\":\"Description of the condition.\"},\"expression\":{\"type\":\"string\",\"description\":\"JSONata expression that defines the condition logic.\"}}},\"effect\":{\"type\":\"object\",\"description\":\"Effect to apply when the condition is met.\",\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Description of the effect.\"},\"effectType\":{\"type\":\"integer\",\"description\":\"Type of effect: `0` (approve), `1` (deny), or `2` (pending).\",\"enum\":[0,1,2]}}}}},\"timeout\":{\"type\":\"number\",\"description\":\"Time in milliseconds to wait for rule evaluation.\"},\"notification\":{\"type\":\"boolean\",\"description\":\"Whether a notification should be triggered (`true`) or not (`false`).\"},\"scoreInterval\":{\"type\":\"object\",\"description\":\"Score range for accepting or denying the rule.\",\"properties\":{\"accept\":{\"type\":\"number\",\"description\":\"Minimum score required to accept the rule.\"},\"deny\":{\"type\":\"number\",\"description\":\"Maximum score to deny the rule.\"}}},\"authorizationData\":{\"type\":\"object\",\"description\":\"Defines required authorizers and whether all must approve (only present for rules with `effectType: 2`).\",\"properties\":{\"requireAllApprovals\":{\"type\":\"boolean\",\"description\":\"Whether all authorizers must approve (`true`) or not (`false`).\"},\"authorizers\":{\"type\":\"array\",\"description\":\"List of entities that can authorize the action.\",\"items\":{\"type\":\"object\",\"description\":\"Entity that can authorize an action.\",\"required\":[\"type\",\"id\"],\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"Type of authorizer. For Organization Account, it's always `unit`.\"},\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the authorizer.\"}}}}}}}}},\"creationDate\":{\"type\":\"string\",\"format\":\"date-time\",\"description\":\"Date and time of dimension creation in the format `YYYY-MM-DDThh:mm:ssZ`.\"},\"creationVersion\":{\"type\":\"string\",\"description\":\"Version of the system that created the dimension.\"},\"creationEnvironment\":{\"type\":\"string\",\"description\":\"Environment where the dimension was created (e.g., `stable`, `beta`).\"}}}}\n\n// Validate if response matches JSON schema \npm.test(\"[GET]::/:accountName/authorization-dimensions - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
                 ]
               }
             }
@@ -626,7 +626,7 @@
           }
         },
         {
-          "id": "1f4fee1c-25ad-41c0-af7d-f20ed2b5f04f",
+          "id": "2fc24d48-1aab-4826-aa9a-d774bb7e703a",
           "name": "Update dimension",
           "request": {
             "name": "Update dimension",
@@ -712,7 +712,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "a53f2b69-9304-4596-ac78-e5d36728417b",
+              "id": "5a04a723-0463-461d-b5d9-d0ca8d454201",
               "name": "OK",
               "originalRequest": {
                 "url": {
@@ -790,7 +790,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "e28d2829-8751-46b4-9143-abd2a05aaeca",
+              "id": "ab50b013-e500-475b-939b-98358cdec23b",
               "name": "Bad Request",
               "originalRequest": {
                 "url": {
@@ -868,7 +868,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "a7c3bbca-1487-4a9d-92ff-46232acfaa57",
+              "id": "15ccef1e-db26-478d-b1ca-424239c8478d",
               "name": "Forbidden",
               "originalRequest": {
                 "url": {
@@ -946,7 +946,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "a3002e23-e03a-4da8-848d-7428d3d5e9b6",
+              "id": "c57e0309-ed43-47bb-9e6c-ba5bd485e5e9",
               "name": "Not Found",
               "originalRequest": {
                 "url": {
@@ -1025,13 +1025,13 @@
             {
               "listen": "test",
               "script": {
-                "id": "fb287e0d-b654-4975-a808-b1b3e993e1ec",
+                "id": "47afe61b-e12e-4da9-981f-4ff8645786e2",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[PUT]::/:accountName/authorization-dimensions/:dimensionId - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
                   "// Validate if response header has matching content-type\npm.test(\"[PUT]::/:accountName/authorization-dimensions/:dimensionId - Content-Type is application/json\", function () {\n   pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\n});\n",
                   "// Validate if response has JSON Body \npm.test(\"[PUT]::/:accountName/authorization-dimensions/:dimensionId - Response has JSON Body\", function () {\n    pm.response.to.have.jsonBody();\n});\n",
-                  "// Response Validation\nconst schema = {\"type\":\"object\",\"description\":\"Response object for an authorization dimension.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the dimension.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the authorization dimension.\"},\"unitId\":{\"type\":\"string\",\"description\":\"Identifier of the business unit this dimension belongs to. If this field is not provided in the request body, the value will default to the business unit associated with the user token from the `VtexIdclientAutCookie`.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the dimension.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\",\"ignored\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Execution priority of the dimension. Lower numbers are evaluated first.\"},\"requireAllRulesAcceptance\":{\"type\":\"boolean\",\"description\":\"Whether all listed rules must be accepted for the dimension to be approved.\"},\"ruleCollection\":{\"type\":\"array\",\"description\":\"Collection of rules contained in this dimension.\",\"items\":{\"type\":\"object\",\"description\":\"Rule object in the response containing conditions and actions for authorization.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the rule.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the rule.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the rule.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Evaluation priority for the rule.\"},\"trigger\":{\"type\":\"object\",\"description\":\"Contains the trigger condition and effect logic.\",\"properties\":{\"condition\":{\"type\":\"object\",\"description\":\"Condition that must be met to trigger the rule.\",\"properties\":{\"conditionType\":{\"type\":\"integer\",\"description\":\"Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).\",\"enum\":[0,1,2]},\"description\":{\"type\":\"string\",\"description\":\"Description of the condition.\"},\"expression\":{\"type\":\"string\",\"description\":\"JSONata expression that defines the condition logic.\"}}},\"effect\":{\"type\":\"object\",\"description\":\"Effect to apply when the condition is met.\",\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Description of the effect.\"},\"effectType\":{\"type\":\"integer\",\"description\":\"Type of effect: `0` (approve), `1` (deny), or `2` (pending).\",\"enum\":[0,1,2]}}}}},\"scoreInterval\":{\"type\":\"object\",\"description\":\"Score range for accepting or denying the rule.\",\"properties\":{\"accept\":{\"type\":\"number\",\"description\":\"Minimum score required to accept the rule.\"},\"deny\":{\"type\":\"number\",\"description\":\"Maximum score to deny the rule.\"}}},\"authorizationData\":{\"type\":\"object\",\"description\":\"Defines required authorizers and whether all must approve (only present for rules with `effectType: 2`).\",\"properties\":{\"requireAllApprovals\":{\"type\":\"boolean\",\"description\":\"Whether all authorizers must approve.\"},\"authorizers\":{\"type\":\"array\",\"description\":\"List of entities that can authorize the action.\",\"items\":{\"type\":\"object\",\"description\":\"Entity that can authorize an action.\",\"required\":[\"type\",\"id\"],\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"Type of authorizer, which can be `unit` or `user`. Organization Account only displays `unit` authorizers.\",\"enum\":[\"unit\",\"user\"]},\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the authorizer.\"}}}}}}}}},\"creationDate\":{\"type\":\"string\",\"format\":\"date-time\",\"description\":\"Date and time of dimension creation in the format `YYYY-MM-DDThh:mm:ssZ`.\"},\"creationVersion\":{\"type\":\"string\",\"description\":\"Version of the system that created the dimension.\"},\"creationEnvironment\":{\"type\":\"string\",\"description\":\"Environment where the dimension was created (e.g., `stable`, `beta`).\"}}}\n\n// Validate if response matches JSON schema \npm.test(\"[PUT]::/:accountName/authorization-dimensions/:dimensionId - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
+                  "// Response Validation\nconst schema = {\"type\":\"object\",\"description\":\"Response object for an authorization dimension.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the dimension.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the authorization dimension.\"},\"unitId\":{\"type\":\"string\",\"description\":\"Identifier of the business unit this dimension belongs to. If this field is not provided in the request body, the value will default to the business unit associated with the user token from the `VtexIdclientAutCookie`.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the dimension.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\",\"ignored\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Execution priority of the dimension. Lower numbers are evaluated first.\"},\"requireAllRulesAcceptance\":{\"type\":\"boolean\",\"description\":\"Whether all listed rules must be accepted for the dimension to be approved.\"},\"ruleCollection\":{\"type\":\"array\",\"description\":\"Collection of rules contained in this dimension.\",\"items\":{\"type\":\"object\",\"description\":\"Rule object in the response containing conditions and actions for authorization.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the rule.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the rule.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the rule.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Evaluation priority for the rule.\"},\"trigger\":{\"type\":\"object\",\"description\":\"Contains the trigger condition and effect logic.\",\"properties\":{\"condition\":{\"type\":\"object\",\"description\":\"Condition that must be met to trigger the rule.\",\"properties\":{\"conditionType\":{\"type\":\"integer\",\"description\":\"Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).\",\"enum\":[0,1,2]},\"description\":{\"type\":\"string\",\"description\":\"Description of the condition.\"},\"expression\":{\"type\":\"string\",\"description\":\"JSONata expression that defines the condition logic.\"}}},\"effect\":{\"type\":\"object\",\"description\":\"Effect to apply when the condition is met.\",\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Description of the effect.\"},\"effectType\":{\"type\":\"integer\",\"description\":\"Type of effect: `0` (approve), `1` (deny), or `2` (pending).\",\"enum\":[0,1,2]}}}}},\"scoreInterval\":{\"type\":\"object\",\"description\":\"Score range for accepting or denying the rule.\",\"properties\":{\"accept\":{\"type\":\"number\",\"description\":\"Minimum score required to accept the rule.\"},\"deny\":{\"type\":\"number\",\"description\":\"Maximum score to deny the rule.\"}}},\"authorizationData\":{\"type\":\"object\",\"description\":\"Defines required authorizers and whether all must approve (only present for rules with `effectType: 2`).\",\"properties\":{\"requireAllApprovals\":{\"type\":\"boolean\",\"description\":\"Whether all authorizers must approve.\"},\"authorizers\":{\"type\":\"array\",\"description\":\"List of entities that can authorize the action.\",\"items\":{\"type\":\"object\",\"description\":\"Entity that can authorize an action.\",\"required\":[\"type\",\"id\"],\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"Type of authorizer. For Organization Account, it's always `unit`.\"},\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the authorizer.\"}}}}}}}}},\"creationDate\":{\"type\":\"string\",\"format\":\"date-time\",\"description\":\"Date and time of dimension creation in the format `YYYY-MM-DDThh:mm:ssZ`.\"},\"creationVersion\":{\"type\":\"string\",\"description\":\"Version of the system that created the dimension.\"},\"creationEnvironment\":{\"type\":\"string\",\"description\":\"Environment where the dimension was created (e.g., `stable`, `beta`).\"}}}\n\n// Validate if response matches JSON schema \npm.test(\"[PUT]::/:accountName/authorization-dimensions/:dimensionId - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
                 ]
               }
             }
@@ -1041,7 +1041,7 @@
           }
         },
         {
-          "id": "ccda1b0a-3564-44b2-9053-4a26af14fe86",
+          "id": "cee65f3f-b3f7-4440-8148-b534bf533855",
           "name": "Delete dimension",
           "request": {
             "name": "Delete dimension",
@@ -1105,7 +1105,7 @@
               "_": {
                 "postman_previewlanguage": "text"
               },
-              "id": "e10fc937-5614-4a1b-b19a-3bb5a4068aa6",
+              "id": "7c1f6329-06ac-4080-b576-92b92eb82dd1",
               "name": "No Content\n\nDimension successfully deleted.",
               "originalRequest": {
                 "url": {
@@ -1151,7 +1151,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "b65e5fbd-0e5d-496a-8f6e-99b738a34080",
+              "id": "4a8619f4-abdc-4201-93b6-580f18c8eb0d",
               "name": "Forbidden",
               "originalRequest": {
                 "url": {
@@ -1207,7 +1207,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "72d9ab80-be38-4b45-9170-ec6681680c4a",
+              "id": "95d6461c-a78b-40a4-9e3e-34a962635a2d",
               "name": "Not Found",
               "originalRequest": {
                 "url": {
@@ -1264,7 +1264,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "73e04d79-79fa-41e4-bf56-73d4cd53875e",
+                "id": "cc87d090-718d-4c60-9c8a-c7017c5c318b",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[DELETE]::/:accountName/authorization-dimensions/:dimensionId - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
@@ -1281,7 +1281,7 @@
       "event": []
     },
     {
-      "id": "87d90daf-ba16-47bb-b4bb-64f69f9f5ca5",
+      "id": "530cefde-8220-4ba2-ac8f-78b028eb1eff",
       "name": "Rules",
       "description": {
         "content": "",
@@ -1289,7 +1289,7 @@
       },
       "item": [
         {
-          "id": "d357793a-4bb5-4412-8bf6-84581dd5ce6b",
+          "id": "6964337f-c739-42f7-a50e-6732b3e49217",
           "name": "Create dimension rule",
           "request": {
             "name": "Create dimension rule",
@@ -1376,7 +1376,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "1ad89c80-9d04-432f-9d4e-220f844f2e4c",
+              "id": "d6b723f7-3e29-4c03-8c26-d74211e4c9b4",
               "name": "OK",
               "originalRequest": {
                 "url": {
@@ -1455,7 +1455,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "0bec6bc5-f537-48fb-8486-52ca8e739aaa",
+              "id": "410acc9d-31f8-4037-af31-c89eab9dd00c",
               "name": "Bad Request",
               "originalRequest": {
                 "url": {
@@ -1534,7 +1534,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "b2c0628e-bdfa-4f09-9e40-3a8d11b04b98",
+              "id": "d9a664c0-32e2-40c3-9680-a3be6b1b2531",
               "name": "Forbidden",
               "originalRequest": {
                 "url": {
@@ -1613,7 +1613,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "e9b860f9-bdad-40e2-bce4-7ef3ac3b760c",
+              "id": "022eb1c6-04cf-40d2-ac92-2d3af3f3d4a4",
               "name": "Not Found",
               "originalRequest": {
                 "url": {
@@ -1693,13 +1693,13 @@
             {
               "listen": "test",
               "script": {
-                "id": "1c4be448-abdb-4d2c-bee4-db3046a9ae23",
+                "id": "35725cb1-b19f-4fe1-896b-723d524c0bdb",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[POST]::/:accountName/authorization-dimensions/:dimensionId/rules - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
                   "// Validate if response header has matching content-type\npm.test(\"[POST]::/:accountName/authorization-dimensions/:dimensionId/rules - Content-Type is application/json\", function () {\n   pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\n});\n",
                   "// Validate if response has JSON Body \npm.test(\"[POST]::/:accountName/authorization-dimensions/:dimensionId/rules - Response has JSON Body\", function () {\n    pm.response.to.have.jsonBody();\n});\n",
-                  "// Response Validation\nconst schema = {\"type\":\"object\",\"description\":\"Rule object in the response containing conditions and actions for authorization.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the rule.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the rule.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the rule.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Evaluation priority for the rule.\"},\"trigger\":{\"type\":\"object\",\"description\":\"Contains the trigger condition and effect logic.\",\"properties\":{\"condition\":{\"type\":\"object\",\"description\":\"Condition that must be met to trigger the rule.\",\"properties\":{\"conditionType\":{\"type\":\"integer\",\"description\":\"Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).\",\"enum\":[0,1,2]},\"description\":{\"type\":\"string\",\"description\":\"Description of the condition.\"},\"expression\":{\"type\":\"string\",\"description\":\"JSONata expression that defines the condition logic.\"}}},\"effect\":{\"type\":\"object\",\"description\":\"Effect to apply when the condition is met.\",\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Description of the effect.\"},\"effectType\":{\"type\":\"integer\",\"description\":\"Type of effect: `0` (approve), `1` (deny), or `2` (pending).\",\"enum\":[0,1,2]}}}}},\"scoreInterval\":{\"type\":\"object\",\"description\":\"Score range for accepting or denying the rule.\",\"properties\":{\"accept\":{\"type\":\"number\",\"description\":\"Minimum score required to accept the rule.\"},\"deny\":{\"type\":\"number\",\"description\":\"Maximum score to deny the rule.\"}}},\"authorizationData\":{\"type\":\"object\",\"description\":\"Defines required authorizers and whether all must approve (only present for rules with `effectType: 2`).\",\"properties\":{\"requireAllApprovals\":{\"type\":\"boolean\",\"description\":\"Whether all authorizers must approve.\"},\"authorizers\":{\"type\":\"array\",\"description\":\"List of entities that can authorize the action.\",\"items\":{\"type\":\"object\",\"description\":\"Entity that can authorize an action.\",\"required\":[\"type\",\"id\"],\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"Type of authorizer, which can be `unit` or `user`. Organization Account only displays `unit` authorizers.\",\"enum\":[\"unit\",\"user\"]},\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the authorizer.\"}}}}}}}}\n\n// Validate if response matches JSON schema \npm.test(\"[POST]::/:accountName/authorization-dimensions/:dimensionId/rules - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
+                  "// Response Validation\nconst schema = {\"type\":\"object\",\"description\":\"Rule object in the response containing conditions and actions for authorization.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the rule.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the rule.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the rule.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Evaluation priority for the rule.\"},\"trigger\":{\"type\":\"object\",\"description\":\"Contains the trigger condition and effect logic.\",\"properties\":{\"condition\":{\"type\":\"object\",\"description\":\"Condition that must be met to trigger the rule.\",\"properties\":{\"conditionType\":{\"type\":\"integer\",\"description\":\"Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).\",\"enum\":[0,1,2]},\"description\":{\"type\":\"string\",\"description\":\"Description of the condition.\"},\"expression\":{\"type\":\"string\",\"description\":\"JSONata expression that defines the condition logic.\"}}},\"effect\":{\"type\":\"object\",\"description\":\"Effect to apply when the condition is met.\",\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Description of the effect.\"},\"effectType\":{\"type\":\"integer\",\"description\":\"Type of effect: `0` (approve), `1` (deny), or `2` (pending).\",\"enum\":[0,1,2]}}}}},\"scoreInterval\":{\"type\":\"object\",\"description\":\"Score range for accepting or denying the rule.\",\"properties\":{\"accept\":{\"type\":\"number\",\"description\":\"Minimum score required to accept the rule.\"},\"deny\":{\"type\":\"number\",\"description\":\"Maximum score to deny the rule.\"}}},\"authorizationData\":{\"type\":\"object\",\"description\":\"Defines required authorizers and whether all must approve (only present for rules with `effectType: 2`).\",\"properties\":{\"requireAllApprovals\":{\"type\":\"boolean\",\"description\":\"Whether all authorizers must approve.\"},\"authorizers\":{\"type\":\"array\",\"description\":\"List of entities that can authorize the action.\",\"items\":{\"type\":\"object\",\"description\":\"Entity that can authorize an action.\",\"required\":[\"type\",\"id\"],\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"Type of authorizer. For Organization Account, it's always `unit`.\"},\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the authorizer.\"}}}}}}}}\n\n// Validate if response matches JSON schema \npm.test(\"[POST]::/:accountName/authorization-dimensions/:dimensionId/rules - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
                 ]
               }
             }
@@ -1709,7 +1709,7 @@
           }
         },
         {
-          "id": "24b6e08b-3263-43d8-82cd-dc4f014eef98",
+          "id": "bebd4be2-52b9-4228-9d35-8a5effcf11b1",
           "name": "Update all dimension rules",
           "request": {
             "name": "Update all dimension rules",
@@ -1796,7 +1796,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "05805890-3761-4218-84de-c387f2333f00",
+              "id": "a1906ca9-c793-4927-a146-50a05aa5ec11",
               "name": "OK",
               "originalRequest": {
                 "url": {
@@ -1875,7 +1875,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "258bfea1-3ad5-48ea-8232-54d7babefca8",
+              "id": "c9342809-f09b-46c7-95e1-e6681a4c1b41",
               "name": "Bad Request",
               "originalRequest": {
                 "url": {
@@ -1954,7 +1954,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "8eb06d0f-d546-4c78-a789-221c39b25be0",
+              "id": "a5a6f3a5-31f7-4ed3-ab53-b38ba9352608",
               "name": "Forbidden",
               "originalRequest": {
                 "url": {
@@ -2033,7 +2033,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "d8e5471a-f246-47ae-af13-365e5572ff92",
+              "id": "840cae96-276a-4b60-9435-89d73f5ee082",
               "name": "Not Found",
               "originalRequest": {
                 "url": {
@@ -2113,13 +2113,13 @@
             {
               "listen": "test",
               "script": {
-                "id": "55f70c80-037c-4bdd-9ec3-0179816cb47c",
+                "id": "75036c3c-866b-433c-bbb8-99147371b547",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[PUT]::/:accountName/authorization-dimensions/:dimensionId/rules - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
                   "// Validate if response header has matching content-type\npm.test(\"[PUT]::/:accountName/authorization-dimensions/:dimensionId/rules - Content-Type is application/json\", function () {\n   pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\n});\n",
                   "// Validate if response has JSON Body \npm.test(\"[PUT]::/:accountName/authorization-dimensions/:dimensionId/rules - Response has JSON Body\", function () {\n    pm.response.to.have.jsonBody();\n});\n",
-                  "// Response Validation\nconst schema = {\"type\":\"array\",\"items\":{\"type\":\"object\",\"description\":\"Rule object in the response containing conditions and actions for authorization.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the rule.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the rule.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the rule.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Evaluation priority for the rule.\"},\"trigger\":{\"type\":\"object\",\"description\":\"Contains the trigger condition and effect logic.\",\"properties\":{\"condition\":{\"type\":\"object\",\"description\":\"Condition that must be met to trigger the rule.\",\"properties\":{\"conditionType\":{\"type\":\"integer\",\"description\":\"Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).\",\"enum\":[0,1,2]},\"description\":{\"type\":\"string\",\"description\":\"Description of the condition.\"},\"expression\":{\"type\":\"string\",\"description\":\"JSONata expression that defines the condition logic.\"}}},\"effect\":{\"type\":\"object\",\"description\":\"Effect to apply when the condition is met.\",\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Description of the effect.\"},\"effectType\":{\"type\":\"integer\",\"description\":\"Type of effect: `0` (approve), `1` (deny), or `2` (pending).\",\"enum\":[0,1,2]}}}}},\"scoreInterval\":{\"type\":\"object\",\"description\":\"Score range for accepting or denying the rule.\",\"properties\":{\"accept\":{\"type\":\"number\",\"description\":\"Minimum score required to accept the rule.\"},\"deny\":{\"type\":\"number\",\"description\":\"Maximum score to deny the rule.\"}}},\"authorizationData\":{\"type\":\"object\",\"description\":\"Defines required authorizers and whether all must approve (only present for rules with `effectType: 2`).\",\"properties\":{\"requireAllApprovals\":{\"type\":\"boolean\",\"description\":\"Whether all authorizers must approve.\"},\"authorizers\":{\"type\":\"array\",\"description\":\"List of entities that can authorize the action.\",\"items\":{\"type\":\"object\",\"description\":\"Entity that can authorize an action.\",\"required\":[\"type\",\"id\"],\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"Type of authorizer, which can be `unit` or `user`. Organization Account only displays `unit` authorizers.\",\"enum\":[\"unit\",\"user\"]},\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the authorizer.\"}}}}}}}}}\n\n// Validate if response matches JSON schema \npm.test(\"[PUT]::/:accountName/authorization-dimensions/:dimensionId/rules - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
+                  "// Response Validation\nconst schema = {\"type\":\"array\",\"items\":{\"type\":\"object\",\"description\":\"Rule object in the response containing conditions and actions for authorization.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the rule.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the rule.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the rule.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Evaluation priority for the rule.\"},\"trigger\":{\"type\":\"object\",\"description\":\"Contains the trigger condition and effect logic.\",\"properties\":{\"condition\":{\"type\":\"object\",\"description\":\"Condition that must be met to trigger the rule.\",\"properties\":{\"conditionType\":{\"type\":\"integer\",\"description\":\"Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).\",\"enum\":[0,1,2]},\"description\":{\"type\":\"string\",\"description\":\"Description of the condition.\"},\"expression\":{\"type\":\"string\",\"description\":\"JSONata expression that defines the condition logic.\"}}},\"effect\":{\"type\":\"object\",\"description\":\"Effect to apply when the condition is met.\",\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Description of the effect.\"},\"effectType\":{\"type\":\"integer\",\"description\":\"Type of effect: `0` (approve), `1` (deny), or `2` (pending).\",\"enum\":[0,1,2]}}}}},\"scoreInterval\":{\"type\":\"object\",\"description\":\"Score range for accepting or denying the rule.\",\"properties\":{\"accept\":{\"type\":\"number\",\"description\":\"Minimum score required to accept the rule.\"},\"deny\":{\"type\":\"number\",\"description\":\"Maximum score to deny the rule.\"}}},\"authorizationData\":{\"type\":\"object\",\"description\":\"Defines required authorizers and whether all must approve (only present for rules with `effectType: 2`).\",\"properties\":{\"requireAllApprovals\":{\"type\":\"boolean\",\"description\":\"Whether all authorizers must approve.\"},\"authorizers\":{\"type\":\"array\",\"description\":\"List of entities that can authorize the action.\",\"items\":{\"type\":\"object\",\"description\":\"Entity that can authorize an action.\",\"required\":[\"type\",\"id\"],\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"Type of authorizer. For Organization Account, it's always `unit`.\"},\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the authorizer.\"}}}}}}}}}\n\n// Validate if response matches JSON schema \npm.test(\"[PUT]::/:accountName/authorization-dimensions/:dimensionId/rules - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
                 ]
               }
             }
@@ -2129,7 +2129,7 @@
           }
         },
         {
-          "id": "2af78acd-0b99-46be-8100-2e192407211c",
+          "id": "3e7216ef-b08a-4b20-9655-f1768248cc87",
           "name": "Update dimension rule",
           "request": {
             "name": "Update dimension rule",
@@ -2227,7 +2227,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "3bef2c79-d459-4578-b68b-d3556a23aa80",
+              "id": "89e085c1-1584-438c-97ee-81a54107a011",
               "name": "OK",
               "originalRequest": {
                 "url": {
@@ -2307,7 +2307,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "4572fd04-e99f-4f8d-8647-66b6a7796d5d",
+              "id": "e6a555ce-a71d-47da-948f-81acec9b0e6b",
               "name": "Bad Request",
               "originalRequest": {
                 "url": {
@@ -2387,7 +2387,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "c95dae3c-f9de-49a3-9193-d06dcf11fe67",
+              "id": "af3f3ee1-81b9-4f92-926a-5861726f9a70",
               "name": "Forbidden",
               "originalRequest": {
                 "url": {
@@ -2467,7 +2467,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "9a930766-a9f8-4982-b5e0-79d6dd19beb2",
+              "id": "1e2034bb-c3ed-48b9-886b-65d98a3ff1bc",
               "name": "Not Found",
               "originalRequest": {
                 "url": {
@@ -2548,13 +2548,13 @@
             {
               "listen": "test",
               "script": {
-                "id": "ce5dca40-e85b-45e2-a0fb-ba13388ded4e",
+                "id": "64a6e343-1f8e-403f-ab1e-9241bbf7c435",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[PUT]::/:accountName/authorization-dimensions/:dimensionId/rules/:ruleId - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
                   "// Validate if response header has matching content-type\npm.test(\"[PUT]::/:accountName/authorization-dimensions/:dimensionId/rules/:ruleId - Content-Type is application/json\", function () {\n   pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\n});\n",
                   "// Validate if response has JSON Body \npm.test(\"[PUT]::/:accountName/authorization-dimensions/:dimensionId/rules/:ruleId - Response has JSON Body\", function () {\n    pm.response.to.have.jsonBody();\n});\n",
-                  "// Response Validation\nconst schema = {\"type\":\"object\",\"description\":\"Rule object in the response containing conditions and actions for authorization.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the rule.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the rule.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the rule.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Evaluation priority for the rule.\"},\"trigger\":{\"type\":\"object\",\"description\":\"Contains the trigger condition and effect logic.\",\"properties\":{\"condition\":{\"type\":\"object\",\"description\":\"Condition that must be met to trigger the rule.\",\"properties\":{\"conditionType\":{\"type\":\"integer\",\"description\":\"Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).\",\"enum\":[0,1,2]},\"description\":{\"type\":\"string\",\"description\":\"Description of the condition.\"},\"expression\":{\"type\":\"string\",\"description\":\"JSONata expression that defines the condition logic.\"}}},\"effect\":{\"type\":\"object\",\"description\":\"Effect to apply when the condition is met.\",\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Description of the effect.\"},\"effectType\":{\"type\":\"integer\",\"description\":\"Type of effect: `0` (approve), `1` (deny), or `2` (pending).\",\"enum\":[0,1,2]}}}}},\"scoreInterval\":{\"type\":\"object\",\"description\":\"Score range for accepting or denying the rule.\",\"properties\":{\"accept\":{\"type\":\"number\",\"description\":\"Minimum score required to accept the rule.\"},\"deny\":{\"type\":\"number\",\"description\":\"Maximum score to deny the rule.\"}}},\"authorizationData\":{\"type\":\"object\",\"description\":\"Defines required authorizers and whether all must approve (only present for rules with `effectType: 2`).\",\"properties\":{\"requireAllApprovals\":{\"type\":\"boolean\",\"description\":\"Whether all authorizers must approve.\"},\"authorizers\":{\"type\":\"array\",\"description\":\"List of entities that can authorize the action.\",\"items\":{\"type\":\"object\",\"description\":\"Entity that can authorize an action.\",\"required\":[\"type\",\"id\"],\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"Type of authorizer, which can be `unit` or `user`. Organization Account only displays `unit` authorizers.\",\"enum\":[\"unit\",\"user\"]},\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the authorizer.\"}}}}}}}}\n\n// Validate if response matches JSON schema \npm.test(\"[PUT]::/:accountName/authorization-dimensions/:dimensionId/rules/:ruleId - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
+                  "// Response Validation\nconst schema = {\"type\":\"object\",\"description\":\"Rule object in the response containing conditions and actions for authorization.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the rule.\"},\"name\":{\"type\":\"string\",\"description\":\"Name of the rule.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the rule.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"priority\":{\"type\":\"integer\",\"description\":\"Evaluation priority for the rule.\"},\"trigger\":{\"type\":\"object\",\"description\":\"Contains the trigger condition and effect logic.\",\"properties\":{\"condition\":{\"type\":\"object\",\"description\":\"Condition that must be met to trigger the rule.\",\"properties\":{\"conditionType\":{\"type\":\"integer\",\"description\":\"Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).\",\"enum\":[0,1,2]},\"description\":{\"type\":\"string\",\"description\":\"Description of the condition.\"},\"expression\":{\"type\":\"string\",\"description\":\"JSONata expression that defines the condition logic.\"}}},\"effect\":{\"type\":\"object\",\"description\":\"Effect to apply when the condition is met.\",\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Description of the effect.\"},\"effectType\":{\"type\":\"integer\",\"description\":\"Type of effect: `0` (approve), `1` (deny), or `2` (pending).\",\"enum\":[0,1,2]}}}}},\"scoreInterval\":{\"type\":\"object\",\"description\":\"Score range for accepting or denying the rule.\",\"properties\":{\"accept\":{\"type\":\"number\",\"description\":\"Minimum score required to accept the rule.\"},\"deny\":{\"type\":\"number\",\"description\":\"Maximum score to deny the rule.\"}}},\"authorizationData\":{\"type\":\"object\",\"description\":\"Defines required authorizers and whether all must approve (only present for rules with `effectType: 2`).\",\"properties\":{\"requireAllApprovals\":{\"type\":\"boolean\",\"description\":\"Whether all authorizers must approve.\"},\"authorizers\":{\"type\":\"array\",\"description\":\"List of entities that can authorize the action.\",\"items\":{\"type\":\"object\",\"description\":\"Entity that can authorize an action.\",\"required\":[\"type\",\"id\"],\"properties\":{\"type\":{\"type\":\"string\",\"description\":\"Type of authorizer. For Organization Account, it's always `unit`.\"},\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the authorizer.\"}}}}}}}}\n\n// Validate if response matches JSON schema \npm.test(\"[PUT]::/:accountName/authorization-dimensions/:dimensionId/rules/:ruleId - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
                 ]
               }
             }
@@ -2564,7 +2564,7 @@
           }
         },
         {
-          "id": "3425d8ca-7cd4-460b-b07e-3afa257499ad",
+          "id": "9a015ece-1ce3-406a-a28e-4fdc4ee7d064",
           "name": "Delete dimension rule",
           "request": {
             "name": "Delete dimension rule",
@@ -2640,7 +2640,7 @@
               "_": {
                 "postman_previewlanguage": "text"
               },
-              "id": "17a838ac-5c57-48ef-90cd-5b62b7561e57",
+              "id": "c8698d33-30d9-4637-9835-156948ef88fb",
               "name": "No Content\n\nRule successfully deleted.",
               "originalRequest": {
                 "url": {
@@ -2688,7 +2688,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "4d6ab8a6-611e-47ea-909e-1c7104deb8f1",
+              "id": "6f884c3f-69ed-4ccd-84b0-0dceb27b6989",
               "name": "Forbidden",
               "originalRequest": {
                 "url": {
@@ -2746,7 +2746,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "d887565f-d6d0-4b05-808e-bd0242bd331a",
+              "id": "b6c05c0d-1b91-4164-a00e-6c1f7c338f26",
               "name": "Not Found",
               "originalRequest": {
                 "url": {
@@ -2805,7 +2805,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "ec79c478-78fd-4d08-a206-b9cc16fdf235",
+                "id": "559bdb4c-96f3-4981-a5d7-8fc6eb86b3c4",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[DELETE]::/:accountName/authorization-dimensions/:dimensionId/rules/:ruleId - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
@@ -2822,7 +2822,7 @@
       "event": []
     },
     {
-      "id": "6dd6076c-dfe6-4c0c-91c6-3551d801ff57",
+      "id": "e501ba78-a7ce-4c84-85a5-c30f20b538a2",
       "name": "Manual authorization",
       "description": {
         "content": "",
@@ -2830,7 +2830,7 @@
       },
       "item": [
         {
-          "id": "2828ec47-870c-4c0c-92a8-b0f49286e3d5",
+          "id": "ea640a2b-f216-4526-9919-ab776c98a4e0",
           "name": "Accept or deny rule",
           "request": {
             "name": "Accept or deny rule",
@@ -2906,7 +2906,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "d067cef3-3ce1-4968-893a-ea9d07d39f5f",
+              "id": "c983eacf-6259-438e-b6bf-3245ea71000b",
               "name": "OK",
               "originalRequest": {
                 "url": {
@@ -2984,7 +2984,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "cbeb6cfd-d261-498e-887c-83b0eb1f199f",
+              "id": "c27abd06-0e65-4998-a4b3-83f565da5820",
               "name": "Bad Request",
               "originalRequest": {
                 "url": {
@@ -3062,7 +3062,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "0ce74268-359f-4af7-8c8c-0070da1e1630",
+              "id": "f22418c4-cda1-4ac3-b00a-d1e2bd348d3f",
               "name": "Forbidden",
               "originalRequest": {
                 "url": {
@@ -3140,7 +3140,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "2c474095-ffe3-4eb9-914c-d0ee7072c1cc",
+              "id": "9c2be7b1-a9cb-4995-adec-2d6ba905f4a8",
               "name": "Not Found",
               "originalRequest": {
                 "url": {
@@ -3219,13 +3219,13 @@
             {
               "listen": "test",
               "script": {
-                "id": "3a705f24-434e-41c0-acee-c4680e09fa51",
+                "id": "3b1b32d6-5bb6-47b0-a7b0-57a924d3ec6b",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[POST]::/commercial-authorizations/:orderAuthId/callback - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
                   "// Validate if response header has matching content-type\npm.test(\"[POST]::/commercial-authorizations/:orderAuthId/callback - Content-Type is application/json\", function () {\n   pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\n});\n",
                   "// Validate if response has JSON Body \npm.test(\"[POST]::/commercial-authorizations/:orderAuthId/callback - Response has JSON Body\", function () {\n    pm.response.to.have.jsonBody();\n});\n",
-                  "// Response Validation\nconst schema = {\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the approval request.\"},\"orderId\":{\"type\":\"string\",\"description\":\"Identifier of the order linked to this approval process.\"},\"workflowInstanceId\":{\"type\":\"string\",\"description\":\"Identifier of the workflow instance.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the authorization.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"units\":{\"type\":\"array\",\"description\":\"List of unit identifiers related to the approval request.\",\"items\":{\"type\":\"string\",\"description\":\"Unit identifier.\"}},\"callbackEndpoint\":{\"type\":\"string\",\"description\":\"Callback URL for order authorization status updates.\"},\"totalOrderValueDesiredBySeller\":{\"type\":\"number\",\"description\":\"Total value of the order as expected by the seller.\"},\"marketPlacePaymentValue\":{\"type\":\"number\",\"description\":\"Value of the order payment in the marketplace.\"},\"itemCollection\":{\"type\":\"array\",\"description\":\"List of items in the order.\",\"items\":{\"type\":\"object\",\"description\":\"Item in the order authorization.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the item in the approval process.\"},\"sku\":{\"type\":\"string\",\"description\":\"SKU identifier of the item.\"},\"price\":{\"type\":\"number\",\"description\":\"Item price.\"},\"totalSystemDiscount\":{\"type\":\"number\",\"description\":\"Discount automatically applied by the system.\"},\"totalManualDiscount\":{\"type\":\"number\",\"description\":\"Discount manually applied.\"},\"quantity\":{\"type\":\"integer\",\"description\":\"Quantity of the item.\"},\"additionalInfo\":{\"type\":\"object\",\"description\":\"Additional information about the item.\",\"properties\":{\"commercialCondition\":{\"type\":\"string\",\"description\":\"Commercial condition identifier.\"}}}}}},\"additionalInfo\":{\"type\":\"object\",\"description\":\"Extra information related to the request.\",\"properties\":{\"userProfileId\":{\"type\":\"string\",\"description\":\"Identifier of the user profile linked to this approval request.\"}}},\"dimensionStatus\":{\"type\":\"array\",\"description\":\"Approval status details per dimension.\",\"items\":{\"type\":\"object\",\"description\":\"Approval status details for a dimension.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the dimension status record.\"},\"name\":{\"type\":\"string\",\"description\":\"Dimension name.\"},\"unitId\":{\"type\":\"string\",\"description\":\"Unit identifier related to this dimension.\"},\"userProfileId\":{\"type\":\"string\",\"description\":\"User profile identifier related to this dimension.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the dimension.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"score\":{\"type\":\"integer\",\"description\":\"Score assigned to the dimension.\"},\"priority\":{\"type\":\"integer\",\"description\":\"Priority of this dimension (lower = higher priority).\"},\"shouldSimulate\":{\"type\":\"boolean\",\"description\":\"Indicates if this dimension should be simulated before application.\"},\"ruleCollection\":{\"type\":\"array\",\"description\":\"Rules applied to this dimension.\",\"items\":{\"type\":\"object\",\"description\":\"Information about a rule within a dimension.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the rule.\"},\"name\":{\"type\":\"string\",\"description\":\"Rule name.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the rule.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"doId\":{\"type\":[\"string\",\"null\"],\"description\":\"Optional decision object identifier.\"},\"score\":{\"type\":\"integer\",\"description\":\"Score assigned to the rule.\"},\"priority\":{\"type\":\"integer\",\"description\":\"Rule priority (lower = higher priority).\"},\"trigger\":{\"type\":\"object\",\"description\":\"Trigger condition and effect for the rule.\",\"properties\":{\"condition\":{\"type\":\"object\",\"description\":\"Condition that triggers the rule.\",\"properties\":{\"conditionType\":{\"type\":\"integer\",\"description\":\"Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).\",\"enum\":[0,1,2]},\"description\":{\"type\":\"string\",\"description\":\"Human-readable description of the condition.\"},\"expression\":{\"type\":\"string\",\"description\":\"Expression used to evaluate the condition.\"}}},\"effect\":{\"type\":\"object\",\"description\":\"Effect applied when the condition is met.\",\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Description of the effect.\"},\"effectType\":{\"type\":\"integer\",\"description\":\"Type of effect: `0` (approve), `1` (deny), or `2` (pending).\"}}}}},\"timeout\":{\"type\":\"integer\",\"description\":\"Timeout (in ms) for rule evaluation.\"},\"notification\":{\"type\":\"boolean\",\"description\":\"Indicates if notifications are enabled for this rule (`true`) or disabled (`false`).\"},\"scoreInterval\":{\"type\":\"object\",\"description\":\"Score thresholds for decision making.\",\"properties\":{\"accept\":{\"type\":\"integer\",\"description\":\"Minimum score for acceptance.\"},\"deny\":{\"type\":\"integer\",\"description\":\"Maximum score for denial.\"}}},\"authorizationData\":{\"type\":\"object\",\"description\":\"Data related to authorization requirements.\",\"properties\":{\"requireAllApprovals\":{\"type\":\"boolean\",\"description\":\"If `true`, all authorizers must approve.\"},\"authorizers\":{\"type\":\"array\",\"description\":\"List of authorizers for the rule.\",\"items\":{\"type\":\"object\",\"description\":\"Authorizer information in callback response.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Identifier of the authorizer.\"},\"type\":{\"type\":\"string\",\"description\":\"Type of authorizer (e.g., `Unit`, `user`).\"},\"authorizationDate\":{\"type\":\"string\",\"format\":\"date-time\",\"description\":\"Date when authorization occurred in the format `YYYY-MM-DDThh:mm:ssZ`.\"}}}}}},\"isUserAuthorized\":{\"type\":\"boolean\",\"description\":\"Whether the current user is authorized.\"},\"isUserNextAuthorizer\":{\"type\":\"boolean\",\"description\":\"Whether the current user is the next required authorizer.\"}}}},\"creationDate\":{\"type\":\"string\",\"format\":\"date-time\",\"description\":\"Timestamp of when the dimension status was created in the format `YYYY-MM-DDThh:mm:ssZ`.\"},\"creationVersion\":{\"type\":\"string\",\"description\":\"Version of the system at creation time.\"},\"creationEnvironment\":{\"type\":\"string\",\"description\":\"Environment in which the record was created (e.g., `stable`).\"},\"requireAllRulesAcceptance\":{\"type\":\"boolean\",\"description\":\"If `true`, all rules must be accepted for approval.\"}}}},\"creationVersion\":{\"type\":\"string\",\"description\":\"Version of the system at creation time.\"},\"creationEnvironment\":{\"type\":\"string\",\"description\":\"Environment in which the approval request was created (e.g., `stable`).\"},\"userProfileId\":{\"type\":\"string\",\"description\":\"Identifier of the user profile that created the approval request.\"}}}\n\n// Validate if response matches JSON schema \npm.test(\"[POST]::/commercial-authorizations/:orderAuthId/callback - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
+                  "// Response Validation\nconst schema = {\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the approval request.\"},\"orderId\":{\"type\":\"string\",\"description\":\"Identifier of the order linked to this approval process.\"},\"workflowInstanceId\":{\"type\":\"string\",\"description\":\"Identifier of the workflow instance.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the authorization.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"units\":{\"type\":\"array\",\"description\":\"List of unit identifiers related to the approval request.\",\"items\":{\"type\":\"string\",\"description\":\"Unit identifier.\"}},\"callbackEndpoint\":{\"type\":\"string\",\"description\":\"Callback URL for order authorization status updates.\"},\"totalOrderValueDesiredBySeller\":{\"type\":\"number\",\"description\":\"Total value of the order as expected by the seller.\"},\"marketPlacePaymentValue\":{\"type\":\"number\",\"description\":\"Value of the order payment in the marketplace.\"},\"itemCollection\":{\"type\":\"array\",\"description\":\"List of items in the order.\",\"items\":{\"type\":\"object\",\"description\":\"Item in the order authorization.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the item in the approval process.\"},\"sku\":{\"type\":\"string\",\"description\":\"SKU identifier of the item.\"},\"price\":{\"type\":\"number\",\"description\":\"Item price.\"},\"totalSystemDiscount\":{\"type\":\"number\",\"description\":\"Discount automatically applied by the system.\"},\"totalManualDiscount\":{\"type\":\"number\",\"description\":\"Discount manually applied.\"},\"quantity\":{\"type\":\"integer\",\"description\":\"Quantity of the item.\"},\"additionalInfo\":{\"type\":\"object\",\"description\":\"Additional information about the item.\",\"properties\":{\"commercialCondition\":{\"type\":\"string\",\"description\":\"Commercial condition identifier.\"}}}}}},\"additionalInfo\":{\"type\":\"object\",\"description\":\"Extra information related to the request.\",\"properties\":{\"userProfileId\":{\"type\":\"string\",\"description\":\"Identifier of the user profile linked to this approval request.\"}}},\"dimensionStatus\":{\"type\":\"array\",\"description\":\"Approval status details per dimension.\",\"items\":{\"type\":\"object\",\"description\":\"Approval status details for a dimension.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the dimension status record.\"},\"name\":{\"type\":\"string\",\"description\":\"Dimension name.\"},\"unitId\":{\"type\":\"string\",\"description\":\"Unit identifier related to this dimension.\"},\"userProfileId\":{\"type\":\"string\",\"description\":\"User profile identifier related to this dimension.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the dimension.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"score\":{\"type\":\"integer\",\"description\":\"Score assigned to the dimension.\"},\"priority\":{\"type\":\"integer\",\"description\":\"Priority of this dimension (lower = higher priority).\"},\"shouldSimulate\":{\"type\":\"boolean\",\"description\":\"Indicates if this dimension should be simulated before application.\"},\"ruleCollection\":{\"type\":\"array\",\"description\":\"Rules applied to this dimension.\",\"items\":{\"type\":\"object\",\"description\":\"Information about a rule within a dimension.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Unique identifier of the rule.\"},\"name\":{\"type\":\"string\",\"description\":\"Rule name.\"},\"status\":{\"type\":[\"string\",\"null\"],\"description\":\"Current status of the rule.\",\"enum\":[null,\"accepted\",\"denied\",\"pending\"]},\"doId\":{\"type\":[\"string\",\"null\"],\"description\":\"Optional decision object identifier.\"},\"score\":{\"type\":\"integer\",\"description\":\"Score assigned to the rule.\"},\"priority\":{\"type\":\"integer\",\"description\":\"Sequential evaluation priority for the rule. Lower numbers are evaluated first. Rules must be ordered: bypass, then deny, then sequential workflow.\"},\"trigger\":{\"type\":\"object\",\"description\":\"Trigger condition and effect for the rule.\",\"properties\":{\"condition\":{\"type\":\"object\",\"description\":\"Condition that triggers the rule.\",\"properties\":{\"conditionType\":{\"type\":\"integer\",\"description\":\"Type of condition, which can be `0` (bypass), `1` (deny) or `2` (sequential workflow). Type `2` defines that the rule condition is set by an expression (see field `expression`).\",\"enum\":[0,1,2]},\"description\":{\"type\":\"string\",\"description\":\"Human-readable description of the condition.\"},\"expression\":{\"type\":\"string\",\"description\":\"Expression used to evaluate the condition.\"}}},\"effect\":{\"type\":\"object\",\"description\":\"Effect applied when the condition is met.\",\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Description of the effect.\"},\"effectType\":{\"type\":\"integer\",\"description\":\"Type of effect: `0` (approve), `1` (deny), or `2` (pending).\"}}}}},\"timeout\":{\"type\":\"integer\",\"description\":\"Timeout (in ms) for rule evaluation.\"},\"notification\":{\"type\":\"boolean\",\"description\":\"Indicates if notifications are enabled for this rule (`true`) or disabled (`false`).\"},\"scoreInterval\":{\"type\":\"object\",\"description\":\"Score thresholds for decision making.\",\"properties\":{\"accept\":{\"type\":\"integer\",\"description\":\"Minimum score for acceptance.\"},\"deny\":{\"type\":\"integer\",\"description\":\"Maximum score for denial.\"}}},\"authorizationData\":{\"type\":\"object\",\"description\":\"Data related to authorization requirements.\",\"properties\":{\"requireAllApprovals\":{\"type\":\"boolean\",\"description\":\"If `true`, all authorizers must approve.\"},\"authorizers\":{\"type\":\"array\",\"description\":\"List of authorizers for the rule.\",\"items\":{\"type\":\"object\",\"description\":\"Authorizer information in callback response.\",\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Identifier of the authorizer.\"},\"type\":{\"type\":\"string\",\"description\":\"Type of authorizer (e.g., `Unit`, `user`).\"},\"authorizationDate\":{\"type\":\"string\",\"format\":\"date-time\",\"description\":\"Date when authorization occurred in the format `YYYY-MM-DDThh:mm:ssZ`.\"}}}}}},\"isUserAuthorized\":{\"type\":\"boolean\",\"description\":\"Whether the current user is authorized.\"},\"isUserNextAuthorizer\":{\"type\":\"boolean\",\"description\":\"Whether the current user is the next required authorizer.\"}}}},\"creationDate\":{\"type\":\"string\",\"format\":\"date-time\",\"description\":\"Timestamp of when the dimension status was created in the format `YYYY-MM-DDThh:mm:ssZ`.\"},\"creationVersion\":{\"type\":\"string\",\"description\":\"Version of the system at creation time.\"},\"creationEnvironment\":{\"type\":\"string\",\"description\":\"Environment in which the record was created (e.g., `stable`).\"},\"requireAllRulesAcceptance\":{\"type\":\"boolean\",\"description\":\"If `true`, all rules must be accepted for approval.\"}}}},\"creationVersion\":{\"type\":\"string\",\"description\":\"Version of the system at creation time.\"},\"creationEnvironment\":{\"type\":\"string\",\"description\":\"Environment in which the approval request was created (e.g., `stable`).\"},\"userProfileId\":{\"type\":\"string\",\"description\":\"Identifier of the user profile that created the approval request.\"}}}\n\n// Validate if response matches JSON schema \npm.test(\"[POST]::/commercial-authorizations/:orderAuthId/callback - Schema is valid\", function() {\n    pm.response.to.have.jsonSchema(schema,{unknownFormats: [\"int32\", \"int64\", \"float\", \"double\"]});\n});\n"
                 ]
               }
             }
@@ -3277,11 +3277,11 @@
     }
   ],
   "info": {
-    "_postman_id": "d1940926-7357-40b4-80f3-1a17f9aed7ab",
+    "_postman_id": "52d962a7-11b6-4014-8140-ae632acd4346",
     "name": "Buying Policies API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "description": {
-      "content": "The Buying Policies system supports dynamic rules that merchants can configure to suit their specific authorization processes. It provides a mechanism for users to register custom rule expressions, offering greater flexibility and extensibility.\r\n\r\nThe approval process is hierarchical and uses a priority-based evaluation system.\r\n\r\n## Organization unit evaluation (dimension priority)\r\n\r\n- Each organization unit has one dimension containing its buying policies.\r\n\r\n- Dimensions are evaluated in ascending priority order (lower numbers first).\r\n\r\n- To enforce policies from lowest to highest hierarchy levels, assign descending priorities by hierarchy:\r\n\r\n    - Top-level unit = 9999 (evaluated last)\r\n    - Child units = 9998 (evaluated second)\r\n    - Grandchild units = 9997 (evaluated first)\r\n\r\n- Sibling units share the same priority.\r\n\r\n- System checks lower-level org units first, then moves up the hierarchy.\r\n\r\n## Policy type evaluation (rule priority)\r\n\r\nWithin each org unit's dimension, rules are evaluated in ascending priority order with fixed assignments:\r\n\r\n- Priority `1` = bypass (`effectType: 0`) - checked first, approves and stops evaluation.\r\n- Priority `2` = deny (`effectType: 1`) - checked second, denies and stops evaluation.\r\n- Priority `3` = sequential workflow (`effectType: 2`) - checked last, requires approval.\r\n\r\n>❗ The dimension must have `requireAllRulesAcceptance: false` so the first matching rule executes and stops further evaluation, enabling bypass functionality.\r\n\r\n## Authorization dynamics and score fields\r\n\r\n### Rule evaluation flow\r\n\r\nWhen an order is submitted, authorization rules are evaluated in two stages.\r\n\r\n#### Stage 1: Rule triggering\r\n\r\n- Rules are evaluated in priority order (bypass → deny → sequential workflow).\r\n- The rule's expression is evaluated against the order data.\r\n- If the expression is `true`, the rule is triggered and executes immediately, stopping further evaluation.\r\n- The `effectType` determines what happens:\r\n  - `0` (bypass) → Automatic approval, order proceeds.\r\n  - `1` (deny) → Automatic denial, order is blocked.\r\n  - `2` (sequential workflow) → Pending, requires manual authorization.\r\n- If no rules trigger, the system moves to the next org unit's dimension (if any).\r\n\r\n#### Stage 2: Manual authorization for pending rules\r\n\r\nRules with `effectType: 2` require manual approval/denial via the [Accept or deny rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/commercial-authorizations/-orderAuthId-/callback) endpoint.\r\n\r\n### The score system\r\n\r\nThe `scoreInterval` object defines decision thresholds:\r\n\r\n```json\r\n\"scoreInterval\": {\r\n    \"accept\": 10,\r\n    \"deny\": 5\r\n}\r\n```\r\n\r\nWhen calling the approval and denial endpoints, you provide a score value that determines the outcome:\r\n\r\n| Score Value | Condition | Outcome |\r\n| :--- | :--- | :--- |\r\n| score ≥ `scoreInterval.accept` | score ≥ 10 | Accepted |\r\n| score ≤ `scoreInterval.deny` | score ≤ 5 | Denied |\r\n| Between thresholds | 5 < score < 10 | Bypassed |\r\n\r\n>⚠️ The score is not the result of the rule's expression. It's a separate value you send when manually authorizing/denying a pending rule.\r\n\r\n**Example:** With `accept: 10` and `deny: 5`:\r\n\r\n- Sending `score: 100` → Rule accepted.\r\n- Sending `score: 0` → Rule denied.\r\n- Sending `score: 8` → Rule bypassed (doesn't affect authorization).\r\n\r\n## Index\r\n\r\n### Dimensions\r\n\r\n- `POST` [Create dimension](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/-accountName-/authorization-dimensions)\r\n- `GET` [Get dimensions information](https://developers.vtex.com/docs/api-reference/buying-policies-api#get-/-accountName-/authorization-dimensions)\r\n- `PUT` [Update dimension](https://developers.vtex.com/docs/api-reference/buying-policies-api#put-/-accountName-/authorization-dimensions/-dimensionId-)\r\n- `DELETE` [Delete dimension](https://developers.vtex.com/docs/api-reference/buying-policies-api#delete-/-accountName-/authorization-dimensions/-dimensionId-)\r\n\r\n### Rules\r\n\r\n- `POST` [Create dimension rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/-accountName-/authorization-dimensions/-dimensionId-/rules)\r\n- `PUT` [Update all dimension rules](https://developers.vtex.com/docs/api-reference/buying-policies-api#put-/-accountName-/authorization-dimensions/-dimensionId-/rules)\r\n- `PUT` [Update dimension rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#put-/-accountName-/authorization-dimensions/-dimensionId-/rules/-ruleId-)\r\n- `DELETE` [Delete dimension rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#delete-/-accountName-/authorization-dimensions/-dimensionId-/rules/-ruleId-)\r\n\r\n### Manual authorization\r\n\r\n- `POST` [Accept or deny rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/commercial-authorizations/-orderAuthId-/callback)\r\n\r\n## Common parameters\r\n\r\n| **Parameter name** | **Description** | **Type** |\r\n| :---: | :--- | :--- |\r\n| `{{accountName}}` | Name of the VTEX account. Used as part of the URL. | Server variable. |\r\n| `{{environment}}` | Environment to use. Used as part of the URL. The default value is `vtexcommercestable`. | Server variable. |\r\n| `X-VTEX-API-AppKey` | Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys). | Authentication header. Must be used together with `X-VTEX-API-AppToken`. Not necessary when using `VtexIdclientAutCookie`. |\r\n| `X-VTEX-API-AppToken` | Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys). | Authentication header. Must be used together with `X-VTEX-API-AppKey`. Not necessary when using `VtexIdclientAutCookie`. |\r\n| `VtexIdclientAutCookie` | [User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours. | Authentication header. Not necessary when using `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken`. |",
+      "content": "The Buying Policies system supports dynamic rules that merchants can configure to suit their specific authorization processes. It provides a mechanism for users to register custom rule expressions, offering greater flexibility and extensibility.\r\n\r\nThe approval process is hierarchical and uses a priority-based evaluation system.\r\n\r\n## Organization unit evaluation (dimension priority)\r\n\r\n- Each organization unit has one dimension containing its buying policies.\r\n\r\n- Dimensions are evaluated in ascending priority order (lower numbers first).\r\n\r\n- To enforce policies from lowest to highest hierarchy levels, assign descending priorities by hierarchy:\r\n\r\n    - Top-level unit = 9999 (evaluated last)\r\n    - Child units = 9998 (evaluated second)\r\n    - Grandchild units = 9997 (evaluated first)\r\n\r\n- Sibling units share the same priority.\r\n\r\n- System checks lower-level org units first, then moves up the hierarchy.\r\n\r\n## Policy type evaluation (rule priority)\r\n\r\nWithin each org unit's dimension, rules are evaluated in ascending priority order (lower numbers first). Rules must be organized in the following order, with sequential priority values:\r\n\r\n1. **Bypass rules** (`effectType: 0`) — checked first, approve and stop evaluation.\r\n2. **Deny rules** (`effectType: 1`) — checked after all bypass rules, deny and stop evaluation.\r\n3. **Sequential workflow rules** (`effectType: 2`) — checked last, require manual approval.\r\n\r\nPriority values are not fixed to specific numbers. They must be assigned sequentially across all rules, keeping the group order above. For example, with 2 bypass rules, 3 deny rules, and 2 approval rules, priorities would be: `1` and `2` for bypass, `3`, `4`, and `5` for deny, `6` and `7` for approval.\r\n\r\n>❗ The dimension must have `requireAllRulesAcceptance: false` so the first matching rule executes and stops further evaluation, enabling bypass functionality.\r\n\r\n## Authorization dynamics and score fields\r\n\r\n### Rule evaluation flow\r\n\r\nWhen an order is submitted, authorization rules are evaluated in two stages.\r\n\r\n#### Stage 1: Rule triggering\r\n\r\n- Rules are evaluated in priority order (bypass → deny → sequential workflow).\r\n- The rule's expression is evaluated against the order data.\r\n- If the expression is `true`, the rule is triggered and executes immediately, stopping further evaluation.\r\n- The `effectType` determines what happens:\r\n  - `0` (bypass) → Automatic approval, order proceeds.\r\n  - `1` (deny) → Automatic denial, order is blocked.\r\n  - `2` (sequential workflow) → Pending, requires manual authorization.\r\n- If no rules trigger, the system moves to the next org unit's dimension (if any).\r\n\r\n#### Stage 2: Manual authorization for pending rules\r\n\r\nRules with `effectType: 2` require manual approval/denial via the [Accept or deny rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/commercial-authorizations/-orderAuthId-/callback) endpoint.\r\n\r\n### The score system\r\n\r\nThe `scoreInterval` object defines decision thresholds:\r\n\r\n```json\r\n\"scoreInterval\": {\r\n    \"accept\": 10,\r\n    \"deny\": 5\r\n}\r\n```\r\n\r\nWhen calling the approval and denial endpoints, you provide a score value that determines the outcome:\r\n\r\n| Score Value | Condition | Outcome |\r\n| :--- | :--- | :--- |\r\n| score ≥ `scoreInterval.accept` | score ≥ 10 | Accepted |\r\n| score ≤ `scoreInterval.deny` | score ≤ 5 | Denied |\r\n| Between thresholds | 5 < score < 10 | Bypassed |\r\n\r\n>⚠️ The score is not the result of the rule's expression. It's a separate value you send when manually authorizing/denying a pending rule.\r\n\r\n**Example:** With `accept: 10` and `deny: 5`:\r\n\r\n- Sending `score: 100` → Rule accepted.\r\n- Sending `score: 0` → Rule denied.\r\n- Sending `score: 8` → Rule bypassed (doesn't affect authorization).\r\n\r\n## Index\r\n\r\n### Dimensions\r\n\r\n- `POST` [Create dimension](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/-accountName-/authorization-dimensions)\r\n- `GET` [Get dimensions information](https://developers.vtex.com/docs/api-reference/buying-policies-api#get-/-accountName-/authorization-dimensions)\r\n- `PUT` [Update dimension](https://developers.vtex.com/docs/api-reference/buying-policies-api#put-/-accountName-/authorization-dimensions/-dimensionId-)\r\n- `DELETE` [Delete dimension](https://developers.vtex.com/docs/api-reference/buying-policies-api#delete-/-accountName-/authorization-dimensions/-dimensionId-)\r\n\r\n### Rules\r\n\r\n- `POST` [Create dimension rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/-accountName-/authorization-dimensions/-dimensionId-/rules)\r\n- `PUT` [Update all dimension rules](https://developers.vtex.com/docs/api-reference/buying-policies-api#put-/-accountName-/authorization-dimensions/-dimensionId-/rules)\r\n- `PUT` [Update dimension rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#put-/-accountName-/authorization-dimensions/-dimensionId-/rules/-ruleId-)\r\n- `DELETE` [Delete dimension rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#delete-/-accountName-/authorization-dimensions/-dimensionId-/rules/-ruleId-)\r\n\r\n### Manual authorization\r\n\r\n- `POST` [Accept or deny rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/commercial-authorizations/-orderAuthId-/callback)\r\n\r\n## Common parameters\r\n\r\n| **Parameter name** | **Description** | **Type** |\r\n| :---: | :--- | :--- |\r\n| `{{accountName}}` | Name of the VTEX account. Used as part of the URL. | Server variable. |\r\n| `{{environment}}` | Environment to use. Used as part of the URL. The default value is `vtexcommercestable`. | Server variable. |\r\n| `X-VTEX-API-AppKey` | Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys). | Authentication header. Must be used together with `X-VTEX-API-AppToken`. Not necessary when using `VtexIdclientAutCookie`. |\r\n| `X-VTEX-API-AppToken` | Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys). | Authentication header. Must be used together with `X-VTEX-API-AppKey`. Not necessary when using `VtexIdclientAutCookie`. |\r\n| `VtexIdclientAutCookie` | [User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours. | Authentication header. Not necessary when using `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken`. |",
       "type": "text/plain"
     }
   }
