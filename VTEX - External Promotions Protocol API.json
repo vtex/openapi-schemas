@@ -1,0 +1,527 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "External Promotions Protocol API",
+        "description": "The External Promotions Protocol API is a set of definitions that allows merchants to integrate their own external promotions engine with the VTEX platform. This is a protocol, which means the merchant must implement the endpoints described in this documentation as a web API (REST) on their own infrastructure.\r\n\r\n>⚠️ This feature is only available for accounts using Headless Checkout.\r\n\r\nVTEX will call these endpoints during the shopping cart calculation and order lifecycle to:\r\n\r\n- Calculate promotions and discounts for a given shopping cart.\r\n- Notify the external promotions provider when an order is created or cancelled, reporting which promotions and coupons were applied.\r\n\r\n>❗ The External Promotions Protocol API is not enabled by default for all VTEX accounts. To use this API, merchants must request its activation by opening a [support ticket](https://help.vtex.com/en/support).\r\n\r\n## Index\r\n\r\n### External promotions\r\n\r\n- `POST` [Calculate promotions](https://developers.vtex.com/docs/api-reference/external-promotions-protocol-api#post-/calculatePromotion): calculates the promotions and discounts for a given shopping cart.\r\n- `POST` [Notify promotion usage](https://developers.vtex.com/docs/api-reference/external-promotions-protocol-api#post-/notifyUsage): receives a notification when an order is created or cancelled, informing which promotions and coupons were applied.\r\n\r\n## Common parameters\r\n\r\n| Parameter name | Description | Type |\r\n| --- | --- | --- |\r\n| `{{providerApiEndpoint}}` | External promotions provider endpoint URL. | Server variable. |",
+        "contact": {},
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "https://{providerApiEndpoint}",
+            "description": "External promotions provider endpoint URL.",
+            "variables": {
+                "providerApiEndpoint": {
+                    "description": "External promotions provider endpoint URL.",
+                    "default": "{providerApiEndpoint}"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/calculatePromotion": {
+            "post": {
+                "tags": [
+                    "External promotions"
+                ],
+                "summary": "Calculate promotions",
+                "description": "Calculates the promotions and discounts applicable to a given shopping cart. VTEX calls this endpoint during the cart calculation process, sending the shopping cart data including items, coupon codes, UTM parameters, and sales channel information. The external promotions provider must return the calculated discounts for each item, along with a summary of all promotions considered.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "origin",
+                                    "salesChannelId",
+                                    "items"
+                                ],
+                                "description": "Request body for the calculate promotions endpoint.",
+                                "properties": {
+                                    "origin": {
+                                        "type": "string",
+                                        "enum": [
+                                            "Marketplace",
+                                            "Fulfillment"
+                                        ],
+                                        "description": "Origin of the shopping cart. Possible values are `Marketplace` and `Fulfillment`."
+                                    },
+                                    "shopperProfileId": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "description": "Unique identifier of the shopper's profile."
+                                    },
+                                    "salesChannelId": {
+                                        "type": "string",
+                                        "description": "Identifier of the sales channel (trade policy) associated with the shopping cart, as configured on VTEX."
+                                    },
+                                    "couponCodes": {
+                                        "type": "array",
+                                        "nullable": true,
+                                        "description": "List of coupon codes added to the shopping cart.",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "Coupon code."
+                                        }
+                                    },
+                                    "utms": {
+                                        "type": "object",
+                                        "nullable": true,
+                                        "description": "UTM tracking parameters associated with the shopping cart.",
+                                        "properties": {
+                                            "source": {
+                                                "type": "string",
+                                                "nullable": true,
+                                                "description": "UTM source value."
+                                            },
+                                            "medium": {
+                                                "type": "string",
+                                                "nullable": true,
+                                                "description": "UTM medium value."
+                                            },
+                                            "campaign": {
+                                                "type": "string",
+                                                "nullable": true,
+                                                "description": "UTM campaign value."
+                                            },
+                                            "internalCampaign": {
+                                                "type": "string",
+                                                "nullable": true,
+                                                "description": "UTM internal campaign value."
+                                            }
+                                        }
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "description": "List of items in the shopping cart.",
+                                        "items": {
+                                            "type": "object",
+                                            "required": [
+                                                "id",
+                                                "sellerId",
+                                                "quantity",
+                                                "price",
+                                                "catalogInfo"
+                                            ],
+                                            "description": "Shopping cart item to be evaluated for promotions.",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "description": "SKU identifier of the item, as configured in the VTEX catalog."
+                                                },
+                                                "sellerId": {
+                                                    "type": "string",
+                                                    "description": "Identifier of the seller, as configured on VTEX."
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "format": "int32",
+                                                    "description": "Quantity of this item in the shopping cart."
+                                                },
+                                                "price": {
+                                                    "type": "number",
+                                                    "format": "double",
+                                                    "description": "Unit price of the item."
+                                                },
+                                                "catalogInfo": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "brandId",
+                                                        "categoryId",
+                                                        "productId"
+                                                    ],
+                                                    "description": "Catalog information associated with this item.",
+                                                    "properties": {
+                                                        "brandId": {
+                                                            "type": "string",
+                                                            "description": "Brand identifier of the item, as configured in the VTEX catalog."
+                                                        },
+                                                        "categoryId": {
+                                                            "type": "string",
+                                                            "description": "Category identifier of the item, as configured in the VTEX catalog."
+                                                        },
+                                                        "productId": {
+                                                            "type": "string",
+                                                            "description": "Product identifier of the item, as configured in the VTEX catalog."
+                                                        },
+                                                        "collectionIds": {
+                                                            "type": "array",
+                                                            "nullable": true,
+                                                            "description": "List of collection identifiers this item belongs to, as configured in the VTEX catalog.",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "description": "Collection identifier."
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "paymentInfo": {
+                                                    "type": "array",
+                                                    "nullable": true,
+                                                    "description": "List of payment methods applied to this item.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "required": [
+                                                            "id",
+                                                            "value"
+                                                        ],
+                                                        "description": "Payment method information for an item.",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string",
+                                                                "description": "Identifier of the payment method, as configured on VTEX."
+                                                            },
+                                                            "value": {
+                                                                "type": "number",
+                                                                "format": "double",
+                                                                "description": "Value paid with this payment method."
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "example": {
+                                "origin": "Marketplace",
+                                "shopperProfileId": "da1220f6-88ce-46a2-b466-7f311c5a1bf0",
+                                "salesChannelId": "3",
+                                "couponCodes": [
+                                    "coupon-code-1",
+                                    "coupon-code-2"
+                                ],
+                                "utms": null,
+                                "items": [
+                                    {
+                                        "id": "792",
+                                        "sellerId": "1",
+                                        "quantity": 3,
+                                        "price": 2,
+                                        "catalogInfo": {
+                                            "brandId": "23",
+                                            "categoryId": "43",
+                                            "productId": "55",
+                                            "collectionIds": [
+                                                "98",
+                                                "11"
+                                            ]
+                                        },
+                                        "paymentInfo": [
+                                            {
+                                                "id": "34",
+                                                "value": 6.0
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "items"
+                                    ],
+                                    "description": "Response body for the calculate promotions endpoint.",
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "description": "List of items with their calculated promotion results.",
+                                            "items": {
+                                                "type": "object",
+                                                "required": [
+                                                    "id",
+                                                    "quantity",
+                                                    "originalPrice"
+                                                ],
+                                                "description": "Item in the calculate promotions response.",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "description": "SKU identifier of the item in the shopping cart."
+                                                    },
+                                                    "quantity": {
+                                                        "type": "integer",
+                                                        "format": "int32",
+                                                        "description": "Quantity of the item in the shopping cart."
+                                                    },
+                                                    "promotions": {
+                                                        "type": "array",
+                                                        "nullable": true,
+                                                        "description": "List of promotions applied to this item.",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "required": [
+                                                                "id",
+                                                                "discount",
+                                                                "type"
+                                                            ],
+                                                            "description": "Promotion applied to an item.",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string",
+                                                                    "description": "Identifier of the applied promotion."
+                                                                },
+                                                                "discount": {
+                                                                    "type": "number",
+                                                                    "format": "double",
+                                                                    "description": "Discount value applied by this promotion."
+                                                                },
+                                                                "type": {
+                                                                    "type": "string",
+                                                                    "enum": [
+                                                                        "Nominal"
+                                                                    ],
+                                                                    "description": "Type of discount applied. Currently, only `Nominal` is supported."
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "originalPrice": {
+                                                        "type": "number",
+                                                        "format": "double",
+                                                        "description": "Original unit price of the item before any discounts."
+                                                    },
+                                                    "discountedPrice": {
+                                                        "type": "number",
+                                                        "nullable": true,
+                                                        "format": "double",
+                                                        "description": "Discounted unit price of the item after promotions are applied."
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "allPromotions": {
+                                            "type": "array",
+                                            "nullable": true,
+                                            "description": "List of all promotions considered for this shopping cart, including those that were not applied.",
+                                            "items": {
+                                                "type": "object",
+                                                "required": [
+                                                    "id",
+                                                    "name",
+                                                    "description"
+                                                ],
+                                                "description": "Summary of a promotion.",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "description": "Identifier of the promotion."
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "description": "Name of the promotion."
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "description": "Description of the promotion."
+                                                    },
+                                                    "couponCode": {
+                                                        "type": "string",
+                                                        "nullable": true,
+                                                        "description": "Coupon code that triggers this promotion. Returns `null` if no coupon code triggered the promotion."
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "items": [
+                                        {
+                                            "id": "792",
+                                            "quantity": 3,
+                                            "promotions": [
+                                                {
+                                                    "id": "promo-1",
+                                                    "discount": 0.25,
+                                                    "type": "Nominal"
+                                                }
+                                            ],
+                                            "originalPrice": 2.0,
+                                            "discountedPrice": 1.75
+                                        }
+                                    ],
+                                    "allPromotions": [
+                                        {
+                                            "id": "promo-1",
+                                            "name": "25 cents off on cokes",
+                                            "description": "Buy at least 3 cokes and get 25 cents off on each",
+                                            "couponCode": "25offCoke"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/notifyUsage": {
+            "post": {
+                "tags": [
+                    "External promotions"
+                ],
+                "summary": "Notify promotion usage",
+                "description": "Receives a notification when an order is created or cancelled, informing the external promotions provider which promotions and coupons were applied to the order. This allows the provider to track promotion usage, enforce usage limits, and maintain accurate promotion state.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "orderId",
+                                    "type",
+                                    "promotionUsages"
+                                ],
+                                "description": "Request body for the notify usage endpoint.",
+                                "properties": {
+                                    "orderId": {
+                                        "type": "string",
+                                        "description": "Identifier of the order triggering this notification."
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "NewOrder",
+                                            "OrderCancellation"
+                                        ],
+                                        "description": "Type of notification. `NewOrder` indicates a new order was placed, and `OrderCancellation` indicates an order was cancelled."
+                                    },
+                                    "promotionUsages": {
+                                        "type": "array",
+                                        "description": "List of promotions used in this order.",
+                                        "items": {
+                                            "type": "object",
+                                            "required": [
+                                                "promotionId",
+                                                "discount"
+                                            ],
+                                            "description": "Details of a promotion applied to the order.",
+                                            "properties": {
+                                                "promotionId": {
+                                                    "type": "string",
+                                                    "description": "Identifier of the applied promotion."
+                                                },
+                                                "discount": {
+                                                    "type": "number",
+                                                    "format": "double",
+                                                    "description": "Total discount value given by this promotion."
+                                                },
+                                                "couponCode": {
+                                                    "type": "string",
+                                                    "nullable": true,
+                                                    "description": "Coupon code that triggered this promotion. Returns `null` if no coupon code triggered the promotion."
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "example": {
+                                "orderId": "099823581-1",
+                                "type": "NewOrder",
+                                "promotionUsages": [
+                                    {
+                                        "promotionId": "promo-1",
+                                        "discount": 0.75,
+                                        "couponCode": "coupon-code-1"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        }
+    },
+    "security": [
+    ],
+    "components": {
+        "securitySchemes": {
+            "apiKey": {
+                "type": "apiKey",
+                "name": "X-API-Key",
+                "in": "header",
+                "description": "API key provided by the external promotions provider for authentication."
+            },
+            "Basic": {
+                "type": "http",
+                "scheme": "basic",
+                "description": "Basic authentication provided by the external promotions provider."
+            }
+        },
+        "parameters": {
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "External promotions"
+        }
+    ]
+}
