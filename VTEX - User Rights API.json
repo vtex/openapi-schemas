@@ -1,0 +1,247 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "User Rights API",
+        "description": "The User Rights API allows you to request the deletion of a user's personal data across VTEX applications, in compliance with \"Right to be Forgotten\" regulations.\r\n\r\nThis API provides an automated workflow for handling data erasure requests. You submit a user's email, receive a job ID, and poll that ID until the deletion is complete.\r\n\r\n> ⚠️ The user rights flows available in this API apply only to non-corporate shoppers. They don't apply to B2B buyers or Admin users.\r\n\r\n>ℹ️ For personal data stored in Master Data custom entities, follow the existing data erasure process described in [Erasing customer data](https://help.vtex.com/docs/tutorials/erasing-customer-data).\r\n\r\n## Operational behavior\r\n\r\n- **Automatic retries:** If something fails internally, the system retries up to 10 times before marking the job as `Failed`. You don't need to retry on your end.\r\n- **Non-existent emails:** If no data is found for the given email, the job completes with `Success`.\r\n- **Polling interval:** We recommend polling with a frequency no higher than every 30 seconds.\r\n\r\n## Index\r\n\r\n### Data erasure\r\n\r\n- `POST` [Create data erasure job](https://developers.vtex.com/docs/api-reference/user-rights-api#post-/api/user-rights/forget/jobs)\r\n- `GET` [Get data erasure job status](https://developers.vtex.com/docs/api-reference/user-rights-api#get-/api/user-rights/forget/jobs/-jobId-)\r\n",
+        "contact": {},
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "https://{accountName}.{environment}.com.br",
+            "description": "VTEX server URL.",
+            "variables": {
+                "accountName": {
+                    "description": "Name of the VTEX account. Used as part of the URL.",
+                    "default": "apiexamples"
+                },
+                "environment": {
+                    "description": "Environment to use. Used as part of the URL.",
+                    "enum": [
+                        "vtexcommercestable"
+                    ],
+                    "default": "vtexcommercestable"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/api/user-rights/forget/jobs": {
+            "post": {
+                "summary": "Create data erasure job",
+                "description": "Creates a job to delete a user's personal data across VTEX applications (\"Right to be Forgotten\"). The request receives the user's email and returns a job ID that can be used to track the deletion progress via the [Get data erasure job status](https://developers.vtex.com/docs/api-reference/user-rights-api#get-/api/user-rights/forget/jobs/-jobId-) endpoint.\r\n\r\n> ⚠️ This data erasure flow applies only to non-corporate shoppers. It doesn't apply to B2B buyers or Admin users.\r\n\r\n>ℹ️ If no data is found for the given email, the job completes with `Success` status.\r\n\r\n>ℹ️ The system automatically retries failed operations up to 10 times before marking the job as `Failed`.",
+                "tags": [
+                    "Data erasure"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "description": "Request body for creating a data erasure job.",
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "description": "Email address of the user whose personal data should be deleted.",
+                                        "example": "user@example.com"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Response body returned when a data erasure job is successfully created.",
+                                    "required": [
+                                        "jobId"
+                                    ],
+                                    "properties": {
+                                        "jobId": {
+                                            "type": "string",
+                                            "format": "uuid",
+                                            "description": "Unique identifier of the data erasure job. Use this ID to poll the job status via the [Get data erasure job status](https://developers.vtex.com/docs/api-reference/user-rights-api#get-/api/user-rights/forget/jobs/-jobId-) endpoint."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "jobId": "550e8400-e29b-41d4-a716-446655440000"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "VtexIdclientAutCookie": []
+                    }
+                ]
+            }
+        },
+        "/api/user-rights/forget/jobs/{jobId}": {
+            "get": {
+                "summary": "Get data erasure job status",
+                "description": "Retrieves the current status of a data erasure job created via the [Create data erasure job](https://developers.vtex.com/docs/api-reference/user-rights-api#post-/api/user-rights/forget/jobs) endpoint.\r\n\r\nPossible `status` values:\r\n\r\n- `InProgress`: The deletion is still being processed. Keep polling.\r\n- `Success`: The user's data has been deleted.\r\n- `Failed`: The deletion could not be completed. See the `message` field for details.\r\n\r\n>ℹ️ We recommend polling this endpoint with a frequency no higher than every 30 seconds.",
+                "tags": [
+                    "Data erasure"
+                ],
+                "parameters": [
+                    {
+                        "name": "jobId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "Unique identifier of the data erasure job, returned by the [Create data erasure job](https://developers.vtex.com/docs/api-reference/user-rights-api#post-/api/user-rights/forget/jobs) endpoint."
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Current status of a data erasure job.",
+                                    "required": [
+                                        "status",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "description": "Current state of the data erasure job. Possible values: `InProgress`, `Success`, or `Failed`.",
+                                            "enum": [
+                                                "InProgress",
+                                                "Success",
+                                                "Failed"
+                                            ]
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Human-readable description of the current job state."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "status": "InProgress",
+                                    "message": "Processing deletion request."
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Error response returned when the specified job ID does not exist.",
+                                    "required": [
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Human-readable error message."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "message": "Job not found"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "VtexIdclientAutCookie": []
+                    }
+                ]
+            }
+        }
+    },
+    "security": [
+        {
+            "appKey": [],
+            "appToken": []
+        },
+        {
+            "VtexIdclientAutCookie": []
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "VtexIdclientAutCookie": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "VtexIdclientAutCookie",
+                "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
+            }
+        },
+        "parameters": {
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Data erasure"
+        }
+    ]
+}
