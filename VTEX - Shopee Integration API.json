@@ -25,14 +25,18 @@
         }
     ],
     "paths": {
-        "/api/shopeeintegration/order/shipping/label/legacy": {
+        "/api/shopeeintegration/order/shipping/label": {
             "get": {
                 "tags": [
                     "Shopee orders"
                 ],
-                "summary": "Download legacy shipping label",
-                "description": "Downloads a legacy shipping label for the given Shopee order.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| Checkout         | CheckoutResources | **Orders Full Access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| OMS - Full access | View order |\r\n| Checkout Admin | View order |\r\n| IntegrationProfile - Fulfillment Oms | View order |\r\n| OMS - Full access | Orders Full Access |\r\n| Checkout Admin | Orders Full Access |\r\n| IntegrationProfile - Fulfillment Oms | Orders Full Access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
-                "security": [],
+                "summary": "Download shipping label",
+                "description": "Returns shipping label data for a Shopee order as JSON. On success the label file is included Base64-encoded (typically a ZIP archive). The credential must be valid for the account indicated by query parameter `an`.\r\n\r\n## Authentication\r\n\r\nThis endpoint requires a valid [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) in the `VtexIdclientAutCookie` header (for example from Admin VTEX login). [API keys](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) are not used for this operation.\r\n\r\n## Permissions\r\n\r\nThe authenticated store user must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| Checkout         | CheckoutResources | **Orders Full Access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| OMS - Full access | View order |\r\n| Checkout Admin | View order |\r\n| IntegrationProfile - Fulfillment Oms | View order |\r\n| OMS - Full access | Orders Full Access |\r\n| Checkout Admin | Orders Full Access |\r\n| IntegrationProfile - Fulfillment Oms | Orders Full Access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "security": [
+                    {
+                        "VtexIdclientAutCookie": []
+                    }
+                ],
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Accept"
@@ -46,43 +50,25 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "200 OK\n\nLegacy shipping label retrieved successfully.",
+                        "description": "200 OK\n\nResponse body with Shopee order status details and a Base64 encoded label file plus content disposition hints.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ShippingLabelLegacyResponse"
+                                    "$ref": "#/components/schemas/ShippingLabelDownloadResponse"
                                 },
                                 "example": {
-                                    "orderId": "240101ABC123",
-                                    "labelFormat": "PDF",
-                                    "labelUrl": "https://storage.example.com/shopee/labels/240101ABC123.pdf",
-                                    "labelContentBase64": null
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request\n\nMissing or invalid query parameters.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
-                                },
-                                "example": {
-                                    "message": "Account name (an) is required."
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "500 Internal Server Error\n\nUnexpected error while downloading the label.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
-                                },
-                                "example": {
-                                    "message": "Unexpected error while downloading the label."
+                                    "message": "Label retrieved successfully",
+                                    "details": {
+                                        "statusMessage": "success",
+                                        "orderStatusInShopee": [
+                                            "READY_TO_SHIP"
+                                        ],
+                                        "file": {
+                                            "base64Encoded": "UEsDBBQAAAAIA...",
+                                            "type": "application/force-download",
+                                            "disposition": "attachment; filename=\"OpenApi_Shipping_label_Zip.Entrega%20Padr%C3%A3o%2A1.zip\""
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -96,8 +82,12 @@
                     "VTEX order callbacks"
                 ],
                 "summary": "Cancel marketplace delivery",
-                "description": "Cancels delivery for a marketplace order received through VTEX callback.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| Checkout         | CheckoutResources | **Orders Full Access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| OMS - Full access | View order |\r\n| Checkout Admin | View order |\r\n| IntegrationProfile - Fulfillment Oms | View order |\r\n| OMS - Full access | Orders Full Access |\r\n| Checkout Admin | Orders Full Access |\r\n| IntegrationProfile - Fulfillment Oms | Orders Full Access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
-                "security": [],
+                "description": "Cancels delivery for a marketplace order received through VTEX callback.\r\n\r\n## Authentication\r\n\r\nThis endpoint requires the store admin [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) in the `VtexIdclientAutCookie` header (session from Admin VTEX login). API keys (`X-VTEX-API-AppKey` / `X-VTEX-API-AppToken`) are not used for this operation.\r\n\r\n## Permissions\r\n\r\nThe authenticated store user must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| Checkout         | CheckoutResources | **Orders Full Access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| OMS - Full access | View order |\r\n| Checkout Admin | View order |\r\n| IntegrationProfile - Fulfillment Oms | View order |\r\n| OMS - Full access | Orders Full Access |\r\n| Checkout Admin | Orders Full Access |\r\n| IntegrationProfile - Fulfillment Oms | Orders Full Access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "security": [
+                    {
+                        "VtexIdclientAutCookie": []
+                    }
+                ],
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Accept"
@@ -115,23 +105,10 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/GenericSuccessResponse"
+                                    "$ref": "#/components/schemas/cancelSuccessResponse"
                                 },
                                 "example": {
                                     "message": "Delivery cancellation completed successfully."
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "400 Bad Request\n\nInvalid delivery cancellation request.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
-                                },
-                                "example": {
-                                    "message": "Conta não encontrada."
                                 }
                             }
                         }
@@ -184,7 +161,7 @@
             "AccountNameQuery": {
                 "name": "an",
                 "in": "query",
-                "description": "Account name used by the Shopee integration.",
+                "description": "VTEX account name for the Shopee integration. Must match the account for which the authentication credential is valid.",
                 "required": true,
                 "schema": {
                     "type": "string",
@@ -223,28 +200,13 @@
             }
         },
         "schemas": {
-            "GenericSuccessResponse": {
+            "cancelSuccessResponse": {
                 "type": "object",
                 "description": "Generic success response payload.",
                 "properties": {
                     "message": {
                         "type": "string",
                         "description": "Result message."
-                    }
-                }
-            },
-            "ErrorResponse": {
-                "type": "object",
-                "description": "Generic error response payload.",
-                "properties": {
-                    "message": {
-                        "type": "string",
-                        "description": "Error message."
-                    },
-                    "stackTrace": {
-                        "type": "string",
-                        "description": "Stack trace when available.",
-                        "nullable": true
                     }
                 }
             },
@@ -259,12 +221,10 @@
                 "properties": {
                     "code": {
                         "type": "integer",
-                        "format": "int32",
                         "description": "Shopee webhook event code."
                     },
                     "shopId": {
                         "type": "integer",
-                        "format": "int64",
                         "description": "Shopee shop identifier."
                     },
                     "data": {
@@ -287,27 +247,58 @@
                     }
                 }
             },
-            "ShippingLabelLegacyResponse": {
+            "ShippingLabelDownloadResponse": {
                 "type": "object",
-                "description": "Legacy shipping label response payload.",
+                "description": "Shipping label download payload returned by the API.",
+                "required": [
+                    "message",
+                    "details"
+                ],
                 "properties": {
-                    "orderId": {
+                    "message": {
                         "type": "string",
-                        "description": "Shopee order identifier."
+                        "description": "Summary message for the operation."
                     },
-                    "labelFormat": {
-                        "type": "string",
-                        "description": "Label file format."
-                    },
-                    "labelUrl": {
-                        "type": "string",
-                        "format": "uri",
-                        "description": "Download URL for the legacy label."
-                    },
-                    "labelContentBase64": {
-                        "type": "string",
-                        "description": "Legacy label content in base64 when available.",
-                        "nullable": true
+                    "details": {
+                        "type": "object",
+                        "description": "Label metadata and encoded file returned for the Shopee order.",
+                        "properties": {
+                            "statusMessage": {
+                                "type": "string",
+                                "description": "Status message from the integration or Shopee flow."
+                            },
+                            "orderStatusInShopee": {
+                                "type": "array",
+                                "description": "Shopee order status values applicable to the label request.",
+                                "items": {
+                                    "type": "string",
+                                    "description": "Shopee order status code or label."
+                                }
+                            },
+                            "file": {
+                                "type": "object",
+                                "description": "Label file encoded in Base64 and HTTP content hints.",
+                                "required": [
+                                    "base64Encoded",
+                                    "type",
+                                    "disposition"
+                                ],
+                                "properties": {
+                                    "base64Encoded": {
+                                        "type": "string",
+                                        "description": "File content (for example a ZIP archive) encoded in Base64."
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "description": "Suggested media type for the file, often application/force-download."
+                                    },
+                                    "disposition": {
+                                        "type": "string",
+                                        "description": "Suggested Content-Disposition header value for download."
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
