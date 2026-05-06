@@ -1,0 +1,524 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "version": "1.0.0",
+        "title": "Batch Inventory Update API",
+        "description": "The Batch Inventory Update API optimizes maintaining data consistency while maximizing throughput.\r\n>ℹ️ This feature is in beta, which means that we are working to improve it. If you have any questions, please contact our [Support Center](https://support.vtex.com/hc/en-us/requests).\r\n\r\n## Index\r\n\r\n- `POST` Create batch inventory job\r\n\n- `POST` Commit batch\r\n- `GET` Get batch status\r\n- `GET` Download batch result CSV\r\n"
+    },
+    "servers": [
+        {
+            "url": "https://{accountName}",
+            "description": "VTEX server URL.",
+            "variables": {
+                "accountName": {
+                    "description": "Name of the VTEX account. Used as part of the URL.",
+                    "default": "apiexamples"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/availability/v1/inventory/batch": {
+            "post": {
+                "tags": [
+                    "Batch operations"
+                ],
+                "summary": "Create batch inventory job",
+                "description": "Creates a new batch inventory job and returns a pre-signed URL for uploading the CSV file. The batch will be in `AWAITING_UPLOAD` status until the CSV is uploaded and committed.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Logistics | Logistics access | **Logistics - Full access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** |\r\n| --------------- | ----------------- |\r\n| Logistics - Full access | Logistics - Full access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or API keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Batch inventory job details.",
+                                    "required": [
+                                        "batchId",
+                                        "status",
+                                        "upload"
+                                    ],
+                                    "properties": {
+                                        "batchId": {
+                                            "type": "string",
+                                            "format": "uuid",
+                                            "description": "Unique identifier for the batch inventory job. This value must be used as the name of the CSV file."
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "description": "Initial status of the batch.",
+                                            "enum": [
+                                                "AWAITING_UPLOAD"
+                                            ]
+                                        },
+                                        "upload": {
+                                            "type": "object",
+                                            "description": "Pre-signed upload details for uploading the CSV file to S3.",
+                                            "required": [
+                                                "method",
+                                                "url",
+                                                "headers",
+                                                "expiresAt"
+                                            ],
+                                            "properties": {
+                                                "method": {
+                                                    "type": "string",
+                                                    "description": "HTTP method to use for the upload.",
+                                                    "enum": [
+                                                        "PUT"
+                                                    ]
+                                                },
+                                                "url": {
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "description": "Pre-signed S3 URL for uploading the CSV file."
+                                                },
+                                                "headers": {
+                                                    "type": "object",
+                                                    "description": "Required headers for the upload request.",
+                                                    "required": [
+                                                        "Content-Type"
+                                                    ],
+                                                    "properties": {
+                                                        "Content-Type": {
+                                                            "type": "string",
+                                                            "description": "Content type for the upload. Must be `text/csv`.",
+                                                            "enum": [
+                                                                "text/csv"
+                                                            ]
+                                                        }
+                                                    }
+                                                },
+                                                "expiresAt": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "description": "URL expiration timestamp. The pre-signed URL is valid for 30 minutes from the time it is returned."
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "batchId": "550e8400-e29b-41d4-a716-446655440000",
+                                    "status": "AWAITING_UPLOAD",
+                                    "upload": {
+                                        "method": "PUT",
+                                        "url": "https://availability-bulk-upload.s3.amazonaws.com/550e8400-e29b-41d4-a716-446655440000.csv?X-Amz-Algorithm=AWS4-HMAC-SHA256&...",
+                                        "headers": {
+                                            "Content-Type": "text/csv"
+                                        },
+                                        "expiresAt": "2026-01-12T20:10:00Z"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request\n\nInvalid request or missing required path parameter."
+                    },
+                    "401": {
+                        "description": "Unauthorized\n\nMissing or invalid authentication."
+                    },
+                    "403": {
+                        "description": "Forbidden\n\nInsufficient permissions or feature not enabled for the account."
+                    },
+                    "500": {
+                        "description": "Internal Server Error\n\nUnexpected error occurred while creating the batch."
+                    }
+                }
+            }
+        },
+        "/availability/v1/inventory/batch/{batchId}/commit": {
+            "post": {
+                "tags": [
+                    "Batch operations"
+                ],
+                "summary": "Commit batch inventory",
+                "description": "Confirms that the CSV upload is complete and triggers asynchronous processing of the batch inventory. The batch status will transition to `QUEUED`.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Logistics | Logistics access | **Logistics - Full access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** |\r\n| --------------- | ----------------- |\r\n| Logistics - Full access | Logistics - Full access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or API keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/batchId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted\n\nUpload confirmed and batch queued for processing."
+                    },
+                    "400": {
+                        "description": "Bad Request\n\nBatch already processing or invalid state."
+                    },
+                    "401": {
+                        "description": "Unauthorized\n\nMissing or invalid authentication."
+                    },
+                    "403": {
+                        "description": "Forbidden\n\nInsufficient permissions."
+                    },
+                    "423": {
+                        "description": "Locked\n\nThere is already a commit in progress for this batch."
+                    },
+                    "500": {
+                        "description": "Internal Server Error\n\nUnexpected error occurred while committing the batch."
+                    }
+                }
+            }
+        },
+        "/availability/v1/inventory/batch/{batchId}/status": {
+            "get": {
+                "tags": [
+                    "Batch operations"
+                ],
+                "summary": "Get batch inventory status",
+                "description": "Retrieves the current processing status and progress information for a batch inventory job. Use this endpoint to poll the batch status and track processing progress.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Logistics | Logistics access | **Logistics - Full access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** |\r\n| --------------- | ----------------- |\r\n| Logistics - Full access | Logistics - Full access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or API keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/batchId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Batch inventory status details.",
+                                    "required": [
+                                        "batchId",
+                                        "status",
+                                        "rowCount",
+                                        "processedCount",
+                                        "errorCount",
+                                        "amountCompleted",
+                                        "createdAt"
+                                    ],
+                                    "properties": {
+                                        "batchId": {
+                                            "type": "string",
+                                            "format": "uuid",
+                                            "description": "Unique identifier for the batch inventory job."
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "description": "Current processing status of the batch inventory.\r\n\r\n| **Status** | **Description** |\r\n| --------------- | ----------------- |\r\n| `AWAITING_UPLOAD` | Batch created, waiting for CSV upload. |\r\n| `QUEUED` | Upload committed, waiting to begin processing. |\r\n| `PROCESSING` | Batch is currently being processed (includes mid stages: `INGESTING`, `CLASSIFYING`). |\r\n| `COMPLETED` | All rows processed successfully. |\r\n| `COMPLETED_WITH_ERRORS` | Processing finished with some row errors. |\r\n| `FAILED` | Processing failed due to validation or system errors. |\r\n| `EXPIRED` | Batch metadata has expired (default: 30 minutes). |",
+                                            "enum": [
+                                                "AWAITING_UPLOAD",
+                                                "QUEUED",
+                                                "PROCESSING",
+                                                "COMPLETED",
+                                                "COMPLETED_WITH_ERRORS",
+                                                "FAILED",
+                                                "EXPIRED"
+                                            ]
+                                        },
+                                        "rowCount": {
+                                            "type": "integer",
+                                            "description": "Total number of rows in the batch."
+                                        },
+                                        "processedCount": {
+                                            "type": "integer",
+                                            "description": "Number of rows processed so far."
+                                        },
+                                        "errorCount": {
+                                            "type": "integer",
+                                            "description": "Number of rows with errors."
+                                        },
+                                        "amountCompleted": {
+                                            "type": "integer",
+                                            "description": "Percentage of batch inventory completed.",
+                                            "minimum": 0,
+                                            "maximum": 100
+                                        },
+                                        "createdAt": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "description": "Batch inventory creation timestamp."
+                                        },
+                                        "startedAt": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "description": "Batch inventory processing start timestamp.",
+                                            "nullable": true
+                                        },
+                                        "stages": {
+                                            "type": "object",
+                                            "description": "Chunk-level stage breakdown. May be `null` while the batch inventory is in early stages.",
+                                            "nullable": true,
+                                            "required": [
+                                                "ingestedChunks",
+                                                "classifiedChunks",
+                                                "processedChunks",
+                                                "notifiedChunks",
+                                                "totalChunks"
+                                            ],
+                                            "properties": {
+                                                "ingestedChunks": {
+                                                    "type": "integer",
+                                                    "description": "Number of chunks that completed the ingestion stage for the batch inventory."
+                                                },
+                                                "classifiedChunks": {
+                                                    "type": "integer",
+                                                    "description": "Number of chunks that completed the classification stage."
+                                                },
+                                                "processedChunks": {
+                                                    "type": "integer",
+                                                    "description": "Number of chunks that completed the processing stage."
+                                                },
+                                                "notifiedChunks": {
+                                                    "type": "integer",
+                                                    "description": "Number of chunks that completed the notification stage."
+                                                },
+                                                "totalChunks": {
+                                                    "type": "integer",
+                                                    "description": "Total number of chunks in the batch."
+                                                }
+                                            }
+                                        },
+                                        "summary": {
+                                            "type": "object",
+                                            "description": "Processing outcome summary. May be `null` while the batch is in early stages.",
+                                            "nullable": true,
+                                            "required": [
+                                                "insertCount",
+                                                "updateCount",
+                                                "noopCount",
+                                                "conflictCount",
+                                                "skippedDueApiUpdateCount",
+                                                "perItemRoutedCount",
+                                                "dlqEventsCount"
+                                            ],
+                                            "properties": {
+                                                "insertCount": {
+                                                    "type": "integer",
+                                                    "description": "Number of new inventory rows inserted."
+                                                },
+                                                "updateCount": {
+                                                    "type": "integer",
+                                                    "description": "Number of existing rows updated."
+                                                },
+                                                "noopCount": {
+                                                    "type": "integer",
+                                                    "description": "Number of rows with no changes needed."
+                                                },
+                                                "conflictCount": {
+                                                    "type": "integer",
+                                                    "description": "Number of rows that encountered Compare-And-Set (CAS) conflicts."
+                                                },
+                                                "skippedDueApiUpdateCount": {
+                                                    "type": "integer",
+                                                    "description": "Number of rows skipped as they were recently modified using the individual item API."
+                                                },
+                                                "perItemRoutedCount": {
+                                                    "type": "integer",
+                                                    "description": "Number of rows routed to per-item processing."
+                                                },
+                                                "dlqEventsCount": {
+                                                    "type": "integer",
+                                                    "description": "Number of events sent to the Dead Letter Queue (DLQ)."
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "batchId": "550e8400-e29b-41d4-a716-446655440000",
+                                    "status": "PROCESSING",
+                                    "rowCount": 13800000,
+                                    "processedCount": 8500000,
+                                    "errorCount": 0,
+                                    "amountCompleted": 61,
+                                    "createdAt": "2026-01-12T20:00:00Z",
+                                    "startedAt": "2026-01-12T20:01:00Z",
+                                    "stages": {
+                                        "ingestedChunks": 276,
+                                        "classifiedChunks": 250,
+                                        "processedChunks": 170,
+                                        "notifiedChunks": 165,
+                                        "totalChunks": 276
+                                    },
+                                    "summary": {
+                                        "insertCount": 5200000,
+                                        "updateCount": 3100000,
+                                        "noopCount": 200000,
+                                        "conflictCount": 0,
+                                        "skippedDueApiUpdateCount": 0,
+                                        "perItemRoutedCount": 0,
+                                        "dlqEventsCount": 0
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request\n\nInvalid batch ID format."
+                    },
+                    "401": {
+                        "description": "Unauthorized\n\nMissing or invalid authentication."
+                    },
+                    "403": {
+                        "description": "Forbidden\n\nInsufficient permissions."
+                    },
+                    "404": {
+                        "description": "Not Found\n\nBatch not found."
+                    },
+                    "500": {
+                        "description": "Internal Server Error\n\nUnexpected error occurred while retrieving the batch status."
+                    }
+                }
+            }
+        },
+        "/availability/v1/inventory/batch/{batchId}/errors": {
+            "get": {
+                "tags": [
+                    "Batch operations"
+                ],
+                "summary": "Get batch inventory errors",
+                "description": "Returns a pre-signed URL to download a CSV file containing all rows that failed processing, along with error codes and messages. The error reports are available until the batch metadata expires (7 days after batch completion). The Get batch inventory errors endpoint is available when:\r\n- `errorCount > 0` in the status response\r\n- Status is one of: `PROCESSING`, `COMPLETED`, `COMPLETED_WITH_ERRORS`, or `FAILED`\r\n\r\nIf these conditions are not met, the endpoint response will be `204 No Content`.\r\n\r\n## Error Types\r\n\r\n**Deterministic Errors**: Errors caused by invalid or incomplete data in the submitted file, for example a missing required fields or invalid values. These errors are detected during the file ingestion from S3 and will cause the affected records to fail. The system doesn't retry these operations automatically. The user must fix the data in the CSV file and resubmit a new batch.\r\n\r\n**Non-Deterministic Errors**: Errors caused by infrastructure or system issues. The system will automatically retry the operation up to 3 times. If the operation still fails after these attempts, the message will be sent to a Dead Letter Queue (DLQ) for further investigation. These errors will show `UPDATE_FAILED` in the error CSV.\r\n\r\n## Error CSV Schema\r\n\r\nThe downloaded CSV file contains the following fields:\r\n\r\n| **Field** | **Type** | **Description** |\r\n| --------------- | ----------------- | ----------------- |\r\n| `line_number` | integer | Original line number in the uploaded CSV. |\r\n| `item_id` | string | SKU identifier from the failed row. |\r\n| `container_id` | string | Warehouse ID from the failed row. |\r\n| `error_code` | string | Machine-readable error code. |\r\n| `error_message` | string | Human-readable error description. |\r\n\r\n## Error Codes\r\n\r\n- `INVALID_QUANTITY`: Quantity value is invalid (negative, non-numeric)\r\n- `MISSING_REQUIRED_FIELD`: Required field is empty or missing\r\n- `INVALID_DATE_FORMAT`: Date/time field has invalid format\r\n- `UPDATE_FAILED`: Database update failed after retries (non-deterministic error)\r\n- `INSERT_CONFLICT`: Insert conflicted with a concurrent operation\r\n- `INVALID_FORMAT`: Row format is invalid (e.g., wrong number of columns)\r\n- `CONFLICT`: Compare-And-Set conflict or per-item routing conflict\r\n- `UNKNOWN`: Unclassified error\r\n\r\n## Error CSV Example\r\n\r\n```csv\r\nline_number,item_id,container_id,error_code,error_message\r\n1523,SKU-12345,WH-01,INVALID_QUANTITY,\"quantity cannot be negative: -50\"\r\n4892,SKU-67890,WH-01,MISSING_REQUIRED_FIELD,\"container_id is required\"\r\n10234,SKU-11111,WH-01,INVALID_DATE_FORMAT,\"supply_date is not valid\"\r\n```\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Logistics | Logistics access | **Logistics - Full access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** |\r\n| --------------- | ----------------- |\r\n| Logistics - Full access | Logistics - Full access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or API keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/batchId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK\n\nError report available for download.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "batchId",
+                                        "downloadUrl",
+                                        "errorCount"
+                                    ],
+                                    "properties": {
+                                        "batchId": {
+                                            "type": "string",
+                                            "format": "uuid",
+                                            "description": "Unique identifier for the batch job."
+                                        },
+                                        "downloadUrl": {
+                                            "type": "string",
+                                            "format": "uri",
+                                            "description": "Pre-signed URL to download the error CSV (valid for 60 minutes)."
+                                        },
+                                        "errorCount": {
+                                            "type": "integer",
+                                            "description": "Total number of rows with errors."
+                                        }
+                                    }
+                                },
+                                "examples": {
+                                    "API Response": {
+                                        "summary": "JSON response from the API",
+                                        "value": {
+                                            "batchId": "550e8400-e29b-41d4-a716-446655440000",
+                                            "downloadUrl": "https://availability-bulk-upload-errors.s3.amazonaws.com/550e8400-e29b-41d4-a716-446655440000-errors.csv?X-Amz-Algorithm=AWS4-HMAC-SHA256&...",
+                                            "errorCount": 3
+                                        }
+                                    },
+                                    "Downloaded CSV Content": {
+                                        "summary": "Example content of the downloaded CSV file",
+                                        "value": "line_number,item_id,container_id,error_code,error_message\n1523,SKU-12345,WH-01,INVALID_QUANTITY,\"quantity cannot be negative: -50\"\n4892,SKU-67890,WH-01,MISSING_REQUIRED_FIELD,\"container_id is required\"\n10234,SKU-11111,WH-01,INVALID_DATE_FORMAT,\"supply_date is not valid\""
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "No Content\n\nNo errors or report not available."
+                    },
+                    "400": {
+                        "description": "Bad Request\n\nInvalid batch ID format."
+                    },
+                    "401": {
+                        "description": "Unauthorized\n\nMissing or invalid authentication."
+                    },
+                    "403": {
+                        "description": "Forbidden\n\nInsufficient permissions."
+                    },
+                    "404": {
+                        "description": "Not Found\n\nBatch not found."
+                    },
+                    "500": {
+                        "description": "Internal Server Error\n\nUnexpected error occurred while retrieving the error report."
+                    }
+                }
+            }
+        }
+    },
+    "security": [
+        {
+            "appKey": [],
+            "appToken": []
+        },
+        {
+            "VtexIdclientAutCookie": []
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "VtexIdclientAutCookie": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "VtexIdclientAutCookie",
+                "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
+            }
+        },
+        "parameters": {
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "batchId": {
+                "name": "batchId",
+                "in": "path",
+                "description": "Unique identifier for the batch job, returned by the [Create batch inventory job](https://developers.vtex.com/docs/guides/batch-inventory-update-api#tag/Batch-operations/operation/create-batch-inventory-job) endpoint.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Batch operations"
+        }
+    ]
+}
