@@ -14,7 +14,7 @@ The License Manager API allows you to create users, modify their names and email
 ### User
 
 - `GET` [Get user information by user ID](https://developers.vtex.com/docs/api-reference/license-manager-api#get-/api/license-manager/users/-userId-)
-- `GET` [Get user information by user email](https://developers.vtex.com/docs/api-reference/license-manager-api#get-/api/license-manager/users/-userEmail-/roles)
+- `GET` [Get user information by user email](https://developers.vtex.com/docs/api-reference/license-manager-api#get-/api/license-manager/users/storefront/-userEmail-/roles)
 - `DELETE` [Delete user](https://developers.vtex.com/docs/api-reference/license-manager-api#delete-/api/license-manager/users/-userId-)
 - `POST` [Create user](https://developers.vtex.com/docs/api-reference/license-manager-api#post-/api/license-manager/users)
 - `GET` [Get list of users](https://developers.vtex.com/docs/api-reference/license-manager-api#get-/api/license-manager/site/pvt/logins/list/paged)
