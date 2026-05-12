@@ -297,6 +297,26 @@
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/SaveaccountconfigRequest"
+                            },
+                            "example": {
+                                "Score": {
+                                    "Approve": 80,
+                                    "Reject": 30
+                                },
+                                "Matchers": [
+                                    {
+                                        "MatcherId": "vtex-matcher",
+                                        "hook-base-address": "http://simple-suggestion-matcher.vtex.com.br",
+                                        "IsActive": true,
+                                        "UpdatesNotificationEndpoint": null,
+                                        "Description": null
+                                    }
+                                ],
+                                "SpecificationsMapping": [
+                                    "color=red",
+                                    "size=L"
+                                ],
+                                "MatchFlux": "autoApprove"
                             }
                         }
                     },
@@ -1272,10 +1292,21 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "items": {
-                                    "$ref": "#/components/schemas/MatchMultiple"
+                                "$ref": "#/components/schemas/MatchMultiple"
+                            },
+                            "example": [
+                                {
+                                    "itemId": "1234567",
+                                    "versionId": "v.2",
+                                    "matchId": "06272023010821403",
+                                    "matcherId": "vtex-matcher",
+                                    "categoryId": 12,
+                                    "brandId": 1234567,
+                                    "skuRef": "123 sku ref",
+                                    "productRef": null,
+                                    "sellerId": "seller123"
                                 }
-                            }
+                            ]
                         }
                     },
                     "required": true
@@ -1349,14 +1380,14 @@
                                     "type": "string",
                                     "description": "An [attachment](https://help.vtex.com/en/tutorial/what-is-an-attachment--aGICk0RVbqKg6GYmQcWUm) is an optional, free customization of a product. It is used to add information to a SKU."
                                 },
-                                "description": "Key-value pairs where the key is the seller's specification name and the value is the equivalent specification in the marketplace.",
-                                "example": {
+                                "description": "Key-value pairs where the key is the seller's specification name and the value is the equivalent specification in the marketplace."
+                            },
+                            "example": {
                                 "Size": "SIZE",
                                 "43": "41",
                                 "Cor": "Color",
                                 "BROWN": "Brown",
                                 "Brand": "brand"
-                            }
                             }
                         }
                     }
@@ -1369,6 +1400,15 @@
             }
         }
     },
+    "security": [
+        {
+            "appKey": [],
+            "appToken": []
+        },
+        {
+            "VtexIdclientAutCookie": []
+        }
+    ],
     "components": {
         "schemas": {
             "SaveautoapproveforaccountRequest": {
@@ -1420,26 +1460,6 @@
                         "default": "autoApprove",
                         "example":"autoApprove"
                     }
-                },
-                "example": {
-                    "Score": {
-                        "Approve": 80,
-                        "Reject": 30
-                    },
-                    "Matchers": [
-                        {
-                            "MatcherId": "vtex-matcher",
-                            "hook-base-address": "http://simple-suggestion-matcher.vtex.com.br",
-                            "IsActive": true,
-                            "UpdatesNotificationEndpoint": null,
-                            "Description": null
-                        }
-                    ],
-                    "SpecificationsMapping": [
-                        "color=red",
-                        "size=L"
-                    ],
-                    "MatchFlux": "autoApprove"
                 }
             },
             "Score": {
@@ -2111,7 +2131,15 @@
                         "example": 100
                     },
                     "images": {
-                        "$ref": "#/components/schemas/Images"
+                        "type": "object",
+                        "description": "An object that represents a single SKU image with a filename as the key and the image URL as the value.",
+                        "properties": {
+                            "imagem1.jpg": {
+                                "type": "string",
+                                "description": "The URL of the SKU's image. Must be an `https` URL.",
+                                "example": "https://imageurl.example"
+                            }
+                        }
                     },
                     "unitMultiplier": {
                         "type": "integer",
@@ -2128,7 +2156,18 @@
                         "example":"un"
                     },
                     "specifications": {
-                        "$ref": "#/components/schemas/Specifications"
+                        "required": [
+                            "Packaging"
+                        ],
+                        "type": "object",
+                        "description": "Object representing the specifications of a product, including details related to its packaging and other relevant attributes.",
+                        "properties": {
+                            "Packaging": {
+                                "type": "string",
+                                "description": "Packaging specifications. Should include package's weight.",
+                                "example": "3kg"
+                            }
+                        }
                     }
                 },
                 "example": {
@@ -2429,12 +2468,20 @@
             "appKey": {
                 "type": "apiKey",
                 "in": "header",
-                "name": "X-VTEX-API-AppKey"
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
             },
             "appToken": {
                 "type": "apiKey",
                 "in": "header",
-                "name": "X-VTEX-API-AppToken"
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "VtexIdclientAutCookie": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "VtexIdclientAutCookie",
+                "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
             }
         },
         "parameters": {
@@ -2481,6 +2528,10 @@
         {
             "name": "Match received SKUs",
             "description": "Match SKU suggestions received in the marketplace."
+        },
+        {
+            "name": "Multiple product specification mapping",
+            "description": "Bulk mapping of seller product specifications to the marketplace catalog."
         }
     ]
 }

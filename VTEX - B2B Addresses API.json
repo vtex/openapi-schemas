@@ -1,0 +1,1572 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "B2B Addresses API",
+        "description": "The B2B Addresses API allows you to manage B2B addresses and their related entities in VTEX. A B2B address stores location data used for shipping and billing. Addresses, recipients, and locations are stored in [Master Data](https://developers.vtex.com/docs/guides/master-data-introduction) data entities.\r\n\r\n>⚠️ This API is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n## B2B address requirements\r\n\r\nB2B addresses must follow these rules:\r\n\r\n| **Field** | **Required** | **Description** |\r\n| --- | --- | --- |\r\n| `addressType` | Yes | Type of address. Use `commercial` for shipping (delivery) or `invoice` for billing (payment). |\r\n| `receiverName` | Yes | Name of the person receiving orders at this address. This field will be deprecated in favor of the [Recipients](https://developers.vtex.com/docs/api-reference/b2b-addresses#post-/api/dataentities/contact_information/documents) feature, but it must be filled with some value (for example, `.`). |\r\n| `country` | Yes | Three-letter [ISO 3166-1 alpha-3](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3) country code (for example, `BRA` or `USA`). |\r\n| `state` | Yes | Two-letter state or province code (for example, `FL` or `SP`). Full names such as `Florida` are not accepted. |\r\n| `postalCode` | Yes | String following the exact country format (for example, `02999` instead of `2999`). Nine-digit formats are not accepted. |\r\n| `geoCoordinates` | No | Array of doubles representing latitude and longitude (for example, `[28.48, -81.20]`), or an empty array `[]`. |\r\n\r\n## Addresses\r\n\r\nStored in the `AD` data entity. A B2B address represents a shipping or billing location tied to a buyer organization.\r\n\r\n## Recipients\r\n\r\nStored in the `contact_information` data entity. A recipient represents a person who can receive orders at one or more B2B addresses. Recipients are linked to B2B addresses through the `addressIds` field.\r\n\r\n## Locations\r\n\r\nA location is a specific delivery point within a site, such as a dock, department, or internal area. For example, freight may be consigned to the company's street address while the actual delivery is to Dock 3456. The **Locations API** is based in the [Custom Fields API](https://developers.vtex.com/docs/api-reference/custom-fields-api).\r\n\r\nTo discover the `customFieldId` for your account, list the existing settings with `GET` [Search custom field settings](https://developers.vtex.com/docs/api-reference/custom-fields-api#get-/api/dataentities/customFieldSettings/search) and pick the one matching the location feature.\r\n\r\n## Index\r\n\r\n### Addresses\r\n\r\n- `POST` [Create B2B address](https://developers.vtex.com/docs/api-reference/b2b-addresses#post-/api/dataentities/AD/documents)\r\n- `GET` [Search B2B addresses](https://developers.vtex.com/docs/api-reference/b2b-addresses#get-/api/dataentities/AD/search)\r\n- `GET` [Get B2B address by ID](https://developers.vtex.com/docs/api-reference/b2b-addresses#get-/api/dataentities/AD/documents/-addressId-)\r\n- `PATCH` [Update B2B address](https://developers.vtex.com/docs/api-reference/b2b-addresses#patch-/api/dataentities/AD/documents/-addressId-)\r\n- `DELETE` [Delete B2B address](https://developers.vtex.com/docs/api-reference/b2b-addresses#delete-/api/dataentities/AD/documents/-addressId-)\r\n\r\n### Recipients\r\n\r\n- `POST` [Create recipient](https://developers.vtex.com/docs/api-reference/b2b-addresses#post-/api/dataentities/contact_information/documents)\r\n- `GET` [Search recipients](https://developers.vtex.com/docs/api-reference/b2b-addresses#get-/api/dataentities/contact_information/search)\r\n- `GET` [Get recipient by ID](https://developers.vtex.com/docs/api-reference/b2b-addresses#get-/api/dataentities/contact_information/documents/-recipientId-)\r\n- `PATCH` [Update recipient](https://developers.vtex.com/docs/api-reference/b2b-addresses#patch-/api/dataentities/contact_information/documents/-recipientId-)\r\n- `DELETE` [Delete recipient](https://developers.vtex.com/docs/api-reference/b2b-addresses#delete-/api/dataentities/contact_information/documents/-recipientId-)\r\n\r\n### Locations\r\n\r\n- `POST` [Create location](https://developers.vtex.com/docs/api-reference/b2b-addresses#post-/api/dataentities/customFieldValues/documents)\r\n- `GET` [Search locations](https://developers.vtex.com/docs/api-reference/b2b-addresses#get-/api/dataentities/customFieldValues/search)\r\n- `GET` [Get location](https://developers.vtex.com/docs/api-reference/b2b-addresses#get-/api/dataentities/customFieldValues/documents/-locationId-)\r\n- `PATCH` [Update location](https://developers.vtex.com/docs/api-reference/b2b-addresses#patch-/api/dataentities/customFieldValues/documents/-locationId-)\r\n- `DELETE` [Delete location](https://developers.vtex.com/docs/api-reference/b2b-addresses#delete-/api/dataentities/customFieldValues/documents/-locationId-)",
+        "contact": {},
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "https://{accountName}.{environment}.com.br",
+            "description": "VTEX server URL.",
+            "variables": {
+                "accountName": {
+                    "description": "Name of the VTEX account. Used as part of the URL.",
+                    "default": "apiexamples"
+                },
+                "environment": {
+                    "description": "Environment to use. Used as part of the URL.",
+                    "enum": [
+                        "vtexcommercestable"
+                    ],
+                    "default": "vtexcommercestable"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/api/dataentities/AD/documents": {
+            "post": {
+                "tags": [
+                    "Addresses"
+                ],
+                "summary": "Create B2B address",
+                "description": "Creates a new B2B address document in the `AD` data entity.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/createUpdateAddressRequests"
+                            },
+                            "example": {
+                                "addressName": "NC Office",
+                                "addressLabel": "NC Office",
+                                "addressType": "commercial",
+                                "receiverName": ".",
+                                "city": "Orlando",
+                                "state": "FL",
+                                "country": "USA",
+                                "postalCode": "02999",
+                                "street": "Main Street",
+                                "number": "300",
+                                "neighborhood": "Downtown",
+                                "complement": "3rd floor",
+                                "reference": "Next to the park",
+                                "geoCoordinates": [
+                                    28.48,
+                                    -81.20
+                                ],
+                                "userId": "2da4e9ab-050b-11f0-b37f-f4b136dbcce1"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/documentResponse"
+                                },
+                                "example": {
+                                    "Id": "AD-b818cbda-e489-11e6-94f4-0ac138d2d42e",
+                                    "Href": "http://api.vtex.com/my-store-name/dataentities/AD/documents/b818cbda-e489-11e6-94f4-0ac138d2d42e"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/dataentities/AD/search": {
+            "get": {
+                "tags": [
+                    "Addresses"
+                ],
+                "summary": "Search B2B addresses",
+                "description": "Retrieves B2B addresses from the `AD` data entity, with support for field selection, filtering, sorting, and pagination.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n>ℹ️ Learn more about [Pagination in the Master Data API](https://developers.vtex.com/docs/guides/pagination-in-the-master-data-api) and [Querying documents in Master Data v1](https://developers.vtex.com/docs/guides/querying-documents-in-master-data-v1).\r\n\r\n## Query examples\r\n\r\n| **Filter type** | **Example** |\r\n| --- | --- |\r\n| **Simple filter** | `/dataentities/AD/search?userId=2da4e9ab-050b-11f0-b37f-f4b136dbcce1` |\r\n| **Complex filter** | `/dataentities/AD/search?_where=(addressType=commercial OR addressType=invoice) AND country=USA` |\r\n| **Date range** | `/dataentities/AD/search?_where=createdIn between 2024-01-01 AND 2025-01-01` |\r\n| **Partial filter** | `/dataentities/AD/search?city=*Orlando*` |\r\n| **Null values** | `/dataentities/AD/search?_where=reference is null` |\r\n| **Non-null values** | `/dataentities/AD/search?_where=reference is not null` |\r\n| **Difference** | `/dataentities/AD/search?_where=state<>FL` |\r\n\r\n>⚠️ Avoid sending too many requests with wildcards (`*`) in the search parameters or that use the `keyword` parameter. This may lead to this endpoint being temporarily blocked for your account. If this happens you will receive an error with status code `503`.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Read only documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "REST-Range",
+                        "in": "header",
+                        "description": "Specifies the range of documents to be returned in the response. The value should follow the format `resources={x}-{y}`, where:\n* `x`: Index of the first document in the returned array.\n* `y`: Index of the last document in the returned array + 1.\n\nThis field controls pagination by defining the subset of documents to be retrieved. The maximum number of documents returned per query is limited to 100. For example, `resources=0-10` returns the first 10 documents.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "resources=0-10"
+                        }
+                    },
+                    {
+                        "name": "_fields",
+                        "in": "query",
+                        "description": "Names of the fields that will be returned per document, separated by a comma `,`. It is possible to fetch all fields using `_all` as the value of this query parameter. However, in order to avoid permission errors, we strongly recommend informing only the names of the exact fields that will be used.",
+                        "required": false,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "addressType,city,state,country,postalCode,userId"
+                        }
+                    },
+                    {
+                        "name": "_where",
+                        "in": "query",
+                        "description": "Defines a condition the B2B address document must comply with. When referring to fields, you can use a nested field up to the first level. For example, filter by buyer organization with `userId=2da4e9ab-050b-11f0-b37f-f4b136dbcce1`.",
+                        "required": false,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "userId=2da4e9ab-050b-11f0-b37f-f4b136dbcce1"
+                        }
+                    },
+                    {
+                        "name": "_sort",
+                        "in": "query",
+                        "description": "Defines sorting mode in two parts. The first part is the name of the field you want to sort by. In the second part, use `ASC` for ascending order or `DESC` for descending order.",
+                        "required": false,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "createdIn DESC"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "REST-Content-Range": {
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Indicates the range of documents returned in the current response, as well as the total number of documents available in the dataset. The value follows the format `resources={x}-{y}/{total}`, where:\n* `x`: Index of the first document in the returned array.\n* `y`: Index of the last document in the returned array + 1.\n* `total`: Total number of documents that match the query.\nFor example, `resources=0-10/98` indicates that documents from 0 to 9 are returned out of a total of 98 matching documents."
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "description": "List of B2B address documents matching the search criteria.",
+                                    "items": {
+                                        "$ref": "#/components/schemas/AddressResponse"
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": "4286e252-050b-11f0-b37f-d6617047d485",
+                                        "addressType": "commercial",
+                                        "addressLabel": "NC Office",
+                                        "receiverName": ".",
+                                        "street": "Toringon Street",
+                                        "number": "11",
+                                        "city": "Orlando",
+                                        "state": "FL",
+                                        "country": "USA",
+                                        "postalCode": "02999",
+                                        "geoCoordinates": [
+                                            28.48,
+                                            -81.20
+                                        ],
+                                        "userId": "2da4e9ab-050b-11f0-b37f-f4b136dbcce1"
+                                    },
+                                    {
+                                        "id": "7de8a913-16a4-11ef-bc95-0ac138d2d42e",
+                                        "addressType": "invoice",
+                                        "addressLabel": "Billing HQ",
+                                        "receiverName": ".",
+                                        "street": "Corporate Ave",
+                                        "number": "200",
+                                        "city": "Miami",
+                                        "state": "FL",
+                                        "country": "USA",
+                                        "postalCode": "33101",
+                                        "geoCoordinates": [],
+                                        "userId": "2da4e9ab-050b-11f0-b37f-f4b136dbcce1"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable"
+                    }
+                }
+            }
+        },
+        "/api/dataentities/AD/documents/{addressId}": {
+            "get": {
+                "tags": [
+                    "Addresses"
+                ],
+                "summary": "Get B2B address by ID",
+                "description": "Retrieves information of a specific B2B address by its unique identifier.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Read only documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "addressId",
+                        "in": "path",
+                        "description": "ID of the B2B address to retrieve.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "4286e252-050b-11f0-b37f-d6617047d485"
+                        }
+                    },
+                    {
+                        "name": "_fields",
+                        "in": "query",
+                        "description": "Specifies which fields of the document should be included in the response. Use `_all` to return all fields, or provide a comma-separated list of field names.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "_all",
+                            "example": "_all"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AddressResponse"
+                                },
+                                "example": {
+                                    "addressLabel": "NC Office",
+                                    "addressType": "commercial",
+                                    "city": "Orlando",
+                                    "complement": "",
+                                    "country": "USA",
+                                    "geoCoordinates": [
+                                        28.48,
+                                        -81.20
+                                    ],
+                                    "neighborhood": "",
+                                    "number": "11",
+                                    "postalCode": "02999",
+                                    "receiverName": ".",
+                                    "reference": null,
+                                    "state": "FL",
+                                    "street": "Toringon Street",
+                                    "userId": "2da4e9ab-050b-11f0-b37f-f4b136dbcce1",
+                                    "id": "4286e252-050b-11f0-b37f-d6617047d485",
+                                    "accountId": "5f1fe23b-9fd1-417d-a4aa-14df38e7746e",
+                                    "accountName": "qastore",
+                                    "dataEntityId": "AD",
+                                    "createdBy": "c83ea7ed-f875-4a10-b0a0-98d96aedab06",
+                                    "createdIn": "2025-03-19T21:44:01.4199691Z",
+                                    "updatedBy": null,
+                                    "updatedIn": null,
+                                    "lastInteractionBy": "c83ea7ed-f875-4a10-b0a0-98d96aedab06",
+                                    "lastInteractionIn": "2025-03-19T21:44:01.4199691Z",
+                                    "followers": [],
+                                    "tags": []
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Addresses"
+                ],
+                "summary": "Update B2B address",
+                "description": "Partially updates an existing B2B address document in the `AD` data entity.\r\n\r\n> ⚠️ When updating addresses you must send each field according to the specifications provided. Otherwise, the Checkout module will not be able to autofill data during the shopping flow, which can block the purchase. Learn more about [SmartCheckout - Customer information automatic fill-in](https://help.vtex.com/en/tutorial/smartcheckout-preenchimento-automatico-de-dados-do-cliente--2Nuu3xAFzdhIzJIldAdtan).\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "addressId",
+                        "in": "path",
+                        "description": "ID of the B2B address to update.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "4286e252-050b-11f0-b37f-d6617047d485"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/createUpdateAddressRequests"
+                            },
+                            "example": {
+                                "addressName": "NC Office",
+                                "addressLabel": "NC Office",
+                                "postalCode": "02999",
+                                "street": "Toringon Street",
+                                "number": "11",
+                                "neighborhood": "",
+                                "complement": "",
+                                "city": "Orlando",
+                                "state": "FL",
+                                "country": "USA",
+                                "receiverName": ".",
+                                "geoCoordinates": [
+                                    28.48,
+                                    -81.20
+                                ],
+                                "addressType": "commercial",
+                                "reference": "Grey building",
+                                "userId": "2da4e9ab-050b-11f0-b37f-d6617047d485"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/documentResponse"
+                                },
+                                "example": {
+                                    "Id": "AD-b818cbda-e489-11e6-94f4-0ac138d2d42e",
+                                    "Href": "http://api.vtex.com/my-store-name/dataentities/AD/documents/b818cbda-e489-11e6-94f4-0ac138d2d42e"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Addresses"
+                ],
+                "summary": "Delete B2B address",
+                "description": "Deletes a specific B2B address document from the `AD` data entity.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "addressId",
+                        "in": "path",
+                        "description": "ID of the B2B address to be deleted.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "4286e252-050b-11f0-b37f-d6617047d485"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/api/dataentities/contact_information/documents": {
+            "post": {
+                "tags": [
+                    "Recipients"
+                ],
+                "summary": "Create recipient",
+                "description": "Creates a new recipient document in the `contact_information` data entity. A recipient represents a person who can receive orders at one or more B2B addresses. Use the `addressIds` field to associate the recipient with existing B2B addresses from the `AD` data entity.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/recipientRequest"
+                            },
+                            "example": {
+                                "email": "rafael.silva@example.com",
+                                "firstName": "Rafael",
+                                "lastName": "Silva",
+                                "profileId": "878fa807-7c7b-4ad3-aaa6-e3ef4fb22b8f",
+                                "phone": "+1 212 555 1234",
+                                "phoneExtension": "123",
+                                "document": "112-3456789",
+                                "documentType": "EIN",
+                                "addressIds": [
+                                    "1ded2836-2061-4545-96d3-58f5338627c5",
+                                    "a3e103fc-d074-44fb-941a-949f1bca937c"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Recipient document creation response.",
+                                    "properties": {
+                                        "Id": {
+                                            "type": "string",
+                                            "description": "Recipient document identifier. The prefix corresponds to the `contact_information` data entity name."
+                                        },
+                                        "Href": {
+                                            "type": "string",
+                                            "description": "Recipient document store path."
+                                        },
+                                        "DocumentId": {
+                                            "type": "string",
+                                            "description": "Recipient document ID."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "Id": "contact_information-123e4567-e89b-12d3-a456-426614174000",
+                                    "Href": "http://{{account}}.myvtex.com/api/dataentities/contact_information/documents/123e4567-e89b-12d3-a456-426614174000?_schema=v1",
+                                    "DocumentId": "123e4567-e89b-12d3-a456-426614174000"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/dataentities/contact_information/search": {
+            "get": {
+                "tags": [
+                    "Recipients"
+                ],
+                "summary": "Search recipients",
+                "description": "Searches for recipients in the `contact_information` data entity based on the query parameters. Recipients returned by this endpoint can be linked to one or more B2B addresses through the `addressIds` field.\r\n\r\n>⚠️ The `_schema` query parameter is required and must be set to `v1`.\r\n\r\n> ℹ️ It is also possible to use pagination and sort as described in the [Master Data v2 Search API](https://developers.vtex.com/docs/api-reference/master-data-api-v2#get-/api/dataentities/-dataEntityName-/search) documentation.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Read only documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "_where",
+                        "in": "query",
+                        "description": "Filter for recipient documents. This is a Master Data search condition built from the field names defined on the `contact_information` entity and the values you want to match. Use `fieldName=value` (for example, `email=example@example.com` or `profileId=878fa807-7c7b-4ad3-aaa6-e3ef4fb22b8f`). Combine conditions using the syntax supported for the Master Data v2 [Search Documents endpoint](https://developers.vtex.com/docs/api-reference/master-data-api-v2#get-/api/dataentities/-dataEntityName-/search?endpoint=get-/api/dataentities/-dataEntityName-/search) (for example, `AND` / `OR` where applicable). Which fields you can use depends on your entity schema, not on this API parameter alone.",
+                        "required": true,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "profileId=878fa807-7c7b-4ad3-aaa6-e3ef4fb22b8f"
+                        }
+                    },
+                    {
+                        "name": "_fields",
+                        "in": "query",
+                        "description": "Fields that should be returned by document. Separate fields' names with commas. For example `_fields=firstName,lastName,email`. The default behavior is to return all fields. You can also use `_fields=_all` to fetch all fields.",
+                        "required": false,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "firstName,lastName,email"
+                        }
+                    },
+                    {
+                        "name": "_schema",
+                        "in": "query",
+                        "description": "Master Data version. This field must be `v1`.",
+                        "required": true,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "default": "v1"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "description": "Array of recipient objects.",
+                                    "items": {
+                                        "type": "object",
+                                        "description": "Recipient object.",
+                                        "properties": {
+                                            "firstName": {
+                                                "type": "string",
+                                                "description": "Recipient first name."
+                                            },
+                                            "lastName": {
+                                                "type": "string",
+                                                "description": "Recipient last name."
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "description": "Recipient email."
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "firstName": "Rafael",
+                                        "lastName": "Silva",
+                                        "email": "rafael.silva@example.com"
+                                    },
+                                    {
+                                        "firstName": "Carolina",
+                                        "lastName": "Mendes",
+                                        "email": "carolina.mendes@example.com"
+                                    },
+                                    {
+                                        "firstName": "Lucas",
+                                        "lastName": "Oliveira",
+                                        "email": "lucas.oliveira@example.com"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/dataentities/contact_information/documents/{recipientId}": {
+            "get": {
+                "tags": [
+                    "Recipients"
+                ],
+                "summary": "Get recipient by ID",
+                "description": "Retrieves a recipient by ID from the `contact_information` data entity. The returned recipient may be associated with one or more B2B addresses through the `addressIds` field.\r\n\r\n>ℹ️ Assign the `_fields` parameter in the query string to retrieve the desired fields. If you want to return all the fields use `_fields=_all`.\r\n\r\n>⚠️ The `_schema` query parameter is required and must be set to `v1`.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Read only documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "recipientId",
+                        "in": "path",
+                        "description": "Unique identifier of the recipient document.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "123e4567-e89b-12d3-a456-426614174000"
+                        }
+                    },
+                    {
+                        "name": "_fields",
+                        "in": "query",
+                        "description": "Fields that should be returned by document. Separate fields' names with commas. For example `_fields=email,firstName,document`. You can also use `_fields=_all` to fetch all fields.",
+                        "required": false,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "firstName,lastName,email"
+                        }
+                    },
+                    {
+                        "name": "_schema",
+                        "in": "query",
+                        "description": "Master Data version. This field must be `v1`.",
+                        "required": true,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "default": "v1"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/recipientRequest"
+                                },
+                                "example": {
+                                    "email": "rafael.silva@example.com",
+                                    "firstName": "Rafael",
+                                    "lastName": "Silva",
+                                    "profileId": "878fa807-7c7b-4ad3-aaa6-e3ef4fb22b8f",
+                                    "phone": "+1 212 555 1234",
+                                    "phoneExtension": "123",
+                                    "document": "112-3456789",
+                                    "documentType": "EIN",
+                                    "addressIds": [
+                                        "1ded2836-2061-4545-96d3-58f5338627c5",
+                                        "a3e103fc-d074-44fb-941a-949f1bca937c"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Recipients"
+                ],
+                "summary": "Update recipient",
+                "description": "Partially updates a recipient document in the `contact_information` data entity. Use the `addressIds` field to change the B2B addresses associated with the recipient.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "recipientId",
+                        "in": "path",
+                        "description": "Unique identifier of the recipient document.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "123e4567-e89b-12d3-a456-426614174000"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/recipientRequest"
+                            },
+                            "example": {
+                                "email": "rafael.silva@example.com",
+                                "firstName": "Rafael",
+                                "lastName": "Silva",
+                                "profileId": "878fa807-7c7b-4ad3-aaa6-e3ef4fb22b8f",
+                                "phone": "+1 212 555 1234",
+                                "phoneExtension": "123",
+                                "document": "112-3456789",
+                                "documentType": "EIN",
+                                "addressIds": [
+                                    "1ded2836-2061-4545-96d3-58f5338627c5",
+                                    "a3e103fc-d074-44fb-941a-949f1bca937c"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Recipients"
+                ],
+                "summary": "Delete recipient",
+                "description": "Deletes a recipient document from the `contact_information` data entity. This operation does not delete the B2B addresses associated with the recipient through the `addressIds` field.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "recipientId",
+                        "in": "path",
+                        "description": "Unique identifier of the recipient document.",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "123e4567-e89b-12d3-a456-426614174000"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/api/dataentities/customFieldValues/documents": {
+            "post": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Create location",
+                "description": "Creates a location value associated with a B2B address. A location is a [custom checkout field](https://developers.vtex.com/docs/guides/custom-fields-integration) value linked to a specific B2B address through the `auxId` field (the B2B address ID). This endpoint assumes the underlying location setting is already configured, which is the native behavior.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/locationRequest"
+                            },
+                            "example": {
+                                "contractId": "2da4e9ab-050b-11f0-b37f-f4b136dbcce1",
+                                "customFieldId": "a7f2b3d4-5c6e-7f89-0123-456789abcdef",
+                                "auxId": "4286e252-050b-11f0-b37f-d6617047d485",
+                                "value": "CC3",
+                                "description": "Cost Center 3"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Response object containing the created location information.",
+                                    "properties": {
+                                        "Id": {
+                                            "type": "string",
+                                            "description": "Unique identifier of the created location, prefixed with the data entity name."
+                                        },
+                                        "Href": {
+                                            "type": "string",
+                                            "description": "Direct URL to access the created location document."
+                                        },
+                                        "DocumentId": {
+                                            "type": "string",
+                                            "description": "The location ID without the data entity prefix."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "Id": "customFieldValues-07d12677-08d8-11f0-b37f-e1ae31409099",
+                                    "Href": "https://accountName.myvtex.com.br/api/dataentities/customFieldValues/documents/07d12677-08d8-11f0-b37f-e1ae31409099",
+                                    "DocumentId": "07d12677-08d8-11f0-b37f-e1ae31409099"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/dataentities/customFieldValues/documents/{locationId}": {
+            "get": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Get location",
+                "description": "Retrieves a specific location by its ID. The `auxId` field identifies the B2B address associated with this location.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Read only documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/locationId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/_fields"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Location document object.",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "description": "The ID of the location document."
+                                        },
+                                        "dataEntityId": {
+                                            "type": "string",
+                                            "description": "The ID of the data entity (`customFieldValues`)."
+                                        },
+                                        "accountId": {
+                                            "type": "string",
+                                            "description": "Unique identifier of the VTEX account."
+                                        },
+                                        "accountName": {
+                                            "type": "string",
+                                            "description": "Name of the VTEX account."
+                                        },
+                                        "followers": {
+                                            "type": "array",
+                                            "description": "Array of followers for this document.",
+                                            "items": {
+                                                "type": "string",
+                                                "description": "Follower identifier."
+                                            }
+                                        },
+                                        "schemas": {
+                                            "type": "array",
+                                            "description": "Array of schemas associated with this document.",
+                                            "items": {
+                                                "type": "string",
+                                                "description": "Schema version."
+                                            }
+                                        },
+                                        "customFieldId": {
+                                            "type": "string",
+                                            "description": "The ID of the location setting to which this location belongs."
+                                        },
+                                        "contractId": {
+                                            "type": "string",
+                                            "description": "The ID of the contract to which this location belongs."
+                                        },
+                                        "auxId": {
+                                            "type": "string",
+                                            "description": "ID of the B2B address associated with this location.",
+                                            "nullable": true
+                                        },
+                                        "value": {
+                                            "type": "string",
+                                            "description": "The actual value of the location."
+                                        },
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Optional description explaining what the value represents.",
+                                            "nullable": true
+                                        },
+                                        "createdBy": {
+                                            "type": "string",
+                                            "description": "ID of the user who created the document."
+                                        },
+                                        "createdBy_USER": {
+                                            "type": "object",
+                                            "description": "Metadata about the creator.",
+                                            "properties": {
+                                                "Id": {
+                                                    "type": "string",
+                                                    "description": "Unique identifier of the user."
+                                                },
+                                                "Login": {
+                                                    "type": "string",
+                                                    "description": "Login email of the user."
+                                                },
+                                                "Name": {
+                                                    "type": "string",
+                                                    "description": "Name of the user.",
+                                                    "nullable": true
+                                                }
+                                            }
+                                        },
+                                        "createdIn": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "description": "Timestamp when the document was created."
+                                        },
+                                        "lastInteractionBy": {
+                                            "type": "string",
+                                            "description": "ID of the last user who modified the document."
+                                        },
+                                        "lastInteractionBy_USER": {
+                                            "type": "object",
+                                            "description": "Metadata about the last interacting user.",
+                                            "properties": {
+                                                "Id": {
+                                                    "type": "string",
+                                                    "description": "Unique identifier of the user."
+                                                },
+                                                "Login": {
+                                                    "type": "string",
+                                                    "description": "Login email of the user."
+                                                },
+                                                "Name": {
+                                                    "type": "string",
+                                                    "description": "Name of the user.",
+                                                    "nullable": true
+                                                }
+                                            }
+                                        },
+                                        "lastInteractionIn": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "description": "Timestamp of the last modification."
+                                        },
+                                        "Tags": {
+                                            "type": "array",
+                                            "description": "Tags associated with the document.",
+                                            "items": {
+                                                "type": "string",
+                                                "description": "Tag value."
+                                            }
+                                        },
+                                        "dataInstanceId": {
+                                            "type": "string",
+                                            "description": "Unique identifier of the data instance."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "id": "a50012d0-c01f-465d-b4bc-e33b38d7437a",
+                                    "dataEntityId": "customFieldValues",
+                                    "accountId": "5f1fe23b-9fd1-417d-a4aa-14df38e7746e",
+                                    "accountName": "store",
+                                    "followers": [],
+                                    "schemas": [],
+                                    "customFieldId": "a7f2b3d4-5c6e-7f89-0123-456789abcdef",
+                                    "contractId": "2da4e9ab-050b-11f0-b37f-f4b136dbcce1",
+                                    "auxId": "4286e252-050b-11f0-b37f-d6617047d485",
+                                    "value": "CC3",
+                                    "description": "Cost Center 3",
+                                    "createdBy": "c83ea7ed-f875-4a10-b0a0-98d96aedab06",
+                                    "createdBy_USER": {
+                                        "Id": "c83ea7ed-f875-4a10-b0a0-98d96aedab06",
+                                        "Login": "user@vtex.com",
+                                        "Name": null
+                                    },
+                                    "createdIn": "2025-04-11T18:24:14.8763277Z",
+                                    "lastInteractionBy": "c83ea7ed-f875-4a10-b0a0-98d96aedab06",
+                                    "lastInteractionBy_USER": {
+                                        "Id": "c83ea7ed-f875-4a10-b0a0-98d96aedab06",
+                                        "Login": "user@vtex.com",
+                                        "Name": null
+                                    },
+                                    "lastInteractionIn": "2025-04-11T18:24:14.8763277Z",
+                                    "tags": [],
+                                    "dataInstanceId": "a50012d0-c01f-465d-b4bc-e33b38d7437a"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Update location",
+                "description": "Updates a specific location. The `auxId` field must match the B2B address ID to which the location belongs.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/locationId"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/locationRequest"
+                            },
+                            "example": {
+                                "contractId": "2da4e9ab-050b-11f0-b37f-f4b136dbcce1",
+                                "customFieldId": "a7f2b3d4-5c6e-7f89-0123-456789abcdef",
+                                "auxId": "4286e252-050b-11f0-b37f-d6617047d485",
+                                "value": "CC3",
+                                "description": "Cost Center 3"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Delete location",
+                "description": "Deletes a specific location.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "$ref": "#/components/parameters/locationId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/_fields"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/api/dataentities/customFieldValues/search": {
+            "get": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Search locations",
+                "description": "Retrieves locations filtered by contract ID, location setting ID, and optionally by specific value. When searching locations associated with a particular B2B address, filter by `auxId={{addressId}}`. Results can be sorted by value.\r\n\r\nYou can use the `_where` query parameter to filter results:\r\n- To get all locations for a contract and setting: `_where=contractId={{contractId}} AND customFieldId=\"{{customFieldId}}\"`\r\n- To get locations for a specific B2B address: `_where=contractId={{contractId}} AND customFieldId=\"{{customFieldId}}\" AND auxId=\"{{addressId}}\"`\r\n- To get a specific value: `_where=contractId={{contractId}} AND customFieldId=\"{{customFieldId}}\" AND value=\"{{value}}\"`\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Read only documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "_schema",
+                        "in": "query",
+                        "description": "Master Data version. This field must be `v1`.",
+                        "required": true,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "v1"
+                        }
+                    },
+                    {
+                        "name": "_fields",
+                        "in": "query",
+                        "description": "Comma-separated list of field names to be returned in the response. Use `_all` to return all fields, or specify individual fields like `id,contractId,value`. Learn more about [searching documents in Master Data v2](https://developers.vtex.com/docs/guides/search-documents-in-master-data).",
+                        "required": true,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "_all"
+                        }
+                    },
+                    {
+                        "name": "_where",
+                        "in": "query",
+                        "description": "Filter expression to search documents using Master Data v2 query syntax. You can combine multiple conditions using `AND`. Examples:\n- Get all locations for a contract: `contractId={{contractId}}`\n- Filter by contract and setting: `contractId={{contractId}} AND customFieldId=\"{{customFieldId}}\"`\n- Filter by B2B address: `contractId={{contractId}} AND customFieldId=\"{{customFieldId}}\" AND auxId=\"{{addressId}}\"`\n- Filter by specific value: `contractId={{contractId}} AND customFieldId=\"{{customFieldId}}\" AND value=\"{{value}}\"`\n\nLearn more about [searching documents in Master Data v2](https://developers.vtex.com/docs/guides/search-documents-in-master-data).",
+                        "required": true,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "contractId={{contractId}} AND customFieldId=\"{{customFieldId}}\""
+                        }
+                    },
+                    {
+                        "name": "_sort",
+                        "in": "query",
+                        "description": "Defines the field and order for sorting results. Use the pattern `{fieldName} {ASC|DESC}`. For example, `value ASC` sorts results by the `value` field in ascending order. Learn more about [searching documents in Master Data v2](https://developers.vtex.com/docs/guides/search-documents-in-master-data).",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "value ASC"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "description": "Array of location objects matching the search criteria.",
+                                    "items": {
+                                        "type": "object",
+                                        "description": "Location search result object.",
+                                        "properties": {
+                                            "id": {
+                                                "type": "string",
+                                                "description": "The unique ID of the location document."
+                                            },
+                                            "contractId": {
+                                                "type": "string",
+                                                "description": "The ID of the contract associated with the location."
+                                            },
+                                            "customFieldId": {
+                                                "type": "string",
+                                                "description": "The ID of the location setting to which this location belongs."
+                                            },
+                                            "auxId": {
+                                                "type": "string",
+                                                "description": "ID of the B2B address associated with this location.",
+                                                "nullable": true
+                                            },
+                                            "value": {
+                                                "type": "string",
+                                                "description": "The value stored for the location."
+                                            },
+                                            "description": {
+                                                "type": "string",
+                                                "description": "Optional text describing what the value represents.",
+                                                "nullable": true
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": "e5130781-32ed-11f0-b37f-942217c27f9b",
+                                        "contractId": "1124b2d8-32eb-11f0-b37f-e2557e6b18d5",
+                                        "customFieldId": "a7f2b3d4-5c6e-7f89-0123-456789abcdef",
+                                        "auxId": "4286e252-050b-11f0-b37f-d6617047d485",
+                                        "value": "CC3",
+                                        "description": "Cost Center 3"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "security": [
+        {
+            "appKey": [],
+            "appToken": []
+        },
+        {
+            "VtexIdclientAutCookie": []
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "VtexIdclientAutCookie": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "VtexIdclientAutCookie",
+                "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
+            }
+        },
+        "parameters": {
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "default": "application/json"
+                }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "default": "application/json"
+                }
+            },
+            "_fields": {
+                "name": "_fields",
+                "in": "query",
+                "description": "Comma-separated list of field names to be returned in the response. This query string parameter allows you to specify which fields to include. Use `_all` to return all fields, or specify individual fields like `id,contractId,value`. Learn more about [searching documents in Master Data v2](https://developers.vtex.com/docs/guides/search-documents-in-master-data).",
+                "required": true,
+                "schema": {
+                    "type": "string",
+                    "example": "_all"
+                }
+            },
+            "locationId": {
+                "name": "locationId",
+                "in": "path",
+                "description": "Unique identifier of the location document.",
+                "required": true,
+                "schema": {
+                    "type": "string",
+                    "example": "a50012d0-c01f-465d-b4bc-e33b38d7437a"
+                }
+            }
+        },
+        "schemas": {
+            "createUpdateAddressRequests": {
+                "type": "object",
+                "description": "Request body object for creating or updating a B2B address.",
+                "required": [
+                    "addressType",
+                    "receiverName",
+                    "country",
+                    "state",
+                    "postalCode",
+                    "city",
+                    "street",
+                    "number",
+                    "userId"
+                ],
+                "properties": {
+                    "addressName": {
+                        "type": "string",
+                        "description": "Address name.",
+                        "nullable": true
+                    },
+                    "addressLabel": {
+                        "type": "string",
+                        "description": "Custom label for the address used by shoppers and buyer organization managers.",
+                        "nullable": true
+                    },
+                    "addressType": {
+                        "type": "string",
+                        "description": "Type of address. Use `commercial` for shipping (delivery) addresses and `invoice` for billing (payment) addresses.",
+                        "enum": [
+                            "commercial",
+                            "invoice"
+                        ]
+                    },
+                    "receiverName": {
+                        "type": "string",
+                        "description": "Name of the person who is going to receive orders at this address. This field will be deprecated in favor of the [Recipients](https://developers.vtex.com/docs/api-reference/b2b-addresses#post-/api/dataentities/contact_information/documents) feature, but it must be filled with some value (for example, `.`)."
+                    },
+                    "city": {
+                        "type": "string",
+                        "description": "City of the B2B address."
+                    },
+                    "state": {
+                        "type": "string",
+                        "description": "State or province of the B2B address. Must be a two-letter code (for example, `FL` or `SP`). Full names such as `Florida` are not accepted."
+                    },
+                    "country": {
+                        "type": "string",
+                        "description": "Three-letter [ISO 3166-1 alpha-3](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3) country code of the B2B address (for example, `BRA` or `USA`)."
+                    },
+                    "postalCode": {
+                        "type": "string",
+                        "description": "Postal code of the B2B address. Must be a string following the exact country format (for example, `02999` instead of `2999`). Nine-digit formats are not accepted."
+                    },
+                    "street": {
+                        "type": "string",
+                        "description": "Street name of the B2B address."
+                    },
+                    "number": {
+                        "type": "string",
+                        "description": "Number of the building, house, or apartment in the B2B address."
+                    },
+                    "neighborhood": {
+                        "type": "string",
+                        "description": "Neighborhood of the B2B address.",
+                        "nullable": true
+                    },
+                    "complement": {
+                        "type": "string",
+                        "description": "Additional information or details that help identify or locate the B2B address, such as apartment number, suite, floor, or unit (if applicable).",
+                        "nullable": true
+                    },
+                    "reference": {
+                        "type": "string",
+                        "description": "Optional reference point or nearby landmark to help locate the B2B address during delivery (for example, next to a park or behind a building).",
+                        "nullable": true
+                    },
+                    "geoCoordinates": {
+                        "type": "array",
+                        "description": "Geographical coordinates of the B2B address. Optional. Must be an array of doubles representing latitude and longitude (for example, `[28.48, -81.20]`), or an empty array `[]`.",
+                        "items": {
+                            "type": "number",
+                            "format": "double",
+                            "description": "Latitude or longitude value."
+                        },
+                        "nullable": true
+                    },
+                    "userId": {
+                        "type": "string",
+                        "description": "ID of the buyer organization to whom the B2B address belongs. This information is the `id` returned by the customer profile (or contract) creation request."
+                    }
+                }
+            },
+            "documentResponse": {
+                "required": [
+                    "Id",
+                    "Href"
+                ],
+                "type": "object",
+                "description": "Response body object for a created or updated document.",
+                "properties": {
+                    "Id": {
+                        "type": "string",
+                        "description": "ID of the document that was created or updated."
+                    },
+                    "Href": {
+                        "type": "string",
+                        "description": "Document reference URL."
+                    }
+                }
+            },
+            "AddressResponse": {
+                "type": "object",
+                "description": "Response body for a B2B address document.",
+                "properties": {
+                    "addressLabel": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "User-defined label to identify the B2B address."
+                    },
+                    "addressType": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Type of B2B address. `commercial` for shipping (delivery) or `invoice` for billing (payment).",
+                        "enum": [
+                            "commercial",
+                            "invoice"
+                        ]
+                    },
+                    "city": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "City of the B2B address."
+                    },
+                    "complement": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Any additional information for the B2B address (for example, apartment or floor)."
+                    },
+                    "country": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Country of the B2B address in three-letter [ISO 3166-1 alpha-3](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3) format (for example, `USA`)."
+                    },
+                    "geoCoordinates": {
+                        "type": "array",
+                        "nullable": true,
+                        "description": "Geographical coordinates of the B2B address as an array of doubles (latitude and longitude), or an empty array `[]`.",
+                        "items": {
+                            "type": "number",
+                            "format": "double",
+                            "description": "Latitude or longitude value."
+                        }
+                    },
+                    "neighborhood": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Neighborhood of the B2B address."
+                    },
+                    "number": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Street number of the B2B address."
+                    },
+                    "postalCode": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Postal code of the B2B address. The format must match the exact country postal code format (for example, `02999` for addresses in the USA)."
+                    },
+                    "receiverName": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Name of the person or entity receiving at this B2B address. This field will be deprecated in favor of the [Recipients](https://developers.vtex.com/docs/api-reference/b2b-addresses#post-/api/dataentities/contact_information/documents) feature, but it must be filled with some value."
+                    },
+                    "reference": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Optional reference point or landmark near the B2B address."
+                    },
+                    "state": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "State or province of the B2B address as a two-letter code (for example, `FL` or `SP`)."
+                    },
+                    "street": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Street name of the B2B address."
+                    },
+                    "userId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "ID of the buyer organization to whom the B2B address belongs."
+                    },
+                    "id": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Unique identifier for this B2B address record."
+                    },
+                    "accountId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "ID of the account related to this B2B address."
+                    },
+                    "accountName": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Name of the account related to this B2B address."
+                    },
+                    "dataEntityId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "ID of the data entity this B2B address belongs to (always `AD`)."
+                    },
+                    "createdBy": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "ID of the user who created the B2B address record."
+                    },
+                    "createdIn": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Timestamp of when the B2B address record was created."
+                    },
+                    "updatedBy": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "ID of the user who last updated the B2B address record."
+                    },
+                    "updatedIn": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Timestamp of the last update to the B2B address record."
+                    },
+                    "lastInteractionBy": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "ID of the user who had the last interaction with the record."
+                    },
+                    "lastInteractionIn": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Timestamp of the last interaction with the record."
+                    },
+                    "followers": {
+                        "type": "array",
+                        "nullable": true,
+                        "description": "List of users following this B2B address record.",
+                        "items": {
+                            "type": "string",
+                            "description": "User ID."
+                        }
+                    },
+                    "tags": {
+                        "type": "array",
+                        "nullable": true,
+                        "description": "List of tags associated with this B2B address.",
+                        "items": {
+                            "type": "string",
+                            "description": "Tag value."
+                        }
+                    }
+                }
+            },
+            "recipientRequest": {
+                "type": "object",
+                "description": "Recipient document object. A recipient can be associated with one or more B2B addresses through the `addressIds` field.",
+                "required": [
+                    "firstName",
+                    "lastName"
+                ],
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "description": "Recipient email."
+                    },
+                    "firstName": {
+                        "type": "string",
+                        "description": "Recipient first name."
+                    },
+                    "lastName": {
+                        "type": "string",
+                        "description": "Recipient last name."
+                    },
+                    "profileId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "References a buyer by its UUID."
+                    },
+                    "phone": {
+                        "type": "string",
+                        "description": "Main phone number."
+                    },
+                    "phoneExtension": {
+                        "type": "string",
+                        "description": "Internal phone extension, if applicable."
+                    },
+                    "document": {
+                        "type": "string",
+                        "description": "Identification document."
+                    },
+                    "documentType": {
+                        "type": "string",
+                        "description": "Type of document."
+                    },
+                    "addressIds": {
+                        "type": "array",
+                        "description": "References to the B2B addresses associated with the recipient. Each value is the UUID of an address stored in the `AD` data entity.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "B2B address UUID."
+                        }
+                    }
+                }
+            },
+            "locationRequest": {
+                "type": "object",
+                "description": "Location object. A location is a value of a [custom checkout field](https://developers.vtex.com/docs/guides/custom-fields-integration) associated with a B2B address through the `auxId` field.",
+                "required": [
+                    "contractId",
+                    "customFieldId",
+                    "auxId",
+                    "value"
+                ],
+                "properties": {
+                    "contractId": {
+                        "type": "string",
+                        "description": "The ID of the contract to which the location belongs."
+                    },
+                    "customFieldId": {
+                        "type": "string",
+                        "description": "The ID of the location setting (native configuration) that this location is a value of. To discover the `customFieldId` for your account, list the existing settings with `GET` [Search custom field settings](https://developers.vtex.com/docs/api-reference/custom-fields-api#get-/api/dataentities/customFieldSettings/search) and pick the one matching the location feature."
+                    },
+                    "auxId": {
+                        "type": "string",
+                        "description": "ID of the B2B address associated with this location."
+                    },
+                    "value": {
+                        "type": "string",
+                        "description": "The value to be stored for the location (max length 22 characters)."
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Details what the value represents."
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Addresses"
+        },
+        {
+            "name": "Recipients"
+        },
+        {
+            "name": "Locations"
+        }
+    ]
+}

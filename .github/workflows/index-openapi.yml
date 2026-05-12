@@ -1,0 +1,111 @@
+# This workflow is designed for the vtex/openapi-schemas repository.
+# Copy this file to vtex/openapi-schemas/.github/workflows/index-openapi.yml
+
+name: Index OpenAPI Endpoints
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '*.json'
+  workflow_dispatch:
+    inputs:
+      full_reindex:
+        description: 'Reindex all OpenAPI schemas'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  index-endpoints:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Compute changed files
+        id: changed
+        run: |
+          if [ "${{ github.event.inputs.full_reindex }}" = "true" ] || [ "${{ github.event_name }}" = "workflow_dispatch" -a "${{ github.event.inputs.full_reindex }}" = "true" ]; then
+            FILES=$(ls VTEX\ -\ *.json 2>/dev/null | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          else
+            FILES=$(git diff --name-only --diff-filter=ACMR HEAD~1 HEAD -- '*.json' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          fi
+          echo "files=$FILES" >> $GITHUB_OUTPUT
+          echo "count=$(echo $FILES | jq length)" >> $GITHUB_OUTPUT
+
+      - name: Exit early if no files
+        run: |
+          if [ "${{ steps.changed.outputs.count }}" = "0" ]; then
+            echo "No changed files"
+            exit 0
+          fi
+
+      - name: POST to indexing endpoint
+        env:
+          FILES_JSON: ${{ steps.changed.outputs.files }}
+        run: |
+          BATCH_SIZE=10
+          TOTAL=$(echo "$FILES_JSON" | jq length)
+          echo "Indexing $TOTAL files in batches of $BATCH_SIZE"
+
+          PROCESSED=0
+          FAILED=0
+          ENDPOINTS=0
+
+          for OFFSET in $(seq 0 $BATCH_SIZE $((TOTAL - 1))); do
+            BATCH=$(echo "$FILES_JSON" | jq -c ".[$OFFSET:$OFFSET+$BATCH_SIZE]")
+            BATCH_LEN=$(echo "$BATCH" | jq length)
+            echo ""
+            echo "==> Batch $((OFFSET / BATCH_SIZE + 1)): $BATCH_LEN file(s) starting at index $OFFSET"
+
+            echo "{\"files\": ${BATCH}}" > /tmp/payload.json
+
+            RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${{ secrets.INDEXING_URL }}/api/index-openapi" \
+              -H "Content-Type: application/json" \
+              -H "X-Internal-Access-Key: ${{ secrets.INTERNAL_ACCESS_KEY }}" \
+              --max-time 300 \
+              -d @/tmp/payload.json)
+
+            HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+            BODY=$(echo "$RESPONSE" | sed '$d')
+
+            echo "HTTP Status: $HTTP_CODE"
+
+            if [ "$HTTP_CODE" != "200" ]; then
+              echo "::error::Batch failed with HTTP $HTTP_CODE: $BODY"
+              FAILED=$((FAILED + BATCH_LEN))
+              continue
+            fi
+
+            B_PROC=$(echo "$BODY" | jq -r '.processed // 0')
+            B_FAIL=$(echo "$BODY" | jq -r '.failed // 0')
+            B_ENDP=$(echo "$BODY" | jq -r '.endpoints_indexed // 0')
+            B_DUR=$(echo "$BODY" | jq -r '.duration_ms // 0')
+
+            PROCESSED=$((PROCESSED + B_PROC))
+            FAILED=$((FAILED + B_FAIL))
+            ENDPOINTS=$((ENDPOINTS + B_ENDP))
+
+            echo "Batch result: ${B_PROC} processed, ${B_FAIL} failed, ${B_ENDP} endpoints in ${B_DUR}ms"
+
+            if [ "$B_FAIL" != "0" ]; then
+              echo "::warning::${B_FAIL} file(s) failed in this batch"
+              echo "$BODY" | jq '.errors'
+            fi
+          done
+
+          echo ""
+          echo "=== TOTAL ==="
+          echo "Processed: $PROCESSED"
+          echo "Failed: $FAILED"
+          echo "Endpoints indexed: $ENDPOINTS"
+
+          if [ "$FAILED" != "0" ]; then
+            echo "::warning::$FAILED total file(s) failed to index"
+          fi
