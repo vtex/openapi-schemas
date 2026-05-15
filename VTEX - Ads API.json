@@ -3,7 +3,7 @@
     "info": {
         "version": "1.0.0",
         "title": "VTEX Ads API",
-        "description": "VTEX Ads API enables merchants and marketplace operators to synchronize product catalogs, display ads in the storefront, record ad interactions, among other operations within the VTEX Ads platform.\n\nThis API is primarily used by:\n- Store developers\n- Marketplace operators\n- Integration partners\n- Advertising platform providers\n\nWith this API you can:\n- Synchronize product catalog information for advertising\n- Track ad impressions, clicks, and views\n- Monitor conversion events and campaign performance\n- Manage ad inventory and placements\n\n>ℹ️ Learn more about [VTEX Ads](https://developers.vtex.com/docs/guides).\n\n## Architecture\n\nVTEX Ads is **cookie-less**. Identification and targeting rely on first-party identifiers — `user_id` and `session_id` — rather than third-party cookies, ensuring compliance with modern privacy regulations.\n\n- **`session_id`:** Persistent visitor identifier, required in every ad query and event. It must remain stable for at least 14 days (the default conversion window). For mobile applications, send the device ID as the `session_id` (GAID on Android, IDFA on iOS) so that the session is maintained indefinitely.\n- **`user_id`:** Unique customer identifier on the publisher's platform. It must be consistent across web, mobile app, and physical store. Required in conversion events; recommended for impressions, clicks, and views.\n\n## Before you begin\n\n- **Base URLs.** The API is served from three hosts depending on the operation:\n    - `https://api-retail-media.newtail.com.br` — Catalog synchronization, Reports, Credit transfer webhook, and SSO.\n    - `https://newtail-media.newtail.com.br` — Ad query.\n    - `https://events.newtail-media.newtail.com.br` — Ads events notification (impression, click, view, conversion).\n- **Authentication.** Catalog synchronization, Reports, Credit transfer, and SSO endpoints require the `X-App-Id` and `X-Api-Key` headers. Ad query and ads event notifications are public and do not require authentication. The Credit transfer webhook additionally requires `X-Secret-Key`. Contact [our support](https://help.vtex.com/en/tutorial/how-does-vtex-support-work--2eAT5EyOvaLoHdIWDVaxC3) to obtain credentials.\n- **Bulk operations.** A maximum of 500 objects per request and 3 simultaneous requests are allowed for catalog and inventory updates.\n- **Event URLs.** The event URLs for tracking impressions, clicks, and views must not be constructed manually — always use the URLs returned by `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-).\n- **Browser-side events.** Use `navigator.sendBeacon()` to fire impression, view, click, and conversion events from the browser. It ensures asynchronous delivery even when the user navigates away or closes the page.\n- **PII hashing.** All personally identifiable fields (`email_hashed`, `phone_hashed`, `social_id_hashed`, `first_name_hashed`, `last_name_hashed`) must be hashed with SHA-256 before being sent. Normalize values first (lowercase and trim; phone numbers in E.164 format).\n- **Reports export.** Reports return JSON by default. Set `download=true` to receive an XLSX file (capped at 20,000 rows per export).\n- **Ad query performance.** Apply a 500–600 ms timeout to ad query calls and prefer persistent HTTP connections (`Connection: keep-alive`).\n\n## Attribution and deduplication\n\n- **Default conversion window:** 14 days from the user's interaction (click for product campaigns; view for banner, video, and sponsored brand campaigns).\n- **Conversion idempotency:** re-sending the same `order_id` within 30 days is ignored.\n- **Event deduplication:** for the same user and ad, impressions are deduplicated for 1 minute and clicks for 1 hour.\n- **Data latency:** conversions appear in reports approximately 30 minutes (API integrations) or up to 2 hours (VTEX platform) after the order is placed.\n\n## Index\n\n### Catalog synchronization\n- `POST` [Synchronize product information](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/product/bulk/products)\n- `POST` [Synchronize inventory information](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/product/bulk/inventories)\n\n### Ads events notification\n- `POST` [Track ad impressions](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/beacon/impression/-ad_id-)\n- `POST` [Track ad clicks](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/beacon/click/-ad_id-)\n- `POST` [Track ad views](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/beacon/view/-ad_id-)\n- `POST` [Track conversions](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/beacon/conversion)\n\n### Ads\n- `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-)\n\n### Reports\n- `GET` [Get advertisers report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/report/v2/advertisers)\n- `GET` [Get publishers report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/report/v2/publishers)\n- `GET` [Get network publishers report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/report/network/publishers)\n- `GET` [List campaigns](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/campaign/v2)\n- `GET` [Get campaign details](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/campaign/-campaign_id-)\n- `GET` [Get advertiser campaigns detailed report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/report/advertisers/campaigns-detailed)\n- `GET` [Get advertiser ads detailed report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/report/advertisers/ads-detailed)\n- `GET` [Get ads performance report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/ad/results/v2)\n\n### Credit transfer\n- `POST` [Notify credit transfer status](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/webhook/marketplace/transfers/-publisher_id-)\n\n### SSO\n- `POST` [Generate seller SSO URL](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/sso/marketplace)\n\n| Parameter name | Description | Type |\n| - | - | - |\n| `X-App-Id` | Publisher App ID for authorization | Authentication header |\n| `X-Api-Key` | API Key for authentication | Authentication header |\n| `X-Secret-Key` | Secret key paired with `X-Api-Key` for the credit transfer webhook | Authentication header |\n| `Content-Type` | Type of the content being sent | Request header |\n| `Accept` | HTTP Client Negotiation Accept Header | Request header |"
+        "description": "VTEX Ads API enables merchants and marketplace operators to synchronize product catalogs, display ads in the storefront, record ad interactions, among other operations within the VTEX Ads platform.\n\nThis API is primarily used by:\n- Store developers\n- Marketplace operators\n- Integration partners\n- Advertising platform providers\n\nWith this API you can:\n- Synchronize product catalog information for advertising\n- Track ad impressions, clicks, and views\n- Monitor conversion events and campaign performance\n- Manage ad inventory and placements\n\n>ℹ️ Learn more about [VTEX Ads](https://help.vtex.com/en/docs/tracks/retail-media).\n\n## Architecture\n\nVTEX Ads is **cookie-less**. Identification and targeting rely on first-party identifiers — `user_id` and `session_id` — rather than third-party cookies, ensuring compliance with modern privacy regulations.\n\n- **`session_id`:** Persistent visitor identifier, required in every ad query and event. It must remain stable for at least 14 days (the default conversion window). For mobile applications, send the device ID as the `session_id` (GAID on Android, IDFA on iOS) so that the session is maintained indefinitely.\n- **`user_id`:** Unique customer identifier on the publisher's platform. It must be consistent across web, mobile app, and physical store. Required in conversion events; recommended for impressions, clicks, and views.\n\n## Before you begin\n\n- **Base URLs.** The API is served from three hosts depending on the operation:\n    - `https://api-retail-media.newtail.com.br` — Catalog synchronization, Reports, Credit transfer webhook, and SSO.\n    - `https://newtail-media.newtail.com.br` — Ad query.\n    - `https://events.newtail-media.newtail.com.br` — Ads events notification (impression, click, view, conversion).\n- **Authentication.** Catalog synchronization, Reports, and SSO endpoints require the `X-App-Id` and `X-Api-Key` headers. Ad query and ads event notifications are public and do not require authentication. The Credit transfer webhook uses a different scheme: `X-Api-Key` and `X-Secret-Key` (it does not use `X-App-Id`). Contact [our support](https://help.vtex.com/en/tutorial/how-does-vtex-support-work--2eAT5EyOvaLoHdIWDVaxC3) to obtain credentials.\n- **Bulk operations.** A maximum of 500 objects per request and 3 simultaneous requests are allowed for catalog and inventory updates.\n- **Event URLs.** The event URLs for tracking impressions, clicks, and views must not be constructed manually — always use the URLs returned by `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-).\n- **Browser-side events.** Use `navigator.sendBeacon()` to fire impression, view, click, and conversion events from the browser. It ensures asynchronous delivery even when the user navigates away or closes the page.\n- **PII hashing.** All personally identifiable fields (`email_hashed`, `phone_hashed`, `social_id_hashed`, `first_name_hashed`, `last_name_hashed`) must be hashed with SHA-256 before being sent. Normalize values first (lowercase and trim; phone numbers in E.164 format).\n- **Reports export.** Reports return JSON by default. Set `download=true` to receive an XLSX file (capped at 20,000 rows per export).\n- **Ad query performance.** Apply a 500-600 ms timeout to ad query calls and prefer persistent HTTP connections (`Connection: keep-alive`).\n\n## Attribution and deduplication\n\n- **Default conversion window:** 14 days from the user's interaction (click for product campaigns; view for banner, video, and sponsored brand campaigns).\n- **Conversion idempotency:** Re-sending the same `order_id` within 30 days is ignored.\n- **Event deduplication:** For the same user and ad, impressions are deduplicated for 1 minute and clicks for 1 hour.\n- **Data latency:** Conversions appear in reports approximately 30 minutes (API integrations) or up to 2 hours (VTEX platform) after the order is placed.\n\n## Index\n\n### Catalog synchronization\n- `POST` [Synchronize product information](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/product/bulk/products)\n- `POST` [Synchronize inventory information](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/product/bulk/inventories)\n\n### Ads events notification\n- `POST` [Track ad impressions](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/beacon/impression/-ad_id-)\n- `POST` [Track ad clicks](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/beacon/click/-ad_id-)\n- `POST` [Track ad views](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/beacon/view/-ad_id-)\n- `POST` [Track conversions](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/beacon/conversion)\n\n### Ads\n- `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-)\n\n### Reports\n- `GET` [Get advertisers report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/report/v2/advertisers)\n- `GET` [Get publishers report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/report/v2/publishers)\n- `GET` [Get network publishers report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/report/network/publishers)\n- `GET` [List campaigns](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/campaign/v2)\n- `GET` [Get campaign details](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/campaign/-campaign_id-)\n- `GET` [Get advertiser campaigns detailed report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/report/advertisers/campaigns-detailed)\n- `GET` [Get advertiser ads detailed report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/report/advertisers/ads-detailed)\n- `GET` [Get ads performance report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/ad/results/v2)\n\n### Credit transfer\n- `POST` [Notify credit transfer status](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/webhook/marketplace/transfers/-publisher_id-)\n\n### SSO\n- `POST` [Generate seller SSO URL](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/sso/marketplace)\n\n| Parameter name | Description | Type |\n| - | - | - |\n| `X-App-Id` | Publisher App ID for authorization | Authentication header |\n| `X-Api-Key` | API Key for authentication | Authentication header |\n| `X-Secret-Key` | Secret key paired with `X-Api-Key` for the credit transfer webhook | Authentication header |\n| `Content-Type` | Type of the content being sent | Request header |\n| `Accept` | HTTP Client Negotiation Accept Header | Request header |"
     },
     "servers": [
         {
@@ -32,7 +32,7 @@
                     "Catalog synchronization"
                 ],
                 "summary": "Synchronize product information",
-                "description": "Update the basic product data in the VTEX Ads catalog.\r\n\r\n>⚠️ For each batch insert/update, a maximum of 500 objects per request and 3 simultaneous requests are allowed.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Updates the basic product data in the VTEX Ads catalog.\r\n\r\n>⚠️ For each batch insert/update, a maximum of 500 objects per request and 3 simultaneous requests are allowed.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -191,7 +191,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "description": "Object with messages from the server.",
                                     "properties": {
                                         "messages": {
                                             "type": "array",
@@ -212,79 +211,7 @@
                         }
                     },
                     "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "description": "Field validation error list.",
-                                    "items": {
-                                        "type": "object",
-                                        "description": "Validation error object.",
-                                        "properties": {
-                                            "instancePath": {
-                                                "type": "string",
-                                                "description": "Path to the property with the error."
-                                            },
-                                            "schemaPath": {
-                                                "type": "string",
-                                                "description": "Path to the schema validation rule."
-                                            },
-                                            "keyword": {
-                                                "type": "string",
-                                                "description": "Validation keyword."
-                                            },
-                                            "params": {
-                                                "type": "object",
-                                                "description": "Error parameters."
-                                            },
-                                            "message": {
-                                                "type": "string",
-                                                "description": "Error message."
-                                            }
-                                        }
-                                    }
-                                },
-                                "example": [
-                                    {
-                                        "instancePath": "/0",
-                                        "schemaPath": "#/items/required",
-                                        "keyword": "required",
-                                        "params": {
-                                            "missingProperty": "product_sku"
-                                        },
-                                        "message": "must have required property 'product_sku'"
-                                    },
-                                    {
-                                        "instancePath": "/0",
-                                        "schemaPath": "#/items/required",
-                                        "keyword": "required",
-                                        "params": {
-                                            "missingProperty": "url"
-                                        },
-                                        "message": "must have required property 'url'"
-                                    },
-                                    {
-                                        "instancePath": "/1",
-                                        "schemaPath": "#/items/required",
-                                        "keyword": "required",
-                                        "params": {
-                                            "missingProperty": "name"
-                                        },
-                                        "message": "must have required property 'name'"
-                                    },
-                                    {
-                                        "instancePath": "/1",
-                                        "schemaPath": "#/items/required",
-                                        "keyword": "required",
-                                        "params": {
-                                            "missingProperty": "url"
-                                        },
-                                        "message": "must have required property 'url'"
-                                    }
-                                ]
-                            }
-                        }
+                        "description": "Validation Error"
                     }
                 }
             }
@@ -301,7 +228,7 @@
                     "Catalog synchronization"
                 ],
                 "summary": "Synchronize inventory information",
-                "description": "Update inventory information, which defines the price, promotional price, and product availability.\r\n\r\n>⚠️ For each batch insert/update, a maximum of 500 objects per request and three simultaneous requests are allowed.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Update inventory information, which defines the price, promotional price, and product availability.\r\n\r\n>⚠️ For each batch insert/update, a maximum of 500 objects per request and three simultaneous requests are allowed.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -315,7 +242,6 @@
                         "application/json": {
                             "schema": {
                                 "type": "array",
-                                "description": "List of inventory objects.",
                                 "maxItems": 500,
                                 "items": {
                                     "type": "object",
@@ -341,7 +267,7 @@
                                             "type": "number",
                                             "description": "Product price.",
                                             "format": "double",
-                                            "example": 18.20
+                                            "example": 18.2
                                         },
                                         "promotional_price": {
                                             "type": "number",
@@ -368,13 +294,13 @@
                                 {
                                     "product_sku": "120210",
                                     "store_id": "1",
-                                    "price": 18.20,
+                                    "price": 18.2,
                                     "promotional_price": 16.32,
                                     "is_available": true
                                 },
                                 {
                                     "product_sku": "120212",
-                                    "price": 18.20,
+                                    "price": 18.2,
                                     "promotional_price": 0,
                                     "is_available": true
                                 }
@@ -389,7 +315,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "description": "Object with messages from the server.",
                                     "properties": {
                                         "messages": {
                                             "type": "array",
@@ -410,115 +335,7 @@
                         }
                     },
                     "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "description": "Field validation error list.",
-                                    "items": {
-                                        "type": "object",
-                                        "description": "Validation error object.",
-                                        "properties": {
-                                            "instancePath": {
-                                                "type": "string",
-                                                "description": "Path to the property with the error."
-                                            },
-                                            "schemaPath": {
-                                                "type": "string",
-                                                "description": "Path to the schema validation rule."
-                                            },
-                                            "keyword": {
-                                                "type": "string",
-                                                "description": "Validation keyword."
-                                            },
-                                            "params": {
-                                                "type": "object",
-                                                "description": "Error parameters."
-                                            },
-                                            "message": {
-                                                "type": "string",
-                                                "description": "Error message."
-                                            }
-                                        }
-                                    }
-                                },
-                                "example": [
-                                    {
-                                        "instancePath": "/0",
-                                        "schemaPath": "#/items/required",
-                                        "keyword": "required",
-                                        "params": {
-                                            "missingProperty": "product_sku"
-                                        },
-                                        "message": "must have required property 'product_sku'"
-                                    },
-                                    {
-                                        "instancePath": "/0",
-                                        "schemaPath": "#/items/required",
-                                        "keyword": "required",
-                                        "params": {
-                                            "missingProperty": "promotional_price"
-                                        },
-                                        "message": "must have required property 'promotional_price'"
-                                    },
-                                    {
-                                        "instancePath": "/0",
-                                        "schemaPath": "#/items/required",
-                                        "keyword": "required",
-                                        "params": {
-                                            "missingProperty": "is_available"
-                                        },
-                                        "message": "must have required property 'is_available'"
-                                    },
-                                    {
-                                        "instancePath": "/1",
-                                        "schemaPath": "#/items/required",
-                                        "keyword": "required",
-                                        "params": {
-                                            "missingProperty": "price"
-                                        },
-                                        "message": "must have required property 'price'"
-                                    },
-                                    {
-                                        "instancePath": "/1",
-                                        "schemaPath": "#/items/required",
-                                        "keyword": "required",
-                                        "params": {
-                                            "missingProperty": "promotional_price"
-                                        },
-                                        "message": "must have required property 'promotional_price'"
-                                    },
-                                    {
-                                        "instancePath": "/1",
-                                        "schemaPath": "#/items/required",
-                                        "keyword": "required",
-                                        "params": {
-                                            "missingProperty": "is_available"
-                                        },
-                                        "message": "must have required property 'is_available'"
-                                    },
-                                    {
-                                        "instancePath": "/2",
-                                        "schemaPath": "#/items/required",
-                                        "keyword": "required",
-                                        "params": {
-                                            "missingProperty": "price"
-                                        },
-                                        "message": "must have required property 'price'"
-                                    },
-                                    {
-                                        "instancePath": "/2",
-                                        "schemaPath": "#/items/required",
-                                        "keyword": "required",
-                                        "params": {
-                                            "missingProperty": "is_available"
-                                        },
-                                        "message": "must have required property 'is_available'"
-                                    }
-                                ]
-                            }
-                        }
+                        "description": "Validation Error"
                     }
                 }
             }
@@ -535,7 +352,7 @@
                     "Ads events notification"
                 ],
                 "summary": "Track ad impressions",
-                "description": "Track when an ad is rendered or visible to a user. The event URL must not be constructed manually — always use the URL provided from `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-).\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Track when an ad is rendered or visible to a user. The event URL must not be constructed manually — always use the URL provided from `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-).\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -606,7 +423,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "description": "Object with messages from the server.",
                                     "properties": {
                                         "messages": {
                                             "type": "array",
@@ -627,68 +443,7 @@
                         }
                     },
                     "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "description": "Field validation error list.",
-                                    "items": {
-                                        "type": "object",
-                                        "description": "Validation error object.",
-                                        "properties": {
-                                            "instancePath": {
-                                                "type": "string",
-                                                "description": "Path to the property with the error."
-                                            },
-                                            "keyword": {
-                                                "type": "string",
-                                                "description": "Validation keyword."
-                                            },
-                                            "message": {
-                                                "type": "string",
-                                                "description": "Error message."
-                                            },
-                                            "params": {
-                                                "type": "object",
-                                                "description": "Error parameters."
-                                            },
-                                            "schemaPath": {
-                                                "type": "string",
-                                                "description": "Path to the schema validation rule."
-                                            }
-                                        }
-                                    }
-                                },
-                                "example": [
-                                    {
-                                        "instancePath": "",
-                                        "keyword": "required",
-                                        "message": "must have required property 'user_id'",
-                                        "params": {
-                                            "missingProperty": "user_id"
-                                        },
-                                        "schemaPath": "#/anyOf/0/required"
-                                    },
-                                    {
-                                        "instancePath": "",
-                                        "keyword": "required",
-                                        "message": "must have required property 'session_id'",
-                                        "params": {
-                                            "missingProperty": "session_id"
-                                        },
-                                        "schemaPath": "#/anyOf/1/required"
-                                    },
-                                    {
-                                        "instancePath": "",
-                                        "keyword": "anyOf",
-                                        "message": "must match a schema in anyOf",
-                                        "params": {},
-                                        "schemaPath": "#/anyOf"
-                                    }
-                                ]
-                            }
-                        }
+                        "description": "Validation Error"
                     }
                 }
             }
@@ -705,7 +460,7 @@
                     "Ads events notification"
                 ],
                 "summary": "Track ad clicks",
-                "description": "Track when a user clicks on an ad. The event URL must not be constructed manually — always use the URL provided from `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-).\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Track when a user clicks on an ad. The event URL must not be constructed manually — always use the URL provided from `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-).\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -776,7 +531,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "description": "Object with messages from the server.",
                                     "properties": {
                                         "messages": {
                                             "type": "array",
@@ -797,68 +551,7 @@
                         }
                     },
                     "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "description": "Field validation error list.",
-                                    "items": {
-                                        "type": "object",
-                                        "description": "Validation error object.",
-                                        "properties": {
-                                            "instancePath": {
-                                                "type": "string",
-                                                "description": "Path to the property with the error."
-                                            },
-                                            "keyword": {
-                                                "type": "string",
-                                                "description": "Validation keyword."
-                                            },
-                                            "message": {
-                                                "type": "string",
-                                                "description": "Error message."
-                                            },
-                                            "params": {
-                                                "type": "object",
-                                                "description": "Error parameters."
-                                            },
-                                            "schemaPath": {
-                                                "type": "string",
-                                                "description": "Path to the schema validation rule."
-                                            }
-                                        }
-                                    }
-                                },
-                                "example": [
-                                    {
-                                        "instancePath": "",
-                                        "keyword": "required",
-                                        "message": "must have required property 'user_id'",
-                                        "params": {
-                                            "missingProperty": "user_id"
-                                        },
-                                        "schemaPath": "#/anyOf/0/required"
-                                    },
-                                    {
-                                        "instancePath": "",
-                                        "keyword": "required",
-                                        "message": "must have required property 'session_id'",
-                                        "params": {
-                                            "missingProperty": "session_id"
-                                        },
-                                        "schemaPath": "#/anyOf/1/required"
-                                    },
-                                    {
-                                        "instancePath": "",
-                                        "keyword": "anyOf",
-                                        "message": "must match a schema in anyOf",
-                                        "params": {},
-                                        "schemaPath": "#/anyOf"
-                                    }
-                                ]
-                            }
-                        }
+                        "description": "Validation Error"
                     }
                 }
             }
@@ -875,7 +568,7 @@
                     "Ads events notification"
                 ],
                 "summary": "Track ad views",
-                "description": "Track views for banner ads. The event URL must not be constructed manually — always use the URL provided from `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-).\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Track views for banner ads. The event URL must not be constructed manually — always use the URL provided from `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-).\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -946,7 +639,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "description": "Object with messages from the server.",
                                     "properties": {
                                         "messages": {
                                             "type": "array",
@@ -967,68 +659,7 @@
                         }
                     },
                     "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "description": "Field validation error list.",
-                                    "items": {
-                                        "type": "object",
-                                        "description": "Validation error object.",
-                                        "properties": {
-                                            "instancePath": {
-                                                "type": "string",
-                                                "description": "Path to the property with the error."
-                                            },
-                                            "keyword": {
-                                                "type": "string",
-                                                "description": "Validation keyword."
-                                            },
-                                            "message": {
-                                                "type": "string",
-                                                "description": "Error message."
-                                            },
-                                            "params": {
-                                                "type": "object",
-                                                "description": "Error parameters."
-                                            },
-                                            "schemaPath": {
-                                                "type": "string",
-                                                "description": "Path to the schema validation rule."
-                                            }
-                                        }
-                                    }
-                                },
-                                "example": [
-                                    {
-                                        "instancePath": "",
-                                        "keyword": "required",
-                                        "message": "must have required property 'user_id'",
-                                        "params": {
-                                            "missingProperty": "user_id"
-                                        },
-                                        "schemaPath": "#/anyOf/0/required"
-                                    },
-                                    {
-                                        "instancePath": "",
-                                        "keyword": "required",
-                                        "message": "must have required property 'session_id'",
-                                        "params": {
-                                            "missingProperty": "session_id"
-                                        },
-                                        "schemaPath": "#/anyOf/1/required"
-                                    },
-                                    {
-                                        "instancePath": "",
-                                        "keyword": "anyOf",
-                                        "message": "must match a schema in anyOf",
-                                        "params": {},
-                                        "schemaPath": "#/anyOf"
-                                    }
-                                ]
-                            }
-                        }
+                        "description": "Validation Error"
                     }
                 }
             }
@@ -1045,7 +676,7 @@
                     "Ads events notification"
                 ],
                 "summary": "Track conversions",
-                "description": "Track when an ad leads to a purchase. This endpoint is used to notify one or more orders (sending them in a batch).\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Track when an ad leads to a purchase. This endpoint is used to notify one or more orders (sending them in a batch).\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -1144,7 +775,7 @@
                                     },
                                     "created_at": {
                                         "type": "string",
-                                        "description": "Order creation date in ISO 8601 format in UTC (for example, `2023-01-01T09:20:00Z`)."
+                                        "description": "Order creation date in ISO 8601 format in UTC (for example, `2026-01-01T09:20:00Z`)."
                                     },
                                     "is_company": {
                                         "type": "boolean",
@@ -1213,7 +844,7 @@
                                         "product_id": "4568"
                                     }
                                 ],
-                                "created_at": "2023-01-01T09:20:00Z",
+                                "created_at": "2026-01-01T09:20:00Z",
                                 "channel": "ecommerce",
                                 "is_company": false,
                                 "gender": "M",
@@ -1234,7 +865,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "description": "Object with messages from the server.",
                                     "properties": {
                                         "messages": {
                                             "type": "array",
@@ -1255,88 +885,7 @@
                         }
                     },
                     "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "description": "Field validation error list.",
-                                    "items": {
-                                        "type": "object",
-                                        "description": "Validation error object.",
-                                        "properties": {
-                                            "instancePath": {
-                                                "type": "string",
-                                                "description": "Path to the property with the error."
-                                            },
-                                            "keyword": {
-                                                "type": "string",
-                                                "description": "Validation keyword."
-                                            },
-                                            "message": {
-                                                "type": "string",
-                                                "description": "Error message."
-                                            },
-                                            "params": {
-                                                "type": "object",
-                                                "description": "Error parameters."
-                                            },
-                                            "schemaPath": {
-                                                "type": "string",
-                                                "description": "Path to the schema validation rule."
-                                            }
-                                        }
-                                    }
-                                },
-                                "example": [
-                                    {
-                                        "instancePath": "",
-                                        "keyword": "required",
-                                        "message": "must have required property 'user_id'",
-                                        "params": {
-                                            "missingProperty": "user_id"
-                                        },
-                                        "schemaPath": "#/required"
-                                    },
-                                    {
-                                        "instancePath": "",
-                                        "keyword": "required",
-                                        "message": "must have required property 'order_id'",
-                                        "params": {
-                                            "missingProperty": "order_id"
-                                        },
-                                        "schemaPath": "#/required"
-                                    },
-                                    {
-                                        "instancePath": "",
-                                        "keyword": "required",
-                                        "message": "must have required property 'publisher_id'",
-                                        "params": {
-                                            "missingProperty": "publisher_id"
-                                        },
-                                        "schemaPath": "#/required"
-                                    },
-                                    {
-                                        "instancePath": "",
-                                        "keyword": "required",
-                                        "message": "must have required property 'items'",
-                                        "params": {
-                                            "missingProperty": "items"
-                                        },
-                                        "schemaPath": "#/required"
-                                    },
-                                    {
-                                        "instancePath": "",
-                                        "keyword": "required",
-                                        "message": "must have required property 'created_at'",
-                                        "params": {
-                                            "missingProperty": "created_at"
-                                        },
-                                        "schemaPath": "#/required"
-                                    }
-                                ]
-                            }
-                        }
+                        "description": "Validation Error"
                     }
                 }
             }
@@ -1353,7 +902,7 @@
                     "Ads"
                 ],
                 "summary": "Get ads",
-                "description": "Retrieve Product and Banner ad formats based on context and placements.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).\r\n\r\n## Request best practices\r\n\r\n- **HTTP persistence:** Prefer persistent connections (`Connection: keep-alive`).\r\n- **Timeout:** Apply a 500–600 ms timeout to the ad query.\r\n\r\n## Context-specific fields\r\n\r\nThe `context` value determines which additional fields are required in the request body. The example below uses the `search` context — adapt it to your context using the table below. Include only the fields listed for your context (in addition to the common required fields `session_id`, `context`, `channel`, and `placements`).\r\n\r\n| `context` | Additional required fields | Notes |\r\n| --- | --- | --- |\r\n| `home` | None | Use generic placements (top banner, home shelf). |\r\n| `category` | `category_name` | Provide the full breadcrumb path (for example, `Daily Care > Deodorant > Spray`). |\r\n| `search` | `term` | Send the search query. Optionally pass `tags` to scope eligible ads. |\r\n| `product_page` | `product_sku` | SKU of the product currently being viewed. |\r\n| `brand_page` | `brand_name` | Name of the brand. Pair with `sponsored_brand` placements when applicable. |\r\n| `digital_signage` | `device_id`, `store_name` | Use `digital_signage` placements and the `app` channel. |",
+                "description": "Retrieve Product and Banner ad formats based on context and placements.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).\r\n\r\n## Request best practices\r\n\r\n- **HTTP persistence:** Prefer persistent connections (`Connection: keep-alive`).\r\n- **Timeout:** Apply a 500-600 ms timeout to the ad query.\r\n\r\n## Context-specific fields\r\n\r\nThe `context` value determines which additional fields are required in the request body. The example below uses the `search` context — adapt it to your context using the table below. Include only the fields listed for your context (in addition to the common required fields `session_id`, `context`, `channel`, and `placements`).\r\n\r\n| `context` | Additional required fields | Notes |\r\n| --- | --- | --- |\r\n| `home` | None | Use generic placements (top banner, home shelf). |\r\n| `category` | `category_name` | Provide the full breadcrumb path (for example, `Daily Care > Deodorant > Spray`). |\r\n| `search` | `term` | Send the search query. Optionally pass `tags` to scope eligible ads. |\r\n| `product_page` | `product_sku` | SKU of the product currently being viewed. |\r\n| `brand_page` | `brand_name` | Name of the brand. Pair with `sponsored_brand` placements when applicable. |\r\n| `digital_signage` | `device_id`, `store_name` | Use `digital_signage` placements and the `app` channel. |",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -1654,7 +1203,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "description": "Object with ads for each placement.",
                                     "additionalProperties": {
                                         "type": "array",
                                         "description": "List of ads for a specific placement.",
@@ -1754,98 +1302,16 @@
                         }
                     },
                     "400": {
-                        "description": "Bad Request\n\nInvalid request.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "error": "Invalid request"
-                                }
-                            }
-                        }
+                        "description": "Bad Request\n\nInvalid request."
                     },
                     "404": {
-                        "description": "Not Found\n\nResource not found.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "error": "Resource not found"
-                                }
-                            }
-                        }
+                        "description": "Not Found\n\nResource not found."
                     },
                     "422": {
-                        "description": "Unprocessable Entity\n\nField validation error.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "description": "Field validation error list.",
-                                    "items": {
-                                        "type": "object",
-                                        "description": "Validation error object.",
-                                        "properties": {
-                                            "instancePath": {
-                                                "type": "string",
-                                                "description": "Path to the property with the error."
-                                            },
-                                            "keyword": {
-                                                "type": "string",
-                                                "description": "Validation keyword."
-                                            },
-                                            "message": {
-                                                "type": "string",
-                                                "description": "Error message."
-                                            },
-                                            "params": {
-                                                "type": "object",
-                                                "description": "Error parameters."
-                                            },
-                                            "schemaPath": {
-                                                "type": "string",
-                                                "description": "Path to the schema validation rule."
-                                            }
-                                        }
-                                    }
-                                },
-                                "example": [
-                                    {
-                                        "instancePath": "/context",
-                                        "keyword": "enum",
-                                        "message": "must be equal to one of the allowed values",
-                                        "params": {
-                                            "allowedValues": [
-                                                "home",
-                                                "category",
-                                                "search",
-                                                "product_page",
-                                                "brand_page",
-                                                "digital_signage"
-                                            ]
-                                        },
-                                        "schemaPath": "#/properties/context/enum"
-                                    }
-                                ]
-                            }
-                        }
+                        "description": "Unprocessable Entity\n\nField validation error."
                     },
                     "429": {
-                        "description": "Too Many Requests\n\nRate limit exceeded.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "error": "Rate limit exceeded"
-                                }
-                            }
-                        }
+                        "description": "Too Many Requests\n\nRate limit exceeded."
                     }
                 }
             }
@@ -1862,7 +1328,7 @@
                     "Reports"
                 ],
                 "summary": "Get advertisers report",
-                "description": "Retrieve information from all advertisers associated with a publisher account. The data is returned in JSON format by default, but can be exported as an XLSX file by setting `download=true`.\r\n\r\n>ℹ️ Only available in the publisher view (publisher account).\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Retrieves information from all advertisers associated with a publisher account. The data is returned in JSON format by default, but can be exported as an XLSX file by setting `download=true`.\r\n\r\n>ℹ️ Only available in the publisher view (publisher account).\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -1899,7 +1365,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "description": "Paginated list of advertisers.",
                                     "properties": {
                                         "total": {
                                             "type": "integer",
@@ -2120,17 +1585,7 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized\n\nMissing or invalid authentication credentials.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "error": "Unauthorized"
-                                }
-                            }
-                        }
+                        "description": "Unauthorized\n\nMissing or invalid authentication credentials."
                     }
                 }
             }
@@ -2147,7 +1602,7 @@
                     "Reports"
                 ],
                 "summary": "Get publishers report",
-                "description": "Retrieve information about the publishers associated with an advertiser account. The data is returned in JSON format by default, but can be exported as an XLSX file by setting `download=true`.\r\n\r\n>ℹ️ Only available in the advertiser view (advertiser account).\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Retrieves information about the publishers associated with an advertiser account. The data is returned in JSON format by default, but can be exported as an XLSX file by setting `download=true`.\r\n\r\n>ℹ️ Only available in the advertiser view (advertiser account).\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -2221,7 +1676,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "description": "Paginated list of publishers.",
                                     "properties": {
                                         "total": {
                                             "type": "integer",
@@ -2421,17 +1875,7 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized\n\nMissing or invalid authentication credentials.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "error": "Unauthorized"
-                                }
-                            }
-                        }
+                        "description": "Unauthorized\n\nMissing or invalid authentication credentials."
                     }
                 }
             }
@@ -2448,7 +1892,7 @@
                     "Reports"
                 ],
                 "summary": "Get network publishers report",
-                "description": "Retrieve information about publishers associated with a Network Publisher account. The data is returned in JSON format by default, but can be exported as an XLSX file by setting `download=true`.\r\n\r\n>ℹ️ Only publishers operating in the Network format are allowed to access this report.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Retrieves information about publishers associated with a Network Publisher account. The data is returned in JSON format by default, but can be exported as an XLSX file by setting `download=true`.\r\n\r\n>ℹ️ Only publishers operating in the Network format are allowed to access this report.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -2519,7 +1963,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "description": "Paginated list of network publishers.",
                                     "properties": {
                                         "total": {
                                             "type": "integer",
@@ -2704,17 +2147,7 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized\n\nMissing or invalid authentication credentials.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "error": "Unauthorized"
-                                }
-                            }
-                        }
+                        "description": "Unauthorized\n\nMissing or invalid authentication credentials."
                     }
                 }
             }
@@ -2731,7 +2164,7 @@
                     "Reports"
                 ],
                 "summary": "List campaigns",
-                "description": "Fetch all available campaigns, applying filters as needed. The data is returned in JSON format by default, but can be exported as an XLSX file by setting `download=true`.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Fetches all available campaigns, applying filters as needed. The data is returned in JSON format by default, but can be exported as an XLSX file by setting `download=true`.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -2843,7 +2276,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "description": "Paginated list of campaigns.",
                                     "properties": {
                                         "total": {
                                             "type": "integer",
@@ -3027,10 +2459,23 @@
                                                     },
                                                     "pending": {
                                                         "type": "array",
-                                                        "description": "Pending operations array.",
+                                                        "description": "Pending operations awaiting review for this campaign/ad. Empty when there is nothing pending.",
                                                         "items": {
                                                             "type": "object",
-                                                            "description": "Pending operation."
+                                                            "description": "Pending operation entry, grouping a `label` with its `quantity`.",
+                                                            "properties": {
+                                                                "label": {
+                                                                    "type": "string",
+                                                                    "description": "Type of pending operation. Currently, only `ads` is returned, indicating ads awaiting review.",
+                                                                    "enum": [
+                                                                        "ads"
+                                                                    ]
+                                                                },
+                                                                "quantity": {
+                                                                    "type": "integer",
+                                                                    "description": "Number of pending items of the given `label`."
+                                                                }
+                                                            }
                                                         }
                                                     },
                                                     "metrics": {
@@ -3166,17 +2611,7 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized\n\nMissing or invalid authentication credentials.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "error": "Unauthorized"
-                                }
-                            }
-                        }
+                        "description": "Unauthorized\n\nMissing or invalid authentication credentials."
                     }
                 }
             }
@@ -3193,7 +2628,7 @@
                     "Reports"
                 ],
                 "summary": "Get campaign details",
-                "description": "Retrieve detailed information about a campaign, such as the products associated with the campaign, status history, ads, and metrics. The data is returned only in JSON format.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Retrieves detailed information about a campaign, such as the products associated with the campaign, status history, ads, and metrics. The data is returned only in JSON format.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -3225,7 +2660,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "description": "Detailed campaign object.",
                                     "properties": {
                                         "id": {
                                             "type": "string",
@@ -3367,10 +2801,23 @@
                                         },
                                         "pending": {
                                             "type": "array",
-                                            "description": "Pending operations array.",
+                                            "description": "Pending operations awaiting review for this campaign/ad. Empty when there is nothing pending.",
                                             "items": {
                                                 "type": "object",
-                                                "description": "Pending operation."
+                                                "description": "Pending operation entry, grouping a `label` with its `quantity`.",
+                                                "properties": {
+                                                    "label": {
+                                                        "type": "string",
+                                                        "description": "Type of pending operation. Currently, only `ads` is returned, indicating ads awaiting review.",
+                                                        "enum": [
+                                                            "ads"
+                                                        ]
+                                                    },
+                                                    "quantity": {
+                                                        "type": "integer",
+                                                        "description": "Number of pending items of the given `label`."
+                                                    }
+                                                }
                                             }
                                         },
                                         "metrics": {
@@ -3714,30 +3161,10 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized\n\nMissing or invalid authentication credentials.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "error": "Unauthorized"
-                                }
-                            }
-                        }
+                        "description": "Unauthorized\n\nMissing or invalid authentication credentials."
                     },
                     "404": {
-                        "description": "Not Found\n\nCampaign not found.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "error": "Resource not found"
-                                }
-                            }
-                        }
+                        "description": "Not Found\n\nCampaign not found."
                     }
                 }
             }
@@ -3754,7 +3181,7 @@
                     "Reports"
                 ],
                 "summary": "Get advertiser campaigns detailed report",
-                "description": "Export a mixed campaign report for advertiser accounts, including both regular campaigns and subpublisher information for network campaigns. The data is returned in JSON format by default, but can be exported as an XLSX file by setting `download=true`.\r\n\r\n>ℹ️ This route is intended for advertiser accounts. For non white-label accounts, only non-private publisher rows are returned.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Exports a mixed campaign report for advertiser accounts, including both regular campaigns and subpublisher information for network campaigns. The data is returned in JSON format by default, but can be exported as an XLSX file by setting `download=true`.\r\n\r\n>ℹ️ This route is intended for advertiser accounts. For non white-label accounts, only non-private publisher rows are returned.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -3952,7 +3379,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "description": "Paginated list of detailed campaigns.",
                                     "properties": {
                                         "total": {
                                             "type": "integer",
@@ -4029,10 +3455,23 @@
                                                     },
                                                     "pending": {
                                                         "type": "array",
-                                                        "description": "Pending operations array.",
+                                                        "description": "Pending operations awaiting review for this campaign/ad. Empty when there is nothing pending.",
                                                         "items": {
                                                             "type": "object",
-                                                            "description": "Pending operation."
+                                                            "description": "Pending operation entry, grouping a `label` with its `quantity`.",
+                                                            "properties": {
+                                                                "label": {
+                                                                    "type": "string",
+                                                                    "description": "Type of pending operation. Currently, only `ads` is returned, indicating ads awaiting review.",
+                                                                    "enum": [
+                                                                        "ads"
+                                                                    ]
+                                                                },
+                                                                "quantity": {
+                                                                    "type": "integer",
+                                                                    "description": "Number of pending items of the given `label`."
+                                                                }
+                                                            }
                                                         }
                                                     },
                                                     "metrics": {
@@ -4150,17 +3589,7 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized\n\nMissing or invalid authentication credentials.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "error": "Unauthorized"
-                                }
-                            }
-                        }
+                        "description": "Unauthorized\n\nMissing or invalid authentication credentials."
                     }
                 }
             }
@@ -4177,7 +3606,7 @@
                     "Reports"
                 ],
                 "summary": "Get advertiser ads detailed report",
-                "description": "Export a detailed ad report for advertiser accounts, including subpublisher breakdown for network campaigns. The data is returned in JSON format by default, but can be exported as an XLSX file by setting `download=true`.\r\n\r\n>ℹ️ This route is intended for advertiser accounts. Non-network campaigns return one row per ad, while network campaigns return one row per `ad + subpublisher`. For non white-label accounts, only non-private publisher rows are returned.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Exports a detailed ad report for advertiser accounts, including subpublisher breakdown for network campaigns. The data is returned in JSON format by default, but can be exported as an XLSX file by setting `download=true`.\r\n\r\n>ℹ️ This route is intended for advertiser accounts. Non-network campaigns return one row per ad, while network campaigns return one row per `ad + subpublisher`. For non white-label accounts, only non-private publisher rows are returned.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -4396,7 +3825,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "description": "Paginated list of detailed ads.",
                                     "properties": {
                                         "total": {
                                             "type": "integer",
@@ -4612,17 +4040,7 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized\n\nMissing or invalid authentication credentials.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "error": "Unauthorized"
-                                }
-                            }
-                        }
+                        "description": "Unauthorized\n\nMissing or invalid authentication credentials."
                     }
                 }
             }
@@ -4639,7 +4057,7 @@
                     "Reports"
                 ],
                 "summary": "Get ads performance report",
-                "description": "Fetch all available ads, applying filters as needed. The data is returned in JSON format by default, but can be exported as an XLSX file by setting `download=true`.\r\n\r\n>ℹ️ Paused ads are excluded from the default response. To include paused ads, set `show_inactive=true`.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Fetches all available ads, applying filters as needed. The data is returned in JSON format by default, but can be exported as an XLSX file by setting `download=true`.\r\n\r\n>ℹ️ Paused ads are excluded from the default response. To include paused ads, set `show_inactive=true`.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -4796,7 +4214,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "description": "Paginated list of ads.",
                                     "properties": {
                                         "total": {
                                             "type": "integer",
@@ -5006,10 +4423,23 @@
                                                     },
                                                     "pending": {
                                                         "type": "array",
-                                                        "description": "Pending operations array.",
+                                                        "description": "Pending operations awaiting review for this campaign/ad. Empty when there is nothing pending.",
                                                         "items": {
                                                             "type": "object",
-                                                            "description": "Pending operation."
+                                                            "description": "Pending operation entry, grouping a `label` with its `quantity`.",
+                                                            "properties": {
+                                                                "label": {
+                                                                    "type": "string",
+                                                                    "description": "Type of pending operation. Currently, only `ads` is returned, indicating ads awaiting review.",
+                                                                    "enum": [
+                                                                        "ads"
+                                                                    ]
+                                                                },
+                                                                "quantity": {
+                                                                    "type": "integer",
+                                                                    "description": "Number of pending items of the given `label`."
+                                                                }
+                                                            }
                                                         }
                                                     },
                                                     "metrics": {
@@ -5093,7 +4523,7 @@
                                             "campaign_id": "campaign-id",
                                             "url": "ad-url",
                                             "settings": {
-                                                "cpc": 1.50,
+                                                "cpc": 1.5,
                                                 "type": "banner",
                                                 "categories": [],
                                                 "keywords": [
@@ -5160,17 +4590,7 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized\n\nMissing or invalid authentication credentials.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "error": "Unauthorized"
-                                }
-                            }
-                        }
+                        "description": "Unauthorized\n\nMissing or invalid authentication credentials."
                     }
                 }
             }
@@ -5187,7 +4607,7 @@
                     "Credit transfer"
                 ],
                 "summary": "Notify credit transfer status",
-                "description": "Notify VTEX Ads about the final status of a credit transfer that was previously requested by VTEX Ads to the marketplace's `POST /checking_account/transfer` endpoint. The marketplace must call this webhook with the resolved status of each transfer transaction.\r\n\r\n>⚠️ In case of a webhook call failure, the marketplace must retry until a `204 No Content` response is received.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Notifies VTEX Ads about the final status of a credit transfer that was previously requested by VTEX Ads to the marketplace's `POST /checking_account/transfer` endpoint. The marketplace must call this webhook with the resolved status of each transfer transaction.\r\n\r\n>⚠️ In case of a webhook call failure, the marketplace must retry until a `204 No Content` response is received.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
                 "security": [
                     {
                         "X-Api-Key": [],
@@ -5217,7 +4637,6 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
-                                "description": "Transfer status notification payload.",
                                 "required": [
                                     "transaction_id",
                                     "status"
@@ -5225,8 +4644,7 @@
                                 "properties": {
                                     "transaction_id": {
                                         "type": "string",
-                                        "description": "Identifier of the transfer transaction returned by the marketplace when the transfer was requested.",
-                                        "example": "TRANSACTION_ID"
+                                        "description": "Identifier of the transfer transaction returned by the marketplace when the transfer was requested."
                                     },
                                     "status": {
                                         "type": "string",
@@ -5234,13 +4652,11 @@
                                         "enum": [
                                             "success",
                                             "failure"
-                                        ],
-                                        "example": "success"
+                                        ]
                                     },
                                     "message": {
                                         "type": "string",
-                                        "description": "Description of the failure reason. Required when `status` is `failure`.",
-                                        "example": "Insufficient balance"
+                                        "description": "Description of the failure reason. Required when `status` is `failure`."
                                     }
                                 }
                             },
@@ -5256,17 +4672,7 @@
                         "description": "No Content\n\nNotification accepted."
                     },
                     "401": {
-                        "description": "Unauthorized\n\nMissing or invalid authentication credentials.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "error": "Unauthorized"
-                                }
-                            }
-                        }
+                        "description": "Unauthorized\n\nMissing or invalid authentication credentials."
                     }
                 }
             }
@@ -5283,7 +4689,7 @@
                     "Single sign-on"
                 ],
                 "summary": "Generate seller single sign-on URL",
-                "description": "Generate a redirect URL that allows a seller user to access the VTEX Ads platform without needing to log in again. Use this endpoint to enable a unified login experience for marketplace sellers.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Generates a redirect URL that allows a seller user to access the VTEX Ads platform without needing to log in again. Use this endpoint to enable a unified login experience for marketplace sellers.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -5297,7 +4703,6 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
-                                "description": "SSO authentication payload.",
                                 "required": [
                                     "sso_token",
                                     "email",
@@ -5308,28 +4713,23 @@
                                 "properties": {
                                     "sso_token": {
                                         "type": "string",
-                                        "description": "User identification token generated by the marketplace.",
-                                        "example": "sso-token-12345"
+                                        "description": "User identification token generated by the marketplace."
                                     },
                                     "email": {
                                         "type": "string",
-                                        "description": "Seller user's email address.",
-                                        "example": "seller@example.com"
+                                        "description": "Seller user's email address."
                                     },
                                     "user_id": {
                                         "type": "string",
-                                        "description": "Unique identifier of the user in the marketplace.",
-                                        "example": "seller123"
+                                        "description": "Unique identifier of the user in the marketplace."
                                     },
                                     "name": {
                                         "type": "string",
-                                        "description": "Seller user's name.",
-                                        "example": "Seller Name"
+                                        "description": "Seller user's name."
                                     },
                                     "marketplace_name": {
                                         "type": "string",
-                                        "description": "Name of the marketplace.",
-                                        "example": "My Marketplace"
+                                        "description": "Name of the marketplace."
                                     }
                                 }
                             },
@@ -5350,7 +4750,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "description": "SSO redirect response.",
                                     "properties": {
                                         "redirect_url": {
                                             "type": "string",
@@ -5365,17 +4764,7 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized\n\nMissing or invalid authentication credentials.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                },
-                                "example": {
-                                    "error": "Unauthorized"
-                                }
-                            }
-                        }
+                        "description": "Unauthorized\n\nMissing or invalid authentication credentials."
                     }
                 }
             }
