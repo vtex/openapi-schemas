@@ -1,0 +1,1136 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Payment Policies API",
+        "description": "The Payment Policies API allows VTEX merchants to configure rules that include or exclude payment systems for specific cart items. The Payment Configuration Service (PCS) stores policy rules, while the Payment Information Service (PIS) evaluates those rules during checkout and returns the payment systems available for each item.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\n## Index\r\n\r\n### Payment policy rules\r\n\r\n- `POST` [Create policy rule](https://developers.vtex.com/docs/api-reference/payment-policies-api#post-/api/payment-configuration-service/policy-rules)\r\n- `GET` [List policy rules](https://developers.vtex.com/docs/api-reference/payment-policies-api#get-/api/payment-configuration-service/policy-rules)\r\n- `GET` [Get policy rule by ID](https://developers.vtex.com/docs/api-reference/payment-policies-api#get-/api/payment-configuration-service/policy-rules/-id-)\r\n- `PUT` [Update policy rule](https://developers.vtex.com/docs/api-reference/payment-policies-api#put-/api/payment-configuration-service/policy-rules/-id-)\r\n- `PATCH` [Update policy rule partially](https://developers.vtex.com/docs/api-reference/payment-policies-api#patch-/api/payment-configuration-service/policy-rules/-id-)\r\n- `DELETE` [Delete policy rule](https://developers.vtex.com/docs/api-reference/payment-policies-api#delete-/api/payment-configuration-service/policy-rules/-id-)\r\n\r\n### Payment policy evaluation\r\n\r\n- `POST` [Evaluate payment policies](https://developers.vtex.com/docs/api-reference/payment-policies-api#post-/api/pvt/payment-systems/search)\r\n\r\n## Rule engine\r\n\r\n> ℹ️ Currently the Payment policies feature supports `and`, `or`, `==`, and `in` operators, with a limit of 500 operators per expression. Available context variables are `collectionIds`, containing the collection IDs associated with the item, and `shippingState`, containing the delivery state code.",
+        "contact": {},
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "https://pcs.{environment}.com.br",
+            "description": "Payment Configuration Service server URL.",
+            "variables": {
+                "environment": {
+                    "description": "Environment to use. Used as part of the URL.",
+                    "enum": [
+                        "vtexcommercestable"
+                    ],
+                    "default": "vtexcommercestable"
+                }
+            }
+        },
+        {
+            "url": "https://{accountName}.vtexpayments.com.br",
+            "description": "Payment Information Service server URL.",
+            "variables": {
+                "accountName": {
+                    "description": "Name of the VTEX account. Used as part of the URL.",
+                    "default": "apiexamples"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/api/payment-configuration-service/policy-rules": {
+            "servers": [
+                {
+                    "url": "https://pcs.{environment}.com.br",
+                    "description": "Payment Configuration Service server URL.",
+                    "variables": {
+                        "environment": {
+                            "description": "Environment to use. Used as part of the URL.",
+                            "enum": [
+                                "vtexcommercestable"
+                            ],
+                        "default": "vtexcommercestable"
+                        }
+                    }
+                }
+            ],
+            "post": {
+                "tags": [
+                    "Payment policy rules"
+                ],
+                "summary": "Create policy rule",
+                "operationId": "createPolicyRule",
+                "description": "Creates a payment policy rule for the VTEX account informed in the `an` query parameter. Policy rules define conditions that determine which payment systems are included or excluded when those conditions match a cart item.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Payments | Payment Policies | **ManageStore** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AccountName"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PolicyRuleInput"
+                            },
+                            "example": {
+                                "name": "Exclude EBT for collection 139 in NY",
+                                "expression": {
+                                    "and": [
+                                        {
+                                            "in": [
+                                                139,
+                                                {
+                                                    "var": "collectionIds"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "==": [
+                                                {
+                                                    "var": "shippingState"
+                                                },
+                                                "NY"
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "enabled": true,
+                                "priority": 90,
+                                "action": "Exclude",
+                                "paymentSystems": [
+                                    100
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PolicyRule"
+                                },
+                                "example": {
+                                    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                    "accountName": "cosmetics2",
+                                    "name": "Exclude EBT for collection 139 in NY",
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "in": [
+                                                    139,
+                                                    {
+                                                        "var": "collectionIds"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "==": [
+                                                    {
+                                                        "var": "shippingState"
+                                                    },
+                                                    "NY"
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "enabled": true,
+                                    "priority": 90,
+                                    "action": "Exclude",
+                                    "paymentSystems": [
+                                        100
+                                    ],
+                                    "createdAt": "2026-04-01T10:00:00Z",
+                                    "updatedAt": "2026-04-01T10:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Payment policy rules"
+                ],
+                "summary": "List policy rules",
+                "operationId": "listPolicyRules",
+                "description": "Lists the payment policy rules configured for the VTEX account informed in the `an` query parameter.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Payments | Payment Policies | **ViewPayments** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AccountName"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "description": "List of policy rules configured for the account.",
+                                    "items": {
+                                        "$ref": "#/components/schemas/PolicyRule"
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                        "accountName": "cosmetics2",
+                                        "name": "Exclude EBT for collection 139 in NY",
+                                        "expression": {
+                                            "and": [
+                                                {
+                                                    "in": [
+                                                        139,
+                                                        {
+                                                            "var": "collectionIds"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "==": [
+                                                        {
+                                                            "var": "shippingState"
+                                                        },
+                                                        "NY"
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "enabled": true,
+                                        "priority": 90,
+                                        "action": "Exclude",
+                                        "paymentSystems": [
+                                            100
+                                        ],
+                                        "createdAt": "2026-04-01T10:00:00Z",
+                                        "updatedAt": "2026-04-01T10:00:00Z"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    }
+                }
+            }
+        },
+        "/api/payment-configuration-service/policy-rules/{id}": {
+            "servers": [
+                {
+                    "url": "https://pcs.{environment}.com.br",
+                    "description": "Payment Configuration Service server URL.",
+                    "variables": {
+                        "environment": {
+                            "description": "Environment to use. Used as part of the URL.",
+                            "enum": [
+                                "vtexcommercestable"
+                            ],
+                        "default": "vtexcommercestable"
+                        }
+                    }
+                }
+            ],
+            "get": {
+                "tags": [
+                    "Payment policy rules"
+                ],
+                "summary": "Get policy rule by ID",
+                "operationId": "getPolicyRuleById",
+                "description": "Retrieves a payment policy rule by ID for the VTEX account informed in the `an` query parameter.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Payments | Payment Policies | **ViewPayments** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/PolicyRuleId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AccountName"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PolicyRule"
+                                },
+                                "example": {
+                                    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                    "accountName": "cosmetics2",
+                                    "name": "Exclude EBT for collection 139 in NY",
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "in": [
+                                                    139,
+                                                    {
+                                                        "var": "collectionIds"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "==": [
+                                                    {
+                                                        "var": "shippingState"
+                                                    },
+                                                    "NY"
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "enabled": true,
+                                    "priority": 90,
+                                    "action": "Exclude",
+                                    "paymentSystems": [
+                                        100
+                                    ],
+                                    "createdAt": "2026-04-01T10:00:00Z",
+                                    "updatedAt": "2026-04-01T10:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Payment policy rules"
+                ],
+                "summary": "Update policy rule",
+                "operationId": "updatePolicyRule",
+                "description": "Replaces a payment policy rule for the VTEX account informed in the `an` query parameter. Send the same response body as the `POST` request, excluding `id`, `accountName`, createdAt`, or `updatedAt`.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Payments | Payment Policies | **ManageStore** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/PolicyRuleId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AccountName"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PolicyRuleInput"
+                            },
+                            "example": {
+                                "name": "Exclude EBT for collection 139 in NY",
+                                "expression": {
+                                    "and": [
+                                        {
+                                            "in": [
+                                                139,
+                                                {
+                                                    "var": "collectionIds"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "==": [
+                                                {
+                                                    "var": "shippingState"
+                                                },
+                                                "NY"
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "enabled": true,
+                                "priority": 90,
+                                "action": "Exclude",
+                                "paymentSystems": [
+                                    100
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PolicyRule"
+                                },
+                                "example": {
+                                    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                    "accountName": "cosmetics2",
+                                    "name": "Exclude EBT for collection 139 in NY",
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "in": [
+                                                    139,
+                                                    {
+                                                        "var": "collectionIds"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "==": [
+                                                    {
+                                                        "var": "shippingState"
+                                                    },
+                                                    "NY"
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "enabled": true,
+                                    "priority": 90,
+                                    "action": "Exclude",
+                                    "paymentSystems": [
+                                        100
+                                    ],
+                                    "createdAt": "2026-04-01T10:00:00Z",
+                                    "updatedAt": "2026-04-01T10:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Payment policy rules"
+                ],
+                "summary": "Update policy rule partially",
+                "operationId": "patchPolicyRule",
+                "description": "Updates one or more fields of a payment policy rule for the VTEX account informed in the `an` query parameter.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Payments | Payment Policies | **ManageStore** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/PolicyRuleId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AccountName"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PolicyRulePatch"
+                            },
+                            "example": {
+                                "priority": 50,
+                                "paymentSystems": [
+                                    100,
+                                    200
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PolicyRule"
+                                },
+                                "example": {
+                                    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                    "accountName": "cosmetics2",
+                                    "name": "Exclude EBT for collection 139 in NY",
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "in": [
+                                                    139,
+                                                    {
+                                                        "var": "collectionIds"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "==": [
+                                                    {
+                                                        "var": "shippingState"
+                                                    },
+                                                    "NY"
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "enabled": false,
+                                    "priority": 50,
+                                    "action": "Exclude",
+                                    "paymentSystems": [
+                                        100,
+                                        200
+                                    ],
+                                    "createdAt": "2026-04-01T10:00:00Z",
+                                    "updatedAt": "2026-04-01T11:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Payment policy rules"
+                ],
+                "summary": "Delete policy rule",
+                "operationId": "deletePolicyRule",
+                "description": "Deletes a payment policy rule for the VTEX account informed in the `an` query parameter.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Payments | Payment Policies | **ManageStore** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/PolicyRuleId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/AccountName"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                }
+            }
+        },
+        "/api/pvt/payment-systems/search": {
+            "servers": [
+                {
+                    "url": "https://{accountName}.vtexpayments.com.br",
+                    "description": "Payment Information Service server URL.",
+                    "variables": {
+                        "accountName": {
+                            "description": "Name of the VTEX account. Used as part of the URL.",
+                            "default": "apiexamples"
+                        }
+                    }
+                }
+            ],
+            "post": {
+                "tags": [
+                    "Payment policy evaluation"
+                ],
+                "summary": "Evaluate payment policies",
+                "operationId": "evaluatePaymentPolicies",
+                "description": "Evaluates active payment policy rules against cart item context and returns payment systems available for each item. Payment systems not mentioned in any matching rule remain available by default.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Payments | Payment Policies | **ViewPayments** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/AccountName"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PaymentPolicySearchRequest"
+                            },
+                            "example": {
+                                "items": [
+                                    {
+                                        "id": "sku-01",
+                                        "collectionIds": [
+                                            139,
+                                            45
+                                        ],
+                                        "shippingData": {
+                                            "state": "NY"
+                                        }
+                                    },
+                                    {
+                                        "id": "sku-02",
+                                        "collectionIds": [
+                                            200
+                                        ],
+                                        "shippingData": {
+                                            "state": "NY"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentPolicySearchResponse"
+                                },
+                                "example": {
+                                    "paymentSystemAssignments": [
+                                        {
+                                            "paymentSystem": 1,
+                                            "itemIds": [
+                                                "sku-01",
+                                                "sku-02"
+                                            ]
+                                        },
+                                        {
+                                            "paymentSystem": 4,
+                                            "itemIds": [
+                                                "sku-01",
+                                                "sku-02"
+                                            ]
+                                        },
+                                        {
+                                            "paymentSystem": 100,
+                                            "itemIds": [
+                                                "sku-02"
+                                            ]
+                                        }
+                                    ],
+                                    "paymentSystemDefinitions": [
+                                        {
+                                            "id": 1,
+                                            "name": "Debit Card",
+                                            "groupName": "debitCard"
+                                        },
+                                        {
+                                            "id": 4,
+                                            "name": "Mastercard",
+                                            "groupName": "creditCard"
+                                        },
+                                        {
+                                            "id": 100,
+                                            "name": "EBT Card",
+                                            "groupName": "ebt"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    }
+                }
+            }
+        }
+    },
+    "security": [
+        {
+            "appKey": [],
+            "appToken": []
+        },
+        {
+            "VtexIdclientAutCookie": []
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "VtexIdclientAutCookie": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "VtexIdclientAutCookie",
+                "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
+            }
+        },
+        "schemas": {
+            "PolicyRuleInput": {
+                "type": "object",
+                "description": "Payload used to create or replace a payment policy rule.",
+                "required": [
+                    "name",
+                    "expression",
+                    "enabled",
+                    "priority",
+                    "action",
+                    "paymentSystems"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Policy rule name."
+                    },
+                    "expression": {
+                        "$ref": "#/components/schemas/JsonLogicExpression"
+                    },
+                    "enabled": {
+                        "type": "boolean",
+                        "description": "Indicates whether the policy rule is active."
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Rule priority. Lower values have higher precedence when conflicting rules match the same item."
+                    },
+                    "action": {
+                        "type": "string",
+                        "description": "Action applied to the payment systems when the rule expression matches.",
+                        "enum": [
+                            "Include",
+                            "Exclude"
+                        ]
+                    },
+                    "paymentSystems": {
+                        "type": "array",
+                        "description": "Payment system IDs affected by the rule.",
+                        "items": {
+                            "type": "integer",
+                            "format": "int32",
+                            "description": "Payment system ID."
+                        }
+                    }
+                }
+            },
+            "PolicyRulePatch": {
+                "type": "object",
+                "description": "Payload used to update one or more fields of a payment policy rule.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Policy rule name."
+                    },
+                    "expression": {
+                        "$ref": "#/components/schemas/JsonLogicExpression"
+                    },
+                    "enabled": {
+                        "type": "boolean",
+                        "description": "Indicates whether the policy rule is active."
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Rule priority. Lower values have higher precedence when conflicting rules match the same item."
+                    },
+                    "action": {
+                        "type": "string",
+                        "description": "Action applied to the payment systems when the rule expression matches.",
+                        "enum": [
+                            "Include",
+                            "Exclude"
+                        ]
+                    },
+                    "paymentSystems": {
+                        "type": "array",
+                        "description": "Payment system IDs affected by the rule.",
+                        "items": {
+                            "type": "integer",
+                            "format": "int32",
+                            "description": "Payment system ID."
+                        }
+                    }
+                }
+            },
+            "PolicyRule": {
+                "type": "object",
+                "description": "Payment policy rule returned by the API.",
+                "required": [
+                    "id",
+                    "accountName",
+                    "name",
+                    "expression",
+                    "enabled",
+                    "priority",
+                    "action",
+                    "paymentSystems",
+                    "createdAt",
+                    "updatedAt"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Unique identifier of the policy rule."
+                    },
+                    "accountName": {
+                        "type": "string",
+                        "description": "VTEX account that owns the policy rule."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Policy rule name."
+                    },
+                    "expression": {
+                        "$ref": "#/components/schemas/JsonLogicExpression"
+                    },
+                    "enabled": {
+                        "type": "boolean",
+                        "description": "Indicates whether the policy rule is active."
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Rule priority. Lower values have higher precedence when conflicting rules match the same item."
+                    },
+                    "action": {
+                        "type": "string",
+                        "description": "Action applied to the payment systems when the rule expression matches.",
+                        "enum": [
+                            "Include",
+                            "Exclude"
+                        ]
+                    },
+                    "paymentSystems": {
+                        "type": "array",
+                        "description": "Payment system IDs affected by the rule.",
+                        "items": {
+                            "type": "integer",
+                            "format": "int32",
+                            "description": "Payment system ID."
+                        }
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date and time when the policy rule was created in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date and time when the policy rule was last updated in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."
+                    }
+                }
+            },
+            "JsonLogicExpression": {
+                "type": "object",
+                "description": "JSONLogic expression evaluated against item context. Currently supports `and`, `or`, `==`, and `in`, with `collectionIds` and `shippingState` as available variables.",
+                "additionalProperties": true
+            },
+            "PaymentPolicySearchRequest": {
+                "type": "object",
+                "description": "Payload used to evaluate payment policies for cart items.",
+                "required": [
+                    "items"
+                ],
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "description": "Cart items to evaluate against active payment policy rules.",
+                        "items": {
+                            "$ref": "#/components/schemas/PaymentPolicySearchItem"
+                        }
+                    }
+                }
+            },
+            "PaymentPolicySearchItem": {
+                "type": "object",
+                "description": "Cart item context used by the payment policy engine.",
+                "required": [
+                    "id",
+                    "collectionIds",
+                    "shippingData"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Item identifier used to map available payment systems back to the cart item."
+                    },
+                    "collectionIds": {
+                        "type": "array",
+                        "description": "Collection IDs associated with the item in the VTEX catalog.",
+                        "items": {
+                            "type": "integer",
+                            "format": "int32",
+                            "description": "Collection ID."
+                        }
+                    },
+                    "shippingData": {
+                        "type": "object",
+                        "description": "Shipping context used by the payment policy engine.",
+                        "required": [
+                            "state"
+                        ],
+                        "properties": {
+                            "state": {
+                                "type": "string",
+                                "description": "State code of the main delivery address."
+                            }
+                        }
+                    }
+                }
+            },
+            "PaymentPolicySearchResponse": {
+                "type": "object",
+                "description": "Payment policy evaluation result returned by the Payment Information Service.",
+                "required": [
+                    "paymentSystemAssignments",
+                    "paymentSystemDefinitions"
+                ],
+                "properties": {
+                    "paymentSystemAssignments": {
+                        "type": "array",
+                        "description": "Relationship between payment systems and the item IDs for which each payment system is available.",
+                        "items": {
+                            "$ref": "#/components/schemas/PaymentSystemAssignment"
+                        }
+                    },
+                    "paymentSystemDefinitions": {
+                        "type": "array",
+                        "description": "Payment system metadata for the payment systems returned in the assignments.",
+                        "items": {
+                            "$ref": "#/components/schemas/PaymentSystemDefinition"
+                        }
+                    }
+                }
+            },
+            "PaymentSystemAssignment": {
+                "type": "object",
+                "description": "Payment system availability for one or more items.",
+                "required": [
+                    "paymentSystem",
+                    "itemIds"
+                ],
+                "properties": {
+                    "paymentSystem": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Payment system ID."
+                    },
+                    "itemIds": {
+                        "type": "array",
+                        "description": "Item IDs for which the payment system is available.",
+                        "items": {
+                            "type": "string",
+                            "description": "Item ID."
+                        }
+                    }
+                }
+            },
+            "PaymentSystemDefinition": {
+                "type": "object",
+                "description": "Payment system metadata.",
+                "required": [
+                    "id",
+                    "name",
+                    "groupName"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Payment system ID."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Payment system display name."
+                    },
+                    "groupName": {
+                        "type": "string",
+                        "description": "Payment system group name."
+                    }
+                }
+            },
+            "Error": {
+                "type": "object",
+                "description": "Error response returned when the request cannot be completed.",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "description": "Error message."
+                    }
+                }
+            }
+        },
+        "parameters": {
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "AccountName": {
+                "name": "an",
+                "in": "query",
+                "description": "Name of the VTEX account whose payment policies should be created, retrieved, updated, deleted, or evaluated.",
+                "required": true,
+                "style": "form",
+                "schema": {
+                    "type": "string",
+                    "example": "cosmetics2"
+                }
+            },
+            "PolicyRuleId": {
+                "name": "id",
+                "in": "path",
+                "description": "Unique identifier of the policy rule.",
+                "required": true,
+                "schema": {
+                    "type": "string",
+                    "format": "uuid"
+                }
+            }
+        },
+        "responses": {
+            "BadRequest": {
+                "description": "Bad Request",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        },
+                        "example": {
+                            "message": "Invalid JSONLogic expression, malformed request body, or policy rule limit exceeded."
+                        }
+                    }
+                }
+            },
+            "Unauthorized": {
+                "description": "Unauthorized",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        },
+                        "example": {
+                            "message": "Missing or invalid credentials."
+                        }
+                    }
+                }
+            },
+            "Forbidden": {
+                "description": "Forbidden",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        },
+                        "example": {
+                            "message": "The user or API key does not have the required permission."
+                        }
+                    }
+                }
+            },
+            "NotFound": {
+                "description": "Not Found",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        },
+                        "example": {
+                            "message": "Policy rule not found for the account."
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Payment policy rules"
+        },
+        {
+            "name": "Payment policy evaluation"
+        }
+    ]
+}
