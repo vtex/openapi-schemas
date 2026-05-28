@@ -27,12 +27,17 @@ rules:
         function: defined        
 
   must-include-response-examples:
-    description: At least one example should be included for each API response
+    description: At least one example must be included for each API response, declared as a sibling of `schema` at the content-type level. Use `example` (singular) for a single payload, or `examples` (plural, an object of named entries with `summary` and `value`) when the schema uses `anyOf`/`oneOf` and each branch needs its own illustrative payload.
     severity: error
     given: "$.paths..responses.*.content.*"
     then:
-      - field: "example"
-        function: defined
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+            - required: ["example"]
+            - required: ["examples"]
 
   must-include-response-schemas:
     description: Each API response must contain a schema
@@ -156,12 +161,31 @@ rules:
         match: "^(?:VTEX|SKU|SKUs|ID|API|CMS|EAN|URL|JSON|OAuth|SLA|Session Manager|Storefront Permissions|B2B|[A-Z][a-z0-9]*(?:-[a-z][a-z0-9]*)*)(?:\\s+(?:VTEX|SKU|SKUs|ID|API|CMS|EAN|URL|JSON|OAuth|SLA|Session Manager|Storefront Permissions|B2B|[a-z][a-z0-9]*(?:-[a-z][a-z0-9]*)*))*$"
 
   request-example-parallel-to-schema:
-    description: The example for request body must be at the same level as the schema (as siblings), not nested inside schema properties. Place the example at the content-type level alongside the schema.
+    description: The request body must declare an example at the content-type level (as a sibling of `schema`), not nested inside schema properties. Use `example` (singular) for a single payload, or `examples` (plural, an object of named entries with `summary` and `value`) when the schema uses `anyOf`/`oneOf` and each branch needs its own illustrative payload.
     severity: error
     given: "$.paths..requestBody.content.*"
     then:
-      field: "example"
-      function: defined
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+            - required: ["example"]
+            - required: ["examples"]
+
+  anyof-oneof-branches-must-be-documented:
+    description: Each subschema of an `anyOf` or `oneOf` (in a request body or response body) must declare both a `title` and a `description`, per the VTEX API reference guidelines (sections 4.7.1 and 4.8.1). The rendered API reference uses the `title` to label each variant tab and the `description` to explain when that variant applies; without them, consumers see anonymous "Option 1 / Option 2" entries and cannot tell the branches apart.
+    severity: error
+    given:
+      - "$.paths.*.*.requestBody.content.*.schema..anyOf[*]"
+      - "$.paths.*.*.requestBody.content.*.schema..oneOf[*]"
+      - "$.paths.*.*.responses.*.content.*.schema..anyOf[*]"
+      - "$.paths.*.*.responses.*.content.*.schema..oneOf[*]"
+    then:
+      - field: "title"
+        function: defined
+      - field: "description"
+        function: defined
 
   no-chained-refs-in-components:
     description: Components cannot use a $ref that points to another component which also contains a $ref (chained refs are not allowed). This may cause rendering errors on the Developer Portal. When this error is shown, check the $ref at the next level and rearrange the content to allow it to be removed, eliminating the need for cascading $refs.
