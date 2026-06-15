@@ -58,13 +58,24 @@
                     "Storefront users"
                 ],
                 "summary": "Create storefront user",
-                "description": "Creates a new storefront user in VTEX ID with one or more authentication identifiers (username, email, or phone number).\n\nThe created user is not linked to any Organization Unit and does not have storefront permissions.\r\n\r\n## Notes and limitations\r\n\r\n- There are currently **no APIs for updating authentication identifiers**. For update-related needs, contact our [Support](https://support.vtex.com/hc/en-us/).\r\n- Although `phoneNumber` can be registered and used for authentication, it is **not yet supported for password recovery**.\r\n- Once a storefront user is added, authentication identifiers cannot be edited or removed. If incorrect data is uploaded, you must create a new user.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| VTEX ID | User Management | **Create User** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>\u2757 To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "description": "Creates a new storefront user in VTEX ID with one or more authentication identifiers (username, email, or phone number).\n\nThe created user is not linked to any Organization Unit and does not have storefront permissions. For more information on how to provision B2B users, see the [B2B user provisioning guide](https://developers.vtex.com/docs/guides/b2b-user-provisioning).\r\n\r\n> ⚠️ This feature is only available for stores using [B2B Buyer Portal](https://help.vtex.com/docs/tutorials/b2b-buyer-portal), which is currently available to selected accounts.\r\n\r\n## Notes and limitations\r\n\r\n- There are currently **no APIs for updating authentication identifiers**. For update-related needs, contact our [Support](https://support.vtex.com/hc/en-us/).\r\n- Although `phoneNumber` can be registered and used for authentication, it is **not yet supported for password recovery**.\r\n- Once a storefront user is added, authentication identifiers cannot be edited or removed. If incorrect data is uploaded, you must create a new user.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| VTEX ID | User Management | **Create User** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>\u2757 To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
                     },
                     {
                         "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "isLegacyPassword",
+                        "in": "query",
+                        "description": "Flag indicating whether the user's password should be validated against an external legacy authentication system on their first login. Set to `true` for B2B password migration scenarios where users are being migrated from a legacy platform. When `true`, the user's first login will trigger validation against the configured middleware endpoint. Set to `false` (default) for standard user creation where users will need to define a new password. See the [B2B password migration guide](https://developers.vtex.com/docs/guides/b2b-password-migration) for more information.",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false,
+                            "example": true
+                        }
                     }
                 ],
                 "requestBody": {
@@ -151,7 +162,7 @@
                         }
                     },
                     "400": {
-                        "description": "Bad Request\n\nInvalid request format or missing required fields.",
+                        "description": "Bad Request\n\nInvalid request format or missing required fields or unsupported identifier type.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -201,6 +212,189 @@
                         "appToken": []
                     }
                 ]
+            }
+        },
+        "/api/authenticator/v1/tenants/features/{name}": {
+            "servers": [
+                {
+                    "url": "https://{accountName}.{environment}.com.br",
+                    "description": "VTEX server URL.",
+                    "variables": {
+                        "accountName": {
+                            "description": "Name of the VTEX account. Used as part of the URL.",
+                            "default": "apiexamples"
+                        },
+                        "environment": {
+                            "description": "Environment to use. Used as part of the URL.",
+                            "enum": [
+                                "vtexcommercestable"
+                            ],
+                            "default": "vtexcommercestable"
+                        }
+                    }
+                }
+            ],
+            "put": {
+                "tags": [
+                    "Password migration"
+                ],
+                "summary": "Upsert password migration configuration",
+                "description": "Configures or updates the external authentication middleware settings for B2B password migration. This endpoint registers the middleware URL and HMAC credentials that VTEX will use to validate legacy user credentials during their first login.\r\n\r\nOnce configured, users with the `isLegacyPassword` flag set to `true` will have their credentials validated against the configured middleware endpoint on their first login attempt.\r\n\r\nFor more information, see the [B2B password migration guide](https://developers.vtex.com/docs/guides/b2b-password-migration).\r\n\r\n> ⚠️ This feature is only available for stores using [B2B Buyer Portal](https://help.vtex.com/docs/tutorials/b2b-buyer-portal), which is currently available to selected accounts.\r\n\r\n## Notes and limitations\r\n\r\n- The middleware endpoint must be accessible via HTTPS with a valid TLS certificate.\r\n- The middleware must respond within 3 seconds (p95 ≤ 1s, p99 ≤ 2.5s recommended).\r\n- The `clientId` and `secret` are used for HMAC-SHA256 request signing.\r\n- The `secret` is treated as a sensitive credential and should not be logged or shared.\r\n- Don't reuse secrets across environments (for example, staging vs. production).\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "description": "Feature name for password migration. Must be `PasswordMigration`.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "PasswordMigration"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "clientId",
+                                    "idpEndpoint",
+                                    "secret"
+                                ],
+                                "properties": {
+                                    "clientId": {
+                                        "type": "string",
+                                        "description": "Public identifier used to select the correct shared secret on the middleware side. This identifier is included in the `X-VTEX-Client-Id` header of authentication requests sent to the middleware."
+                                    },
+                                    "idpEndpoint": {
+                                        "type": "string",
+                                        "description": "HTTPS URL of the authentication middleware endpoint that VTEX will call to validate legacy credentials. The path must end with `/authentication`. Example: `https://your-middleware.com/authentication`."
+                                    },
+                                    "secret": {
+                                        "type": "string",
+                                        "description": "Shared secret used to authenticate VTEX requests to the middleware via HMAC-SHA256 signatures. This should be a high-entropy value (recommended: 32+ random bytes / 256-bit, encoded as Base64). Treat this as a sensitive credential: do not log it, do not share it, and do not reuse it across environments."
+                                    }
+                                }
+                            },
+                            "example": {
+                                "clientId": "vtex-b2b-store",
+                                "idpEndpoint": "https://auth-middleware.example.com/authentication",
+                                "secret": "aGlnaC1lbnRyb3B5LXNlY3JldC1rZXktZXhhbXBsZQ=="
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK\n\nFeature registered or updated successfully."
+                    },
+                    "400": {
+                        "description": "Bad Request\n\nUnknown feature name or invalid secret format."
+                    },
+                    "500": {
+                        "description": "Internal Server Error\n\nUnknown server error."
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Password migration"
+                ],
+                "summary": "Enable or disable password migration",
+                "description": "Enables or disables the B2B password migration feature for your account without removing the configuration. When disabled, legacy password validation will not be performed, even for users with `isLegacyPassword=true`.\r\n\r\nFor more information, see the [B2B password migration guide](https://developers.vtex.com/docs/guides/b2b-password-migration).\r\n\r\n> ⚠️ This feature is only available for stores using [B2B Buyer Portal](https://help.vtex.com/docs/tutorials/b2b-buyer-portal), which is currently available to selected accounts.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "description": "Feature name for password migration. Must be `PasswordMigration`.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "PasswordMigration"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "enabled"
+                                ],
+                                "properties": {
+                                    "enabled": {
+                                        "type": "boolean",
+                                        "description": "Flag to enable (`true`) or disable (`false`) the password migration feature. When disabled, legacy password validation will not be performed."
+                                    }
+                                }
+                            },
+                            "example": {
+                                "enabled": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK\n\nFeature toggled successfully."
+                    },
+                    "400": {
+                        "description": "Bad Request\n\nUnknown feature name."
+                    },
+                    "404": {
+                        "description": "Not Found\n\nFeature not registered for this tenant."
+                    },
+                    "500": {
+                        "description": "Internal Server Error\n\nUnknown server error."
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Password migration"
+                ],
+                "summary": "Delete password migration configuration",
+                "description": "Removes the B2B password migration configuration from your account entirely, including all middleware endpoint settings and HMAC credentials. After deletion, legacy password validation will no longer be available.\r\n\r\nFor more information, see the [B2B password migration guide](https://developers.vtex.com/docs/guides/b2b-password-migration).\r\n\r\n> ⚠️ This feature is only available for stores using [B2B Buyer Portal](https://help.vtex.com/docs/tutorials/b2b-buyer-portal), which is currently available to selected accounts.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "description": "Feature name for password migration. Must be `PasswordMigration`.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "PasswordMigration"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content\n\nFeature deleted successfully."
+                    },
+                    "400": {
+                        "description": "Bad Request\n\nUnknown feature name."
+                    },
+                    "500": {
+                        "description": "Internal Server Error\n\nUnknown server error."
+                    }
+                }
             }
         },
         "/api/vtexid/pvt/user/info": {
@@ -2540,6 +2734,9 @@
         },
         {
             "name": "Storefront users"
+        },
+        {
+            "name": "Password migration"
         },
         {
             "name": "Organization account authentication"
