@@ -4,7 +4,7 @@
         "title": "External Promotions Protocol API",
         "description": "The External Promotions Protocol API is a set of definitions that allows merchants to integrate their own external promotions engine with the VTEX platform. This is a protocol, which means the merchant must implement the endpoints described in this documentation as a web API (REST) on their own infrastructure.\r\n\r\n>⚠️ This feature is only available for accounts using Headless Checkout.\r\n\r\nVTEX will call these endpoints during the shopping cart calculation and order lifecycle to:\r\n\r\n- Calculate promotions and discounts for a given shopping cart.\r\n- Notify the external promotions provider when an order is created or cancelled, reporting which promotions and coupons were applied.\r\n\r\n>❗ The External Promotions Protocol API is not enabled by default for all VTEX accounts. To use this API, merchants must request its activation by opening a [support ticket](https://help.vtex.com/en/support).\r\n\r\n## Index\r\n\r\n### External promotions\r\n\r\n- `POST` [Calculate promotions](https://developers.vtex.com/docs/api-reference/external-promotions-protocol-api#post-/calculatePromotion): calculates the promotions and discounts for a given shopping cart.\r\n- `POST` [Notify promotion usage](https://developers.vtex.com/docs/api-reference/external-promotions-protocol-api#post-/notifyUsage): receives a notification when an order is created or cancelled, informing which promotions and coupons were applied.\r\n\r\n## Common parameters\r\n\r\n| Parameter name | Description | Type |\r\n| --- | --- | --- |\r\n| `{{providerApiEndpoint}}` | External promotions provider endpoint URL. | Server variable. |",
         "contact": {},
-        "version": "1.0.0"
+        "version": "1.1.0"
     },
     "servers": [
         {
@@ -25,7 +25,7 @@
                     "External promotions"
                 ],
                 "summary": "Calculate promotions",
-                "description": "Calculates the promotions and discounts applicable to a given shopping cart. VTEX calls this endpoint during the cart calculation process, sending the shopping cart data including items, coupon codes, UTM parameters, and sales channel information. The external promotions provider must return the calculated discounts for each item, along with a summary of all promotions considered.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Calculates the promotions and discounts applicable to a given shopping cart. VTEX calls this endpoint during the cart calculation process, sending the shopping cart data including items, coupon codes, UTM parameters, and sales channel information. The external promotions provider must return the calculated discounts for each item, along with a summary of all promotions considered.\r\n\r\nThis endpoint supports **hybrid** orchestration (protocol v1.1). When an account combines native VTEX promotions with an external provider, VTEX sends the cart **after** native evaluation: see `items[].price` (post-native per-unit price) and the optional per-line `items[].nativePromotionLayer`. The provider may also return `allPromotions[].qualificationProgress` describing promotions the shopper has **not yet unlocked**.\r\n\r\n## Authentication\r\n\r\nVTEX authenticates to the provider using the credentials configured for the account. By default this is an API key sent in the `X-API-Key` header (HTTP Basic is also supported). The provider should reject unauthenticated requests with `401 Unauthorized`.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -40,12 +40,17 @@
                             "schema": {
                                 "type": "object",
                                 "required": [
+                                    "correlationId",
                                     "origin",
                                     "salesChannelId",
                                     "items"
                                 ],
                                 "description": "Request body for the calculate promotions endpoint.",
                                 "properties": {
+                                    "correlationId": {
+                                        "type": "string",
+                                        "description": "Unique identifier for this `calculatePromotion` call, stable across client retries of the same cart step. VTEX links it to execution diagnostics; providers should log it and may use it for idempotency. Added in protocol v1.1."
+                                    },
                                     "origin": {
                                         "type": "string",
                                         "enum": [
@@ -99,6 +104,18 @@
                                             }
                                         }
                                     },
+                                    "customFields": {
+                                        "type": "object",
+                                        "nullable": true,
+                                        "description": "Arbitrary custom data forwarded from the cart, grouped by app. The outer keys are app identifiers; each value is a map of field name to string value. Field values longer than 128 characters are dropped by VTEX before sending. Added in protocol v1.1.",
+                                        "additionalProperties": {
+                                            "type": "object",
+                                            "description": "Custom fields for a single app, as a map of field name to value.",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
                                     "items": {
                                         "type": "array",
                                         "description": "List of items in the shopping cart.",
@@ -129,7 +146,7 @@
                                                 "price": {
                                                     "type": "number",
                                                     "format": "double",
-                                                    "description": "Unit price of the item."
+                                                    "description": "Per-unit selling price of the item before the external engine applies. In **hybrid** mode this is the per-unit price **after** native VTEX promotions, so the provider can stack on top. In external-only mode this is the pre-external selling price."
                                                 },
                                                 "catalogInfo": {
                                                     "type": "object",
@@ -160,6 +177,16 @@
                                                                 "type": "string",
                                                                 "description": "Collection identifier."
                                                             }
+                                                        },
+                                                        "ean": {
+                                                            "type": "string",
+                                                            "nullable": true,
+                                                            "description": "EAN (barcode) of the item, when VTEX has it. Added in protocol v1.1."
+                                                        },
+                                                        "refId": {
+                                                            "type": "string",
+                                                            "nullable": true,
+                                                            "description": "Merchant reference id (RefId) of the item, when VTEX has it. Added in protocol v1.1."
                                                         }
                                                     }
                                                 },
@@ -186,6 +213,58 @@
                                                             }
                                                         }
                                                     }
+                                                },
+                                                "nativePromotionLayer": {
+                                                    "type": "object",
+                                                    "nullable": true,
+                                                    "description": "Hybrid only. How native VTEX promotions changed this line before the external engine runs. When present, `priceAfterLayer` equals `price`. Added in protocol v1.1.",
+                                                    "required": [
+                                                        "priceBeforeLayer",
+                                                        "priceAfterLayer"
+                                                    ],
+                                                    "properties": {
+                                                        "priceBeforeLayer": {
+                                                            "type": "number",
+                                                            "format": "double",
+                                                            "description": "Per-unit price before native promotions."
+                                                        },
+                                                        "priceAfterLayer": {
+                                                            "type": "number",
+                                                            "format": "double",
+                                                            "description": "Per-unit price after native promotions (equals `price` in hybrid mode)."
+                                                        },
+                                                        "appliedPromotions": {
+                                                            "type": "array",
+                                                            "nullable": true,
+                                                            "description": "Native promotions applied in this layer only.",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "required": [
+                                                                    "id",
+                                                                    "discount",
+                                                                    "type"
+                                                                ],
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "string",
+                                                                        "description": "Identifier of the native promotion."
+                                                                    },
+                                                                    "discount": {
+                                                                        "type": "number",
+                                                                        "format": "double",
+                                                                        "description": "Per-unit discount applied by this promotion."
+                                                                    },
+                                                                    "type": {
+                                                                        "type": "string",
+                                                                        "enum": [
+                                                                            "Nominal"
+                                                                        ],
+                                                                        "description": "Type of discount applied. Currently, only `Nominal` is supported."
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -193,6 +272,12 @@
                                 }
                             },
                             "example": {
+                                "correlationId": "7f3e2b10-2c5a-4a9e-bf6a-9b9d0c2f1a23",
+                                "customFields": {
+                                    "myAppId": {
+                                        "giftMessage": "Happy birthday"
+                                    }
+                                },
                                 "origin": "Marketplace",
                                 "shopperProfileId": "da1220f6-88ce-46a2-b466-7f311c5a1bf0",
                                 "salesChannelId": "3",
@@ -214,14 +299,27 @@
                                             "collectionIds": [
                                                 "98",
                                                 "11"
-                                            ]
+                                            ],
+                                            "ean": "7891234567890",
+                                            "refId": "SKU-ABC-001"
                                         },
                                         "paymentInfo": [
                                             {
                                                 "id": "34",
                                                 "value": 6.0
                                             }
-                                        ]
+                                        ],
+                                        "nativePromotionLayer": {
+                                            "priceBeforeLayer": 2.5,
+                                            "priceAfterLayer": 2.0,
+                                            "appliedPromotions": [
+                                                {
+                                                    "id": "native-promo-1",
+                                                    "discount": 0.5,
+                                                    "type": "Nominal"
+                                                }
+                                            ]
+                                        }
                                     }
                                 ]
                             }
@@ -297,13 +395,65 @@
                                                     "originalPrice": {
                                                         "type": "number",
                                                         "format": "double",
-                                                        "description": "Original unit price of the item before any discounts."
+                                                        "description": "Original per-unit price of this line before external deals. In hybrid mode, typically the per-unit price after native promotions (the pre-external price the provider augments)."
                                                     },
                                                     "discountedPrice": {
                                                         "type": "number",
                                                         "nullable": true,
                                                         "format": "double",
-                                                        "description": "Discounted unit price of the item after promotions are applied."
+                                                        "description": "Per-unit price of the item after external promotions are applied."
+                                                    },
+                                                    "externalPromotionLayer": {
+                                                        "type": "object",
+                                                        "nullable": true,
+                                                        "description": "Hybrid: how the partner (external) promotion layer changed this line. When set, `priceBeforeLayer` matches `originalPrice` and `priceAfterLayer` matches `discountedPrice`. Added in protocol v1.1.",
+                                                        "required": [
+                                                            "priceBeforeLayer",
+                                                            "priceAfterLayer"
+                                                        ],
+                                                        "properties": {
+                                                            "priceBeforeLayer": {
+                                                                "type": "number",
+                                                                "format": "double",
+                                                                "description": "Per-unit price before the partner layer (post-native in hybrid)."
+                                                            },
+                                                            "priceAfterLayer": {
+                                                                "type": "number",
+                                                                "format": "double",
+                                                                "description": "Per-unit price after the partner layer."
+                                                            },
+                                                            "appliedPromotions": {
+                                                                "type": "array",
+                                                                "nullable": true,
+                                                                "description": "Partner deals applied in this layer only.",
+                                                                "items": {
+                                                                    "type": "object",
+                                                                    "required": [
+                                                                        "id",
+                                                                        "discount",
+                                                                        "type"
+                                                                    ],
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "string",
+                                                                            "description": "Identifier of the applied promotion."
+                                                                        },
+                                                                        "discount": {
+                                                                            "type": "number",
+                                                                            "format": "double",
+                                                                            "description": "Per-unit discount applied by this promotion."
+                                                                        },
+                                                                        "type": {
+                                                                            "type": "string",
+                                                                            "enum": [
+                                                                                "Nominal"
+                                                                            ],
+                                                                            "description": "Type of discount applied. Currently, only `Nominal` is supported."
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
@@ -337,6 +487,258 @@
                                                         "type": "string",
                                                         "nullable": true,
                                                         "description": "Coupon code that triggers this promotion. Returns `null` if no coupon code triggered the promotion."
+                                                    },
+                                                    "qualificationProgress": {
+                                                        "type": "object",
+                                                        "nullable": true,
+                                                        "description": "For **not-yet-unlocked** promotions, structured qualification data VTEX maps to native teasers (\"almost there\" messaging). All properties are optional; omit the object (or send `{}`) when there is no structured progress. Added in protocol v1.1; not present in v1.0.",
+                                                        "properties": {
+                                                            "remainingCartWideAmount": {
+                                                                "type": "number",
+                                                                "nullable": true,
+                                                                "format": "double",
+                                                                "description": "Monetary amount still needed across the whole cart to meet a cart-wide spend threshold (the remaining gap, not the full threshold)."
+                                                            },
+                                                            "orderSubtotalMustExceed": {
+                                                                "type": "number",
+                                                                "nullable": true,
+                                                                "format": "double",
+                                                                "description": "Cart items-subtotal floor the rule requires (the target threshold)."
+                                                            },
+                                                            "remainingItemQuantity": {
+                                                                "type": "object",
+                                                                "nullable": true,
+                                                                "description": "Item/SKU quantity qualification context: optional aggregate and per-SKU rows.",
+                                                                "properties": {
+                                                                    "totalUnitsRemaining": {
+                                                                        "type": "number",
+                                                                        "nullable": true,
+                                                                        "format": "double",
+                                                                        "description": "Aggregate extra units still needed across the qualifying SKU set."
+                                                                    },
+                                                                    "perSku": {
+                                                                        "type": "array",
+                                                                        "nullable": true,
+                                                                        "description": "Per-SKU contribution toward the quantity conditions.",
+                                                                        "items": {
+                                                                            "type": "object",
+                                                                            "required": [
+                                                                                "skuId"
+                                                                            ],
+                                                                            "properties": {
+                                                                                "skuId": {
+                                                                                    "type": "string",
+                                                                                    "description": "Cart/catalog line id, aligned with items[].id in the same request."
+                                                                                },
+                                                                                "unitsInCart": {
+                                                                                    "type": "integer",
+                                                                                    "nullable": true,
+                                                                                    "format": "int32",
+                                                                                    "description": "Units of this SKU currently in the cart toward this promotion."
+                                                                                },
+                                                                                "unitsRequiredForPromotion": {
+                                                                                    "type": "number",
+                                                                                    "nullable": true,
+                                                                                    "format": "double",
+                                                                                    "description": "Units of this SKU required by the rule."
+                                                                                },
+                                                                                "unitsRemaining": {
+                                                                                    "type": "number",
+                                                                                    "nullable": true,
+                                                                                    "format": "double",
+                                                                                    "description": "Units of this SKU still needed to satisfy its part of the condition."
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            },
+                                                            "minimumRuleQuantity": {
+                                                                "type": "integer",
+                                                                "nullable": true,
+                                                                "format": "int32",
+                                                                "description": "Minimum qualifying units the rule requires (e.g. buy-N / combo thresholds)."
+                                                            },
+                                                            "contextTotalForQualifyingItems": {
+                                                                "type": "object",
+                                                                "nullable": true,
+                                                                "description": "Subtotal value range and item scope for total-value rules.",
+                                                                "properties": {
+                                                                    "minValue": {
+                                                                        "type": "number",
+                                                                        "nullable": true,
+                                                                        "format": "double",
+                                                                        "description": "Minimum subtotal in cart currency."
+                                                                    },
+                                                                    "maxValue": {
+                                                                        "type": "number",
+                                                                        "nullable": true,
+                                                                        "format": "double",
+                                                                        "description": "Maximum subtotal bound."
+                                                                    },
+                                                                    "itemScope": {
+                                                                        "type": "string",
+                                                                        "nullable": true,
+                                                                        "enum": [
+                                                                            "AllItems",
+                                                                            "IncludeMatchedItems",
+                                                                            "ExcludeMatchedItems"
+                                                                        ],
+                                                                        "description": "Which line items' value participates in the subtotal check."
+                                                                    }
+                                                                }
+                                                            },
+                                                            "itemUnitPriceBounds": {
+                                                                "type": "object",
+                                                                "nullable": true,
+                                                                "description": "Per-unit price band on a line.",
+                                                                "properties": {
+                                                                    "minPrice": {
+                                                                        "type": "number",
+                                                                        "nullable": true,
+                                                                        "format": "double",
+                                                                        "description": "Minimum per-unit item price for qualification."
+                                                                    },
+                                                                    "maxPrice": {
+                                                                        "type": "number",
+                                                                        "nullable": true,
+                                                                        "format": "double",
+                                                                        "description": "Maximum per-unit item price for qualification."
+                                                                    }
+                                                                }
+                                                            },
+                                                            "skuIdGroups": {
+                                                                "type": "object",
+                                                                "nullable": true,
+                                                                "description": "SKUs in scope of the rule. Use `allOf` for a single set; `group1`/`group2` for mix-and-match.",
+                                                                "properties": {
+                                                                    "allOf": {
+                                                                        "type": "array",
+                                                                        "nullable": true,
+                                                                        "items": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "description": "All listed SKUs participate in a single set."
+                                                                    },
+                                                                    "group1": {
+                                                                        "type": "array",
+                                                                        "nullable": true,
+                                                                        "items": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "description": "First SKU group in a two-group rule."
+                                                                    },
+                                                                    "group2": {
+                                                                        "type": "array",
+                                                                        "nullable": true,
+                                                                        "items": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "description": "Second SKU group in a two-group rule."
+                                                                    }
+                                                                }
+                                                            },
+                                                            "productCollectionIds": {
+                                                                "type": "array",
+                                                                "nullable": true,
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "description": "Collection / cluster ids in scope."
+                                                            },
+                                                            "brandIds": {
+                                                                "type": "array",
+                                                                "nullable": true,
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "description": "Brand ids in scope."
+                                                            },
+                                                            "categoryIds": {
+                                                                "type": "array",
+                                                                "nullable": true,
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "description": "Category ids in scope."
+                                                            },
+                                                            "zipCodeRangeSegments": {
+                                                                "type": "array",
+                                                                "nullable": true,
+                                                                "description": "Delivery CEP/zip gating ranges.",
+                                                                "items": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "from": {
+                                                                            "type": "string",
+                                                                            "description": "Range start, digits only (no mask)."
+                                                                        },
+                                                                        "to": {
+                                                                            "type": "string",
+                                                                            "description": "Range end, digits only (no mask)."
+                                                                        },
+                                                                        "inclusivity": {
+                                                                            "type": "string",
+                                                                            "enum": [
+                                                                                "inclusive",
+                                                                                "exclusive"
+                                                                            ],
+                                                                            "description": "Whether the shopper's zip is included (`inclusive`) or excluded (`exclusive`)."
+                                                                        }
+                                                                    }
+                                                                }
+                                                            },
+                                                            "paymentMethodIds": {
+                                                                "type": "array",
+                                                                "nullable": true,
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "description": "Payment method ids the shopper must use."
+                                                            },
+                                                            "cardIssuerIds": {
+                                                                "type": "array",
+                                                                "nullable": true,
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "description": "Allowed card issuers."
+                                                            },
+                                                            "cardBinPrefixRestrictions": {
+                                                                "type": "array",
+                                                                "nullable": true,
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "description": "Card BIN prefix patterns the card number must satisfy."
+                                                            },
+                                                            "minInstallmentCount": {
+                                                                "type": "integer",
+                                                                "nullable": true,
+                                                                "format": "int32",
+                                                                "description": "Minimum installments required."
+                                                            },
+                                                            "maxInstallmentCount": {
+                                                                "type": "integer",
+                                                                "nullable": true,
+                                                                "format": "int32",
+                                                                "description": "Maximum installments allowed."
+                                                            },
+                                                            "teaserStyleHints": {
+                                                                "type": "array",
+                                                                "nullable": true,
+                                                                "items": {
+                                                                    "type": "string",
+                                                                    "enum": [
+                                                                        "UpPrice",
+                                                                        "Profiler",
+                                                                        "Catalog",
+                                                                        "ConditionalPrice"
+                                                                    ]
+                                                                },
+                                                                "description": "UI grouping hints for the teaser message."
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
@@ -356,7 +758,18 @@
                                                 }
                                             ],
                                             "originalPrice": 2.0,
-                                            "discountedPrice": 1.75
+                                            "discountedPrice": 1.75,
+                                            "externalPromotionLayer": {
+                                                "priceBeforeLayer": 2.0,
+                                                "priceAfterLayer": 1.75,
+                                                "appliedPromotions": [
+                                                    {
+                                                        "id": "promo-1",
+                                                        "discount": 0.25,
+                                                        "type": "Nominal"
+                                                    }
+                                                ]
+                                            }
                                         }
                                     ],
                                     "allPromotions": [
@@ -365,6 +778,19 @@
                                             "name": "25 cents off on cokes",
                                             "description": "Buy at least 3 cokes and get 25 cents off on each",
                                             "couponCode": "25offCoke"
+                                        },
+                                        {
+                                            "id": "promo-2",
+                                            "name": "Free shipping over $50",
+                                            "description": "Spend $50 or more to unlock free shipping",
+                                            "couponCode": null,
+                                            "qualificationProgress": {
+                                                "remainingCartWideAmount": 44.0,
+                                                "orderSubtotalMustExceed": 50.0,
+                                                "teaserStyleHints": [
+                                                    "UpPrice"
+                                                ]
+                                            }
                                         }
                                     ]
                                 }
@@ -386,7 +812,7 @@
                     "External promotions"
                 ],
                 "summary": "Notify promotion usage",
-                "description": "Receives a notification when an order is created or cancelled, informing the external promotions provider which promotions and coupons were applied to the order. This allows the provider to track promotion usage, enforce usage limits, and maintain accurate promotion state.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "description": "Receives a notification when an order is created or cancelled, informing the external promotions provider which promotions and coupons were applied to the order. This allows the provider to track promotion usage, enforce usage limits, and maintain accurate promotion state.\r\n\r\nThe optional `correlationId` references the `calculatePromotion` evaluation that led to the order, when VTEX can supply it, for end-to-end tracing. Added in protocol v1.1.\r\n\r\n## Authentication\r\n\r\nVTEX authenticates to the provider using the credentials configured for the account (API key in the `X-API-Key` header by default; HTTP Basic also supported). The provider should reject unauthenticated requests with `401 Unauthorized`.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -407,6 +833,11 @@
                                 ],
                                 "description": "Request body for the notify usage endpoint.",
                                 "properties": {
+                                    "correlationId": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "description": "When available, the `correlationId` of the `calculatePromotion` evaluation that led to this order, for end-to-end tracing. Added in protocol v1.1."
+                                    },
                                     "orderId": {
                                         "type": "string",
                                         "description": "Identifier of the order triggering this notification."
@@ -450,6 +881,7 @@
                                 }
                             },
                             "example": {
+                                "correlationId": "7f3e2b10-2c5a-4a9e-bf6a-9b9d0c2f1a23",
                                 "orderId": "099823581-1",
                                 "type": "NewOrder",
                                 "promotionUsages": [
@@ -479,6 +911,12 @@
         }
     },
     "security": [
+        {
+            "apiKey": []
+        },
+        {
+            "Basic": []
+        }
     ],
     "components": {
         "securitySchemes": {
