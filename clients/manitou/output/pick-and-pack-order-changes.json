@@ -1,0 +1,1260 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Pick and Pack Order changes API",
+    "description": "The Pick and Pack Order changes API manages order modifications in a Pick and Pack order. This API supports actions like updating deadlines, adding items, modifying quantities, rejecting or replacing items, and updating item details.\r\n\r\n>ℹ️ This API is currently in beta and subject to changes. Use it with caution in production environments.\r\n\r\n## Order changes\r\n\r\n- `PUT` [Update order deadline](https://developers.vtex.com/docs/api-reference/pick-and-pack-order-changes-api#put-/orders/-orderId-/deadline)\r\n- `POST` [Update items of the order](https://developers.vtex.com/docs/api-reference/pick-and-pack-order-changes-api#post-/order/changes)\r\n\r\n## BIN locations\r\n\r\n- [`GET` Get BIN location](https://developers.vtex.com/docs/api-reference/pick-and-pack-order-changes-api#get-/-skuId-/warehouses/-warehouseId-)\r\n- [`POST` Create BIN location](https://developers.vtex.com/docs/api-reference/pick-and-pack-order-changes-api#post-/-skuId-/warehouses/-warehouseId-)\r\n- [`PUT` Update BIN location](https://developers.vtex.com/docs/api-reference/pick-and-pack-order-changes-api#put-/-skuId-/warehouses/-warehouseId-)\r\n- [`DELETE` Delete BIN location](https://developers.vtex.com/docs/api-reference/pick-and-pack-order-changes-api#delete-/-skuId-/warehouses/-warehouseId-)",
+    "contact": {},
+    "version": "1.0"
+  },
+  "servers": [
+    {
+      "url": "https://{accountName}.{environment}.com.br/vtex_pickandpack",
+      "description": "VTEX server URL.",
+      "variables": {
+        "accountName": {
+          "description": "Name of the VTEX account. Used as part of the URL.",
+          "default": "apiexamples"
+        },
+        "environment": {
+          "description": "Environment to use. Used as part of the URL.",
+          "enum": [
+            "vtexcommercestable"
+          ],
+          "default": "vtexcommercestable"
+        }
+      }
+    },
+    {
+      "url": "https://{accountName}.myvtex.com/pickpack/bin-location",
+      "description": "VTEX server URL.",
+      "variables": {
+        "accountName": {
+          "description": "Name of the VTEX account. Used as part of the URL.",
+          "default": "apiexamples"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/orders/{orderId}/deadline": {
+      "put": {
+        "summary": "Update order deadline",
+        "description": "Updates the deadline for an order. The `min` and `max` fields specify the deadline window, while the description provides additional information.\r\n\r\n>ℹ️ This endpoint is currently in beta and subject to changes. Use with caution in production environments.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| OMS | OMS access | **Only show orders created by the user (via call center)** |\r\n| Catalog | Telesales | **Assisted Sales** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.\n\n> Requests with a body must be sent with `Content-Type: application/json`.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/orderId"
+          }
+        ],
+        "tags": [
+          "Order changes"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDeadlineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateDeadlineResponse"
+                },
+                "example": {
+                  "order": {
+                    "currentDeadline": {
+                      "max": "2024-12-24T23:03:02Z",
+                      "min": "2024-12-23T23:03:02Z"
+                    },
+                    "deadlineChanges": [
+                      {
+                        "current": true,
+                        "description": "Extend deadline due to delayed shipment",
+                        "handled": true,
+                        "max": "2024-12-24T23:03:02.000Z",
+                        "min": "2024-12-23T23:03:02.000Z",
+                        "oldDates": {
+                          "max": "2024-12-04T17:20:48.088Z",
+                          "min": "2024-12-04T17:20:48.088Z"
+                        },
+                        "updatedAt": "2024-12-03T17:35:59.786Z"
+                      }
+                    ],
+                    "orderId": "1481050515517-01"
+                  },
+                  "success": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "description": "Request error object with error information.",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "description": "Error code.",
+                          "type": "string"
+                        },
+                        "message": {
+                          "description": "Error message.",
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "success": {
+                      "description": "Condition if the request was successful.",
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "400",
+                    "message": "New dates must be greater than the current dates"
+                  },
+                  "success": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "description": "Authentication failed due to missing, invalid, or expired credentials. Ensure the `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken` headers include valid values.",
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Unauthorized"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "operationId": "put_orders_ByOrderId_deadline"
+      }
+    },
+    "/order/changes": {
+      "post": {
+        "summary": "Update items of the order",
+        "description": "The endpoint supports actions like adding items, modifying quantities, rejecting or replacing items, and updating item details, adding notes and suggest product replacements.\r\n\r\n>ℹ️ This endpoint is currently in beta and subject to changes. Use with caution in production environments.\r\n\r\n>⚠️ Before using this endpoint, you must make a request with the [Cart simulation](https://developers.vtex.com/docs/api-reference/checkout-api#post-/api/checkout/pub/orderForms/simulation) endpoint to check inventory availability. For more information of how to simulate a cart, check the [Simulate a shopping cart](https://developers.vtex.com/docs/guides/simulate-a-shopping-cart) guide.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| OMS | OMS access | **Only show orders created by the user (via call center)** |\r\n| Catalog | Telesales | **Assisted Sales** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.\n\n> Requests with a body must be sent with `Content-Type: application/json`.",
+        "tags": [
+          "Order changes"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/AddItemRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/AddQuantityRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ItemToAddRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RejectItemRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ReplaceItemRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ItemToReplace"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UpdateItemRequest"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddItemRequest"
+                },
+                "example": {
+                  "message": "Error requesting picking action"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "description": "Error message.",
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Error requesting picking action"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "description": "Authentication failed due to missing, invalid, or expired credentials. Ensure the `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken` headers include valid values.",
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Unauthorized"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "operationId": "post_order_changes"
+      }
+    },
+    "/{skuId}/warehouses/{warehouseId}": {
+      "get": {
+        "summary": "Get BIN location",
+        "description": "Retrieves the BIN location for a specific SKU in a warehouse. The BIN location is a specific, designated storage location within a warehouse. This location isn't necessarily a physical container. Each BIN is typically assigned a unique identifier or code, facilitating precise tracking and retrieval of items within the warehouse.\r\n\r\n>ℹ️ This endpoint is currently in beta and subject to changes. Use with caution in production environments.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| OMS | OMS access | **Only show orders created by the user (via call center)** |\r\n| Catalog | Telesales | **Assisted Sales** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+        "parameters": [
+          {
+            "name": "skuId",
+            "in": "path",
+            "description": "Unique identifier of the SKU.",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "example": "1"
+            }
+          },
+          {
+            "name": "warehouseId",
+            "in": "path",
+            "description": "Unique identifier of the warehouse.",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "example": "10"
+            }
+          }
+        ],
+        "tags": [
+          "BIN locations"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "description": "The BIN location within the warehouse."
+                    },
+                    "hostname": {
+                      "type": "string",
+                      "description": "The account name managing the BIN location."
+                    },
+                    "warehouseId": {
+                      "type": "string",
+                      "description": "The identifier of the warehouse."
+                    },
+                    "skuId": {
+                      "type": "string",
+                      "description": "The identifier of the SKU."
+                    }
+                  }
+                },
+                "example": {
+                  "location": "My location 14",
+                  "hostname": "lastmile",
+                  "warehouseId": "10",
+                  "skuId": "1"
+                }
+              }
+            }
+          }
+        },
+        "servers": [
+          {
+            "url": "https://{accountName}.myvtex.com/pickpack/bin-location",
+            "description": "VTEX server URL.",
+            "variables": {
+              "accountName": {
+                "description": "Name of the VTEX account. Used as part of the URL.",
+                "default": "apiexamples"
+              }
+            }
+          }
+        ],
+        "operationId": "get_BySkuId_warehouses_ByWarehouseId"
+      },
+      "post": {
+        "summary": "Create BIN location",
+        "description": "Creates a new BIN location by warehouse ID and SKU ID. The BIN location is a specific, designated storage location within a warehouse. This location isn't necessarily a physical container. Each BIN is typically assigned a unique identifier or code, facilitating precise tracking and retrieval of items within the warehouse.\r\n\r\n>ℹ️ This endpoint is currently in beta and subject to changes. Use with caution in production environments.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| OMS | OMS access | **Only show orders created by the user (via call center)** |\r\n| Catalog | Telesales | **Assisted Sales** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.\n\n> Requests with a body must be sent with `Content-Type: application/json`.",
+        "tags": [
+          "BIN locations"
+        ],
+        "parameters": [
+          {
+            "name": "skuId",
+            "in": "path",
+            "description": "Unique identifier of the SKU.",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "example": "1"
+            }
+          },
+          {
+            "name": "warehouseId",
+            "in": "path",
+            "description": "Unique identifier of the warehouse.",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "example": "10"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "location": {
+                    "type": "string",
+                    "description": "The BIN location within the warehouse."
+                  }
+                },
+                "required": [
+                  "location"
+                ]
+              },
+              "example": {
+                "location": "My location 14"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "description": "The BIN location within the warehouse."
+                    },
+                    "hostname": {
+                      "type": "string",
+                      "description": "The account name managing the BIN location."
+                    },
+                    "warehouseId": {
+                      "type": "string",
+                      "description": "The identifier of the warehouse."
+                    },
+                    "skuId": {
+                      "type": "string",
+                      "description": "The identifier of the SKU."
+                    }
+                  }
+                },
+                "example": {
+                  "location": "My location 14",
+                  "hostname": "lastmile",
+                  "warehouseId": "10",
+                  "skuId": "1"
+                }
+              }
+            }
+          }
+        },
+        "servers": [
+          {
+            "url": "https://{accountName}.myvtex.com/pickpack/bin-location",
+            "description": "VTEX server URL.",
+            "variables": {
+              "accountName": {
+                "description": "Name of the VTEX account. Used as part of the URL.",
+                "default": "apiexamples"
+              }
+            }
+          }
+        ],
+        "operationId": "post_BySkuId_warehouses_ByWarehouseId"
+      },
+      "put": {
+        "summary": "Update BIN location",
+        "description": "Updates the BIN location by warehouse ID and SKU ID. The BIN location is a specific, designated storage location within a warehouse. This location isn't necessarily a physical container. Each BIN is typically assigned a unique identifier or code, facilitating precise tracking and retrieval of items within the warehouse.\r\n\r\n>ℹ️ This endpoint is currently in beta and subject to changes. Use with caution in production environments.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| OMS | OMS access | **Only show orders created by the user (via call center)** |\r\n| Catalog | Telesales | **Assisted Sales** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.\n\n> Requests with a body must be sent with `Content-Type: application/json`.",
+        "tags": [
+          "BIN locations"
+        ],
+        "parameters": [
+          {
+            "name": "skuId",
+            "in": "path",
+            "description": "Unique identifier of the SKU.",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "example": "1"
+            }
+          },
+          {
+            "name": "warehouseId",
+            "in": "path",
+            "description": "Unique identifier of the warehouse.",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "example": "10"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "location": {
+                    "type": "string",
+                    "description": "The BIN location within the warehouse."
+                  }
+                },
+                "required": [
+                  "location"
+                ]
+              },
+              "example": {
+                "location": "My location 14"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "description": "The BIN location within the warehouse."
+                    },
+                    "hostname": {
+                      "type": "string",
+                      "description": "The account name managing the BIN location."
+                    },
+                    "warehouseId": {
+                      "type": "string",
+                      "description": "The identifier of the warehouse."
+                    },
+                    "skuId": {
+                      "type": "string",
+                      "description": "The identifier of the SKU."
+                    }
+                  }
+                },
+                "example": {
+                  "location": "My location 14",
+                  "hostname": "lastmile",
+                  "warehouseId": "10",
+                  "skuId": "1"
+                }
+              }
+            }
+          }
+        },
+        "servers": [
+          {
+            "url": "https://{accountName}.myvtex.com/pickpack/bin-location",
+            "description": "VTEX server URL.",
+            "variables": {
+              "accountName": {
+                "description": "Name of the VTEX account. Used as part of the URL.",
+                "default": "apiexamples"
+              }
+            }
+          }
+        ],
+        "operationId": "put_BySkuId_warehouses_ByWarehouseId"
+      },
+      "delete": {
+        "summary": "Delete BIN location",
+        "description": "Deletes a specific BIN location by warehouse ID and SKU ID. The BIN location is a specific, designated storage location within a warehouse. This location isn't necessarily a physical container. Each BIN is typically assigned a unique identifier or code, facilitating precise tracking and retrieval of items within the warehouse.\r\n\r\n>ℹ️ This endpoint is currently in beta and subject to changes. Use with caution in production environments.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| OMS | OMS access | **Only show orders created by the user (via call center)** |\r\n| Catalog | Telesales | **Assisted Sales** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+        "tags": [
+          "BIN locations"
+        ],
+        "parameters": [
+          {
+            "name": "skuId",
+            "in": "path",
+            "description": "Unique identifier of the SKU.",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "example": "1"
+            }
+          },
+          {
+            "name": "warehouseId",
+            "in": "path",
+            "description": "Unique identifier of the warehouse.",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "example": "10"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "description": "Empty array."
+                },
+                "example": []
+              }
+            }
+          }
+        },
+        "servers": [
+          {
+            "url": "https://{accountName}.myvtex.com/pickpack/bin-location",
+            "description": "VTEX server URL.",
+            "variables": {
+              "accountName": {
+                "description": "Name of the VTEX account. Used as part of the URL.",
+                "default": "apiexamples"
+              }
+            }
+          }
+        ],
+        "operationId": "delete_BySkuId_warehouses_ByWarehouseId"
+      }
+    },
+    "/{skuId}/warehouses": {
+      "get": {
+        "summary": "List BIN locations",
+        "description": "Retrieves a list of warehouses associated with a specific SKU ID. The BIN location is a specific, designated storage location within a warehouse. This location isn't necessarily a physical container. Each BIN is typically assigned a unique identifier or code, facilitating precise tracking and retrieval of items within the warehouse.\r\n\r\n>ℹ️ This endpoint is currently in beta and subject to changes. Use with caution in production environments.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| OMS | OMS access | **Only show orders created by the user (via call center)** |\r\n| Catalog | Telesales | **Assisted Sales** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+        "tags": [
+          "BIN locations"
+        ],
+        "parameters": [
+          {
+            "name": "skuId",
+            "in": "path",
+            "description": "Unique identifier of the SKU.",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "example": "1"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "description": "BIN location",
+                    "type": "object",
+                    "properties": {
+                      "location": {
+                        "type": "string",
+                        "description": "The BIN location within the warehouse."
+                      },
+                      "hostname": {
+                        "type": "string",
+                        "description": "The account name managing the BIN location."
+                      },
+                      "warehouseId": {
+                        "type": "string",
+                        "description": "The identifier of the warehouse."
+                      },
+                      "skuId": {
+                        "type": "string",
+                        "description": "The identifier of the SKU."
+                      }
+                    }
+                  }
+                },
+                "example": [
+                  {
+                    "location": "My location 14 edited",
+                    "hostname": "lastmile",
+                    "warehouseId": "14",
+                    "skuId": "2"
+                  },
+                  {
+                    "location": "My location 15 edited",
+                    "hostname": "lastmile",
+                    "warehouseId": "15",
+                    "skuId": "1"
+                  },
+                  {
+                    "location": "My location 4 edited",
+                    "hostname": "lastmile",
+                    "warehouseId": "10",
+                    "skuId": "7"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "servers": [
+          {
+            "url": "https://{accountName}.myvtex.com/pickpack/warehouses",
+            "description": "VTEX server URL.",
+            "variables": {
+              "accountName": {
+                "description": "Name of the VTEX account. Used as part of the URL.",
+                "default": "apiexamples"
+              }
+            }
+          }
+        ],
+        "operationId": "get_BySkuId_warehouses"
+      },
+      "delete": {
+        "summary": "Delete all BIN locations",
+        "description": "Deletes all BIN locations for a specific SKU ID. The BIN location is a specific, designated storage location within a warehouse. This location isn't necessarily a physical container. Each BIN is typically assigned a unique identifier or code, facilitating precise tracking and retrieval of items within the warehouse.\r\n\r\n>ℹ️ This endpoint is currently in beta and subject to changes. Use with caution in production environments.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **View order** |\r\n| OMS | OMS access | **Only show orders created by the user (via call center)** |\r\n| Catalog | Telesales | **Assisted Sales** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+        "parameters": [
+          {
+            "name": "skuId",
+            "in": "path",
+            "description": "Unique identifier of the SKU.",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "example": "1"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "description": "Empty array."
+                },
+                "example": []
+              }
+            }
+          }
+        },
+        "operationId": "delete_BySkuId_warehouses"
+      }
+    }
+  },
+  "security": [
+    {
+      "appKey": [],
+      "appToken": []
+    },
+    {
+      "VtexIdclientAutCookie": []
+    }
+  ],
+  "components": {
+    "schemas": {
+      "UpdateDeadlineRequest": {
+        "required": [
+          "description",
+          "max",
+          "min"
+        ],
+        "type": "object",
+        "description": "Contains deadline information.",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Reason or purpose of the deadline change."
+          },
+          "max": {
+            "type": "string",
+            "description": "Latest deadline date in ISO 8601 format."
+          },
+          "min": {
+            "type": "string",
+            "description": "Earliest deadline date in ISO 8601 format."
+          }
+        },
+        "example": {
+          "UpdateDeadline": {
+            "description": "Extend deadline due to delayed shipment",
+            "max": "2024-12-24T23:03:02Z",
+            "min": "2024-12-23T23:03:02Z"
+          }
+        }
+      },
+      "UpdateDeadlineResponse": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "description": "Object with current deadline information.",
+            "type": "object",
+            "properties": {
+              "currentDeadline": {
+                "description": "Current deadline information.",
+                "type": "object",
+                "properties": {
+                  "max": {
+                    "description": "Latest deadline date in ISO 8601 format.",
+                    "type": "string"
+                  },
+                  "min": {
+                    "description": "Earliest deadline date in ISO 8601 format.",
+                    "type": "string"
+                  }
+                }
+              },
+              "deadlineChanges": {
+                "description": "Object containg information of the deadline changes.",
+                "type": "array",
+                "items": {
+                  "description": "Deadline change.",
+                  "type": "object",
+                  "properties": {
+                    "current": {
+                      "description": "If the deadline changes were update.",
+                      "type": "boolean"
+                    },
+                    "description": {
+                      "description": "Reason or purpose for the update.",
+                      "type": "string"
+                    },
+                    "handled": {
+                      "description": "If the deadline changes were handled by the picker.",
+                      "type": "boolean"
+                    },
+                    "max": {
+                      "description": "Latest deadline date in ISO 8601 format.",
+                      "type": "string"
+                    },
+                    "min": {
+                      "description": "Earliest deadline date in ISO 8601 format.",
+                      "type": "string"
+                    },
+                    "oldDates": {
+                      "description": "Object containg previous deadline information.",
+                      "type": "object",
+                      "properties": {
+                        "max": {
+                          "description": "Latest deadline date in ISO 8601 format.",
+                          "type": "string"
+                        },
+                        "min": {
+                          "description": "Earliest deadline date in ISO 8601 format.",
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "updatedAt": {
+                      "description": "An explanation about the purpose of this instance.",
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "orderId": {
+                "description": "Unique identifier of the order.",
+                "type": "string"
+              }
+            }
+          },
+          "success": {
+            "description": "Condition if the request was successful.",
+            "type": "boolean"
+          }
+        }
+      },
+      "AddItemRequest": {
+        "required": [
+          "type",
+          "orderId",
+          "itemId",
+          "quantity",
+          "warehouseId",
+          "price",
+          "sellingPrice",
+          "note",
+          "pickingOptions"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Action type (`ADD_ITEM`)."
+          },
+          "orderId": {
+            "type": "string",
+            "description": "Unique identifier of the order."
+          },
+          "itemId": {
+            "type": "string",
+            "description": "Unique identifier of the item."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Quantity of items to add."
+          },
+          "warehouseId": {
+            "type": "string",
+            "description": "Unique identifier of the warehouse."
+          },
+          "price": {
+            "type": "integer",
+            "description": "Price of the item."
+          },
+          "sellingPrice": {
+            "type": "integer",
+            "description": "Selling price of the item."
+          },
+          "note": {
+            "type": "string",
+            "description": "Note to add to the item."
+          },
+          "pickingOptions": {
+            "required": [
+              "onNotFound",
+              "alternateOptions"
+            ],
+            "type": "object",
+            "description": "Items picking options.",
+            "properties": {
+              "onNotFound": {
+                "type": "string",
+                "description": "List of alternate options."
+              },
+              "alternateOptions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "ID of alternative items."
+                },
+                "description": "List of IDs of alternative items."
+              }
+            }
+          }
+        },
+        "example": {
+          "type": "ADD_ITEM",
+          "orderId": "1481110515526-01",
+          "itemId": "49",
+          "quantity": 2,
+          "warehouseId": "9029",
+          "price": 500000,
+          "sellingPrice": 200000,
+          "note": "TEST from VTEX PROXY 3",
+          "pickingOptions": {
+            "onNotFound": "REPLACE",
+            "alternateOptions": [
+              "74"
+            ]
+          }
+        }
+      },
+      "AddQuantityRequest": {
+        "required": [
+          "type",
+          "orderId",
+          "itemId",
+          "newQuantity",
+          "unitMultiplier",
+          "reasonType",
+          "reasonDetail"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Action type (`ADD_QUANTITY`)."
+          },
+          "orderId": {
+            "type": "string",
+            "description": "Unique identifier of the order."
+          },
+          "itemId": {
+            "type": "string",
+            "description": "Unique identifier for the item."
+          },
+          "newQuantity": {
+            "type": "integer",
+            "description": "New quantity of items."
+          },
+          "unitMultiplier": {
+            "type": "integer",
+            "description": "Unit multiplier."
+          },
+          "reasonType": {
+            "type": "string",
+            "description": "Reason type."
+          },
+          "reasonDetail": {
+            "type": "string",
+            "description": "Reason detail."
+          }
+        },
+        "example": {
+          "type": "ADD_QUANTITY",
+          "orderId": "1481110515526-01",
+          "itemId": "3",
+          "newQuantity": 4,
+          "unitMultiplier": 1,
+          "reasonType": "TEST",
+          "reasonDetail": "test reason detail"
+        }
+      },
+      "RejectItemRequest": {
+        "required": [
+          "type",
+          "orderId",
+          "itemId",
+          "quantity",
+          "reasonType",
+          "reasonDetail"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Action type (`REJECT`)."
+          },
+          "orderId": {
+            "type": "string",
+            "description": "Unique identifier of the order."
+          },
+          "itemId": {
+            "type": "string",
+            "description": "Unique identifier for the item."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Quantity of items to reject."
+          },
+          "reasonType": {
+            "type": "string",
+            "description": "Reason type."
+          },
+          "reasonDetail": {
+            "type": "string",
+            "description": "Reason detail."
+          }
+        },
+        "example": {
+          "type": "REJECT",
+          "orderId": "1481110515526-01",
+          "itemId": "1364",
+          "quantity": 1,
+          "reasonType": "INVENTORY",
+          "reasonDetail": "inventory unavailable"
+        }
+      },
+      "ReplaceItemRequest": {
+        "required": [
+          "type",
+          "orderId",
+          "itemToReplace",
+          "ItemToAddRequest",
+          "reasonType",
+          "reasonDetail"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Action type (`REPLACE`)."
+          },
+          "orderId": {
+            "type": "string",
+            "description": "Unique identifier of the order."
+          },
+          "itemToReplace": {
+            "$ref": "#/components/schemas/ItemToReplace"
+          },
+          "ItemToAddRequest": {
+            "$ref": "#/components/schemas/ItemToAddRequest"
+          },
+          "reasonType": {
+            "type": "string",
+            "description": "Reason type."
+          },
+          "reasonDetail": {
+            "type": "string",
+            "description": "Reason detail."
+          }
+        },
+        "example": {
+          "type": "REPLACE",
+          "orderId": "1481110515526-01",
+          "itemToReplace": {
+            "id": "49",
+            "quantity": 1
+          },
+          "ItemToAddRequest": {
+            "id": "17",
+            "quantity": 2,
+            "price": 20000,
+            "sellingPrice": 10000,
+            "warehouseId": "9029",
+            "note": "TEST from VTEX PROXY 1",
+            "pickingOptions": {
+              "onNotFound": "REPLACE",
+              "alternateOptions": [
+                "74"
+              ]
+            }
+          },
+          "reasonType": "TEST",
+          "reasonDetail": "test reason detail"
+        }
+      },
+      "ItemToReplace": {
+        "required": [
+          "id",
+          "quantity"
+        ],
+        "type": "object",
+        "description": "Items to be replaced in the order.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the item."
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Item quantity."
+          }
+        },
+        "example": {
+          "id": "49",
+          "quantity": 1
+        }
+      },
+      "ItemToAddRequest": {
+        "type": "object",
+        "description": "Items to be added in the order.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the item."
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Item quantity."
+          },
+          "price": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Price of the item."
+          },
+          "sellingPrice": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Selling price of the item."
+          },
+          "warehouseId": {
+            "type": "string",
+            "description": "Unique identifier of the warehouse."
+          },
+          "note": {
+            "type": "string",
+            "description": "Note to add to the item."
+          },
+          "pickingOptions": {
+            "required": [
+              "onNotFound",
+              "alternateOptions"
+            ],
+            "type": "object",
+            "description": "Items picking options.",
+            "properties": {
+              "onNotFound": {
+                "type": "string",
+                "description": "List of alternate options."
+              },
+              "alternateOptions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "ID of alternative items."
+                },
+                "description": "List of IDs of alternative items."
+              }
+            }
+          }
+        },
+        "example": {
+          "id": "17",
+          "quantity": 2,
+          "price": 20000,
+          "sellingPrice": 10000,
+          "warehouseId": "9029",
+          "note": "TEST from VTEX PROXY 1",
+          "pickingOptions": {
+            "onNotFound": "REPLACE",
+            "alternateOptions": [
+              "74"
+            ]
+          }
+        }
+      },
+      "UpdateItemRequest": {
+        "required": [
+          "type",
+          "orderId",
+          "itemId",
+          "note",
+          "pickingOptions"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Action type (`UPDATE_ITEM`).",
+            "enum": [
+              "UPDATE_ITEM"
+            ]
+          },
+          "orderId": {
+            "type": "string",
+            "description": "Unique identifier of the order."
+          },
+          "itemId": {
+            "type": "string",
+            "description": "Unique identifier of the item."
+          },
+          "note": {
+            "type": "string",
+            "description": "Note to add to the item."
+          },
+          "pickingOptions": {
+            "required": [
+              "onNotFound",
+              "alternateOptions"
+            ],
+            "type": "object",
+            "description": "Items picking options.",
+            "properties": {
+              "onNotFound": {
+                "type": "string",
+                "description": "List of alternate options."
+              },
+              "alternateOptions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "ID of alternative items."
+                },
+                "description": "List of IDs of alternative items."
+              }
+            }
+          }
+        },
+        "example": {
+          "type": "UPDATE_ITEM",
+          "orderId": "1479430515373-01",
+          "itemId": "1248",
+          "note": "TEST from VTEX PROXY 3",
+          "pickingOptions": {
+            "onNotFound": "REPLACE",
+            "alternateOptions": [
+              "74"
+            ]
+          }
+        }
+      }
+    },
+    "parameters": {
+      "orderId": {
+        "name": "orderId",
+        "in": "path",
+        "description": "Unique identifier of the order.",
+        "required": true,
+        "style": "simple",
+        "schema": {
+          "type": "string",
+          "example": "1481050515517-01"
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Order changes"
+    },
+    {
+      "name": "BIN locations"
+    }
+  ]
+}
