@@ -3,7 +3,7 @@
     "info": {
         "version": "1.0.0",
         "title": "VTEX Ads API",
-        "description": "VTEX Ads API enables merchants and marketplace operators to synchronize product catalogs, display ads in the storefront, record ad interactions, among other operations within the VTEX Ads platform.\n\nThis API is primarily used by:\n- Store developers\n- Marketplace operators\n- Integration partners\n- Advertising platform providers\n\nWith this API you can:\n- Synchronize product catalog information for advertising\n- Track ad impressions, clicks, and views\n- Monitor conversion events and campaign performance\n- Manage ad inventory and placements\n\n>ℹ️ Learn more about [VTEX Ads](https://help.vtex.com/en/docs/tracks/retail-media).\n\n## Architecture\n\nVTEX Ads is **cookie-less**. Identification and targeting rely on first-party identifiers — `user_id` and `session_id` — rather than third-party cookies, ensuring compliance with modern privacy regulations.\n\n- **`session_id`:** Persistent visitor identifier, required in every ad query and event. It must remain stable for at least 14 days (the default conversion window). For mobile applications, send the device ID as the `session_id` (GAID on Android, IDFA on iOS) so that the session is maintained indefinitely.\n- **`user_id`:** Unique customer identifier on the publisher's platform. It must be consistent across web, mobile app, and physical store. Required in conversion events; recommended for impressions, clicks, and views.\n\n## Before you begin\n\n- **Base URLs.** The API is served from three hosts depending on the operation:\n    - `https://api-retail-media.newtail.com.br` — Catalog synchronization, Reports, Credit transfer webhook, and SSO.\n    - `https://newtail-media.newtail.com.br` — Ad query.\n    - `https://events.newtail-media.newtail.com.br` — Ads events notification (impression, click, view, conversion).\n- **Authentication.** Catalog synchronization, Reports, and SSO endpoints require the `X-App-Id` and `X-Api-Key` headers. Ad query and ads event notifications are public and do not require authentication. The Credit transfer webhook uses a different scheme: `X-Api-Key` and `X-Secret-Key` (it does not use `X-App-Id`). Contact [our support](https://help.vtex.com/en/tutorial/how-does-vtex-support-work--2eAT5EyOvaLoHdIWDVaxC3) to obtain credentials.\n- **Bulk operations.** A maximum of 500 objects per request and 3 simultaneous requests are allowed for catalog and inventory updates.\n- **Event URLs.** The event URLs for tracking impressions, clicks, and views must not be constructed manually — always use the URLs returned by `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-).\n- **Browser-side events.** Use `navigator.sendBeacon()` to fire impression, view, click, and conversion events from the browser. It ensures asynchronous delivery even when the user navigates away or closes the page.\n- **PII hashing.** All personally identifiable fields (`email_hashed`, `phone_hashed`, `social_id_hashed`, `first_name_hashed`, `last_name_hashed`) must be hashed with SHA-256 before being sent. Normalize values first (lowercase and trim; phone numbers in E.164 format).\n- **Reports export.** Reports return JSON by default. Set `download=true` to receive an XLSX file (capped at 20,000 rows per export).\n- **Ad query performance.** Apply a 500-600 ms timeout to ad query calls and prefer persistent HTTP connections (`Connection: keep-alive`).\n\n## Attribution and deduplication\n\n- **Default conversion window:** 14 days from the user's interaction (click for product campaigns; view for banner, video, and sponsored brand campaigns).\n- **Conversion idempotency:** Re-sending the same `order_id` within 30 days is ignored.\n- **Event deduplication:** For the same user and ad, impressions are deduplicated for 1 minute and clicks for 1 hour.\n- **Data latency:** Conversions appear in reports approximately 30 minutes (API integrations) or up to 2 hours (VTEX platform) after the order is placed.\n\n## Index\n\n### Catalog synchronization\n- `POST` [Synchronize product information](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/product/bulk/products)\n- `POST` [Synchronize inventory information](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/product/bulk/inventories)\n\n### Ads events notification\n- `POST` [Track ad impressions](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/beacon/impression/-ad_id-)\n- `POST` [Track ad clicks](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/beacon/click/-ad_id-)\n- `POST` [Track ad views](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/beacon/view/-ad_id-)\n- `POST` [Track conversions](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/beacon/conversion)\n\n### Ads\n- `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-)\n\n### Reports\n- `GET` [Get advertisers report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/report/v2/advertisers)\n- `GET` [Get publishers report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/report/v2/publishers)\n- `GET` [Get network publishers report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/report/network/publishers)\n- `GET` [List campaigns](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/campaign/v2)\n- `GET` [Get campaign details](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/campaign/-campaign_id-)\n- `GET` [Get advertiser campaigns detailed report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/report/advertisers/campaigns-detailed)\n- `GET` [Get advertiser ads detailed report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/report/advertisers/ads-detailed)\n- `GET` [Get ads performance report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/ad/results/v2)\n\n### Credit transfer\n- `POST` [Notify credit transfer status](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/webhook/marketplace/transfers/-publisher_id-)\n\n### SSO\n- `POST` [Generate seller SSO URL](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/sso/marketplace)\n\n| Parameter name | Description | Type |\n| - | - | - |\n| `X-App-Id` | Publisher App ID for authorization | Authentication header |\n| `X-Api-Key` | API Key for authentication | Authentication header |\n| `X-Secret-Key` | Secret key paired with `X-Api-Key` for the credit transfer webhook | Authentication header |\n| `Content-Type` | Type of the content being sent | Request header |\n| `Accept` | HTTP Client Negotiation Accept Header | Request header |"
+        "description": "VTEX Ads API enables merchants and marketplace operators to synchronize product catalogs, display ads in the storefront, record ad interactions, among other operations within the VTEX Ads platform.\n\nThis API is primarily used by:\n- Store developers\n- Marketplace operators\n- Integration partners\n- Advertising platform providers\n\nWith this API you can:\n- Synchronize product catalog information for advertising\n- Track ad impressions, clicks, and views\n- Monitor conversion events and campaign performance\n- Manage ad inventory and placements\n\n>ℹ️ Learn more about [VTEX Ads](https://help.vtex.com/en/docs/tracks/retail-media).\n\n## Architecture\n\nVTEX Ads is **cookie-less**. Identification and targeting rely on first-party identifiers — `user_id` and `session_id` — rather than third-party cookies, ensuring compliance with modern privacy regulations.\n\n- **`session_id`:** Persistent visitor identifier, required in every ad query and event. It must remain stable for at least 14 days (the default conversion window). For mobile applications, send the device ID as the `session_id` (GAID on Android, IDFA on iOS) so that the session is maintained indefinitely.\n- **`user_id`:** Unique customer identifier on the publisher's platform. It must be consistent across web, mobile app, and physical store. Required in conversion events; recommended for impressions, clicks, and views.\n\n## Before you begin\n\n- **Base URLs.** The API is served from three hosts depending on the operation:\n    - `https://api-retail-media.newtail.com.br` — Catalog synchronization, Reports, Credit transfer webhook, and SSO.\n    - `https://newtail-media.newtail.com.br` — Ad query.\n    - `https://events.newtail-media.newtail.com.br` — Ads events notification (impression, click, view, conversion).\n- **Authentication.** Catalog synchronization, Reports, and SSO endpoints require the `X-App-Id` and `X-Api-Key` headers. Ad query and ads event notifications are public and do not require authentication. The Credit transfer webhook uses a different scheme: `X-Api-Key` and `X-Secret-Key` (it does not use `X-App-Id`). Contact [our support](https://help.vtex.com/en/tutorial/how-does-vtex-support-work--2eAT5EyOvaLoHdIWDVaxC3) to obtain credentials.\n- **Bulk operations.** A maximum of 500 objects per request and 3 simultaneous requests are allowed for catalog and inventory updates.\n- **Event URLs.** The event URLs for tracking impressions, clicks, and views must not be constructed manually — always use the URLs returned by `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-).\n- **Browser-side events.** Use `navigator.sendBeacon()` to fire impression, view, click, and conversion events from the browser. It ensures asynchronous delivery even when the user navigates away or closes the page.\n- **PII hashing.** All personally identifiable fields (`email_hashed`, `phone_hashed`, `social_id_hashed`, `first_name_hashed`, `last_name_hashed`) must be hashed with SHA-256 before being sent. Normalize values first (lowercase and trim; phone numbers in E.164 format).\n- **Reports export.** Reports return JSON by default. Set `download=true` to receive an XLSX file (capped at 20,000 rows per export).\n- **Ad query performance.** Apply a 500-600 ms timeout to ad query calls and prefer persistent HTTP connections (`Connection: keep-alive`).\n\n## Attribution and deduplication\n\n- **Default conversion window:** 14 days from the user's interaction (click for product campaigns; view for banner, video, and sponsored brand campaigns).\n- **Conversion idempotency:** Re-sending the same `order_id` within 30 days is ignored.\n- **Event deduplication:** For the same user and ad, impressions are deduplicated for 1 minute and clicks for 1 hour.\n- **Data latency:** Conversions appear in reports approximately 30 minutes (API integrations) or up to 2 hours (VTEX platform) after the order is placed.\n\n| Parameter name | Description | Type |\n| - | - | - |\n| `X-App-Id` | Publisher App ID for authorization | Authentication header |\n| `X-Api-Key` | API Key for authentication | Authentication header |\n| `X-Secret-Key` | Secret key paired with `X-Api-Key` for the credit transfer webhook | Authentication header |\n| `Content-Type` | Type of the content being sent | Request header |\n| `Accept` | HTTP Client Negotiation Accept Header | Request header |"
     },
     "servers": [
         {
@@ -2546,9 +2546,25 @@
                                                                 "type": "integer",
                                                                 "description": "Total number of views."
                                                             },
+                                                            "conversions_click": {
+                                                                "type": "string",
+                                                                "description": "Number of conversions attributed to clicks."
+                                                            },
+                                                            "conversions_view": {
+                                                                "type": "string",
+                                                                "description": "Number of conversions attributed to views."
+                                                            },
                                                             "conversion_rate": {
                                                                 "type": "string",
-                                                                "description": "Conversion rate percentage."
+                                                                "description": "Consolidated conversion rate percentage, calculated as total conversions divided by the sum of clicks and views (`total_conversions / (total_clicks + total_views)`). This is the default conversion rate and considers both click- and view-attributed conversions."
+                                                            },
+                                                            "conversion_rate_click": {
+                                                                "type": "string",
+                                                                "description": "Conversion rate percentage considering click-attributed conversions only, calculated as `conversions_click / total_clicks`."
+                                                            },
+                                                            "conversion_rate_view": {
+                                                                "type": "string",
+                                                                "description": "Conversion rate percentage considering view-attributed conversions only, calculated as `conversions_view / total_views`."
                                                             },
                                                             "ctr": {
                                                                 "type": "string",
@@ -2556,7 +2572,23 @@
                                                             },
                                                             "roas": {
                                                                 "type": "string",
-                                                                "description": "Return on ad spend."
+                                                                "description": "Consolidated return on ad spend, combining click- and view-attributed revenue across all ad formats."
+                                                            },
+                                                            "roas_click": {
+                                                                "type": "string",
+                                                                "description": "Return on ad spend calculated using click-attributed revenue only."
+                                                            },
+                                                            "roas_view": {
+                                                                "type": "string",
+                                                                "description": "Return on ad spend calculated using view-attributed revenue only."
+                                                            },
+                                                            "roas_halo": {
+                                                                "type": "string",
+                                                                "description": "Halo return on ad spend: incremental revenue from non-advertised products purchased in the same order as advertised products (the halo effect), divided by ad spend."
+                                                            },
+                                                            "roas_overall": {
+                                                                "type": "string",
+                                                                "description": "Total return on ad spend, combining direct revenue from the advertised product with halo revenue from other products in the same order, divided by the ad investment. Measures the campaign's total impact on the whole order."
                                                             },
                                                             "adcost": {
                                                                 "type": "string",
@@ -2585,6 +2617,18 @@
                                                             "avg_cpm": {
                                                                 "type": "string",
                                                                 "description": "Average cost per mille."
+                                                            },
+                                                            "halo_revenue": {
+                                                                "type": "string",
+                                                                "description": "Incremental revenue from non-advertised products that were purchased in the same order as an advertised product, attributed to the ad's spillover (halo) effect."
+                                                            },
+                                                            "halo_orders": {
+                                                                "type": "string",
+                                                                "description": "Number of orders with at least one halo item."
+                                                            },
+                                                            "halo_items": {
+                                                                "type": "string",
+                                                                "description": "Quantity of halo items sold."
                                                             }
                                                         }
                                                     }
@@ -2641,16 +2685,27 @@
                                                 "conversions": 4,
                                                 "impressions": 7603,
                                                 "views": 51,
-                                                "conversion_rate": "10.26",
+                                                "conversions_click": "3",
+                                                "conversions_view": "1",
+                                                "conversion_rate": "4.44",
+                                                "conversion_rate_click": "7.69",
+                                                "conversion_rate_view": "1.96",
                                                 "ctr": ".51",
                                                 "roas": "2.64",
+                                                "roas_click": "1.80",
+                                                "roas_view": "0.84",
+                                                "roas_halo": "0.95",
+                                                "roas_overall": "3.59",
                                                 "adcost": "37.87",
                                                 "income": "25747.00",
                                                 "total_spent": "9750.00",
                                                 "ecpm": "3.3864",
                                                 "cpa": "2437.50",
                                                 "avg_cpc": "250.00",
-                                                "avg_cpm": "1282.39"
+                                                "avg_cpm": "1282.39",
+                                                "halo_revenue": "9260.00",
+                                                "halo_orders": "2",
+                                                "halo_items": "5"
                                             }
                                         }
                                     ]
@@ -2888,9 +2943,25 @@
                                                     "type": "integer",
                                                     "description": "Total number of views."
                                                 },
+                                                "conversions_click": {
+                                                    "type": "string",
+                                                    "description": "Number of conversions attributed to clicks."
+                                                },
+                                                "conversions_view": {
+                                                    "type": "string",
+                                                    "description": "Number of conversions attributed to views."
+                                                },
                                                 "conversion_rate": {
                                                     "type": "string",
-                                                    "description": "Conversion rate percentage."
+                                                    "description": "Consolidated conversion rate percentage, calculated as total conversions divided by the sum of clicks and views (`total_conversions / (total_clicks + total_views)`). This is the default conversion rate and considers both click- and view-attributed conversions."
+                                                },
+                                                "conversion_rate_click": {
+                                                    "type": "string",
+                                                    "description": "Conversion rate percentage considering click-attributed conversions only, calculated as `conversions_click / total_clicks`."
+                                                },
+                                                "conversion_rate_view": {
+                                                    "type": "string",
+                                                    "description": "Conversion rate percentage considering view-attributed conversions only, calculated as `conversions_view / total_views`."
                                                 },
                                                 "ctr": {
                                                     "type": "string",
@@ -2898,7 +2969,23 @@
                                                 },
                                                 "roas": {
                                                     "type": "string",
-                                                    "description": "Return on ad spend."
+                                                    "description": "Consolidated return on ad spend, combining click- and view-attributed revenue across all ad formats."
+                                                },
+                                                "roas_click": {
+                                                    "type": "string",
+                                                    "description": "Return on ad spend calculated using click-attributed revenue only."
+                                                },
+                                                "roas_view": {
+                                                    "type": "string",
+                                                    "description": "Return on ad spend calculated using view-attributed revenue only."
+                                                },
+                                                "roas_halo": {
+                                                    "type": "string",
+                                                    "description": "Halo return on ad spend: incremental revenue from non-advertised products purchased in the same order as advertised products (the halo effect), divided by ad spend."
+                                                },
+                                                "roas_overall": {
+                                                    "type": "string",
+                                                    "description": "Total return on ad spend, combining direct revenue from the advertised product with halo revenue from other products in the same order, divided by the ad investment. Measures the campaign's total impact on the whole order."
                                                 },
                                                 "adcost": {
                                                     "type": "string",
@@ -2927,6 +3014,18 @@
                                                 "avg_cpm": {
                                                     "type": "string",
                                                     "description": "Average cost per mille."
+                                                },
+                                                "halo_revenue": {
+                                                    "type": "string",
+                                                    "description": "Incremental revenue from non-advertised products that were purchased in the same order as an advertised product, attributed to the ad's spillover (halo) effect."
+                                                },
+                                                "halo_orders": {
+                                                    "type": "string",
+                                                    "description": "Number of orders with at least one halo item."
+                                                },
+                                                "halo_items": {
+                                                    "type": "string",
+                                                    "description": "Quantity of halo items sold."
                                                 }
                                             }
                                         },
@@ -3133,16 +3232,27 @@
                                         "conversions": 4,
                                         "impressions": 7603,
                                         "views": 51,
-                                        "conversion_rate": "10.26",
+                                        "conversions_click": "3",
+                                        "conversions_view": "1",
+                                        "conversion_rate": "4.44",
+                                        "conversion_rate_click": "7.69",
+                                        "conversion_rate_view": "1.96",
                                         "ctr": ".51",
                                         "roas": "2.64",
+                                        "roas_click": "1.80",
+                                        "roas_view": "0.84",
+                                        "roas_halo": "0.95",
+                                        "roas_overall": "3.59",
                                         "adcost": "37.87",
                                         "income": "25747.00",
                                         "total_spent": "9750.00",
                                         "ecpm": "3.3864",
                                         "cpa": "2437.50",
                                         "avg_cpc": "250.00",
-                                        "avg_cpm": "1282.39"
+                                        "avg_cpm": "1282.39",
+                                        "halo_revenue": "9260.00",
+                                        "halo_orders": "2",
+                                        "halo_items": "5"
                                     },
                                     "ads": [
                                         {
@@ -3546,9 +3656,25 @@
                                                                 "type": "integer",
                                                                 "description": "Total number of views."
                                                             },
+                                                            "conversions_click": {
+                                                                "type": "string",
+                                                                "description": "Number of conversions attributed to clicks."
+                                                            },
+                                                            "conversions_view": {
+                                                                "type": "string",
+                                                                "description": "Number of conversions attributed to views."
+                                                            },
                                                             "conversion_rate": {
                                                                 "type": "string",
-                                                                "description": "Conversion rate percentage."
+                                                                "description": "Consolidated conversion rate percentage, calculated as total conversions divided by the sum of clicks and views (`total_conversions / (total_clicks + total_views)`). This is the default conversion rate and considers both click- and view-attributed conversions."
+                                                            },
+                                                            "conversion_rate_click": {
+                                                                "type": "string",
+                                                                "description": "Conversion rate percentage considering click-attributed conversions only, calculated as `conversions_click / total_clicks`."
+                                                            },
+                                                            "conversion_rate_view": {
+                                                                "type": "string",
+                                                                "description": "Conversion rate percentage considering view-attributed conversions only, calculated as `conversions_view / total_views`."
                                                             },
                                                             "ctr": {
                                                                 "type": "string",
@@ -3556,7 +3682,23 @@
                                                             },
                                                             "roas": {
                                                                 "type": "string",
-                                                                "description": "Return on ad spend."
+                                                                "description": "Consolidated return on ad spend, combining click- and view-attributed revenue across all ad formats."
+                                                            },
+                                                            "roas_click": {
+                                                                "type": "string",
+                                                                "description": "Return on ad spend calculated using click-attributed revenue only."
+                                                            },
+                                                            "roas_view": {
+                                                                "type": "string",
+                                                                "description": "Return on ad spend calculated using view-attributed revenue only."
+                                                            },
+                                                            "roas_halo": {
+                                                                "type": "string",
+                                                                "description": "Halo return on ad spend: incremental revenue from non-advertised products purchased in the same order as advertised products (the halo effect), divided by ad spend."
+                                                            },
+                                                            "roas_overall": {
+                                                                "type": "string",
+                                                                "description": "Total return on ad spend, combining direct revenue from the advertised product with halo revenue from other products in the same order, divided by the ad investment. Measures the campaign's total impact on the whole order."
                                                             },
                                                             "adcost": {
                                                                 "type": "string",
@@ -3585,6 +3727,18 @@
                                                             "avg_cpm": {
                                                                 "type": "string",
                                                                 "description": "Average cost per mille."
+                                                            },
+                                                            "halo_revenue": {
+                                                                "type": "string",
+                                                                "description": "Incremental revenue from non-advertised products that were purchased in the same order as an advertised product, attributed to the ad's spillover (halo) effect."
+                                                            },
+                                                            "halo_orders": {
+                                                                "type": "string",
+                                                                "description": "Number of orders with at least one halo item."
+                                                            },
+                                                            "halo_items": {
+                                                                "type": "string",
+                                                                "description": "Quantity of halo items sold."
                                                             }
                                                         }
                                                     }
@@ -3619,16 +3773,27 @@
                                                 "total_conversions_items_quantity": 7,
                                                 "impressions": 7603,
                                                 "views": 51,
-                                                "conversion_rate": "10.26",
+                                                "conversions_click": "3",
+                                                "conversions_view": "1",
+                                                "conversion_rate": "4.44",
+                                                "conversion_rate_click": "7.69",
+                                                "conversion_rate_view": "1.96",
                                                 "ctr": ".51",
                                                 "roas": "2.64",
+                                                "roas_click": "1.80",
+                                                "roas_view": "0.84",
+                                                "roas_halo": "0.95",
+                                                "roas_overall": "3.59",
                                                 "adcost": "37.87",
                                                 "income": "25747.00",
                                                 "total_spent": "9750.00",
                                                 "ecpm": "3.3864",
                                                 "cpa": "2437.50",
                                                 "avg_cpc": "250.00",
-                                                "avg_cpm": "1282.39"
+                                                "avg_cpm": "1282.39",
+                                                "halo_revenue": "9260.00",
+                                                "halo_orders": "2",
+                                                "halo_items": "5"
                                             }
                                         }
                                     ]
@@ -4514,9 +4679,25 @@
                                                                 "type": "string",
                                                                 "description": "Total number of views."
                                                             },
+                                                            "conversions_click": {
+                                                                "type": "string",
+                                                                "description": "Number of conversions attributed to clicks."
+                                                            },
+                                                            "conversions_view": {
+                                                                "type": "string",
+                                                                "description": "Number of conversions attributed to views."
+                                                            },
                                                             "conversion_rate": {
                                                                 "type": "string",
-                                                                "description": "Conversion rate percentage."
+                                                                "description": "Consolidated conversion rate percentage, calculated as total conversions divided by the sum of clicks and views (`total_conversions / (total_clicks + total_views)`). This is the default conversion rate and considers both click- and view-attributed conversions."
+                                                            },
+                                                            "conversion_rate_click": {
+                                                                "type": "string",
+                                                                "description": "Conversion rate percentage considering click-attributed conversions only, calculated as `conversions_click / total_clicks`."
+                                                            },
+                                                            "conversion_rate_view": {
+                                                                "type": "string",
+                                                                "description": "Conversion rate percentage considering view-attributed conversions only, calculated as `conversions_view / total_views`."
                                                             },
                                                             "ctr": {
                                                                 "type": "string",
@@ -4524,7 +4705,23 @@
                                                             },
                                                             "roas": {
                                                                 "type": "string",
-                                                                "description": "Return on ad spend."
+                                                                "description": "Consolidated return on ad spend, combining click- and view-attributed revenue across all ad formats."
+                                                            },
+                                                            "roas_click": {
+                                                                "type": "string",
+                                                                "description": "Return on ad spend calculated using click-attributed revenue only."
+                                                            },
+                                                            "roas_view": {
+                                                                "type": "string",
+                                                                "description": "Return on ad spend calculated using view-attributed revenue only."
+                                                            },
+                                                            "roas_halo": {
+                                                                "type": "string",
+                                                                "description": "Halo return on ad spend: incremental revenue from non-advertised products purchased in the same order as advertised products (the halo effect), divided by ad spend."
+                                                            },
+                                                            "roas_overall": {
+                                                                "type": "string",
+                                                                "description": "Total return on ad spend, combining direct revenue from the advertised product with halo revenue from other products in the same order, divided by the ad investment. Measures the campaign's total impact on the whole order."
                                                             },
                                                             "adcost": {
                                                                 "type": "string",
@@ -4553,6 +4750,18 @@
                                                             "avg_cpm": {
                                                                 "type": "string",
                                                                 "description": "Average cost per mille."
+                                                            },
+                                                            "halo_revenue": {
+                                                                "type": "string",
+                                                                "description": "Incremental revenue from non-advertised products that were purchased in the same order as an advertised product, attributed to the ad's spillover (halo) effect."
+                                                            },
+                                                            "halo_orders": {
+                                                                "type": "string",
+                                                                "description": "Number of orders with at least one halo item."
+                                                            },
+                                                            "halo_items": {
+                                                                "type": "string",
+                                                                "description": "Quantity of halo items sold."
                                                             }
                                                         }
                                                     }
@@ -4620,16 +4829,27 @@
                                                 "total_conversions_items_quantity": "1",
                                                 "impressions": "2900",
                                                 "views": "2689",
-                                                "conversion_rate": "1.89",
+                                                "conversions_click": "1",
+                                                "conversions_view": "0",
+                                                "conversion_rate": "0.04",
+                                                "conversion_rate_click": "1.89",
+                                                "conversion_rate_view": "0.00",
                                                 "ctr": "1.83",
                                                 "roas": "0.18",
+                                                "roas_click": "0.12",
+                                                "roas_view": "0.06",
+                                                "roas_halo": "0.07",
+                                                "roas_overall": "0.25",
                                                 "adcost": "540.94",
                                                 "income": "5361.00",
                                                 "total_spent": "29000.0000",
                                                 "ecpm": "1.85",
                                                 "cpa": "29000.00",
                                                 "avg_cpc": "547.17",
-                                                "avg_cpm": "10000.00"
+                                                "avg_cpm": "10000.00",
+                                                "halo_revenue": "2100.00",
+                                                "halo_orders": "1",
+                                                "halo_items": "2"
                                             }
                                         }
                                     ]
@@ -4718,6 +4938,104 @@
                 "responses": {
                     "204": {
                         "description": "No Content\n\nNotification accepted."
+                    },
+                    "401": {
+                        "description": "Unauthorized\n\nMissing or invalid authentication credentials."
+                    }
+                }
+            }
+        },
+        "/audience/upload-url": {
+            "servers": [
+                {
+                    "url": "https://api-retail-media.newtail.com.br",
+                    "description": "VTEX Ads server."
+                }
+            ],
+            "post": {
+                "tags": [
+                    "Audiences"
+                ],
+                "summary": "Generate audience upload URL",
+                "description": "Returns a short-lived pre-signed Amazon S3 `POST` that lets a publisher upload an audience file without long-lived credentials. The response carries the destination `url` and the signed `fields` that must accompany the upload.\r\n\r\nThe backend builds the object `key` from the authenticated publisher, so a publisher cannot write to another publisher's path. The pre-signed `POST` is valid for `expires_in` seconds (900 by default) and Amazon S3 rejects files larger than `max_bytes` (2 GiB by default).\r\n\r\n>ℹ️ The file upload itself is a separate multipart `POST` request sent directly to Amazon S3 with the returned `url` and `fields`. It is not part of this API. See [Integrating audiences](https://developers.vtex.com/docs/guides/integrating-audiences) for the full flow, file format, and PII hashing rules.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK\n\nPresigned upload URL generated successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "url": {
+                                            "type": "string",
+                                            "description": "Amazon S3 endpoint the publisher must send the multipart upload request to."
+                                        },
+                                        "fields": {
+                                            "type": "object",
+                                            "description": "Signed Amazon S3 form fields that must be included in the upload request, before the `file` field.",
+                                            "additionalProperties": {
+                                                "type": "string",
+                                                "description": "Value of a signed Amazon S3 form field (for example, policy, signature, or credential)."
+                                            }
+                                        },
+                                        "key": {
+                                            "type": "string",
+                                            "description": "Object key the file will be stored under. Generated by the backend from the authenticated publisher."
+                                        },
+                                        "bucket": {
+                                            "type": "string",
+                                            "description": "Name of the Amazon S3 bucket that receives the upload."
+                                        },
+                                        "expires_in": {
+                                            "type": "integer",
+                                            "description": "Number of seconds the pre-signed `POST` remains valid.",
+                                            "default": 900
+                                        },
+                                        "max_bytes": {
+                                            "type": "integer",
+                                            "description": "Maximum file size, in bytes, accepted by Amazon S3. Larger files are rejected.",
+                                            "default": 2147483648
+                                        },
+                                        "upload": {
+                                            "type": "object",
+                                            "description": "Hints describing how to perform the follow-up upload request.",
+                                            "properties": {
+                                                "method": {
+                                                    "type": "string",
+                                                    "description": "HTTP method to use for the upload request."
+                                                },
+                                                "enctype": {
+                                                    "type": "string",
+                                                    "description": "Encoding type to use for the upload request."
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "url": "https://newtail-data-clean-room.s3.amazonaws.com/",
+                                    "fields": {
+                                        "key": "0d675bf6-03f6-4b81-9617-e79dffddc3ab/audiences/2026/06/03/14/1717340000.parquet.snappy",
+                                        "Content-Type": "application/octet-stream",
+                                        "Policy": "eyJleHBpcmF0aW9uIjoiMjAyNi0wNi0wM1QxNDoxNTowMFoiLCJjb25kaXRpb25zIjpbXX0=",
+                                        "X-Amz-Signature": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
+                                    },
+                                    "key": "0d675bf6-03f6-4b81-9617-e79dffddc3ab/audiences/2026/06/03/14/1717340000.parquet.snappy",
+                                    "bucket": "newtail-data-clean-room",
+                                    "expires_in": 900,
+                                    "max_bytes": 2147483648,
+                                    "upload": {
+                                        "method": "POST",
+                                        "enctype": "multipart/form-data"
+                                    }
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthorized\n\nMissing or invalid authentication credentials."
@@ -4964,6 +5282,9 @@
     "tags": [
         {
             "name": "Catalog synchronization"
+        },
+        {
+            "name": "Audiences"
         },
         {
             "name": "Ads events notification"
