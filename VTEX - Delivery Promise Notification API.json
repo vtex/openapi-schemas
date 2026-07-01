@@ -7,7 +7,7 @@
     },
     "servers": [
         {
-            "url": "https://{accountName}.{environment}.com.br/api",
+            "url": "https://{accountName}.{environment}.com.br",
             "description": "VTEX server URL.",
             "variables": {
                 "accountName": {
@@ -23,7 +23,7 @@
         }
     ],
     "paths": {
-        "/delivery-promises/external-sellers/{sellerId}/products": {
+        "/api/delivery-promises/external-sellers/{sellerId}/products": {
             "put": {
                 "summary": "Update external product availability",
                 "description": "Creates or fully updates delivery promises for one or more [external seller's](https://help.vtex.com/en/tutorial/integration-guide-for-marketplaces-seller-non-vtex--yMji0ow0rQuYgQsg26Kus) items, notifying VTEX of changes in product availability and delivery promises.\r\n\r\nThe Delivery Promise Notification API notifies the VTEX store of the external seller's product availability and delivery promises — that is, in which delivery zones, times, and methods the product is available.\r\n\r\n>ℹ️ This API is intended only for [**external sellers**](https://help.vtex.com/en/tutorial/integration-guide-for-marketplaces-seller-non-vtex--yMji0ow0rQuYgQsg26Kus). It is not required for [franchise accounts](https://help.vtex.com/en/docs/tutorials/what-is-a-franchise-account), sellers using [VTEX Seller Portal](https://help.vtex.com/en/docs/tutorials/how-to-set-up-your-store-on-seller-portal), or [VTEX sellers](https://help.vtex.com/en/tutorial/integrating-with-marketplace) already integrated into the [marketplace ecosystem](https://help.vtex.com/en/tutorial/integrating-with-marketplace). In these cases, availability and delivery options are managed natively by VTEX.\r\n\r\nUse this endpoint to **create or fully replace** the delivery promises for one or more external sellers' items. Each request sends the complete set of promises for the items included in the payload.\r\n\r\n## Making a SKU unavailable\r\n\r\nTo make a SKU unavailable for a given delivery context, send a `PUT` request with `availability: 0`. This action explicitly updates the [Delivery Promise](https://help.vtex.com/en/tutorial/delivery-promise-beta--p9EJH9GgxL0JceA6dBswd) state. Unlike [Seller Portal](https://help.vtex.com/en/docs/tutorials/how-to-set-up-your-store-on-seller-portal) integrations, this change is not automatically propagated and must be triggered via API.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Delivery Promises | ProductAvailability | **Notify Product Availability Change** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>\u2757 To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
@@ -59,242 +59,248 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "required": [
-                                    "itemId",
-                                    "availability",
-                                    "promises"
-                                ],
-                                "properties": {
-                                    "itemId": {
-                                        "type": "string",
-                                        "description": "Unique identifier of the binding of the seller with the SKU."
-                                    },
-                                    "productId": {
-                                        "type": "string",
-                                        "description": "Product unique identifier."
-                                    },
-                                    "availability": {
-                                        "type": "integer",
-                                        "description": "Total available items for the SKU across all promises. Send `0` to make the SKU unavailable in this delivery context."
-                                    },
-                                    "promises": {
-                                        "type": "array",
-                                        "description": "List of delivery promises.",
-                                        "items": {
-                                            "type": "object",
-                                            "description": "Delivery promise details.",
-                                            "required": [
-                                                "availability",
-                                                "deliveryChannel",
-                                                "deliveryZoneIds"
-                                            ],
-                                            "properties": {
-                                                "availability": {
-                                                    "type": "integer",
-                                                    "description": "Available items for this delivery promise. Send `0` to make this specific promise unavailable."
-                                                },
-                                                "deliveryChannel": {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "delivery",
-                                                        "pickup-in-point"
-                                                    ],
-                                                    "description": "Delivery channel type. Accepted values are `delivery` and `pickup-in-point`."
-                                                },
-                                                "deliveryZoneIds": {
-                                                    "type": "array",
-                                                    "minItems": 1,
-                                                    "items": {
-                                                        "type": "string",
-                                                        "description": "Delivery zone unique identifier.",
-                                                        "enum": [
-                                                            "BRA_COUNTRY",
-                                                            "BRA_REGION_NORTE",
-                                                            "BRA_REGION_CENTRO_OESTE",
-                                                            "BRA_REGION_NORDESTE",
-                                                            "BRA_REGION_SUDESTE",
-                                                            "BRA_REGION_SUL",
-                                                            "BRA_SUBSTATE_DF_CAPITAL",
-                                                            "BRA_SUBSTATE_DF_INTERIOR",
-                                                            "BRA_SUBSTATE_GO_CAPITAL",
-                                                            "BRA_SUBSTATE_GO_INTERIOR",
-                                                            "BRA_SUBSTATE_MT_CAPITAL",
-                                                            "BRA_SUBSTATE_MT_INTERIOR",
-                                                            "BRA_SUBSTATE_MS_CAPITAL",
-                                                            "BRA_SUBSTATE_MS_INTERIOR",
-                                                            "BRA_SUBSTATE_BA_CAPITAL",
-                                                            "BRA_SUBSTATE_BA_REG_METROPOLITANA",
-                                                            "BRA_SUBSTATE_BA_INTERIOR",
-                                                            "BRA_SUBSTATE_SE_CAPITAL",
-                                                            "BRA_SUBSTATE_SE_INTERIOR",
-                                                            "BRA_SUBSTATE_PE_CAPITAL",
-                                                            "BRA_SUBSTATE_PE_REG_METROPOLITANA",
-                                                            "BRA_SUBSTATE_PE_INTERIOR",
-                                                            "BRA_SUBSTATE_AL_CAPITAL",
-                                                            "BRA_SUBSTATE_AL_INTERIOR",
-                                                            "BRA_SUBSTATE_PB_CAPITAL",
-                                                            "BRA_SUBSTATE_PB_INTERIOR",
-                                                            "BRA_SUBSTATE_RN_CAPITAL",
-                                                            "BRA_SUBSTATE_RN_INTERIOR",
-                                                            "BRA_SUBSTATE_CE_CAPITAL",
-                                                            "BRA_SUBSTATE_CE_REG_METROPOLITANA",
-                                                            "BRA_SUBSTATE_CE_INTERIOR",
-                                                            "BRA_SUBSTATE_PI_CAPITAL",
-                                                            "BRA_SUBSTATE_PI_INTERIOR",
-                                                            "BRA_SUBSTATE_MA_CAPITAL",
-                                                            "BRA_SUBSTATE_MA_INTERIOR",
-                                                            "BRA_SUBSTATE_PA_CAPITAL",
-                                                            "BRA_SUBSTATE_PA_REG_METROPOLITANA",
-                                                            "BRA_SUBSTATE_PA_INTERIOR",
-                                                            "BRA_SUBSTATE_AP_CAPITAL",
-                                                            "BRA_SUBSTATE_AP_INTERIOR",
-                                                            "BRA_SUBSTATE_AM_CAPITAL",
-                                                            "BRA_SUBSTATE_AM_INTERIOR",
-                                                            "BRA_SUBSTATE_RR_CAPITAL",
-                                                            "BRA_SUBSTATE_RR_INTERIOR",
-                                                            "BRA_SUBSTATE_AC_CAPITAL",
-                                                            "BRA_SUBSTATE_AC_INTERIOR",
-                                                            "BRA_SUBSTATE_TO_CAPITAL",
-                                                            "BRA_SUBSTATE_TO_INTERIOR",
-                                                            "BRA_SUBSTATE_RO_CAPITAL",
-                                                            "BRA_SUBSTATE_RO_INTERIOR",
-                                                            "BRA_SUBSTATE_SP_CAPITAL",
-                                                            "BRA_SUBSTATE_SP_REG_METROPOLITANA",
-                                                            "BRA_SUBSTATE_SP_LITORAL",
-                                                            "BRA_SUBSTATE_SP_INTERIOR",
-                                                            "BRA_SUBSTATE_RJ_CAPITAL",
-                                                            "BRA_SUBSTATE_RJ_REG_METROPOLITANA",
-                                                            "BRA_SUBSTATE_RJ_INTERIOR",
-                                                            "BRA_SUBSTATE_ES_CAPITAL",
-                                                            "BRA_SUBSTATE_ES_INTERIOR",
-                                                            "BRA_SUBSTATE_MG_CAPITAL",
-                                                            "BRA_SUBSTATE_MG_REG_METROPOLITANA",
-                                                            "BRA_SUBSTATE_MG_INTERIOR",
-                                                            "BRA_SUBSTATE_PR_CAPITAL",
-                                                            "BRA_SUBSTATE_PR_REG_METROPOLITANA",
-                                                            "BRA_SUBSTATE_PR_INTERIOR",
-                                                            "BRA_SUBSTATE_SC_CAPITAL",
-                                                            "BRA_SUBSTATE_SC_REG_METROPOLITANA",
-                                                            "BRA_SUBSTATE_SC_INTERIOR",
-                                                            "BRA_SUBSTATE_RS_CAPITAL",
-                                                            "BRA_SUBSTATE_RS_REG_METROPOLITANA",
-                                                            "BRA_SUBSTATE_RS_INTERIOR",
-                                                            "USA_COUNTRY",
-                                                            "USA_DIVISION_NEW_ENGLAND",
-                                                            "USA_STATE_CT",
-                                                            "USA_STATE_ME",
-                                                            "USA_STATE_MA",
-                                                            "USA_STATE_NH",
-                                                            "USA_STATE_RI",
-                                                            "USA_STATE_VT",
-                                                            "USA_DIVISION_MIDDLE_ATLANTIC",
-                                                            "USA_STATE_NJ",
-                                                            "USA_STATE_NY",
-                                                            "USA_STATE_PA",
-                                                            "USA_DIVISION_EAST_NORTH_CENTRAL",
-                                                            "USA_STATE_IL",
-                                                            "USA_STATE_IN",
-                                                            "USA_STATE_MI",
-                                                            "USA_STATE_OH",
-                                                            "USA_STATE_WI",
-                                                            "USA_DIVISION_WEST_NORTH_CENTRAL",
-                                                            "USA_STATE_IA",
-                                                            "USA_STATE_KS",
-                                                            "USA_STATE_MN",
-                                                            "USA_STATE_MO",
-                                                            "USA_STATE_NE",
-                                                            "USA_STATE_ND",
-                                                            "USA_STATE_SD",
-                                                            "USA_DIVISION_SOUTH_ATLANTIC",
-                                                            "USA_STATE_DE",
-                                                            "USA_STATE_FL",
-                                                            "USA_STATE_GA",
-                                                            "USA_STATE_MD",
-                                                            "USA_STATE_NC",
-                                                            "USA_STATE_SC",
-                                                            "USA_STATE_VA",
-                                                            "USA_STATE_WV",
-                                                            "USA_STATE_DC",
-                                                            "USA_DIVISION_EAST_SOUTH_CENTRAL",
-                                                            "USA_STATE_AL",
-                                                            "USA_STATE_KY",
-                                                            "USA_STATE_MS",
-                                                            "USA_STATE_TN",
-                                                            "USA_DIVISION_WEST_SOUTH_CENTRAL",
-                                                            "USA_STATE_AR",
-                                                            "USA_STATE_LA",
-                                                            "USA_STATE_OK",
-                                                            "USA_STATE_TX",
-                                                            "USA_DIVISION_MOUNTAIN",
-                                                            "USA_STATE_AZ",
-                                                            "USA_STATE_CO",
-                                                            "USA_STATE_ID",
-                                                            "USA_STATE_MT",
-                                                            "USA_STATE_NV",
-                                                            "USA_STATE_NM",
-                                                            "USA_STATE_UT",
-                                                            "USA_STATE_WY",
-                                                            "USA_DIVISION_PACIFIC",
-                                                            "USA_STATE_AK",
-                                                            "USA_STATE_CA",
-                                                            "USA_STATE_HI",
-                                                            "USA_STATE_OR",
-                                                            "USA_STATE_WA"
-                                                        ]
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "required": [
+                                        "itemId",
+                                        "availability",
+                                        "promises"
+                                    ],
+                                    "properties": {
+                                        "itemId": {
+                                            "type": "string",
+                                            "description": "Unique identifier of the binding of the seller with the SKU."
+                                        },
+                                        "productId": {
+                                            "type": "string",
+                                            "description": "Product unique identifier."
+                                        },
+                                        "availability": {
+                                            "type": "integer",
+                                            "description": "Total available items for the SKU across all promises. Send `0` to make the SKU unavailable in this delivery context."
+                                        },
+                                        "promises": {
+                                            "type": "array",
+                                            "description": "List of delivery promises.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Delivery promise details.",
+                                                "required": [
+                                                    "availability",
+                                                    "deliveryChannel",
+                                                    "deliveryZoneIds"
+                                                ],
+                                                "properties": {
+                                                    "availability": {
+                                                        "type": "integer",
+                                                        "description": "Available items for this delivery promise. Send `0` to make this specific promise unavailable."
                                                     },
-                                                    "description": "List of delivery zones where the item is available."
-                                                },
-                                                "deliveryInfo": {
-                                                    "type": "object",
-                                                    "description": "Delivery method details. The `id` value sent here is the key used to update this promise later via [Update delivery promises for an external seller's item](https://developers.vtex.com/docs/api-reference/delivery-promise-notification-api#patch-/delivery-promises/external-sellers/-sellerId-/items/-itemId-) endpoint.",
-                                                    "properties": {
-                                                        "id": {
+                                                    "deliveryChannel": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "delivery",
+                                                            "pickup-in-point"
+                                                        ],
+                                                        "description": "Delivery channel type. Accepted values are `delivery` and `pickup-in-point`."
+                                                    },
+                                                    "deliveryZoneIds": {
+                                                        "type": "array",
+                                                        "minItems": 1,
+                                                        "items": {
                                                             "type": "string",
-                                                            "description": "Unique identifier of the delivery method. This value is the key used to update this promise later via [Update delivery promises for an external seller's item](https://developers.vtex.com/docs/api-reference/delivery-promise-notification-api#patch-/delivery-promises/external-sellers/-sellerId-/items/-itemId-) endpoint."
+                                                            "description": "Delivery zone unique identifier.",
+                                                            "enum": [
+                                                                "BRA_COUNTRY",
+                                                                "BRA_REGION_NORTE",
+                                                                "BRA_REGION_CENTRO_OESTE",
+                                                                "BRA_REGION_NORDESTE",
+                                                                "BRA_REGION_SUDESTE",
+                                                                "BRA_REGION_SUL",
+                                                                "BRA_SUBSTATE_DF_CAPITAL",
+                                                                "BRA_SUBSTATE_DF_INTERIOR",
+                                                                "BRA_SUBSTATE_GO_CAPITAL",
+                                                                "BRA_SUBSTATE_GO_INTERIOR",
+                                                                "BRA_SUBSTATE_MT_CAPITAL",
+                                                                "BRA_SUBSTATE_MT_INTERIOR",
+                                                                "BRA_SUBSTATE_MS_CAPITAL",
+                                                                "BRA_SUBSTATE_MS_INTERIOR",
+                                                                "BRA_SUBSTATE_BA_CAPITAL",
+                                                                "BRA_SUBSTATE_BA_REG_METROPOLITANA",
+                                                                "BRA_SUBSTATE_BA_INTERIOR",
+                                                                "BRA_SUBSTATE_SE_CAPITAL",
+                                                                "BRA_SUBSTATE_SE_INTERIOR",
+                                                                "BRA_SUBSTATE_PE_CAPITAL",
+                                                                "BRA_SUBSTATE_PE_REG_METROPOLITANA",
+                                                                "BRA_SUBSTATE_PE_INTERIOR",
+                                                                "BRA_SUBSTATE_AL_CAPITAL",
+                                                                "BRA_SUBSTATE_AL_INTERIOR",
+                                                                "BRA_SUBSTATE_PB_CAPITAL",
+                                                                "BRA_SUBSTATE_PB_INTERIOR",
+                                                                "BRA_SUBSTATE_RN_CAPITAL",
+                                                                "BRA_SUBSTATE_RN_INTERIOR",
+                                                                "BRA_SUBSTATE_CE_CAPITAL",
+                                                                "BRA_SUBSTATE_CE_REG_METROPOLITANA",
+                                                                "BRA_SUBSTATE_CE_INTERIOR",
+                                                                "BRA_SUBSTATE_PI_CAPITAL",
+                                                                "BRA_SUBSTATE_PI_INTERIOR",
+                                                                "BRA_SUBSTATE_MA_CAPITAL",
+                                                                "BRA_SUBSTATE_MA_INTERIOR",
+                                                                "BRA_SUBSTATE_PA_CAPITAL",
+                                                                "BRA_SUBSTATE_PA_REG_METROPOLITANA",
+                                                                "BRA_SUBSTATE_PA_INTERIOR",
+                                                                "BRA_SUBSTATE_AP_CAPITAL",
+                                                                "BRA_SUBSTATE_AP_INTERIOR",
+                                                                "BRA_SUBSTATE_AM_CAPITAL",
+                                                                "BRA_SUBSTATE_AM_INTERIOR",
+                                                                "BRA_SUBSTATE_RR_CAPITAL",
+                                                                "BRA_SUBSTATE_RR_INTERIOR",
+                                                                "BRA_SUBSTATE_AC_CAPITAL",
+                                                                "BRA_SUBSTATE_AC_INTERIOR",
+                                                                "BRA_SUBSTATE_TO_CAPITAL",
+                                                                "BRA_SUBSTATE_TO_INTERIOR",
+                                                                "BRA_SUBSTATE_RO_CAPITAL",
+                                                                "BRA_SUBSTATE_RO_INTERIOR",
+                                                                "BRA_SUBSTATE_SP_CAPITAL",
+                                                                "BRA_SUBSTATE_SP_REG_METROPOLITANA",
+                                                                "BRA_SUBSTATE_SP_LITORAL",
+                                                                "BRA_SUBSTATE_SP_INTERIOR",
+                                                                "BRA_SUBSTATE_RJ_CAPITAL",
+                                                                "BRA_SUBSTATE_RJ_REG_METROPOLITANA",
+                                                                "BRA_SUBSTATE_RJ_INTERIOR",
+                                                                "BRA_SUBSTATE_ES_CAPITAL",
+                                                                "BRA_SUBSTATE_ES_INTERIOR",
+                                                                "BRA_SUBSTATE_MG_CAPITAL",
+                                                                "BRA_SUBSTATE_MG_REG_METROPOLITANA",
+                                                                "BRA_SUBSTATE_MG_INTERIOR",
+                                                                "BRA_SUBSTATE_PR_CAPITAL",
+                                                                "BRA_SUBSTATE_PR_REG_METROPOLITANA",
+                                                                "BRA_SUBSTATE_PR_INTERIOR",
+                                                                "BRA_SUBSTATE_SC_CAPITAL",
+                                                                "BRA_SUBSTATE_SC_REG_METROPOLITANA",
+                                                                "BRA_SUBSTATE_SC_INTERIOR",
+                                                                "BRA_SUBSTATE_RS_CAPITAL",
+                                                                "BRA_SUBSTATE_RS_REG_METROPOLITANA",
+                                                                "BRA_SUBSTATE_RS_INTERIOR",
+                                                                "USA_COUNTRY",
+                                                                "USA_DIVISION_NEW_ENGLAND",
+                                                                "USA_STATE_CT",
+                                                                "USA_STATE_ME",
+                                                                "USA_STATE_MA",
+                                                                "USA_STATE_NH",
+                                                                "USA_STATE_RI",
+                                                                "USA_STATE_VT",
+                                                                "USA_DIVISION_MIDDLE_ATLANTIC",
+                                                                "USA_STATE_NJ",
+                                                                "USA_STATE_NY",
+                                                                "USA_STATE_PA",
+                                                                "USA_DIVISION_EAST_NORTH_CENTRAL",
+                                                                "USA_STATE_IL",
+                                                                "USA_STATE_IN",
+                                                                "USA_STATE_MI",
+                                                                "USA_STATE_OH",
+                                                                "USA_STATE_WI",
+                                                                "USA_DIVISION_WEST_NORTH_CENTRAL",
+                                                                "USA_STATE_IA",
+                                                                "USA_STATE_KS",
+                                                                "USA_STATE_MN",
+                                                                "USA_STATE_MO",
+                                                                "USA_STATE_NE",
+                                                                "USA_STATE_ND",
+                                                                "USA_STATE_SD",
+                                                                "USA_DIVISION_SOUTH_ATLANTIC",
+                                                                "USA_STATE_DE",
+                                                                "USA_STATE_FL",
+                                                                "USA_STATE_GA",
+                                                                "USA_STATE_MD",
+                                                                "USA_STATE_NC",
+                                                                "USA_STATE_SC",
+                                                                "USA_STATE_VA",
+                                                                "USA_STATE_WV",
+                                                                "USA_STATE_DC",
+                                                                "USA_DIVISION_EAST_SOUTH_CENTRAL",
+                                                                "USA_STATE_AL",
+                                                                "USA_STATE_KY",
+                                                                "USA_STATE_MS",
+                                                                "USA_STATE_TN",
+                                                                "USA_DIVISION_WEST_SOUTH_CENTRAL",
+                                                                "USA_STATE_AR",
+                                                                "USA_STATE_LA",
+                                                                "USA_STATE_OK",
+                                                                "USA_STATE_TX",
+                                                                "USA_DIVISION_MOUNTAIN",
+                                                                "USA_STATE_AZ",
+                                                                "USA_STATE_CO",
+                                                                "USA_STATE_ID",
+                                                                "USA_STATE_MT",
+                                                                "USA_STATE_NV",
+                                                                "USA_STATE_NM",
+                                                                "USA_STATE_UT",
+                                                                "USA_STATE_WY",
+                                                                "USA_DIVISION_PACIFIC",
+                                                                "USA_STATE_AK",
+                                                                "USA_STATE_CA",
+                                                                "USA_STATE_HI",
+                                                                "USA_STATE_OR",
+                                                                "USA_STATE_WA"
+                                                            ]
                                                         },
-                                                        "name": {
-                                                            "type": "string",
-                                                            "description": "Display name of the delivery method."
-                                                        },
-                                                        "deliveryTime": {
-                                                            "type": "string",
-                                                            "description": "Estimated delivery time in `dd.hh:mm:ss` format. For example, `2.02:00:00` represents an estimated delivery time of two days and two hours."
+                                                        "description": "List of delivery zones where the item is available."
+                                                    },
+                                                    "deliveryInfo": {
+                                                        "type": "object",
+                                                        "description": "Delivery method details. The `id` value sent here is the key used to update this promise later via [Update delivery promises for an external seller's item](https://developers.vtex.com/docs/api-reference/delivery-promise-notification-api#patch-/delivery-promises/external-sellers/-sellerId-/items/-itemId-) endpoint.",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string",
+                                                                "description": "Unique identifier of the delivery method. This value is the key used to update this promise later via [Update delivery promises for an external seller's item](https://developers.vtex.com/docs/api-reference/delivery-promise-notification-api#patch-/delivery-promises/external-sellers/-sellerId-/items/-itemId-) endpoint."
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "description": "Display name of the delivery method."
+                                                            },
+                                                            "deliveryTime": {
+                                                                "type": "string",
+                                                                "description": "Estimated delivery time in `dd.hh:mm:ss` format. For example, `2.02:00:00` represents an estimated delivery time of two days and two hours."
+                                                            }
                                                         }
                                                     }
                                                 }
                                             }
                                         }
                                     }
+                                    
                                 }
                             },
-                            "example": {
-                                "itemId": "1234",
-                                "productId": "XPTO",
-                                "availability": 7,
-                                "promises": [
-                                    {
-                                        "availability": 5,
-                                        "deliveryChannel": "delivery",
-                                        "deliveryZoneIds": ["BRA_COUNTRY"],
-                                        "deliveryInfo": {
-                                            "id": "Prime5Days",
-                                            "name": "Same Week",
-                                            "deliveryTime": "5.00:00:00"
+                            "example": [
+                                {
+                                    "itemId": "1234",
+                                    "productId": "XPTO",
+                                    "availability": 7,
+                                    "promises": [
+                                        {
+                                            "availability": 5,
+                                            "deliveryChannel": "delivery",
+                                            "deliveryZoneIds": ["BRA_COUNTRY"],
+                                            "deliveryInfo": {
+                                                "id": "Prime5Days",
+                                                "name": "Same Week",
+                                                "deliveryTime": "5.00:00:00"
+                                            }
+                                        },
+                                        {
+                                            "availability": 3,
+                                            "deliveryChannel": "pickup-in-point",
+                                            "deliveryZoneIds": ["BRA_COUNTRY"],
+                                            "deliveryInfo": {
+                                                "id": "Prime2Day",
+                                                "name": "Same Day",
+                                                "deliveryTime": "1.00:00:00"
+                                            }
                                         }
-                                    },
-                                    {
-                                        "availability": 3,
-                                        "deliveryChannel": "pickup-in-point",
-                                        "deliveryZoneIds": ["BRA_COUNTRY"],
-                                        "deliveryInfo": {
-                                            "id": "Prime2Day",
-                                            "name": "Same Day",
-                                            "deliveryTime": "1.00:00:00"
-                                        }
-                                    }
-                                ]
-                            }
+                                    ]
+                                }
+                            ]
                         }
                     }
                 },
@@ -387,7 +393,7 @@
                 ]
             }
         },
-        "/delivery-promises/external-sellers/{sellerId}/items/{itemId}": {
+        "/api/delivery-promises/external-sellers/{sellerId}/items/{itemId}": {
             "patch": {
                 "summary": "Update delivery promises for an external seller's item",
                 "description": "Updates one or more delivery promises of a single [external seller's](https://help.vtex.com/en/tutorial/integration-guide-for-marketplaces-seller-non-vtex--yMji0ow0rQuYgQsg26Kus) item, identified by the path parameter `itemId`.\r\n\r\nThe Delivery Promise Notification API notifies the VTEX store of the external seller's product availability and delivery promises — that is, in which delivery zones, times, and methods the product is available.\r\n\r\n>ℹ️ This API is intended only for [**external sellers**](https://help.vtex.com/en/tutorial/integration-guide-for-marketplaces-seller-non-vtex--yMji0ow0rQuYgQsg26Kus). It is not required for [franchise accounts](https://help.vtex.com/en/docs/tutorials/what-is-a-franchise-account), sellers using [VTEX Seller Portal](https://help.vtex.com/en/docs/tutorials/how-to-set-up-your-store-on-seller-portal), or [VTEX sellers](https://help.vtex.com/en/tutorial/integrating-with-marketplace) already integrated into the [marketplace ecosystem](https://help.vtex.com/en/tutorial/integrating-with-marketplace). In these cases, availability and delivery options are managed natively by VTEX.\r\n\r\nUse this endpoint to update one or more delivery promises of a single external seller's item. A `PATCH` request always targets a single `itemId`, but you can update as many promises as needed within that item.\r\n\r\nEach promise to be updated must be identified by `id` (the same value previously sent as `deliveryInfo.id` in a `PUT` request). This field is required because, without it, the API cannot determine which promise of that item should be updated.\r\n\r\n>ℹ️ Before running a `PATCH` for an item, that item must have been previously created with a `PUT` request. `PATCH` is an update operation whose key is the `id` previously sent in the Update external product availability request.\r\n\r\n## Making a SKU unavailable\r\n\r\nTo make a SKU unavailable for a given delivery context, send a `PATCH` request with `availability: 0`. This action explicitly updates the [Delivery Promise](https://help.vtex.com/en/tutorial/delivery-promise-beta--p9EJH9GgxL0JceA6dBswd) state. Unlike [Seller Portal](https://help.vtex.com/en/docs/tutorials/how-to-set-up-your-store-on-seller-portal) integrations, this change is not automatically propagated and must be triggered via API.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Delivery Promises         | ProductAvailability | **Notify Product Availability Change** |\r\n|  |  |  |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>\u2757 To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
