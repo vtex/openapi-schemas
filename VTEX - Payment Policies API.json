@@ -1,0 +1,1748 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Payment Policies API",
+        "description": "The Payment Policies API allows VTEX merchants to configure rules that include or exclude payment systems for specific cart items. The Payment Configuration Service (PCS) stores policy rules, while the Payment Information Service (PIS) evaluates those rules during checkout and returns the payment systems available for each item.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\n## Index\r\n\r\n### Payment policy rules\r\n\r\n- `POST` [Create policy rule](https://developers.vtex.com/docs/api-reference/payment-policies-api#post-/api/payment-configuration-service/policy-rules)\r\n- `GET` [List policy rules](https://developers.vtex.com/docs/api-reference/payment-policies-api#get-/api/payment-configuration-service/policy-rules)\r\n- `GET` [Get policy rule by ID](https://developers.vtex.com/docs/api-reference/payment-policies-api#get-/api/payment-configuration-service/policy-rules/-id-)\r\n- `PUT` [Update policy rule](https://developers.vtex.com/docs/api-reference/payment-policies-api#put-/api/payment-configuration-service/policy-rules/-id-)\r\n- `DELETE` [Delete policy rule](https://developers.vtex.com/docs/api-reference/payment-policies-api#delete-/api/payment-configuration-service/policy-rules/-id-)\r\n\r\n### Payment policy evaluation\r\n\r\n- `POST` [Evaluate payment policies](https://developers.vtex.com/docs/api-reference/payment-policies-api#post-/api/pvt/payment-systems/search)\r\n\r\n## Rule engine\r\n\r\n> ℹ️ Currently the Payment policies feature supports `and`, `or`, `==`, and `in` operators, with a limit of 500 operators per expression. Available context variables are `collectionIds`, containing the collection IDs associated with the item, and `shippingState`, containing the delivery state code.",
+        "contact": {},
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "https://{accountName}.pcs.vtexcommercestable.com.br",
+            "description": "Payment Configuration Service server URL.",
+            "variables": {
+                "accountName": {
+                    "description": "Name of the VTEX account. Used as part of the URL.",
+                    "default": "apiexamples"
+                }
+            }
+        },
+        {
+            "url": "https://{accountName}.vtexpayments.com.br",
+            "description": "Payment Information Service server URL.",
+            "variables": {
+                "accountName": {
+                    "description": "Name of the VTEX account. Used as part of the URL.",
+                    "default": "apiexamples"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/api/payment-configuration-service/policy-rules": {
+            "servers": [
+                {
+                    "url": "https://{accountName}.pcs.vtexcommercestable.com.br",
+                    "description": "Payment Configuration Service server URL.",
+                    "variables": {
+                        "accountName": {
+                            "description": "Name of the VTEX account. Used as part of the URL.",
+                            "default": "apiexamples"
+                        }
+                    }
+                }
+            ],
+            "post": {
+                "tags": [
+                    "Payment policy rules"
+                ],
+                "summary": "Create policy rule",
+                "operationId": "createPolicyRule",
+                "description": "Creates a payment policy rule for the VTEX account identified by the `accountName` URL variable. Policy rules define conditions that determine which payment systems are included or excluded when those conditions match a cart item.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Payments | Payment Policies | **ManageStore** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PolicyRuleInput"
+                            },
+                            "example": {
+                                "name": "Exclude EBT for collection 139 in NY",
+                                "expression": {
+                                    "and": [
+                                        {
+                                            "in": [
+                                                139,
+                                                {
+                                                    "var": "collectionIds"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "==": [
+                                                {
+                                                    "var": "shippingState"
+                                                },
+                                                "NY"
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "enabled": true,
+                                "priority": 90,
+                                "action": "Exclude",
+                                "paymentSystems": [
+                                    100
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PolicyRule"
+                                },
+                                "example": {
+                                    "id": "a1b2c3d4e5f6478990abcdef12345678",
+                                    "name": "Exclude EBT for collection 139 in NY",
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "in": [
+                                                    139,
+                                                    {
+                                                        "var": "collectionIds"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "==": [
+                                                    {
+                                                        "var": "shippingState"
+                                                    },
+                                                    "NY"
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "enabled": true,
+                                    "priority": 90,
+                                    "action": "Exclude",
+                                    "paymentSystems": [
+                                        100
+                                    ],
+                                    "createdAt": "2026-04-01T10:00:00Z",
+                                    "updatedAt": "2026-04-01T10:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/UnprocessableContent"
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Payment policy rules"
+                ],
+                "summary": "List policy rules",
+                "operationId": "listPolicyRules",
+                "description": "Lists the payment policy rules configured for the VTEX account identified by the `accountName` URL variable.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| PCI Gateway | Payment-Make Payments | **View Payment Data** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "description": "List of policy rules configured for the account.",
+                                    "items": {
+                                        "$ref": "#/components/schemas/PolicyRule"
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": "a1b2c3d4e5f6478990abcdef12345678",
+                                        "name": "Exclude EBT for collection 139 in NY",
+                                        "expression": {
+                                            "and": [
+                                                {
+                                                    "in": [
+                                                        139,
+                                                        {
+                                                            "var": "collectionIds"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "==": [
+                                                        {
+                                                            "var": "shippingState"
+                                                        },
+                                                        "NY"
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "enabled": true,
+                                        "priority": 90,
+                                        "action": "Exclude",
+                                        "paymentSystems": [
+                                            100
+                                        ],
+                                        "createdAt": "2026-04-01T10:00:00Z",
+                                        "updatedAt": "2026-04-01T10:00:00Z"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    }
+                }
+            }
+        },
+        "/api/payment-configuration-service/policy-rules/{id}": {
+            "servers": [
+                {
+                    "url": "https://{accountName}.pcs.vtexcommercestable.com.br",
+                    "description": "Payment Configuration Service server URL.",
+                    "variables": {
+                        "accountName": {
+                            "description": "Name of the VTEX account. Used as part of the URL.",
+                            "default": "apiexamples"
+                        }
+                    }
+                }
+            ],
+            "get": {
+                "tags": [
+                    "Payment policy rules"
+                ],
+                "summary": "Get policy rule by ID",
+                "operationId": "getPolicyRuleById",
+                "description": "Retrieves a payment policy rule by ID for the VTEX account identified by the `accountName` URL variable.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| PCI Gateway | Payment-Make Payments | **View Payment Data** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/PolicyRuleId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PolicyRule"
+                                },
+                                "example": {
+                                    "id": "a1b2c3d4e5f6478990abcdef12345678",
+                                    "name": "Exclude EBT for collection 139 in NY",
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "in": [
+                                                    139,
+                                                    {
+                                                        "var": "collectionIds"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "==": [
+                                                    {
+                                                        "var": "shippingState"
+                                                    },
+                                                    "NY"
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "enabled": true,
+                                    "priority": 90,
+                                    "action": "Exclude",
+                                    "paymentSystems": [
+                                        100
+                                    ],
+                                    "createdAt": "2026-04-01T10:00:00Z",
+                                    "updatedAt": "2026-04-01T10:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Payment policy rules"
+                ],
+                "summary": "Update policy rule",
+                "operationId": "updatePolicyRule",
+                "description": "Replaces a payment policy rule for the VTEX account identified by the `accountName` URL variable. Send the same request body used to create a rule. Do not include response-only fields such as `id`, `createdAt`, or `updatedAt`, and do not send a `version` field because concurrency is handled server-side.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Payments | Payment Policies | **ManageStore** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/PolicyRuleId"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PolicyRuleInput"
+                            },
+                            "example": {
+                                "name": "Exclude EBT for collection 139 in NY",
+                                "expression": {
+                                    "and": [
+                                        {
+                                            "in": [
+                                                139,
+                                                {
+                                                    "var": "collectionIds"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "==": [
+                                                {
+                                                    "var": "shippingState"
+                                                },
+                                                "NY"
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "enabled": true,
+                                "priority": 90,
+                                "action": "Exclude",
+                                "paymentSystems": [
+                                    100
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PolicyRule"
+                                },
+                                "example": {
+                                    "id": "a1b2c3d4e5f6478990abcdef12345678",
+                                    "name": "Exclude EBT for collection 139 in NY",
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "in": [
+                                                    139,
+                                                    {
+                                                        "var": "collectionIds"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "==": [
+                                                    {
+                                                        "var": "shippingState"
+                                                    },
+                                                    "NY"
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "enabled": true,
+                                    "priority": 90,
+                                    "action": "Exclude",
+                                    "paymentSystems": [
+                                        100
+                                    ],
+                                    "createdAt": "2026-04-01T10:00:00Z",
+                                    "updatedAt": "2026-04-01T10:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Conflict"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/UnprocessableContent"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Payment policy rules"
+                ],
+                "summary": "Delete policy rule",
+                "operationId": "deletePolicyRule",
+                "description": "Deletes a payment policy rule for the VTEX account identified by the `accountName` URL variable.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Payments | Payment Policies | **ManageStore** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/PolicyRuleId"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                }
+            }
+        },
+        "/api/pvt/payment-systems/search": {
+            "servers": [
+                {
+                    "url": "https://{accountName}.vtexpayments.com.br",
+                    "description": "Payment Information Service server URL.",
+                    "variables": {
+                        "accountName": {
+                            "description": "Name of the VTEX account. Used as part of the URL.",
+                            "default": "apiexamples"
+                        }
+                    }
+                }
+            ],
+            "post": {
+                "tags": [
+                    "Payment policy evaluation"
+                ],
+                "summary": "Evaluate payment policies",
+                "operationId": "evaluatePaymentPolicies",
+                "description": "Evaluates active payment policy rules against cart item context and returns payment systems available for each item. Payment systems not mentioned in any matching rule remain available by default. You can also use this endpoint to validate which payment systems are available for cart items before checkout continues.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| PCI Gateway | Payment-Make Payments | **View Payment Data** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PaymentPolicySearchRequest"
+                            },
+                            "example": {
+                                "items": [
+                                    {
+                                        "id": "sku-01",
+                                        "collectionIds": [
+                                            139,
+                                            45
+                                        ],
+                                        "shippingData": {
+                                            "state": "NY"
+                                        }
+                                    },
+                                    {
+                                        "id": "sku-02",
+                                        "collectionIds": [
+                                            200
+                                        ],
+                                        "shippingData": {
+                                            "state": "NY"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentPolicySearchResponse"
+                                },
+                                "example": {
+                                    "paymentSystemAssignments": {
+                                            "sku-01": [1, 4],
+                                            "sku-02": [1, 4, 100]
+                                    },
+                                    "paymentSystemDefinitions": [
+                                        {
+                                            "id": 1,
+                                            "name": "Debit Card",
+                                            "groupName": "debitCard"
+                                        },
+                                        {
+                                            "id": 4,
+                                            "name": "Mastercard",
+                                            "groupName": "creditCard"
+                                        },
+                                        {
+                                            "id": 100,
+                                            "name": "EBT Card",
+                                            "groupName": "ebt"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "408": {
+                        "description": "Request Timeout",
+                        "content": {
+                                            "text/plain": {
+                                                           "schema": {
+                                                           "type": "string"
+                                                          },
+                                            "example": "timeout"
+                                            }
+                               }
+                            }
+                          }
+                        }
+                      }
+                    },
+    "security": [
+        {
+            "appKey": [],
+            "appToken": []
+        },
+        {
+            "VtexIdclientAutCookie": []
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "VtexIdclientAutCookie": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "VtexIdclientAutCookie",
+                "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
+            }
+        },
+        "schemas": {
+            "PolicyRuleInput": {
+                "type": "object",
+                "description": "Payload used to create or replace a payment policy rule.",
+                "required": [
+                    "name",
+                    "expression",
+                    "enabled",
+                    "priority",
+                    "action",
+                    "paymentSystems"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Policy rule name.",
+                        "minLength": 1
+                    },
+                    "expression": {
+                        "$ref": "#/components/schemas/JsonLogicExpression"
+                    },
+                    "enabled": {
+                        "type": "boolean",
+                        "description": "Indicates whether the policy rule is active."
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Rule priority, from `0` to `999`. Lower values have higher precedence when conflicting rules match the same item.",
+                        "minimum": 0,
+                        "maximum": 999
+                    },
+                    "action": {
+                        "type": "string",
+                        "description": "Action applied to the payment systems when the rule expression matches. Accepts `Include` or `Exclude`; value matching is case-insensitive.",
+                        "enum": [
+                            "Include",
+                            "Exclude"
+                        ]
+                    },
+                    "paymentSystems": {
+                        "type": "array",
+                        "description": "Payment system IDs affected by the rule.",
+                        "items": {
+                            "type": "integer",
+                            "format": "int32",
+                            "description": "Payment system ID."
+                        },
+                        "minItems": 1
+                    }
+                }
+            },
+            "PolicyRule": {
+                "type": "object",
+                "description": "Payment policy rule returned by the API.",
+                "required": [
+                    "id",
+                    "name",
+                    "expression",
+                    "enabled",
+                    "priority",
+                    "action",
+                    "paymentSystems",
+                    "createdAt",
+                    "updatedAt"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "^[a-f0-9]{32}$",
+                        "description": "Unique identifier of the policy rule."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Policy rule name.",
+                        "minLength": 1
+                    },
+                    "expression": {
+                        "$ref": "#/components/schemas/JsonLogicExpression"
+                    },
+                    "enabled": {
+                        "type": "boolean",
+                        "description": "Indicates whether the policy rule is active."
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Rule priority, from `0` to `999`. Lower values have higher precedence when conflicting rules match the same item.",
+                        "minimum": 0,
+                        "maximum": 999
+                    },
+                    "action": {
+                        "type": "string",
+                        "description": "Action applied to the payment systems when the rule expression matches. Accepts `Include` or `Exclude`; value matching is case-insensitive.",
+                        "enum": [
+                            "Include",
+                            "Exclude"
+                        ]
+                    },
+                    "paymentSystems": {
+                        "type": "array",
+                        "description": "Payment system IDs affected by the rule.",
+                        "items": {
+                            "type": "integer",
+                            "format": "int32",
+                            "description": "Payment system ID."
+                        },
+                        "minItems": 1
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date and time when the policy rule was created in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date and time when the policy rule was last updated in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."
+                    }
+                }
+            },
+            "JsonLogicExpression": {
+                "type": "object",
+                "description": "JSONLogic expression evaluated against item context. Currently supports `and`, `or`, `==`, and `in`, with `collectionIds` and `shippingState` as available variables.",
+                "additionalProperties": true
+            },
+            "PaymentPolicySearchRequest": {
+                "type": "object",
+                "description": "Payload used to evaluate payment policies for cart items. Supports the same catalog filters as the merchant payment systems GET (`salesChannel`, `paymentSystemIds`), plus line items for policy evaluation.",
+                "required": [
+                    "items"
+                ],
+                "properties": {
+                    "salesChannel": {
+                        "type": "string",
+                        "description": "Sales channel ID or name. When omitted, null, or whitespace, all sales channels are considered."
+                    },
+                    "paymentSystemIds": {
+                        "type": "array",
+                        "description": "Optional subset of payment system IDs to consider from the merchant catalog before applying policy rules. When omitted or empty, no additional catalog filter is applied.",
+                        "items": {
+                            "type": "integer",
+                            "format": "int32",
+                            "description": "Payment system ID."
+                        }
+                    },
+                    "items": {
+                        "type": "array",
+                        "description": "Cart items to evaluate against active payment policy rules.",
+                        "items": {
+                            "$ref": "#/components/schemas/PaymentPolicySearchItem"
+                        }
+                    }
+                }
+            },
+            "PaymentPolicySearchItem": {
+                "type": "object",
+                "description": "Cart item context used by the payment policy engine.",
+                "required": [
+                    "id"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Item identifier used to map available payment systems back to the cart item."
+                    },
+                    "collectionIds": {
+                        "type": "array",
+                        "description": "Collection IDs associated with the item in the VTEX catalog.",
+                        "items": {
+                            "type": "integer",
+                            "format": "int32",
+                            "description": "Collection ID."
+                        }
+                    },
+                    "shippingData": {
+                        "type": "object",
+                        "description": "Shipping context used by the payment policy engine.",
+                        "required": [
+                            "state"
+                        ],
+                        "properties": {
+                            "state": {
+                                "type": "string",
+                                "description": "State code of the main delivery address."
+                            }
+                        }
+                    }
+                }
+            },
+            "PaymentPolicySearchResponse": {
+                "type": "object",
+                "description": "Payment policy evaluation result returned by the Payment Information Service.",
+                "required": [
+                    "paymentSystemAssignments",
+                    "paymentSystemDefinitions"
+                ],
+                "properties": {
+                    "paymentSystemAssignments": {
+                        "type": "object",
+                        "description": "Map of item IDs to the payment system IDs allowed for each item.",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer",
+                                "format": "int32"
+                            }
+                        },
+                        "example": {
+                            "sku-01": [1, 4],
+                            "sku-02": [1, 4, 100]
+                        }
+                    },
+                    "paymentSystemDefinitions": {
+                        "type": "array",
+                        "description": "Payment system metadata for the payment systems returned in the assignments.",
+                        "items": {
+                            "$ref": "#/components/schemas/PaymentSystemDefinition"
+                        },
+                        "example": [
+                                    {
+                                        "id": 1,
+                                        "name": "American Express",
+                                        "requiresDocument": false,
+                                        "implementation": "Vtex.PaymentGateway.CreditCard.Amex",
+                                        "connectorImplementation": "Vtex.PaymentGateway.Connectors.AuthorizeDotNet.AuthorizeDotNetConnector",
+                                        "antifraudConnectorImplementation": null,
+                                        "groupName": "creditCard",
+                                        "redirect": false,
+                                        "isCustom": false,
+                                        "isSelfAuthorized": false,
+                                        "requiresAuthentication": false,
+                                        "allowInstallments": true,
+                                        "allowBinExclusion": false,
+                                        "allowMultiple": true,
+                                        "allowIssuer": true,
+                                        "allowCountry": false,
+                                        "allowCommercialPolicy": true,
+                                        "allowCommercialCondition": true,
+                                        "allowPeriod": true,
+                                        "isAvailable": true,
+                                        "description": null,
+                                        "supportRecurrence": true,
+                                        "validator": {
+                                            "regex": "^3[47][0-9]{13}$",
+                                            "mask": "9999 999999 99999",
+                                            "cardCodeMask": "9999",
+                                            "cardCodeRegex": "^[0-9]{4}$",
+                                            "weights": [
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1
+                                            ],
+                                            "useCvv": true,
+                                            "useExpirationDate": true,
+                                            "useCardHolderName": true,
+                                            "useBillingAddress": true,
+                                            "validCardLengths": null
+                                        },
+                                        "appDependencies": null,
+                                        "displayDocument": false,
+                                        "dueDate": "2023-12-20T11:46:27.2993428Z",
+                                        "allowNotification": false,
+                                        "affiliationId": null,
+                                        "availablePayments": null,
+                                        "dueDateMinutes": 10079
+                                    },
+                                    {
+                                        "id": 72,
+                                        "name": "PicPay",
+                                        "requiresDocument": false,
+                                        "implementation": "Vtex.PaymentGateway.RedirectPayments.PicPayPayment",
+                                        "connectorImplementation": "Vtex.PaymentGateway.Connectors.PaymentProvider.PaymentProviderConnector_PicPay",
+                                        "antifraudConnectorImplementation": null,
+                                        "groupName": "picPay",
+                                        "redirect": true,
+                                        "isCustom": false,
+                                        "isSelfAuthorized": false,
+                                        "requiresAuthentication": false,
+                                        "allowInstallments": true,
+                                        "allowBinExclusion": false,
+                                        "allowMultiple": true,
+                                        "allowIssuer": false,
+                                        "allowCountry": true,
+                                        "allowCommercialPolicy": true,
+                                        "allowCommercialCondition": true,
+                                        "allowPeriod": true,
+                                        "isAvailable": true,
+                                        "description": null,
+                                        "supportRecurrence": false,
+                                        "validator": {
+                                            "regex": null,
+                                            "mask": null,
+                                            "cardCodeMask": null,
+                                            "cardCodeRegex": null,
+                                            "weights": null,
+                                            "useCvv": false,
+                                            "useExpirationDate": false,
+                                            "useCardHolderName": false,
+                                            "useBillingAddress": false,
+                                            "validCardLengths": null
+                                        },
+                                        "appDependencies": null,
+                                        "displayDocument": false,
+                                        "dueDate": "2023-12-20T11:46:27.2993428Z",
+                                        "allowNotification": false,
+                                        "affiliationId": null,
+                                        "availablePayments": null,
+                                        "dueDateMinutes": 10079
+                                    },
+                                    {
+                                        "id": 64,
+                                        "name": "Customer Credit",
+                                        "requiresDocument": false,
+                                        "implementation": "Vtex.PaymentGateway.Promissory.CreditControlPayment",
+                                        "connectorImplementation": "Vtex.PaymentGateway.Connectors.PaymentProvider.PaymentProviderConnector_CreditControlV2",
+                                        "antifraudConnectorImplementation": null,
+                                        "groupName": "creditControl",
+                                        "redirect": false,
+                                        "isCustom": false,
+                                        "isSelfAuthorized": false,
+                                        "requiresAuthentication": false,
+                                        "allowInstallments": true,
+                                        "allowBinExclusion": false,
+                                        "allowMultiple": true,
+                                        "allowIssuer": false,
+                                        "allowCountry": false,
+                                        "allowCommercialPolicy": true,
+                                        "allowCommercialCondition": true,
+                                        "allowPeriod": true,
+                                        "isAvailable": true,
+                                        "description": null,
+                                        "supportRecurrence": false,
+                                        "validator": {
+                                            "regex": null,
+                                            "mask": null,
+                                            "cardCodeMask": null,
+                                            "cardCodeRegex": null,
+                                            "weights": null,
+                                            "useCvv": false,
+                                            "useExpirationDate": false,
+                                            "useCardHolderName": false,
+                                            "useBillingAddress": false,
+                                            "validCardLengths": null
+                                        },
+                                        "appDependencies": null,
+                                        "displayDocument": false,
+                                        "dueDate": "2023-12-20T11:46:27.2993428Z",
+                                        "allowNotification": false,
+                                        "affiliationId": null,
+                                        "availablePayments": null,
+                                        "dueDateMinutes": 10079
+                                    },
+                                    {
+                                        "id": 16,
+                                        "name": "Vale",
+                                        "requiresDocument": true,
+                                        "implementation": "Vtex.PaymentGateway.GiftCard.VtexGiftCard",
+                                        "connectorImplementation": "Vtex.PaymentGateway.Connectors.VtexGiftCardHub.VtexGiftCardHubConnector",
+                                        "antifraudConnectorImplementation": null,
+                                        "groupName": "giftCard",
+                                        "redirect": false,
+                                        "isCustom": false,
+                                        "isSelfAuthorized": false,
+                                        "requiresAuthentication": false,
+                                        "allowInstallments": false,
+                                        "allowBinExclusion": false,
+                                        "allowMultiple": true,
+                                        "allowIssuer": false,
+                                        "allowCountry": false,
+                                        "allowCommercialPolicy": true,
+                                        "allowCommercialCondition": true,
+                                        "allowPeriod": true,
+                                        "isAvailable": true,
+                                        "description": null,
+                                        "supportRecurrence": false,
+                                        "validator": {
+                                            "regex": null,
+                                            "mask": null,
+                                            "cardCodeMask": null,
+                                            "cardCodeRegex": null,
+                                            "weights": null,
+                                            "useCvv": false,
+                                            "useExpirationDate": false,
+                                            "useCardHolderName": false,
+                                            "useBillingAddress": false,
+                                            "validCardLengths": null
+                                        },
+                                        "appDependencies": null,
+                                        "displayDocument": true,
+                                        "dueDate": "2023-12-20T11:46:27.2993428Z",
+                                        "allowNotification": false,
+                                        "affiliationId": null,
+                                        "availablePayments": null,
+                                        "dueDateMinutes": 10079
+                                    },
+                                    {
+                                        "id": 39,
+                                        "name": "Maestro",
+                                        "requiresDocument": false,
+                                        "implementation": "Vtex.PaymentGateway.Card.Maestro",
+                                        "connectorImplementation": "Vtex.PaymentGateway.Connectors.AdyenConnector",
+                                        "antifraudConnectorImplementation": null,
+                                        "groupName": "debitCard",
+                                        "redirect": false,
+                                        "isCustom": false,
+                                        "isSelfAuthorized": false,
+                                        "requiresAuthentication": false,
+                                        "allowInstallments": false,
+                                        "allowBinExclusion": false,
+                                        "allowMultiple": false,
+                                        "allowIssuer": true,
+                                        "allowCountry": false,
+                                        "allowCommercialPolicy": true,
+                                        "allowCommercialCondition": true,
+                                        "allowPeriod": true,
+                                        "isAvailable": true,
+                                        "description": null,
+                                        "supportRecurrence": false,
+                                        "validator": {
+                                            "regex": "^((5(([1-2]|[4-5])[0-9]{8}|0((1|6)([0-9]{7}))|3(0(4((0|[2-9])[0-9]{5})|([0-3]|[5-9])[0-9]{6})|[1-9][0-9]{7})))|((508116)\\d{4,10})|((502121)\\d{4,10})|((589916)\\d{4,10})|(2[0-9]{15})|(67[0-9]{14})|(506387)\\d{4,10})",
+                                            "mask": "9999 9999 9999 9999",
+                                            "cardCodeMask": "999",
+                                            "cardCodeRegex": "^[0-9]{3}$",
+                                            "weights": [
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2
+                                            ],
+                                            "useCvv": true,
+                                            "useExpirationDate": true,
+                                            "useCardHolderName": true,
+                                            "useBillingAddress": true,
+                                            "validCardLengths": null
+                                        },
+                                        "appDependencies": null,
+                                        "displayDocument": false,
+                                        "dueDate": "2023-12-20T11:46:27.2993428Z",
+                                        "allowNotification": false,
+                                        "affiliationId": null,
+                                        "availablePayments": null,
+                                        "dueDateMinutes": 10079
+                                    },
+                                    {
+                                        "id": 169,
+                                        "name": "Google Pay",
+                                        "requiresDocument": false,
+                                        "implementation": "Vtex.PaymentGateway.RedirectPayments.GooglePayPayment",
+                                        "connectorImplementation": "Vtex.PaymentGateway.Connectors.PaymentProvider.PaymentProviderConnector_stripe-payment-provider-connector-v3",
+                                        "antifraudConnectorImplementation": null,
+                                        "groupName": "Google Pay",
+                                        "redirect": true,
+                                        "isCustom": false,
+                                        "isSelfAuthorized": false,
+                                        "requiresAuthentication": false,
+                                        "allowInstallments": false,
+                                        "allowBinExclusion": false,
+                                        "allowMultiple": true,
+                                        "allowIssuer": false,
+                                        "allowCountry": true,
+                                        "allowCommercialPolicy": true,
+                                        "allowCommercialCondition": true,
+                                        "allowPeriod": true,
+                                        "isAvailable": true,
+                                        "description": null,
+                                        "supportRecurrence": false,
+                                        "validator": {
+                                            "regex": null,
+                                            "mask": null,
+                                            "cardCodeMask": null,
+                                            "cardCodeRegex": null,
+                                            "weights": null,
+                                            "useCvv": false,
+                                            "useExpirationDate": false,
+                                            "useCardHolderName": false,
+                                            "useBillingAddress": false,
+                                            "validCardLengths": null
+                                        },
+                                        "appDependencies": null,
+                                        "displayDocument": false,
+                                        "dueDate": "2023-12-20T11:46:27.2993428Z",
+                                        "allowNotification": false,
+                                        "affiliationId": null,
+                                        "availablePayments": null,
+                                        "dueDateMinutes": 10079
+                                    },
+                                    {
+                                        "id": 4,
+                                        "name": "Mastercard",
+                                        "requiresDocument": true,
+                                        "implementation": "Vtex.PaymentGateway.CreditCard.Mastercard",
+                                        "connectorImplementation": "Vtex.PaymentGateway.Connectors.PaymentProvider.PaymentProviderConnector_cosmetics2-payment-provider-v0",
+                                        "antifraudConnectorImplementation": null,
+                                        "groupName": "creditCard",
+                                        "redirect": false,
+                                        "isCustom": false,
+                                        "isSelfAuthorized": false,
+                                        "requiresAuthentication": false,
+                                        "allowInstallments": true,
+                                        "allowBinExclusion": false,
+                                        "allowMultiple": true,
+                                        "allowIssuer": true,
+                                        "allowCountry": false,
+                                        "allowCommercialPolicy": true,
+                                        "allowCommercialCondition": true,
+                                        "allowPeriod": true,
+                                        "isAvailable": true,
+                                        "description": null,
+                                        "supportRecurrence": true,
+                                        "validator": {
+                                            "regex": "^((5(([1-2]|[4-5])[0-9]{8}|0((1|6)([0-9]{7}))|3(0(4((0|[2-9])[0-9]{5})|([0-3]|[5-9])[0-9]{6})|[1-9][0-9]{7})))|((508116)\\d{4,10})|((502121)\\d{4,10})|((589916)\\d{4,10})|(2[0-9]{15})|(67[0-9]{14})|(506387)\\d{4,10})",
+                                            "mask": "9999 9999 9999 9999",
+                                            "cardCodeMask": "999",
+                                            "cardCodeRegex": "^[0-9]{3}$",
+                                            "weights": [
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2
+                                            ],
+                                            "useCvv": true,
+                                            "useExpirationDate": true,
+                                            "useCardHolderName": true,
+                                            "useBillingAddress": true,
+                                            "validCardLengths": null
+                                        },
+                                        "appDependencies": null,
+                                        "displayDocument": true,
+                                        "dueDate": "2023-12-20T11:46:27.2993428Z",
+                                        "allowNotification": false,
+                                        "affiliationId": null,
+                                        "availablePayments": null,
+                                        "dueDateMinutes": 10079
+                                    },
+                                    {
+                                        "id": 401,
+                                        "name": "PaymentApp",
+                                        "requiresDocument": false,
+                                        "implementation": "Vtex.PaymentGateway.CreditCard.PrivateLabelPayment",
+                                        "connectorImplementation": "Vtex.PaymentGateway.Connectors.PaymentProvider.PaymentProviderConnector_cosmetics2-payment-provider-v0",
+                                        "antifraudConnectorImplementation": null,
+                                        "groupName": "customPrivate_401",
+                                        "redirect": false,
+                                        "isCustom": true,
+                                        "isSelfAuthorized": false,
+                                        "requiresAuthentication": false,
+                                        "allowInstallments": true,
+                                        "allowBinExclusion": false,
+                                        "allowMultiple": true,
+                                        "allowIssuer": true,
+                                        "allowCountry": false,
+                                        "allowCommercialPolicy": true,
+                                        "allowCommercialCondition": true,
+                                        "allowPeriod": true,
+                                        "isAvailable": true,
+                                        "description": "Payment app.",
+                                        "supportRecurrence": true,
+                                        "validator": {
+                                            "regex": "1(0(0(0(0([0-9])|[1-9][0-9]{11})|[1-9][0-9]{12})|[1-9][0-9]{13})|[1-9][0-9]{14})|9(9(9(9(9([0-9])|[0-8][0-9]{11})|[0-8][0-9]{12})|[0-8][0-9]{13})|[0-8][0-9]{14})|[2-8][0-9]{15}",
+                                            "mask": "9999 9999 9999 9999",
+                                            "cardCodeMask": "999",
+                                            "cardCodeRegex": "^[0-9]{3}$",
+                                            "weights": [],
+                                            "useCvv": true,
+                                            "useExpirationDate": true,
+                                            "useCardHolderName": true,
+                                            "useBillingAddress": false,
+                                            "validCardLengths": null
+                                        },
+                                        "appDependencies": null,
+                                        "displayDocument": false,
+                                        "dueDate": "2023-12-23T11:46:27.2993428Z",
+                                        "allowNotification": false,
+                                        "affiliationId": null,
+                                        "availablePayments": null,
+                                        "dueDateMinutes": 14399
+                                    },
+                                    {
+                                        "id": 2,
+                                        "name": "Visa",
+                                        "requiresDocument": false,
+                                        "implementation": "Vtex.PaymentGateway.CreditCard.Visa",
+                                        "connectorImplementation": "Vtex.PaymentGateway.Connectors.PaymentProvider.PaymentProviderConnector_cosmetics2-payment-provider-v0",
+                                        "antifraudConnectorImplementation": null,
+                                        "groupName": "creditCard",
+                                        "redirect": false,
+                                        "isCustom": false,
+                                        "isSelfAuthorized": false,
+                                        "requiresAuthentication": false,
+                                        "allowInstallments": true,
+                                        "allowBinExclusion": false,
+                                        "allowMultiple": true,
+                                        "allowIssuer": true,
+                                        "allowCountry": false,
+                                        "allowCommercialPolicy": true,
+                                        "allowCommercialCondition": true,
+                                        "allowPeriod": true,
+                                        "isAvailable": true,
+                                        "description": null,
+                                        "supportRecurrence": true,
+                                        "validator": {
+                                            "regex": "^4[0-9]{15}$",
+                                            "mask": "9999 9999 9999 9999",
+                                            "cardCodeMask": "999",
+                                            "cardCodeRegex": "^[0-9]{3}$",
+                                            "weights": [
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2,
+                                                1,
+                                                2
+                                            ],
+                                            "useCvv": true,
+                                            "useExpirationDate": true,
+                                            "useCardHolderName": true,
+                                            "useBillingAddress": true,
+                                            "validCardLengths": null
+                                        },
+                                        "appDependencies": null,
+                                        "displayDocument": false,
+                                        "dueDate": "2023-12-20T11:46:27.2993428Z",
+                                        "allowNotification": false,
+                                        "affiliationId": null,
+                                        "availablePayments": null,
+                                        "dueDateMinutes": 10079
+                                    }
+                                ]
+                    }
+                }
+            },
+            "PaymentSystemDefinition": {
+                "required": [
+                    "id",
+                    "name",
+                    "groupName"
+                ],
+                "type": "object",
+                "description": "Available payment methods response body information.",
+                "properties": {
+                    "id": {
+                        "type": "number",
+                        "description": "Payment method identification."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Payment method name."
+                    },
+                    "requiresDocument": {
+                        "type": "boolean",
+                        "description": "Indicates whether a document is required."
+                    },
+                    "implementation": {
+                        "type": "string",
+                        "description": "Payment method implementation class name."
+                    },
+                    "connectorImplementation": {
+                        "type": "string",
+                        "description": "Connector (payment provider) implementation class name."
+                    },
+                    "antifraudConnectorImplementation": {
+                        "type": "string",
+                        "description": "Connector (anti-fraud provider) implementation class name.",
+                        "nullable": true
+                    },
+                    "groupName": {
+                        "type": "string",
+                        "description": "Payment group name."
+                    },
+                    "redirect": {
+                        "type": "boolean",
+                        "description": "Indicates whether the payment method allows redirection."
+                    },
+                    "isCustom": {
+                        "type": "boolean",
+                        "description": "Indicates whether it is custom."
+                    },
+                    "isSelfAuthorized": {
+                        "type": "boolean",
+                        "description": "Indicates whether the payment is automatically authorized."
+                    },
+                    "requiresAuthentication": {
+                        "type": "boolean",
+                        "description": "Indicates whether it is necessary to log in to make the payment."
+                    },
+                    "allowInstallments": {
+                        "type": "boolean",
+                        "description": "Indicates whether the payment method allows installments."
+                    },
+                    "allowBinExclusion": {
+                        "type": "boolean",
+                        "description": "Indicates whether it is possible to restrict the use of specific BIN codes (only applicable for cards)."
+                    },
+                    "allowMultiple": {
+                        "type": "boolean",
+                        "description": "Indicates whether the method allows multiple payments. Example of `false`: debit card."
+                    },
+                    "allowIssuer": {
+                        "type": "boolean",
+                        "description": "Indicates whether it is possible to identify the name of the bank responsible for issuing the card."
+                    },
+                    "allowCountry": {
+                        "type": "boolean",
+                        "description": "Indicates whether it is possible to restrict a payment rule by the country where the purchase is made."
+                    },
+                    "allowCommercialPolicy": {
+                        "type": "boolean",
+                        "description": "Indicates whether to restrict a payment rule by commercial policy type."
+                    },
+                    "allowCommercialCondition": {
+                        "type": "boolean",
+                        "description": "Indicates whether to restrict a payment rule by commercial condition type."
+                    },
+                    "allowPeriod": {
+                        "type": "boolean",
+                        "description": "Indicates whether it is possible to restrict a period for making the payment."
+                    },
+                    "isAvailable": {
+                        "type": "boolean",
+                        "description": "Indicates whether the payment method is available for use."
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Description of the payment method.",
+                        "nullable": true
+                    },
+                    "supportRecurrence": {
+                        "type": "boolean",
+                        "description": "Indicates whether the payment method supports recurrence."
+                    },
+                    "validator": {
+                        "required": [
+                            "regex",
+                            "mask",
+                            "cardCodeMask",
+                            "cardCodeRegex",
+                            "weights",
+                            "useCvv",
+                            "useExpirationDate",
+                            "useCardHolderName",
+                            "useBillingAddress",
+                            "validCardLengths"
+                        ],
+                        "type": "object",
+                        "description": "Validator information.",
+                        "properties": {
+                            "regex": {
+                                "type": "string",
+                                "description": "[Regex](https://regexr.com/) information.",
+                                "nullable": true
+                            },
+                            "mask": {
+                                "type": "string",
+                                "description": "Validator mask.",
+                                "nullable": true
+                            },
+                            "cardCodeMask": {
+                                "type": "string",
+                                "description": "Card code regular mask.",
+                                "nullable": true
+                            },
+                            "cardCodeRegex": {
+                                "type": "string",
+                                "description": "Card code regular expression.",
+                                "nullable": true
+                            },
+                            "weights": {
+                                "type": "array",
+                                "description": "Array containing weigths information.",
+                                "items": {
+                                    "type": "integer",
+                                    "description": "Weigths information."
+                                },
+                                "nullable": true
+                            },
+                            "useCvv": {
+                                "type": "boolean",
+                                "description": "Indicates whether it is necessary to use the CVV code to complete a transaction with payment made by card."
+                            },
+                            "useExpirationDate": {
+                                "type": "boolean",
+                                "description": "Indicates whether it is necessary to use the expiration date to complete a card payment transaction."
+                            },
+                            "useCardHolderName": {
+                                "type": "boolean",
+                                "description": "Indicates whether it is necessary to use the card holder name to complete a payment transaction made by card."
+                            },
+                            "useBillingAddress": {
+                                "type": "boolean",
+                                "description": "Indicates whether it is necessary to use the billing address to complete a card payment transaction."
+                            },
+                            "validCardLengths": {
+                                "type": "string",
+                                "description": "Information about valid card lengths.",
+                                "nullable": true
+                            }
+                        }
+                    },
+                    "appDependencies": {
+                        "type": "string",
+                        "description": "App dependencies information.",
+                        "nullable": true
+                    },
+                    "displayDocument": {
+                        "type": "boolean",
+                        "description": "Indicates whether a document is shown."
+                    },
+                    "dueDate": {
+                        "type": "string",
+                        "description": "Payment due date."
+                    },
+                    "allowNotification": {
+                        "type": "boolean",
+                        "description": "Indicates the possibility of payment notification (used by bank invoices and notes payable)."
+                    },
+                    "affiliationId": {
+                        "type": "string",
+                        "description": "Affiliation connector (payment provider) identification.",
+                        "nullable": true
+                    },
+                    "availablePayments": {
+                        "type": "string",
+                        "description": "Information about payment availability.",
+                        "nullable": true
+                    },
+                    "dueDateMinutes": {
+                        "type": "number",
+                        "description": "Amount of time (in minutes) until the payment date (`dueDate`)."
+                    }
+                }
+            },
+            "Validator": {
+                "required": [
+                    "regex",
+                    "mask",
+                    "cardCodeMask",
+                    "cardCodeRegex",
+                    "weights",
+                    "useCvv",
+                    "useExpirationDate",
+                    "useCardHolderName",
+                    "useBillingAddress",
+                    "validCardLengths"
+                ],
+                "type": "object",
+                "description": "Validator information.",
+                "properties": {
+                    "regex": {
+                        "type": "string",
+                        "description": "[Regex](https://regexr.com/) information.",
+                        "nullable": true
+                    },
+                    "mask": {
+                        "type": "string",
+                        "description": "Validator mask.",
+                        "nullable": true
+                    },
+                    "cardCodeMask": {
+                        "type": "string",
+                        "description": "Card code regular mask.",
+                        "nullable": true
+                    },
+                    "cardCodeRegex": {
+                        "type": "string",
+                        "description": "Card code regular expression.",
+                        "nullable": true
+                    },
+                    "weights": {
+                        "type": "array",
+                        "description": "Array containing weigths information.",
+                        "items": {
+                            "type": "integer",
+                            "description": "Weigths information."
+                        },
+                        "nullable": true
+                    },
+                    "useCvv": {
+                        "type": "boolean",
+                        "description": "Indicates whether it is necessary to use the CVV code to complete a transaction with payment made by card."
+                    },
+                    "useExpirationDate": {
+                        "type": "boolean",
+                        "description": "Indicates whether it is necessary to use the expiration date to complete a card payment transaction."
+                    },
+                    "useCardHolderName": {
+                        "type": "boolean",
+                        "description": "Indicates whether it is necessary to use the card holder name to complete a payment transaction made by card."
+                    },
+                    "useBillingAddress": {
+                        "type": "boolean",
+                        "description": "Indicates whether it is necessary to use the billing address to complete a card payment transaction."
+                    },
+                    "validCardLengths": {
+                        "type": "string",
+                        "description": "Information about valid card lengths.",
+                        "nullable": true
+                    }
+                }
+            },
+            "ProblemDetails": {
+                "type": "object",
+                "description": "RFC 7807 Problem Details response returned when the request cannot be completed.",
+                "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "instance"
+                ],
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "description": "URI reference that identifies the problem type."
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "Short, human-readable summary of the problem type."
+                    },
+                    "status": {
+                        "type": "integer",
+                        "format": "int32",
+                        "minimum": 100,
+                        "maximum": 599,
+                        "description": "HTTP status code generated by the server for this occurrence of the problem."
+                    },
+                    "detail": {
+                        "type": "string",
+                        "description": "Human-readable explanation specific to this occurrence of the problem."
+                    },
+                    "instance": {
+                        "type": "string",
+                        "description": "URI reference that identifies the specific occurrence of the problem."
+                    }
+                }
+            }
+        },
+        "parameters": {
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            },
+            "PolicyRuleId": {
+                "name": "id",
+                "in": "path",
+                "description": "Unique identifier of the policy rule.",
+                "required": true,
+                "schema": {
+                    "type": "string",
+                    "format": "^[a-f0-9]{32}$"
+                }
+            }
+        },
+        "responses": {
+            "BadRequest": {
+                "description": "Bad Request",
+                "content": {
+                    "application/problem+json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/ProblemDetails"
+                        },
+                        "example": {
+                            "type": "https://httpstatuses.com/400",
+                            "title": "Bad Request",
+                            "status": 400,
+                            "detail": "The request body is malformed.",
+                            "instance": "/api/payment-configuration-service/policy-rules"
+                        }
+                    }
+                }
+            },
+            "Unauthorized": {
+                "description": "Unauthorized",
+                "content": {
+                    "application/problem+json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/ProblemDetails"
+                        },
+                        "example": {
+                            "type": "https://httpstatuses.com/401",
+                            "title": "Unauthorized",
+                            "status": 401,
+                            "detail": "Missing or invalid credentials.",
+                            "instance": "/api/payment-configuration-service/policy-rules"
+                        }
+                    }
+                }
+            },
+            "Forbidden": {
+                "description": "Forbidden",
+                "content": {
+                    "application/problem+json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/ProblemDetails"
+                        },
+                        "example": {
+                            "type": "https://httpstatuses.com/403",
+                            "title": "Forbidden",
+                            "status": 403,
+                            "detail": "The user or API key does not have the required permission.",
+                            "instance": "/api/payment-configuration-service/policy-rules"
+                        }
+                    }
+                }
+            },
+            "NotFound": {
+                "description": "Not Found",
+                "content": {
+                    "application/problem+json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/ProblemDetails"
+                        },
+                        "example": {
+                            "type": "https://httpstatuses.com/404",
+                            "title": "Not Found",
+                            "status": 404,
+                            "detail": "Policy rule not found for the account.",
+                            "instance": "/api/payment-configuration-service/policy-rules"
+                        }
+                    }
+                }
+            },
+            "Conflict": {
+                "description": "Conflict",
+                "content": {
+                    "application/problem+json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/ProblemDetails"
+                        },
+                        "example": {
+                            "type": "https://httpstatuses.com/409",
+                            "title": "Conflict",
+                            "status": 409,
+                            "detail": "The policy rule was updated by another request. Retry with the latest data.",
+                            "instance": "/api/payment-configuration-service/policy-rules"
+                        }
+                    }
+                }
+            },
+            "UnprocessableContent": {
+                "description": "Unprocessable Content",
+                "content": {
+                    "application/problem+json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/ProblemDetails"
+                        },
+                        "example": {
+                            "type": "https://httpstatuses.com/422",
+                            "title": "Unprocessable Content",
+                            "status": 422,
+                            "detail": "Validation failed, the JSONLogic expression is invalid, or a domain invariant was violated.",
+                            "instance": "/api/payment-configuration-service/policy-rules"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Payment policy rules"
+        },
+        {
+            "name": "Payment policy evaluation"
+        }
+    ]
+}
