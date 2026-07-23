@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "External Promotions Protocol API",
-        "description": "The External Promotions Protocol API is a set of definitions that allows merchants to integrate their own external promotions engine with the VTEX platform. This is a protocol, which means the merchant must implement the endpoints described in this documentation as a web API (REST) on their own infrastructure.\r\n\r\n⚠️ This feature is only available for accounts using Headless Checkout.\r\n\r\nVTEX will call these endpoints during the shopping cart calculation and order lifecycle to:\r\n\r\n- Calculate promotions and discounts for a given shopping cart.\r\n- Notify the external promotions provider when an order is created or cancelled, reporting which promotions and coupons were applied.\r\n\r\n>⚠️ This feature is in a closed beta testing phase. If you are interested in participating, open a ticket with the [VTEX Support](https://help.vtex.com/en/support) team.\r\n\r\n## Index\r\n\r\n### External promotions\r\n\r\n- `POST` [Calculate promotions](https://developers.vtex.com/docs/api-reference/external-promotions-protocol-api#post-/calculatePromotion): calculates the promotions and discounts for a given shopping cart.\r\n- `POST` [Notify promotion usage](https://developers.vtex.com/docs/api-reference/external-promotions-protocol-api#post-/notifyUsage): receives a notification when an order is created or cancelled, informing which promotions and coupons were applied.\r\n\r\n## Common parameters\r\n\r\n| Parameter name | Description | Type |\r\n| --- | --- | --- |\r\n| `{{providerApiEndpoint}}` | External promotions provider endpoint URL. | Server variable. |",
+        "description": "The External Promotions Protocol API is a set of definitions that allows merchants to integrate their own external promotions engine with the VTEX platform. This is a protocol, which means the merchant must implement the endpoints described in this documentation as a web API (REST) on their own infrastructure.\r\n\r\n⚠️ This feature is only available for accounts using Headless Checkout.\r\n\r\nVTEX will call these endpoints during the shopping cart calculation and order lifecycle to:\r\n\r\n- Calculate promotions and discounts for a given shopping cart.\r\n- Notify the external promotions provider when an order is created or cancelled, reporting which promotions and coupons were applied.\r\n\r\n## Promotion sources\r\n\r\nAccounts configure promotions with one of these sources:\r\n\r\n- **Native** — VTEX promotions only (no external provider).\r\n- **Hybrid** — native VTEX promotions run first, then VTEX calls the external provider with the post-native cart so both engines can apply.\r\n\r\nThere is no external-only source. When an account integrates an external promotions provider, it always uses the **hybrid** orchestration model.\r\n\r\n>⚠️ This feature is in a closed beta testing phase. If you are interested in participating, open a ticket with the [VTEX Support](https://help.vtex.com/en/support) team.\r\n\r\n## Index\r\n\r\n### External promotions\r\n\r\n- `POST` [Calculate promotions](https://developers.vtex.com/docs/api-reference/external-promotions-protocol-api#post-/calculatePromotion): calculates the promotions and discounts for a given shopping cart.\r\n- `POST` [Notify promotion usage](https://developers.vtex.com/docs/api-reference/external-promotions-protocol-api#post-/notifyUsage): receives a notification when an order is created or cancelled, informing which promotions and coupons were applied.\r\n\r\n## Common parameters\r\n\r\n| Parameter name | Description | Type |\r\n| --- | --- | --- |\r\n| `{{providerApiEndpoint}}` | External promotions provider endpoint URL. | Server variable. |",
         "contact": {},
         "version": "1.1.0"
     },
@@ -25,7 +25,7 @@
                     "External promotions"
                 ],
                 "summary": "Calculate promotions",
-                "description": "Calculates the promotions and discounts applicable to a given shopping cart. VTEX calls this endpoint during the cart calculation process, sending the shopping cart data including items, coupon codes, UTM parameters, and sales channel information. The external promotions provider must return the calculated discounts for each item, along with a summary of all promotions considered.\r\n\r\nThis endpoint supports **hybrid** orchestration (protocol v1.1). When an account combines native VTEX promotions with an external provider, VTEX sends the cart **after** native evaluation: see `items[].price` (post-native per-unit price) and the optional per-line `items[].nativePromotionLayer`. The provider may also return `allPromotions[].qualificationProgress` describing promotions the shopper has **not yet unlocked**.\r\n\r\n## Authentication\r\n\r\nVTEX authenticates to the provider using the credentials configured for the account. By default this is an API key sent in the `X-API-Key` header (HTTP Basic is also supported). The provider should reject unauthenticated requests with `401 Unauthorized`.",
+                "description": "Calculates the promotions and discounts applicable to a given shopping cart. VTEX calls this endpoint during the cart calculation process, sending the shopping cart data including items, coupon codes, UTM parameters, and sales channel information. The external promotions provider must return the calculated discounts for each item, along with a summary of all promotions considered.\r\n\r\nThis endpoint supports **hybrid** orchestration (protocol v1.1). When an account combines native VTEX promotions with an external provider, VTEX sends the cart **after** native evaluation: see `items[].price` (post-native per-unit price) and the optional per-line `items[].nativePromotionLayer`. The provider may also return `allPromotions[].qualificationProgress` describing promotions the shopper has **not yet unlocked**.\r\n\r\nIn hybrid mode, the provider can optionally return `nativePromotionRemovals` to ask VTEX to drop specific applied native promotions (by the ids exposed in `items[].nativePromotionLayer.appliedPromotions[].id`) from the merged result — either cart-wide or for selected lines — instead of only stacking discounts on top of them. Absent or empty `nativePromotionRemovals` is a no-op.\r\n\r\n## Authentication\r\n\r\nVTEX authenticates to the provider using the credentials configured for the account. By default this is an API key sent in the `X-API-Key` header (HTTP Basic is also supported). The provider should reject unauthenticated requests with `401 Unauthorized`.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -146,7 +146,7 @@
                                                 "price": {
                                                     "type": "number",
                                                     "format": "double",
-                                                    "description": "Per-unit selling price of the item before the external engine applies. In **hybrid** mode this is the per-unit price **after** native VTEX promotions, so the provider can stack on top. In external-only mode this is the pre-external selling price."
+                                                    "description": "Per-unit selling price of the item before the external engine applies. In **hybrid** mode this is the per-unit price **after** native VTEX promotions, so the provider can stack on top."
                                                 },
                                                 "catalogInfo": {
                                                     "type": "object",
@@ -742,6 +742,41 @@
                                                     }
                                                 }
                                             }
+                                        },
+                                        "nativePromotionRemovals": {
+                                            "type": "array",
+                                            "nullable": true,
+                                            "description": "Optional, hybrid-only. Native VTEX promotions the provider asks VTEX to remove from the merged cart result. Absent or empty is a strict no-op (same as the append-only merge). Reference each promotion by the id exposed in `items[].nativePromotionLayer.appliedPromotions[].id`. Only native promotions exposed via `nativePromotionLayer` (price and gift) are removable; unknown, non-applied, or non-removable ids (shipping, tax, reward) and malformed entries are silently ignored and never fail the calculation. Added in protocol v1.1.",
+                                            "items": {
+                                                "type": "object",
+                                                "required": [
+                                                    "promotionId"
+                                                ],
+                                                "description": "Request to remove an applied native VTEX promotion from the merged result.",
+                                                "properties": {
+                                                    "promotionId": {
+                                                        "type": "string",
+                                                        "description": "Native promotion identifier to remove, matching `items[].nativePromotionLayer.appliedPromotions[].id` from the request. Ids that are not applied or not removable are silently ignored."
+                                                    },
+                                                    "scope": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "cartWide",
+                                                            "perLine"
+                                                        ],
+                                                        "description": "Removal scope, matched case-insensitively. Use `cartWide` to remove the promotion from all lines, or `perLine` to remove it only from the cited `lineItemIds`. When omitted, defaults to `cartWide`. For the same `promotionId`, a `cartWide` entry absorbs any `perLine` entries; repeated `perLine` entries union their `lineItemIds`. Unrecognized values are discarded without failing the response."
+                                                    },
+                                                    "lineItemIds": {
+                                                        "type": "array",
+                                                        "nullable": true,
+                                                        "description": "Cart item ids (`items[].id`) to strip when `scope` is `perLine`. Required and non-empty for `perLine`; ignored for `cartWide`. Cited lines the promotion did not touch are silently ignored.",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "description": "Cart item identifier to strip, aligned with `items[].id` in the same calculate promotions call."
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 },
@@ -791,6 +826,12 @@
                                                     "UpPrice"
                                                 ]
                                             }
+                                        }
+                                    ],
+                                    "nativePromotionRemovals": [
+                                        {
+                                            "promotionId": "native-promo-1",
+                                            "scope": "cartWide"
                                         }
                                     ]
                                 }
