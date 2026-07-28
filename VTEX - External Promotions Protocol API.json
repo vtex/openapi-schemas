@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "External Promotions Protocol API",
-        "description": "The External Promotions Protocol API is a set of definitions that allows merchants to integrate their own external promotions engine with the VTEX platform. This is a protocol, which means the merchant must implement the endpoints described in this documentation as a web API (REST) on their own infrastructure.\n\n>⚠️ This feature is in a closed betawhich means that we are working to improve it. If you have any questions, please contact our [Support Center](https://help.vtex.com/en/support).\n\nVTEX will call these endpoints during the shopping cart calculation and order lifecycle to:\n\n- Calculate promotions and discounts for a given shopping cart.\n- Notify the external promotions provider when an order is created or cancelled, reporting which promotions and coupons were applied.\n\n> ⚠️ This feature is only available for accounts using Headless Checkout.\n\n## Promotion sources\n\nAccounts configure promotions with one of these sources:\n\n- **Native**: VTEX promotions only (no external provider).\n- **Hybrid**: native VTEX promotions run first, then VTEX calls the external provider with the post-native cart so both engines can apply.\n\nThere is no external-only source. When an account integrates an external promotions provider, it always uses the **hybrid** orchestration model.\n\n## Common parameters\n\n| Parameter name | Description | Type |\n| --- | --- | --- |\n| `{{providerApiEndpoint}}` | External promotions provider endpoint URL. | Server variable. |",
+        "description": "The External Promotions Protocol API is a set of definitions that allows merchants to integrate their own external promotions engine with the VTEX platform. This is a protocol, which means the merchant must implement the endpoints described in this documentation as a web API (REST) on their own infrastructure.\r\n\r\n⚠️ In this release the protocol targets accounts using Headless Checkout. Store Framework checkout is out of scope and may adopt the same APIs later.\r\n\r\nVTEX will call these endpoints during the shopping cart calculation and order lifecycle to:\r\n\r\n- Calculate promotions and discounts for a given shopping cart.\r\n- Notify the external promotions provider when an order is created or cancelled, reporting which promotions and coupons were applied.\r\n\r\n## Promotion sources\r\n\r\nAccounts configure promotions with one of these sources:\r\n\r\n- **Native** — VTEX promotions only (no external provider).\r\n- **Hybrid** — native VTEX promotions run first, then VTEX calls the external provider with the post-native cart so both engines can apply.\r\n\r\nThere is no external-only source. When an account integrates an external promotions provider, it always uses the **hybrid** orchestration model.\r\n\r\n>⚠️ This feature is in a closed beta testing phase. If you are interested in participating, open a ticket with the [VTEX Support](https://help.vtex.com/en/support) team.\r\n\r\n## Authentication\r\n\r\nVTEX authenticates to the provider with an API key sent in an HTTP request header. The header name is configured per account and defaults to `Authorization`; an optional prefix (for example `Bearer `) can be prepended to the key value. Because both the header name and the prefix are configurable, agree on them with VTEX during onboarding.\r\n\r\nVTEX does not send HTTP Basic credentials. The provider should reject unauthenticated requests with `401 Unauthorized`.\r\n\r\n## Request headers\r\n\r\nVTEX sends `Content-Type: application/json; charset=utf-8` on every call. VTEX does **not** send an `Accept` header, so the provider must not require one.\r\n\r\n## Timeouts, retries and error handling\r\n\r\n| Endpoint | Timeout | Retries |\r\n| --- | --- | --- |\r\n| `calculatePromotion` | 5000 ms by default, configurable per account. | None. The call is issued once. |\r\n| `notifyUsage` | 5000 ms by default, configurable per account. | Up to 3 by default, with exponential backoff. |\r\n\r\nBecause `notifyUsage` is retried, the provider may receive the same notification more than once and must process it idempotently, keyed by `orderId` and `type`.\r\n\r\nWhen a `calculatePromotion` call fails — timeout, non-2xx status, or a body VTEX cannot validate — the account's error treatment setting decides the outcome: `nativeOnly` keeps the native result and silently drops the external one, `acceptPartial` merges the fragments that validated, and `raiseError` surfaces an error to the caller. Providers should fail fast within the timeout rather than returning a partially built body.\r\n\r\n## Index\r\n\r\n### External promotions\r\n\r\n- `POST` [Calculate promotions](https://developers.vtex.com/docs/api-reference/external-promotions-protocol-api#post-/calculatePromotion): calculates the promotions and discounts for a given shopping cart.\r\n- `POST` [Notify promotion usage](https://developers.vtex.com/docs/api-reference/external-promotions-protocol-api#post-/notifyUsage): receives a notification when an order is created or cancelled, informing which promotions and coupons were applied.\r\n\r\n## Common parameters\r\n\r\n| Parameter name | Description | Type |\r\n| --- | --- | --- |\r\n| `{{providerApiEndpoint}}` | External promotions provider endpoint URL. | Server variable. |",
         "contact": {},
         "version": "1.1.0"
     },
@@ -12,8 +12,8 @@
             "description": "External promotions provider endpoint URL.",
             "variables": {
                 "providerApiEndpoint": {
-                    "description": "External promotions provider endpoint URL.",
-                    "default": "{providerApiEndpoint}"
+                    "description": "External promotions provider endpoint host, optionally followed by a path prefix (for example `provider.example.com/api/v1`). VTEX calls `calculatePromotion` and `notifyUsage` relative to this URL.",
+                    "default": "provider.example.com"
                 }
             }
         }
@@ -25,13 +25,10 @@
                     "External promotions"
                 ],
                 "summary": "Calculate promotions",
-                "description": "Calculates the promotions and discounts applicable to a given shopping cart. VTEX calls this endpoint during the cart calculation process, sending the shopping cart data including items, coupon codes, UTM parameters, and sales channel information. The external promotions provider must return the calculated discounts for each item, along with a summary of all promotions considered.\r\n\r\nThis endpoint supports **hybrid** orchestration (protocol v1.1). When an account combines native VTEX promotions with an external provider, VTEX sends the cart **after** native evaluation: see `items[].price` (post-native per-unit price) and the optional per-line `items[].nativePromotionLayer`. The provider may also return `allPromotions[].qualificationProgress` describing promotions the shopper has **not yet unlocked**.\r\n\r\nIn hybrid mode, the provider can optionally return `nativePromotionRemovals` to ask VTEX to drop specific applied native promotions (by the ids exposed in `items[].nativePromotionLayer.appliedPromotions[].id`) from the merged result — either cart-wide or for selected lines — instead of only stacking discounts on top of them. Absent or empty `nativePromotionRemovals` is a no-op.\r\n\r\n## Authentication\r\n\r\nVTEX authenticates to the provider using the credentials configured for the account. By default this is an API key sent in the `X-API-Key` header (HTTP Basic is also supported). The provider should reject unauthenticated requests with `401 Unauthorized`.",
+                "description": "Calculates the promotions and discounts applicable to a given shopping cart. VTEX calls this endpoint during the cart calculation process, sending the shopping cart data including items, coupon codes, UTM parameters, and sales channel information. The external promotions provider must return the calculated discounts for each item, along with a summary of all promotions considered.\r\n\r\nThis endpoint supports **hybrid** orchestration (protocol v1.1). When an account combines native VTEX promotions with an external provider, VTEX sends the cart **after** native evaluation: see `items[].price` (post-native per-unit price) and the optional per-line `items[].nativePromotionLayer`. The provider may also return `allPromotions[].qualificationProgress` describing promotions the shopper has **not yet unlocked**.\r\n\r\nIn hybrid mode, the provider can optionally return `nativePromotionRemovals` to ask VTEX to drop specific applied native promotions (by the ids exposed in `items[].nativePromotionLayer.appliedPromotions[].id`) from the merged result — either cart-wide or for selected lines — instead of only stacking discounts on top of them. Absent or empty `nativePromotionRemovals` is a no-op.\r\n\r\n## How VTEX derives the discount\r\n\r\nThis is the single most important rule of the response contract:\r\n\r\n- The money VTEX applies comes **only** from `items[].promotions[].discount`, multiplied by `items[].quantity`.\r\n- A promotion produces a discount **only** if its `id` is also listed in `allPromotions`. VTEX builds the result by iterating `allPromotions` and matching each entry against `items[].promotions`.\r\n- `originalPrice`, `discountedPrice` and `externalPromotionLayer` are **informational**. They are used for tracing and diagnostics and never produce a discount on their own. Returning `externalPromotionLayer` without the matching `items[].promotions` entries results in **no discount being applied at all**.\r\n\r\n## Response requirements\r\n\r\nVTEX validates the body before merging it and discards the **entire** response when it is malformed. Specifically:\r\n\r\n- `items` must be present and must not contain `null` entries.\r\n- If any `items[].promotions` is present and non-empty, then `allPromotions` must also be present and non-empty. Item-level promotions without a catalog are rejected.\r\n- Every `allPromotions[].id` and every `items[].promotions[].id` must be a non-empty string.\r\n- Every `items[].id` must match an item id sent in the request.\r\n- Quantity fields under `qualificationProgress` must be whole numbers. A fractional value fails deserialization and discards the response.\r\n\r\nAn applied promotion id that is not listed in `allPromotions` is tolerated and does not fail the response, but no discount is produced for it.\r\n\r\n## Authentication\r\n\r\nVTEX authenticates with an API key sent in a header whose name is configured per account and defaults to `Authorization`, optionally with a prefix such as `Bearer `. VTEX does not send HTTP Basic credentials, and it does not send an `Accept` header. The provider should reject unauthenticated requests with `401 Unauthorized`.\r\n\r\n## Timeout\r\n\r\nThe call times out after 5000 ms by default (configurable per account) and is **not** retried.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
-                    },
-                    {
-                        "$ref": "#/components/parameters/Accept"
                     }
                 ],
                 "requestBody": {
@@ -363,7 +360,7 @@
                                                     "promotions": {
                                                         "type": "array",
                                                         "nullable": true,
-                                                        "description": "List of promotions applied to this item.",
+                                                        "description": "Promotions applied by the external provider to this item. **This is the only field VTEX uses to compute the external discount**: the applied value is `discount` multiplied by this item's `quantity`, and only for promotions whose `id` is also listed in `allPromotions`. Omitting this array — even when `externalPromotionLayer` is populated — means no external discount is applied to the line. When both are present they must describe the same promotions; a mismatch is logged as a warning.",
                                                         "items": {
                                                             "type": "object",
                                                             "required": [
@@ -395,18 +392,18 @@
                                                     "originalPrice": {
                                                         "type": "number",
                                                         "format": "double",
-                                                        "description": "Original per-unit price of this line before external deals. In hybrid mode, typically the per-unit price after native promotions (the pre-external price the provider augments)."
+                                                        "description": "Original per-unit price of this line before external deals. In hybrid mode, typically the per-unit price after native promotions (the pre-external price the provider augments). Informational only: VTEX does not derive the discount from this field."
                                                     },
                                                     "discountedPrice": {
                                                         "type": "number",
                                                         "nullable": true,
                                                         "format": "double",
-                                                        "description": "Per-unit price of the item after external promotions are applied."
+                                                        "description": "Per-unit price of the item after external promotions are applied. Informational only: VTEX does not derive the discount from this field, it uses `promotions[].discount`."
                                                     },
                                                     "externalPromotionLayer": {
                                                         "type": "object",
                                                         "nullable": true,
-                                                        "description": "Hybrid: how the partner (external) promotion layer changed this line. When set, `priceBeforeLayer` matches `originalPrice` and `priceAfterLayer` matches `discountedPrice`. Added in protocol v1.1.",
+                                                        "description": "Hybrid: how the partner (external) promotion layer changed this line. Informational only — it is used for tracing and reconciliation and never produces a discount by itself; always send the corresponding `promotions` entries. When set, `priceBeforeLayer` SHOULD match `originalPrice` and `priceAfterLayer` SHOULD match `discountedPrice`; VTEX compares them with a tolerance of 0.01 and only logs a warning on divergence, without rejecting the response. Added in protocol v1.1.",
                                                         "required": [
                                                             "priceBeforeLayer",
                                                             "priceAfterLayer"
@@ -461,7 +458,7 @@
                                         "allPromotions": {
                                             "type": "array",
                                             "nullable": true,
-                                            "description": "List of all promotions considered for this shopping cart, including those that were not applied.",
+                                            "description": "Catalog of all promotions considered for this shopping cart, including those that were not applied. **Conditionally required**: whenever any `items[].promotions` entry is present, this array must be present and non-empty, otherwise VTEX rejects the whole response. It is also the catalog VTEX iterates to build discounts, so a promotion referenced in `items[].promotions` but missing here produces no discount. Every entry must carry a non-empty `id`.",
                                             "items": {
                                                 "type": "object",
                                                 "required": [
@@ -511,10 +508,10 @@
                                                                 "description": "Item/SKU quantity qualification context: optional aggregate and per-SKU rows.",
                                                                 "properties": {
                                                                     "totalUnitsRemaining": {
-                                                                        "type": "number",
+                                                                        "type": "integer",
                                                                         "nullable": true,
-                                                                        "format": "double",
-                                                                        "description": "Aggregate extra units still needed across the qualifying SKU set."
+                                                                        "format": "int32",
+                                                                        "description": "Aggregate extra units still needed across the qualifying SKU set. Must be a whole number: a fractional value fails deserialization and discards the whole response."
                                                                     },
                                                                     "perSku": {
                                                                         "type": "array",
@@ -534,19 +531,19 @@
                                                                                     "type": "integer",
                                                                                     "nullable": true,
                                                                                     "format": "int32",
-                                                                                    "description": "Units of this SKU currently in the cart toward this promotion."
+                                                                                    "description": "Units of this SKU currently in the cart toward this promotion. Must be a whole number."
                                                                                 },
                                                                                 "unitsRequiredForPromotion": {
-                                                                                    "type": "number",
+                                                                                    "type": "integer",
                                                                                     "nullable": true,
-                                                                                    "format": "double",
-                                                                                    "description": "Units of this SKU required by the rule."
+                                                                                    "format": "int32",
+                                                                                    "description": "Units of this SKU required by the rule. Must be a whole number: a fractional value fails deserialization and discards the whole response."
                                                                                 },
                                                                                 "unitsRemaining": {
-                                                                                    "type": "number",
+                                                                                    "type": "integer",
                                                                                     "nullable": true,
-                                                                                    "format": "double",
-                                                                                    "description": "Units of this SKU still needed to satisfy its part of the condition."
+                                                                                    "format": "int32",
+                                                                                    "description": "Units of this SKU still needed to satisfy its part of the condition. Must be a whole number: a fractional value fails deserialization and discards the whole response."
                                                                                 }
                                                                             }
                                                                         }
@@ -582,9 +579,10 @@
                                                                         "enum": [
                                                                             "AllItems",
                                                                             "IncludeMatchedItems",
-                                                                            "ExcludeMatchedItems"
+                                                                            "ExcludeMatchedItems",
+                                                                            null
                                                                         ],
-                                                                        "description": "Which line items' value participates in the subtotal check."
+                                                                        "description": "Which line items' value participates in the subtotal check. Omit the property or send `null` when the rule does not define a scope."
                                                                     }
                                                                 }
                                                             },
@@ -764,7 +762,7 @@
                                                             "cartWide",
                                                             "perLine"
                                                         ],
-                                                        "description": "Removal scope, matched case-insensitively. Use `cartWide` to remove the promotion from all lines, or `perLine` to remove it only from the cited `lineItemIds`. When omitted, defaults to `cartWide`. For the same `promotionId`, a `cartWide` entry absorbs any `perLine` entries; repeated `perLine` entries union their `lineItemIds`. Unrecognized values are discarded without failing the response."
+                                                        "description": "Removal scope. `cartWide` and `perLine` are the canonical values and the only ones providers should send; VTEX additionally tolerates other casings at runtime, but they are not part of this contract and will fail schema validation. Use `cartWide` to remove the promotion from all lines, or `perLine` to remove it only from the cited `lineItemIds`. When omitted, defaults to `cartWide`. For the same `promotionId`, a `cartWide` entry absorbs any `perLine` entries; repeated `perLine` entries union their `lineItemIds`. Unrecognized values are discarded without failing the response."
                                                     },
                                                     "lineItemIds": {
                                                         "type": "array",
@@ -780,60 +778,106 @@
                                         }
                                     }
                                 },
-                                "example": {
-                                    "items": [
-                                        {
-                                            "id": "792",
-                                            "quantity": 3,
-                                            "promotions": [
+                                "examples": {
+                                    "stackedOnNativePromotion": {
+                                        "summary": "Hybrid — external discount stacked on top of the native one",
+                                        "description": "Answers the request example. The native promotion already took the unit price from 2.50 to 2.00, which is why the request carried `price: 2`. The provider stacks 0.25 per unit on top, so the line settles at 1.75 per unit and both promotions stay applied. Because there is no `nativePromotionRemovals`, the merge is purely additive. Note that `promotions[].discount` is what VTEX charges against the line: 0.25 × 3 units = 0.75 off this line.",
+                                        "value": {
+                                            "items": [
                                                 {
-                                                    "id": "promo-1",
-                                                    "discount": 0.25,
-                                                    "type": "Nominal"
+                                                    "id": "792",
+                                                    "quantity": 3,
+                                                    "promotions": [
+                                                        {
+                                                            "id": "promo-1",
+                                                            "discount": 0.25,
+                                                            "type": "Nominal"
+                                                        }
+                                                    ],
+                                                    "originalPrice": 2.0,
+                                                    "discountedPrice": 1.75,
+                                                    "externalPromotionLayer": {
+                                                        "priceBeforeLayer": 2.0,
+                                                        "priceAfterLayer": 1.75,
+                                                        "appliedPromotions": [
+                                                            {
+                                                                "id": "promo-1",
+                                                                "discount": 0.25,
+                                                                "type": "Nominal"
+                                                            }
+                                                        ]
+                                                    }
                                                 }
                                             ],
-                                            "originalPrice": 2.0,
-                                            "discountedPrice": 1.75,
-                                            "externalPromotionLayer": {
-                                                "priceBeforeLayer": 2.0,
-                                                "priceAfterLayer": 1.75,
-                                                "appliedPromotions": [
-                                                    {
-                                                        "id": "promo-1",
-                                                        "discount": 0.25,
-                                                        "type": "Nominal"
+                                            "allPromotions": [
+                                                {
+                                                    "id": "promo-1",
+                                                    "name": "25 cents off on cokes",
+                                                    "description": "Buy at least 3 cokes and get 25 cents off on each",
+                                                    "couponCode": "25offCoke"
+                                                },
+                                                {
+                                                    "id": "promo-2",
+                                                    "name": "Free shipping over $50",
+                                                    "description": "Spend $50 or more to unlock free shipping",
+                                                    "couponCode": null,
+                                                    "qualificationProgress": {
+                                                        "remainingCartWideAmount": 44.0,
+                                                        "orderSubtotalMustExceed": 50.0,
+                                                        "teaserStyleHints": [
+                                                            "UpPrice"
+                                                        ]
                                                     }
-                                                ]
-                                            }
+                                                }
+                                            ]
                                         }
-                                    ],
-                                    "allPromotions": [
-                                        {
-                                            "id": "promo-1",
-                                            "name": "25 cents off on cokes",
-                                            "description": "Buy at least 3 cokes and get 25 cents off on each",
-                                            "couponCode": "25offCoke"
-                                        },
-                                        {
-                                            "id": "promo-2",
-                                            "name": "Free shipping over $50",
-                                            "description": "Spend $50 or more to unlock free shipping",
-                                            "couponCode": null,
-                                            "qualificationProgress": {
-                                                "remainingCartWideAmount": 44.0,
-                                                "orderSubtotalMustExceed": 50.0,
-                                                "teaserStyleHints": [
-                                                    "UpPrice"
-                                                ]
-                                            }
+                                    },
+                                    "replacingNativePromotion": {
+                                        "summary": "Hybrid — external promotion replaces the native one",
+                                        "description": "Answers the same request, but the provider does not want its deal to stack. It asks VTEX to drop `native-promo-1` cart-wide, so the native 0.50 per unit disappears from the merged result, and prices its own deal against the pre-native price of 2.50 exposed in `nativePromotionLayer.priceBeforeLayer`. The line settles at 2.20 per unit (2.50 − 0.30) and `native-promo-1` no longer appears in the cart.",
+                                        "value": {
+                                            "items": [
+                                                {
+                                                    "id": "792",
+                                                    "quantity": 3,
+                                                    "promotions": [
+                                                        {
+                                                            "id": "promo-1",
+                                                            "discount": 0.3,
+                                                            "type": "Nominal"
+                                                        }
+                                                    ],
+                                                    "originalPrice": 2.5,
+                                                    "discountedPrice": 2.2,
+                                                    "externalPromotionLayer": {
+                                                        "priceBeforeLayer": 2.5,
+                                                        "priceAfterLayer": 2.2,
+                                                        "appliedPromotions": [
+                                                            {
+                                                                "id": "promo-1",
+                                                                "discount": 0.3,
+                                                                "type": "Nominal"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            ],
+                                            "allPromotions": [
+                                                {
+                                                    "id": "promo-1",
+                                                    "name": "30 cents off on cokes",
+                                                    "description": "Buy at least 3 cokes and get 30 cents off on each, replacing any native coke discount",
+                                                    "couponCode": "30offCoke"
+                                                }
+                                            ],
+                                            "nativePromotionRemovals": [
+                                                {
+                                                    "promotionId": "native-promo-1",
+                                                    "scope": "cartWide"
+                                                }
+                                            ]
                                         }
-                                    ],
-                                    "nativePromotionRemovals": [
-                                        {
-                                            "promotionId": "native-promo-1",
-                                            "scope": "cartWide"
-                                        }
-                                    ]
+                                    }
                                 }
                             }
                         }
@@ -853,13 +897,10 @@
                     "External promotions"
                 ],
                 "summary": "Notify promotion usage",
-                "description": "Receives a notification when an order is created or cancelled, informing the external promotions provider which promotions and coupons were applied to the order. This allows the provider to track promotion usage, enforce usage limits, and maintain accurate promotion state.\r\n\r\nThe optional `correlationId` references the `calculatePromotion` evaluation that led to the order, when VTEX can supply it, for end-to-end tracing. Added in protocol v1.1.\r\n\r\n## Authentication\r\n\r\nVTEX authenticates to the provider using the credentials configured for the account (API key in the `X-API-Key` header by default; HTTP Basic also supported). The provider should reject unauthenticated requests with `401 Unauthorized`.",
+                "description": "Receives a notification when an order is created or cancelled, informing the external promotions provider which promotions and coupons were applied to the order. This allows the provider to track promotion usage, enforce usage limits, and maintain accurate promotion state.\r\n\r\nThe optional `correlationId` references the `calculatePromotion` evaluation that led to the order, when VTEX can supply it, for end-to-end tracing. Added in protocol v1.1.\r\n\r\nIn hybrid mode this notification carries **only the external provider's own promotions**. Native VTEX promotions applied to the same order are filtered out before sending, so `promotionUsages` never contains native ids. When no external promotion applied to the order, VTEX skips the call entirely.\r\n\r\n## Idempotency\r\n\r\nThe call times out after 5000 ms by default and is retried up to 3 times by default, with exponential backoff. The provider may therefore receive the same notification more than once and must process it idempotently, keyed by `orderId` and `type`. VTEX treats any 2xx as success and does not act on the response body.\r\n\r\n## Authentication\r\n\r\nVTEX authenticates with an API key sent in a header whose name is configured per account and defaults to `Authorization`, optionally with a prefix such as `Bearer `. VTEX does not send HTTP Basic credentials, and it does not send an `Accept` header. The provider should reject unauthenticated requests with `401 Unauthorized`.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
-                    },
-                    {
-                        "$ref": "#/components/parameters/Accept"
                     }
                 ],
                 "requestBody": {
@@ -954,46 +995,27 @@
     "security": [
         {
             "apiKey": []
-        },
-        {
-            "Basic": []
         }
     ],
     "components": {
         "securitySchemes": {
             "apiKey": {
                 "type": "apiKey",
-                "name": "X-API-Key",
+                "name": "Authorization",
                 "in": "header",
-                "description": "API key provided by the external promotions provider for authentication."
-            },
-            "Basic": {
-                "type": "http",
-                "scheme": "basic",
-                "description": "Basic authentication provided by the external promotions provider."
+                "description": "API key configured for the account. The header name defaults to `Authorization` but is configurable per account, and the value may carry a configurable prefix such as `Bearer `. HTTP Basic authentication is not supported: VTEX never sends Basic credentials."
             }
         },
         "parameters": {
             "Content-Type": {
                 "name": "Content-Type",
                 "in": "header",
-                "description": "Type of the content being sent.",
+                "description": "Type of the content being sent. VTEX always sends `application/json; charset=utf-8`, so the provider must not match this header exactly against `application/json`.",
                 "required": true,
                 "style": "simple",
                 "schema": {
                     "type": "string",
-                    "example": "application/json"
-                }
-            },
-            "Accept": {
-                "name": "Accept",
-                "in": "header",
-                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
-                "required": true,
-                "style": "simple",
-                "schema": {
-                    "type": "string",
-                    "example": "application/json"
+                    "example": "application/json; charset=utf-8"
                 }
             }
         }
