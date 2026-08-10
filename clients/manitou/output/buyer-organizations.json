@@ -1,0 +1,481 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Buyer Organizations",
+    "description": "The Buyer Organizations API facilitates the bulk import of [Buyer Organizations](https://developers.vtex.com/docs/apps/vtex.b2b-organizations), [Cost Centers](https://developers.vtex.com/docs/guides/vtex-b2b-organizations#cost-centers), and [Members](https://developers.vtex.com/docs/guides/vtex-b2b-organizations#users). By allowing spreadsheet import, this API simplifies the management of buyer organizations and allows easy updating and maintenance of information in B2B stores.\r\n\r\n>ℹ ️Only `.xlsx` files under 50MB in size can be imported. You can [download the template file](https://io.vtex.com.br/b2b-bulk-import/b2b-bulk-import-template.xlsx) as an example. For more information on the file structure and how to fill it out, access the [Bulk Import Buyer Organizations Spreadsheet](https://developers.vtex.com/docs/guides/bulk-import-buyer-organizations-spreadsheet) guide.\r\n\r\n\r\n## Index\r\n\r\n### Bulk import\r\n- `POST` [Upload file](https://developers.vtex.com/docs/api-reference/buyer-organizations#post-/api/b2b/import/buyer-orgs)\r\n- `GET` [Check progress](https://developers.vtex.com/docs/api-reference/buyer-organizations#get-/api/b2b/import/buyer-orgs/-importId-)\r\n- `POST` [Start import](https://developers.vtex.com/docs/api-reference/buyer-organizations#post-/api/b2b/import/buyer-orgs/-importId-)\r\n- `POST` [Validate file](https://developers.vtex.com/docs/api-reference/buyer-organizations#post-/api/b2b/import/buyer-orgs/validate/-importId-)\r\n\r\n>⚠️ Bulk Import does not allow editing or updating existing information for organizations and cost centers. It is intended solely for creating new records and managing members.\r\n\r\n## Common parameters in the documentation\r\n\r\n| Parameter name | Description |\r\n| - | - |\r\n| `{{accountName}}` | Name of the VTEX account. Used as part of the URL. |\r\n| `{{environment}}` | Environment to use. Used as part of the URL. |\r\n| `{{X-VTEX-API-AppKey}}` | Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys). |\r\n| `{{X-VTEX-API-AppToken}}` | Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys). |",
+    "version": "1.0"
+  },
+  "servers": [
+    {
+      "url": "https://{accountName}.{environment}.com.br",
+      "description": "VTEX server URL.",
+      "variables": {
+        "accountName": {
+          "description": "Name of the VTEX account. Used as part of the URL.",
+          "default": "apiexamples"
+        },
+        "environment": {
+          "description": "Environment to use. Used as part of the URL.",
+          "enum": [
+            "vtexcommercestable"
+          ],
+          "default": "vtexcommercestable"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/api/b2b/import/buyer-orgs": {
+      "post": {
+        "tags": [
+          "Bulk Import"
+        ],
+        "summary": "Upload file",
+        "description": "Uploads a file for bulk import of Buyer Organizations, Cost Centers and Members. The uploaded file should be in `XLSX` format and have less than 50MB. For more information on the file structure and how to fill it out, access the [Bulk Import Spreadsheet](https://developers.vtex.com/docs/guides/bulk-import-buyer-organizations-spreadsheet) guide.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| B2B | B2B General | **B2BBulkImport** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.\n\n> Requests with a body must be sent with `Content-Type: application/json`.",
+        "operationId": "UploadFile",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/an"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "encoding": {},
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "File to be uploaded.",
+                    "example": "file.xlsx"
+                  }
+                }
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/file-data"
+                },
+                "example": {
+                  "accountName": "accountName",
+                  "importId": "3c3cba0a-8355-4812-ad4d-f4c0b32e2613",
+                  "importState": "Uploaded",
+                  "percentage": "0",
+                  "lastUpdateDate": "2023-10-05T16:40:11+00:00",
+                  "fileName": "file.xlsx"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/b2b/import/buyer-orgs/{importId}": {
+      "get": {
+        "tags": [
+          "Bulk Import"
+        ],
+        "summary": "Check progress",
+        "description": "Checks the progress of a started file validation or import process. After initiating validation using [Validate file](https://developers.vtex.com/docs/api-reference/buyer-organizations#post-/api/b2b/import/buyer-orgs/validate/-importId-) or import using [Start import](https://developers.vtex.com/docs/api-reference/buyer-organizations#post-/api/b2b/import/buyer-orgs/-importId-), you can track progress by sending a request to this endpoint. \r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| B2B | B2B General | **B2BBulkImport** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+        "operationId": "CheckProgress",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/an"
+          },
+          {
+            "$ref": "#/components/parameters/importId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response containing the details of the file validation or import.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/file-data"
+                    },
+                    {
+                      "$ref": "#/components/schemas/importResult"
+                    },
+                    {
+                      "$ref": "#/components/schemas/validationResult"
+                    }
+                  ]
+                },
+                "examples": {
+                  "ValidationDetails": {
+                    "value": {
+                      "accountName": "accountName",
+                      "importId": "3c3cba0a-8355-4812-ad4d-f4c0b32e2613",
+                      "importState": "InValidation",
+                      "percentage": "0",
+                      "lastUpdateDate": "2023-10-05T16:40:11+00:00",
+                      "fileName": "file.xlsx"
+                    }
+                  },
+                  "ImportDetails": {
+                    "value": {
+                      "accountName": "accountName",
+                      "importId": "3c3cba0a-8355-4812-ad4d-f4c0b32e2613",
+                      "importState": "Completed",
+                      "percentage": "100",
+                      "lastUpdateDate": "2023-10-05T16:41:11+00:00",
+                      "fileName": "file.xlsx"
+                    }
+                  },
+                  "ValidationErrorsDetails": {
+                    "value": {
+                      "accountName": "accountName",
+                      "importId": "71411025-c7d9-4c9d-92b5-9bc70a1acdb7",
+                      "importState": "ValidationFailed",
+                      "percentage": "0",
+                      "lastUpdateDate": "2024-02-21T17:56:57+00:00",
+                      "fileName": "file.xlsx",
+                      "validationResult": {
+                        "isValid": false,
+                        "validationResult": [
+                          {
+                            "name": "Organizations",
+                            "validRows": 0,
+                            "invalidRows": 1
+                          },
+                          {
+                            "name": "Cost Centers",
+                            "validRows": 0,
+                            "invalidRows": 0
+                          },
+                          {
+                            "name": "Members",
+                            "validRows": 0,
+                            "invalidRows": 0
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "ImportErrorsDetails": {
+                    "value": {
+                      "accountName": "accountName",
+                      "importId": "d51b1b09-b4f3-44a3-ad70-53b9c8fe35f4",
+                      "importState": "CompletedWithError",
+                      "percentage": "100",
+                      "lastUpdateDate": "2024-02-26T14:47:10+00:00",
+                      "fileName": "test-26-fev-bulk-import-error.xlsx",
+                      "importResult": {
+                        "imports": [
+                          {
+                            "name": "Organizations",
+                            "importedRows": 2,
+                            "rowsWithError": 1
+                          }
+                        ],
+                        "reportDownloadLink": "https://host.com/files/accountName/d51b1b09-b4f3-44a3-ad70-53b9c8fe35f4/file-error_Report.xlsx"
+                      },
+                      "importedAt": "2024-02-26T14:47:05+00:00",
+                      "importedUserEmail": "user@host.com",
+                      "importedUserName": "user"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Bulk Import"
+        ],
+        "summary": "Start import",
+        "description": "Once the file is successfully uploaded and validated, you can call this endpoint to start the import. Provide the `importId` returned by the [Validate file](https://developers.vtex.com/docs/api-reference/buyer-organizations#post-/api/b2b/import/buyer-orgs/validate/-importId-) or [Upload file](https://developers.vtex.com/docs/api-reference/buyer-organizations#post-/api/b2b/import/buyer-orgs) endpoints. \r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| B2B | B2B General | **B2BBulkImport** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/an"
+          },
+          {
+            "$ref": "#/components/parameters/importId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "operationId": "post_api_b2b_import_buyerOrgs_ByImportId"
+      }
+    },
+    "/api/b2b/import/buyer-orgs/validate/{importId}": {
+      "post": {
+        "tags": [
+          "Bulk Import"
+        ],
+        "summary": "Validate file",
+        "description": "Starts the bulk import file content validation. Once the the file is successfully uploaded, you can start the validation using the `importId` returned by the [Upload file](https://developers.vtex.com/docs/api-reference/buyer-organizations#post-/api/b2b/import/buyer-orgs) endpoint. \n\n## Permissions\n\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\n\n| **Product** | **Category** | **Resource** |\n| --------------- | ----------------- | ----------------- |\n| B2B | B2B General | **B2BBulkImport** |\n\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\n\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+        "operationId": "ValidateFile",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/an"
+          },
+          {
+            "$ref": "#/components/parameters/importId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "an": {
+        "name": "an",
+        "in": "query",
+        "description": "Name of your VTEX account.",
+        "required": false,
+        "style": "form",
+        "schema": {
+          "type": "string",
+          "example": "exampleAccount"
+        }
+      },
+      "importId": {
+        "name": "importId",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier of the import.",
+        "schema": {
+          "type": "string",
+          "example": "3c3cba0a-8355-4812-ad4d-f4c0b32e2613"
+        }
+      }
+    },
+    "schemas": {
+      "file-data": {
+        "type": "object",
+        "description": "Object containing information about bulk import state.",
+        "required": [
+          "accountName",
+          "importId",
+          "importState",
+          "percentage",
+          "lastUpdateDate",
+          "fileName"
+        ],
+        "properties": {
+          "accountName": {
+            "type": "string",
+            "description": "Name of your VTEX account."
+          },
+          "importId": {
+            "type": "string",
+            "description": "Unique identifier of the import."
+          },
+          "importState": {
+            "type": "string",
+            "description": "Current state of the import. The possible values are:\n- `Uploaded`: The file was successfully uploaded.\n- `InValidation`: File validation is in progress.\n- `ReadyToImport`: File validation completed, ready for import.\n- `Completed`: File successfully imported.\n- `ValidationFailed`: File validation failed.\n- `CompletedWithError`: File import failed."
+          },
+          "percentage": {
+            "type": "string",
+            "description": "Completion percentage of the import."
+          },
+          "lastUpdateDate": {
+            "type": "string",
+            "description": "Date and time of the last update of the import, in `yyyy-mm-ddTHH:MM:SS+00:00` format."
+          },
+          "fileName": {
+            "type": "string",
+            "description": "Name of the file being imported."
+          }
+        }
+      },
+      "importResult": {
+        "type": "object",
+        "description": "Object containing information about bulk import state.",
+        "required": [
+          "accountName",
+          "importId",
+          "importState",
+          "percentage",
+          "lastUpdateDate",
+          "fileName",
+          "importResult",
+          "importedAt",
+          "importedUserEmail",
+          "importedUserName"
+        ],
+        "properties": {
+          "accountName": {
+            "type": "string",
+            "description": "Name of your VTEX account."
+          },
+          "importId": {
+            "type": "string",
+            "description": "Unique identifier of the import."
+          },
+          "importState": {
+            "type": "string",
+            "description": "Current state of the import. The possible values are:\n- `Uploaded`: The file was successfully uploaded.\n- `InValidation`: File validation is in progress.\n- `ReadyToImport`: File validation completed, ready for import.\n- `Completed`: File successfully imported.\n- `ValidationFailed`: File validation failed.\n- `CompletedWithError`: File import failed."
+          },
+          "percentage": {
+            "type": "string",
+            "description": "Completion percentage of the import."
+          },
+          "lastUpdateDate": {
+            "type": "string",
+            "description": "Date and time of the last update of the import, in `yyyy-mm-ddTHH:MM:SS+00:00` format."
+          },
+          "fileName": {
+            "type": "string",
+            "description": "Name of the file being imported."
+          },
+          "importedAt": {
+            "type": "string",
+            "description": "Date and time when the import was completed, in `yyyy-mm-ddTHH:MM:SS+00:00` format."
+          },
+          "importedUserEmail": {
+            "type": "string",
+            "description": "Email address of the user who performed the import."
+          },
+          "importedUserName": {
+            "type": "string",
+            "description": "Name of the user who performed the import."
+          },
+          "importResult": {
+            "type": "object",
+            "description": "Information about the outcome of the bulk import operation.",
+            "properties": {
+              "reportDownloadLink": {
+                "type": "string",
+                "description": "A link to download a detailed report on the outcome of the bulk import."
+              },
+              "imports": {
+                "type": "array",
+                "description": "Detailed information about the imported items.",
+                "items": {
+                  "type": "object",
+                  "description": "Object with detailed information.",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Unique identifier associated with the imported item."
+                    },
+                    "importedRows": {
+                      "type": "integer",
+                      "description": "Total number of lines successfully imported."
+                    },
+                    "rowsWithError": {
+                      "type": "integer",
+                      "description": "Total number of lines that encountered errors during import."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "validationResult": {
+        "type": "object",
+        "description": "Object containing information about bulk import state.",
+        "required": [
+          "accountName",
+          "importId",
+          "importState",
+          "percentage",
+          "lastUpdateDate",
+          "fileName",
+          "validationResult"
+        ],
+        "properties": {
+          "accountName": {
+            "type": "string",
+            "description": "Name of your VTEX account."
+          },
+          "importId": {
+            "type": "string",
+            "description": "Unique identifier of the import."
+          },
+          "importState": {
+            "type": "string",
+            "description": "Current state of the import. The possible values are:\n- `Uploaded`: The file was successfully uploaded.\n- `InValidation`: File validation is in progress.\n- `ReadyToImport`: File validation completed, ready for import.\n- `Completed`: File successfully imported.\n- `ValidationFailed`: File validation failed.\n- `CompletedWithError`: File import failed."
+          },
+          "percentage": {
+            "type": "string",
+            "description": "Completion percentage of the import."
+          },
+          "lastUpdateDate": {
+            "type": "string",
+            "description": "Date and time of the last update of the import, in `yyyy-mm-ddTHH:MM:SS+00:00` format."
+          },
+          "fileName": {
+            "type": "string",
+            "description": "Name of the file being imported."
+          },
+          "validationResult": {
+            "type": "object",
+            "description": "Information about the result of bulk imported data validation.",
+            "properties": {
+              "isValid": {
+                "type": "boolean",
+                "description": "Indicates whether the bulk import operation was successful."
+              },
+              "validationResult": {
+                "type": "array",
+                "description": "Detailed information about the validation results.",
+                "items": {
+                  "type": "object",
+                  "description": "Object with detailed information.",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Unique identifier associated with the imported item."
+                    },
+                    "validRows": {
+                      "type": "integer",
+                      "description": "Total number of lines successfully validated."
+                    },
+                    "invalidRows": {
+                      "type": "integer",
+                      "description": "Number of imported lines that failed validation."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Bulk Import"
+    }
+  ],
+  "security": [
+    {
+      "appKey": [],
+      "appToken": []
+    },
+    {
+      "VtexIdclientAutCookie": []
+    }
+  ]
+}
