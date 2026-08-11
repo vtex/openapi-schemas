@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Authenticator",
-        "description": "The Authenticator API provides endpoints for managing storefront user registration and B2B password migration configuration.\n\n> ⚠️ This feature is only available for stores using [B2B Buyer Portal](https://help.vtex.com/docs/tutorials/b2b-buyer-portal), which is currently available to selected accounts. For general store user authentication, see the [VTEX ID API](https://developers.vtex.com/docs/api-reference/vtex-id-api).\n\nFor more information on provisioning B2B users, see the [B2B user provisioning](https://developers.vtex.com/docs/guides/b2b-user-provisioning) guide.\n\n## Common parameters\n\n| Parameter name | Description | Type |\n| - | - | - |\n| `accountName` | Name of the VTEX account. Used as part of the URL. | Server variable. |\n| `environment` | Environment to use. Used as part of the URL. | Server variable. |",
+        "description": "The Authenticator API provides endpoints for managing storefront user registration, first login, and B2B password migration configuration.\n\n> ⚠️ This feature is only available for stores using [B2B Buyer Portal](https://help.vtex.com/docs/tutorials/b2b-buyer-portal), which is currently available to selected accounts. For general store user authentication, see the [VTEX ID API](https://developers.vtex.com/docs/api-reference/vtex-id-api).\n\nFor more information on provisioning B2B users, see the [B2B user provisioning](https://developers.vtex.com/docs/guides/b2b-user-provisioning) guide. For more information on having a newly created user set their first password, see the [B2B first login](https://developers.vtex.com/docs/guides/b2b-first-login) guide.\n\n## Common parameters\n\n| Parameter name | Description | Type |\n| - | - | - |\n| `accountName` | Name of the VTEX account. Used as part of the URL. | Server variable. |\n| `environment` | Environment to use. Used as part of the URL. | Server variable. |",
         "version": "1.0"
     },
     "servers": [
@@ -212,6 +212,405 @@
                         "appToken": []
                     }
                 ]
+            }
+        },
+        "/api/authenticator/v1/pub/authentication/start": {
+            "servers": [
+                {
+                    "url": "https://{accountName}.{environment}.com",
+                    "description": "VTEX server URL.",
+                    "variables": {
+                        "accountName": {
+                            "description": "Name of the VTEX account. Used as part of the URL.",
+                            "default": "apiexamples"
+                        },
+                        "environment": {
+                            "description": "Environment to use. Used as part of the URL.",
+                            "enum": [
+                                "myvtex"
+                            ],
+                            "default": "myvtex"
+                        }
+                    }
+                }
+            ],
+            "post": {
+                "tags": [
+                    "First login"
+                ],
+                "summary": "Start login attempt",
+                "description": "Starts a login attempt for a storefront user created through `POST` [Create storefront user](https://developers.vtex.com/docs/api-reference/authenticator-api#post-/api/authenticator/v1/storefront/users). This is always the first call of the first-login sequence, regardless of whether the user already has a password.\r\n\r\nOn success, the response sets the `_vss` cookie, which holds the state of the login attempt for 10 minutes. This cookie must be forwarded on every subsequent call in the sequence, `POST` [Sign in](https://developers.vtex.com/docs/api-reference/authenticator-api#post-/api/authenticator/v1/bff/storefront/signin) and `POST` [Set password](https://developers.vtex.com/docs/api-reference/authenticator-api#post-/api/authenticator/v1/pub/authentication/classic/setpassword). If you're calling these endpoints from a server rather than a browser, capture this cookie from the response and forward it manually, since it won't be handled automatically.\r\n\r\nFor more information, see the [B2B first login guide](https://developers.vtex.com/docs/guides/b2b-first-login).\r\n\r\n> ⚠️ This feature is only available for stores using [B2B Buyer Portal](https://help.vtex.com/docs/tutorials/b2b-buyer-portal), which is currently available to selected accounts.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "an",
+                        "in": "query",
+                        "description": "Name of the VTEX account.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "accountName",
+                                    "scope",
+                                    "returnUrl"
+                                ],
+                                "properties": {
+                                    "accountName": {
+                                        "type": "string",
+                                        "description": "Name of the VTEX account."
+                                    },
+                                    "scope": {
+                                        "type": "string",
+                                        "description": "Same value as `accountName`. Its presence, not just its value, determines whether the login session is treated as storefront or admin. Always send it filled with the account name."
+                                    },
+                                    "returnUrl": {
+                                        "type": "string",
+                                        "description": "URL the user is redirected to once login completes."
+                                    },
+                                    "callbackUrl": {
+                                        "type": "string",
+                                        "description": "Callback URL for external identity provider (IdP) or OAuth logins. If you don't use an external IdP, repeat the `returnUrl` value here."
+                                    },
+                                    "user": {
+                                        "type": "string",
+                                        "description": "The user's identifier (email or username), if already known."
+                                    },
+                                    "fingerprint": {
+                                        "type": "string",
+                                        "description": "Optional device fingerprint, used for anti-fraud rules."
+                                    }
+                                }
+                            },
+                            "example": {
+                                "accountName": "apiexamples",
+                                "scope": "apiexamples",
+                                "returnUrl": "https://apiexamples.myvtex.com",
+                                "callbackUrl": "https://apiexamples.myvtex.com",
+                                "user": "user@example.com"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK\r\n\r\nLogin attempt started successfully.",
+                        "headers": {
+                            "Set-Cookie": {
+                                "description": "Session token for the login attempt, valid for 10 minutes.",
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "example": "_vss=C17BCD635B637E66BF2BBE07CEED0B1B7425387FB8D6E42FE68EBCE7A49193F2"
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/api/authenticator/v1/bff/storefront/signin": {
+            "servers": [
+                {
+                    "url": "https://{accountName}.{environment}.com",
+                    "description": "VTEX server URL.",
+                    "variables": {
+                        "accountName": {
+                            "description": "Name of the VTEX account. Used as part of the URL.",
+                            "default": "apiexamples"
+                        },
+                        "environment": {
+                            "description": "Environment to use. Used as part of the URL.",
+                            "enum": [
+                                "myvtex"
+                            ],
+                            "default": "myvtex"
+                        }
+                    }
+                }
+            ],
+            "post": {
+                "tags": [
+                    "First login"
+                ],
+                "summary": "Sign in",
+                "description": "Checks whether a storefront user already has a password. For a newly created user with no password yet, this call automatically sends the access code to the user's email, no other endpoint call is needed to trigger it.\r\n\r\nRequires the `_vss` cookie obtained from `POST` [Start login attempt](https://developers.vtex.com/docs/api-reference/authenticator-api#post-/api/authenticator/v1/pub/authentication/start).\r\n\r\nFor more information, see the [B2B first login guide](https://developers.vtex.com/docs/guides/b2b-first-login).\r\n\r\n> ⚠️ This feature is only available for stores using [B2B Buyer Portal](https://help.vtex.com/docs/tutorials/b2b-buyer-portal), which is currently available to selected accounts.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "an",
+                        "in": "query",
+                        "description": "Name of the VTEX account.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "_vss",
+                        "in": "cookie",
+                        "description": "Session token obtained in the `Set-Cookie` header of the `POST` [Start login attempt](https://developers.vtex.com/docs/api-reference/authenticator-api#post-/api/authenticator/v1/pub/authentication/start) response.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "C17BCD635B637E66BF2BBE07CEED0B1B7425387FB8D6E42FE68EBCE7A49193F2"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "login"
+                                ],
+                                "properties": {
+                                    "login": {
+                                        "type": "string",
+                                        "description": "The user's identifier (email or username)."
+                                    }
+                                }
+                            },
+                            "example": {
+                                "login": "user@example.com"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "nextStep": {
+                                            "type": "string",
+                                            "enum": [
+                                                "CreatePassword",
+                                                "PasswordLogin",
+                                                "CreatePasswordWithoutContactInfo"
+                                            ],
+                                            "description": "Next action the user must take. `CreatePassword`: the user has no password yet and an access code was just emailed, continue to `POST` [Set password](https://developers.vtex.com/docs/api-reference/authenticator-api#post-/api/authenticator/v1/pub/authentication/classic/setpassword). `PasswordLogin`: the user already has a password. `CreatePasswordWithoutContactInfo`: the user has no email or phone on file, meaning `POST` [Create storefront user](https://developers.vtex.com/docs/api-reference/authenticator-api#post-/api/authenticator/v1/storefront/users) was called without an email identifier, fix the user's record before proceeding."
+                                        },
+                                        "maskedEmail": {
+                                            "type": "string",
+                                            "description": "Partially masked email the access code was sent to, if any.",
+                                            "nullable": true
+                                        },
+                                        "maskedPhone": {
+                                            "type": "string",
+                                            "description": "Partially masked phone number, if any.",
+                                            "nullable": true
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "nextStep": "CreatePassword",
+                                    "maskedEmail": "use***@example.com",
+                                    "maskedPhone": null
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "authStatus": {
+                                            "type": "string",
+                                            "enum": [
+                                                "InvalidToken",
+                                                "InvalidEmail",
+                                                "BlockedUser"
+                                            ],
+                                            "description": "`InvalidToken`: the `_vss` cookie is missing, expired, or invalid, redo `POST` [Start login attempt](https://developers.vtex.com/docs/api-reference/authenticator-api#post-/api/authenticator/v1/pub/authentication/start). `InvalidEmail`: the `login` field was empty. `BlockedUser`: too many attempts without a valid recaptcha."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "authStatus": "InvalidToken"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/api/authenticator/v1/pub/authentication/classic/setpassword": {
+            "servers": [
+                {
+                    "url": "https://{accountName}.{environment}.com",
+                    "description": "VTEX server URL.",
+                    "variables": {
+                        "accountName": {
+                            "description": "Name of the VTEX account. Used as part of the URL.",
+                            "default": "apiexamples"
+                        },
+                        "environment": {
+                            "description": "Environment to use. Used as part of the URL.",
+                            "enum": [
+                                "myvtex"
+                            ],
+                            "default": "myvtex"
+                        }
+                    }
+                }
+            ],
+            "post": {
+                "tags": [
+                    "First login"
+                ],
+                "summary": "Set password",
+                "description": "Sets a storefront user's first password using the access code sent to their email by `POST` [Sign in](https://developers.vtex.com/docs/api-reference/authenticator-api#post-/api/authenticator/v1/bff/storefront/signin).\r\n\r\nRequires the same `_vss` cookie obtained from `POST` [Start login attempt](https://developers.vtex.com/docs/api-reference/authenticator-api#post-/api/authenticator/v1/pub/authentication/start). On success, the response sets the `VtexIdclientAutCookie` session cookie, the user is logged in immediately after setting their password.\r\n\r\nFor more information, see the [B2B first login guide](https://developers.vtex.com/docs/guides/b2b-first-login).\r\n\r\n> ⚠️ This feature is only available for stores using [B2B Buyer Portal](https://help.vtex.com/docs/tutorials/b2b-buyer-portal), which is currently available to selected accounts.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "an",
+                        "in": "query",
+                        "description": "Name of the VTEX account.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples"
+                        }
+                    },
+                    {
+                        "name": "expireSessions",
+                        "in": "query",
+                        "description": "Whether to invalidate any existing session for this user as soon as the password changes. Keep this as `true`.",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    },
+                    {
+                        "name": "_vss",
+                        "in": "cookie",
+                        "description": "Session token obtained in the `Set-Cookie` header of the `POST` [Start login attempt](https://developers.vtex.com/docs/api-reference/authenticator-api#post-/api/authenticator/v1/pub/authentication/start) response.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "C17BCD635B637E66BF2BBE07CEED0B1B7425387FB8D6E42FE68EBCE7A49193F2"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "login",
+                                    "accesskey",
+                                    "newPassword"
+                                ],
+                                "properties": {
+                                    "login": {
+                                        "type": "string",
+                                        "description": "The user's identifier, matching the value sent to `POST` [Sign in](https://developers.vtex.com/docs/api-reference/authenticator-api#post-/api/authenticator/v1/bff/storefront/signin) for this login attempt."
+                                    },
+                                    "accesskey": {
+                                        "type": "string",
+                                        "description": "6-digit access code received by email through `POST` [Sign in](https://developers.vtex.com/docs/api-reference/authenticator-api#post-/api/authenticator/v1/bff/storefront/signin)."
+                                    },
+                                    "newPassword": {
+                                        "type": "string",
+                                        "description": "The password to set for the user."
+                                    },
+                                    "recaptcha": {
+                                        "type": "string",
+                                        "description": "Recaptcha token, required only if recaptcha protection is enabled for the account."
+                                    }
+                                }
+                            },
+                            "example": {
+                                "login": "user@example.com",
+                                "accesskey": "123456",
+                                "newPassword": "{{newPassword}}"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK\r\n\r\nPassword set successfully.",
+                        "headers": {
+                            "Set-Cookie": {
+                                "description": "Authenticated session cookie.",
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "example": "VtexIdclientAutCookie=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Empty response body."
+                                },
+                                "example": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "authStatus": {
+                                            "type": "string",
+                                            "enum": [
+                                                "InvalidToken",
+                                                "WrongCredentials",
+                                                "BlockedUser"
+                                            ],
+                                            "description": "`InvalidToken`: the `_vss` cookie is missing, expired, or invalid, redo `POST` [Start login attempt](https://developers.vtex.com/docs/api-reference/authenticator-api#post-/api/authenticator/v1/pub/authentication/start). `WrongCredentials`: the `accesskey` field arrived empty, double-check it's populated with the code received by email. `BlockedUser`: too many attempts without a valid recaptcha."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "authStatus": "WrongCredentials"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
             }
         },
         "/api/authenticator/v1/tenants/features/{name}": {
@@ -441,6 +840,9 @@
     "tags": [
         {
             "name": "Storefront users"
+        },
+        {
+            "name": "First login"
         },
         {
             "name": "Password migration"
