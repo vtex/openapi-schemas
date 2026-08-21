@@ -1,0 +1,120 @@
+info:
+  name: Marketplace order cancellation
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/pvt/orders/:orderId/cancel"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: orderId
+      value: 1138342255777-01
+      type: path
+    - name: fulfillmentEndpoint
+      value: marketplaceexample.externalseller.com
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "marketplaceOrderId": "1138342255777-01",
+        "marketplaceOrderGroup": "group-123",
+        "cancellationRequestId": "85835ab408514b52aa139e4236ce0c33",
+        "cancellationRequestDate": "2024-03-04T15:45:02.1306363+00:00",
+        "reason": "Out of stock",
+        "requestedByUser": true
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/pvt/orders/:orderId/cancel - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/pvt/orders/:orderId/cancel - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/pvt/orders/:orderId/cancel - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/pvt/orders/:orderId/cancel - Schema is valid", function () {
+          const schema = {"type":"object","description":"Details related to an order, including the order approval date, marketplace order ID, order number, and order receipt code.","properties":{"date":{"type":"string","title":"Date","description":"Order approval date."},"marketplaceOrderId":{"type":"string","title":"Marketplace Order Id","description":"Identifies the order. The seller should use this ID to trigger the fulfillment process of the corresponding order."},"orderId":{"type":"string","title":"Order Id","description":"Order number."},"receipt":{"type":"string","description":"Order receipt code.","title":"Receipt"}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This request may be sent from VTEX to the external seller in case of order cancelation. For that, the seller will need to implement the Marketplace order cancellation endpoint. Whenever this request is received by the seller, the order should be canceled and the fulfillment flow should not proceed. 
+
+  For the seller to: 
+
+  - **Evaluate a cancellation request:** it is possible to send an empty body as a response to the cancellation request, meaning that the seller is evaluating whether to proceed with the cancellation or not. 
+
+  - **Confirm the cancellation request:** it is possible to confirm the order cancellation by the marketplace by responding to the call with a body including only one information: the `marketplaceOrderId`, which identifies the order in the marketplace. The seller should use this ID to trigger the cancellation of the corresponding order. The seller should then respond with the same `marketplaceOrderId` and also with the `orderId`, which identifies the order in the seller, the date and time of the notification receipt, and a protocol code that confirms the receipt of the request (which may have the value `null`). 
+
+  - **Refuse a cancellation request:** it is possible to to [send the Invoice](https://developers.vtex.com/vtex-rest-api/reference/external-seller#send-invoice), meaning that the cancellation has been denied, and the flow continues to the [Order Invoicing](https://developers.vtex.com/vtex-rest-api/docs/external-seller-integration-connector#order-invoicing) step, and the ones that follow it. 
+
+  >⚠️ This call should be made twice: once for the *Evaluate cancellation request* scenario, and a second time to *Confirm cancellation* or *Refuse cancellation*.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Checkout | CheckoutResources | **Order Cancellation** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Cancela Pedidos | Order Cancellation |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `orderId` | path | (Required) ID of the order being fulfilled. |
+  | `fulfillmentEndpoint` | path | (Required) This is the fulfillment endpoint registered for each specific external seller in the **seller management** section of VTEX's admin panel. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "date": "2019-05-09 15:31:23",
+    "marketplaceOrderId": "959311095",
+    "orderId": "1138342255777-01",
+    "receipt": "e39d05f9-0c54-4469-a626-8bb5cff169f8"
+  }
+  ```

@@ -1,0 +1,199 @@
+info:
+  name: Calculate promotions
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/calculatePromotion"
+  headers:
+    - name: Content-Type
+      value: application/json; charset=utf-8
+  body:
+    type: json
+    data: |-
+      {
+        "correlationId": "7f3e2b10-2c5a-4a9e-bf6a-9b9d0c2f1a23",
+        "customFields": {
+          "myAppId": {
+            "giftMessage": "Happy birthday"
+          }
+        },
+        "origin": "Marketplace",
+        "shopperProfileId": "da1220f6-88ce-46a2-b466-7f311c5a1bf0",
+        "salesChannelId": "3",
+        "couponCodes": [
+          "coupon-code-1",
+          "coupon-code-2"
+        ],
+        "utms": null,
+        "items": [
+          {
+            "id": "792",
+            "sellerId": "1",
+            "quantity": 3,
+            "price": 2,
+            "catalogInfo": {
+              "brandId": "23",
+              "categoryId": "43",
+              "productId": "55",
+              "collectionIds": [
+                "98",
+                "11"
+              ],
+              "ean": "7891234567890",
+              "refId": "SKU-ABC-001"
+            },
+            "paymentInfo": [
+              {
+                "id": "34",
+                "value": 6
+              }
+            ],
+            "nativePromotionLayer": {
+              "priceBeforeLayer": 2.5,
+              "priceAfterLayer": 2,
+              "appliedPromotions": [
+                {
+                  "id": "native-promo-1",
+                  "discount": 0.5,
+                  "type": "Nominal"
+                }
+              ]
+            }
+          }
+        ]
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/calculatePromotion - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/calculatePromotion - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/calculatePromotion - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/calculatePromotion - Schema is valid", function () {
+          const schema = {"type":"object","required":["items"],"description":"Response body for the calculate promotions endpoint.","properties":{"items":{"type":"array","description":"List of items with their calculated promotion results.","items":{"type":"object","required":["id","quantity","originalPrice"],"description":"Item in the calculate promotions response.","properties":{"id":{"type":"string","description":"SKU identifier of the item in the shopping cart."},"quantity":{"type":"integer","format":"int32","description":"Quantity of the item in the shopping cart."},"promotions":{"type":["array","null"],"description":"Promotions applied by the external provider to this item. **This is the only field VTEX uses to compute the external discount**: the applied value is `discount` multiplied by this item's `quantity`, and only for promotions whose `id` is also listed in `allPromotions`. Omitting this array — even when `externalPromotionLayer` is populated — means no external discount is applied to the line. When both are present they must describe the same promotions; a mismatch is logged as a warning.","items":{"type":"object","required":["id","discount","type"],"description":"Promotion applied to an item.","properties":{"id":{"type":"string","description":"Identifier of the applied promotion."},"discount":{"type":"number","format":"double","description":"Discount value applied by this promotion."},"type":{"type":"string","enum":["Nominal"],"description":"Type of discount applied. Currently, only `Nominal` is supported."}}}},"originalPrice":{"type":"number","format":"double","description":"Original per-unit price of this line before external deals. In hybrid mode, typically the per-unit price after native promotions (the pre-external price the provider augments). Informational only: VTEX does not derive the discount from this field."},"discountedPrice":{"type":["number","null"],"format":"double","description":"Per-unit price of the item after external promotions are applied. Informational only: VTEX does not derive the discount from this field, it uses `promotions[].discount`."},"externalPromotionLayer":{"type":["object","null"],"description":"Hybrid: how the partner (external) promotion layer changed this line. Informational only — it is used for tracing and reconciliation and never produces a discount by itself; always send the corresponding `promotions` entries. When set, `priceBeforeLayer` SHOULD match `originalPrice` and `priceAfterLayer` SHOULD match `discountedPrice`; VTEX compares them with a tolerance of 0.01 and only logs a warning on divergence, without rejecting the response. Added in protocol v1.1.","required":["priceBeforeLayer","priceAfterLayer"],"properties":{"priceBeforeLayer":{"type":"number","format":"double","description":"Per-unit price before the partner layer (post-native in hybrid)."},"priceAfterLayer":{"type":"number","format":"double","description":"Per-unit price after the partner layer."},"appliedPromotions":{"type":["array","null"],"description":"Partner deals applied in this layer only.","items":{"type":"object","required":["id","discount","type"],"properties":{"id":{"type":"string","description":"Identifier of the applied promotion."},"discount":{"type":"number","format":"double","description":"Per-unit discount applied by this promotion."},"type":{"type":"string","enum":["Nominal"],"description":"Type of discount applied. Currently, only `Nominal` is supported."}}}}}}}}},"allPromotions":{"type":["array","null"],"description":"Catalog of all promotions considered for this shopping cart, including those that were not applied. **Conditionally required**: whenever any `items[].promotions` entry is present, this array must be present and non-empty, otherwise VTEX rejects the whole response. It is also the catalog VTEX iterates to build discounts, so a promotion referenced in `items[].promotions` but missing here produces no discount. Every entry must carry a non-empty `id`.","items":{"type":"object","required":["id","name","description"],"description":"Summary of a promotion.","properties":{"id":{"type":"string","description":"Identifier of the promotion."},"name":{"type":"string","description":"Name of the promotion."},"description":{"type":"string","description":"Description of the promotion."},"couponCode":{"type":["string","null"],"description":"Coupon code that triggers this promotion. Returns `null` if no coupon code triggered the promotion."},"qualificationProgress":{"type":["object","null"],"description":"For **not-yet-unlocked** promotions, structured qualification data VTEX maps to native teasers (\"almost there\" messaging). All properties are optional; omit the object (or send `{}`) when there is no structured progress. Added in protocol v1.1; not present in v1.0.","properties":{"remainingCartWideAmount":{"type":["number","null"],"format":"double","description":"Monetary amount still needed across the whole cart to meet a cart-wide spend threshold (the remaining gap, not the full threshold)."},"orderSubtotalMustExceed":{"type":["number","null"],"format":"double","description":"Cart items-subtotal floor the rule requires (the target threshold)."},"remainingItemQuantity":{"type":["object","null"],"description":"Item/SKU quantity qualification context: optional aggregate and per-SKU rows.","properties":{"totalUnitsRemaining":{"type":["integer","null"],"format":"int32","description":"Aggregate extra units still needed across the qualifying SKU set. Must be a whole number: a fractional value fails deserialization and discards the whole response."},"perSku":{"type":["array","null"],"description":"Per-SKU contribution toward the quantity conditions.","items":{"type":"object","required":["skuId"],"properties":{"skuId":{"type":"string","description":"Cart/catalog line id, aligned with items[].id in the same request."},"unitsInCart":{"type":["integer","null"],"format":"int32","description":"Units of this SKU currently in the cart toward this promotion. Must be a whole number."},"unitsRequiredForPromotion":{"type":["integer","null"],"format":"int32","description":"Units of this SKU required by the rule. Must be a whole number: a fractional value fails deserialization and discards the whole response."},"unitsRemaining":{"type":["integer","null"],"format":"int32","description":"Units of this SKU still needed to satisfy its part of the condition. Must be a whole number: a fractional value fails deserialization and discards the whole response."}}}}}},"minimumRuleQuantity":{"type":["integer","null"],"format":"int32","description":"Minimum qualifying units the rule requires (e.g. buy-N / combo thresholds)."},"contextTotalForQualifyingItems":{"type":["object","null"],"description":"Subtotal value range and item scope for total-value rules.","properties":{"minValue":{"type":["number","null"],"format":"double","description":"Minimum subtotal in cart currency."},"maxValue":{"type":["number","null"],"format":"double","description":"Maximum subtotal bound."},"itemScope":{"type":["string","null"],"enum":["AllItems","IncludeMatchedItems","ExcludeMatchedItems",null],"description":"Which line items' value participates in the subtotal check. Omit the property or send `null` when the rule does not define a scope."}}},"itemUnitPriceBounds":{"type":["object","null"],"description":"Per-unit price band on a line.","properties":{"minPrice":{"type":["number","null"],"format":"double","description":"Minimum per-unit item price for qualification."},"maxPrice":{"type":["number","null"],"format":"double","description":"Maximum per-unit item price for qualification."}}},"skuIdGroups":{"type":["object","null"],"description":"SKUs in scope of the rule. Use `allOf` for a single set; `group1`/`group2` for mix-and-match.","properties":{"allOf":{"type":["array","null"],"items":{"type":"string"},"description":"All listed SKUs participate in a single set."},"group1":{"type":["array","null"],"items":{"type":"string"},"description":"First SKU group in a two-group rule."},"group2":{"type":["array","null"],"items":{"type":"string"},"description":"Second SKU group in a two-group rule."}}},"productCollectionIds":{"type":["array","null"],"items":{"type":"string"},"description":"Collection / cluster ids in scope."},"brandIds":{"type":["array","null"],"items":{"type":"string"},"description":"Brand ids in scope."},"categoryIds":{"type":["array","null"],"items":{"type":"string"},"description":"Category ids in scope."},"zipCodeRangeSegments":{"type":["array","null"],"description":"Delivery CEP/zip gating ranges.","items":{"type":"object","properties":{"from":{"type":"string","description":"Range start, digits only (no mask)."},"to":{"type":"string","description":"Range end, digits only (no mask)."},"inclusivity":{"type":"string","enum":["inclusive","exclusive"],"description":"Whether the shopper's zip is included (`inclusive`) or excluded (`exclusive`)."}}}},"paymentMethodIds":{"type":["array","null"],"items":{"type":"string"},"description":"Payment method ids the shopper must use."},"cardIssuerIds":{"type":["array","null"],"items":{"type":"string"},"description":"Allowed card issuers."},"cardBinPrefixRestrictions":{"type":["array","null"],"items":{"type":"string"},"description":"Card BIN prefix patterns the card number must satisfy."},"minInstallmentCount":{"type":["integer","null"],"format":"int32","description":"Minimum installments required."},"maxInstallmentCount":{"type":["integer","null"],"format":"int32","description":"Maximum installments allowed."},"teaserStyleHints":{"type":["array","null"],"items":{"type":"string","enum":["UpPrice","Profiler","Catalog","ConditionalPrice"]},"description":"UI grouping hints for the teaser message."}}}}}},"nativePromotionRemovals":{"type":["array","null"],"description":"Optional, hybrid-only. Native VTEX promotions the provider asks VTEX to remove from the merged cart result. Absent or empty is a strict no-op (same as the append-only merge). Reference each promotion by the id exposed in `items[].nativePromotionLayer.appliedPromotions[].id`. Only native promotions exposed via `nativePromotionLayer` (price and gift) are removable; unknown, non-applied, or non-removable ids (shipping, tax, reward) and malformed entries are silently ignored and never fail the calculation. Added in protocol v1.1.","items":{"type":"object","required":["promotionId"],"description":"Request to remove an applied native VTEX promotion from the merged result.","properties":{"promotionId":{"type":"string","description":"Native promotion identifier to remove, matching `items[].nativePromotionLayer.appliedPromotions[].id` from the request. Ids that are not applied or not removable are silently ignored."},"scope":{"type":"string","enum":["cartWide","perLine"],"description":"Removal scope. `cartWide` and `perLine` are the canonical values and the only ones providers should send; VTEX additionally tolerates other casings at runtime, but they are not part of this contract and will fail schema validation. Use `cartWide` to remove the promotion from all lines, or `perLine` to remove it only from the cited `lineItemIds`. When omitted, defaults to `cartWide`. For the same `promotionId`, a `cartWide` entry absorbs any `perLine` entries; repeated `perLine` entries union their `lineItemIds`. Unrecognized values are discarded without failing the response."},"lineItemIds":{"type":["array","null"],"description":"Cart item ids (`items[].id`) to strip when `scope` is `perLine`. Required and non-empty for `perLine`; ignored for `cartWide`. Cited lines the promotion did not touch are silently ignored.","items":{"type":"string","description":"Cart item identifier to strip, aligned with `items[].id` in the same calculate promotions call."}}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Calculates the promotions and discounts applicable to a given shopping cart. VTEX calls this endpoint during the cart calculation process, sending the shopping cart data including items, coupon codes, UTM parameters, and sales channel information. The external promotions provider must return the calculated discounts for each item, along with a summary of all promotions considered.
+
+  This endpoint supports **hybrid** orchestration (protocol v1.1). When an account combines native VTEX promotions with an external provider, VTEX sends the cart **after** native evaluation: see `items[].price` (post-native per-unit price) and the optional per-line `items[].nativePromotionLayer`. The provider may also return `allPromotions[].qualificationProgress` describing promotions the shopper has **not yet unlocked**.
+
+  In hybrid mode, the provider can optionally return `nativePromotionRemovals` to ask VTEX to drop specific applied native promotions (by the ids exposed in `items[].nativePromotionLayer.appliedPromotions[].id`) from the merged result — either cart-wide or for selected lines — instead of only stacking discounts on top of them. Absent or empty `nativePromotionRemovals` is a no-op.
+
+  ## How VTEX derives the discount
+
+  This is the single most important rule of the response contract:
+
+  - The money VTEX applies comes **only** from `items[].promotions[].discount`, multiplied by `items[].quantity`.
+  - A promotion produces a discount **only** if its `id` is also listed in `allPromotions`. VTEX builds the result by iterating `allPromotions` and matching each entry against `items[].promotions`.
+  - `originalPrice`, `discountedPrice` and `externalPromotionLayer` are **informational**. They are used for tracing and diagnostics and never produce a discount on their own. Returning `externalPromotionLayer` without the matching `items[].promotions` entries results in **no discount being applied at all**.
+
+  ## Response requirements
+
+  VTEX validates the body before merging it and discards the **entire** response when it is malformed. Specifically:
+
+  - `items` must be present and must not contain `null` entries.
+  - If any `items[].promotions` is present and non-empty, then `allPromotions` must also be present and non-empty. Item-level promotions without a catalog are rejected.
+  - Every `allPromotions[].id` and every `items[].promotions[].id` must be a non-empty string.
+  - Every `items[].id` must match an item id sent in the request.
+  - Quantity fields under `qualificationProgress` must be whole numbers. A fractional value fails deserialization and discards the response.
+
+  An applied promotion id that is not listed in `allPromotions` is tolerated and does not fail the response, but no discount is produced for it.
+
+  ## Authentication
+
+  VTEX authenticates with an API key sent in a header whose name is configured per account and defaults to `Authorization`, optionally with a prefix such as `Bearer `. VTEX does not send HTTP Basic credentials, and it does not send an `Accept` header. The provider should reject unauthenticated requests with `401 Unauthorized`.
+
+  ## Timeout
+
+  The call times out after 5000 ms by default (configurable per account) and is **not** retried.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. VTEX always sends `application/json; charset=utf-8`. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "items": [
+      {
+        "id": "792",
+        "quantity": 3,
+        "promotions": [
+          {
+            "id": "promo-1",
+            "discount": 0.25,
+            "type": "Nominal"
+          }
+        ],
+        "originalPrice": 2,
+        "discountedPrice": 1.75,
+        "externalPromotionLayer": {
+          "priceBeforeLayer": 2,
+          "priceAfterLayer": 1.75,
+          "appliedPromotions": [
+            {
+              "id": "promo-1",
+              "discount": 0.25,
+              "type": "Nominal"
+            }
+          ]
+        }
+      }
+    ],
+    "allPromotions": [
+      {
+        "id": "promo-1",
+        "name": "25 cents off on cokes",
+        "description": "Buy at least 3 cokes and get 25 cents off on each",
+        "couponCode": "25offCoke"
+      },
+      {
+        "id": "promo-2",
+        "name": "Free shipping over $50",
+        "description": "Spend $50 or more to unlock free shipping",
+        "couponCode": null,
+        "qualificationProgress": {
+          "remainingCartWideAmount": 44,
+          "orderSubtotalMustExceed": 50,
+          "teaserStyleHints": [
+            "UpPrice"
+          ]
+        }
+      }
+    ]
+  }
+  ```

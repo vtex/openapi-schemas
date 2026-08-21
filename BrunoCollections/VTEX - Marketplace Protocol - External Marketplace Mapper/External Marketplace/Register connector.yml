@@ -1,0 +1,155 @@
+info:
+  name: Register connector
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/channel-manager/connector?an=apiexemple"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: an
+      value: apiexemple
+      type: query
+    - name: environment
+      value: "{{environment}}"
+      type: path
+  body:
+    type: json
+    data: |-
+      [
+        {
+          "name": "Mercado Livre Classic",
+          "website": "mercadolivre.com.br",
+          "logo": "https://g.foolcdn.com/art/companylogos/square/meli.png",
+          "description": "Mercado Libre operates online commerce platforms in Latin America. It operates Mercado Libre Marketplace, an automated online commerce platform that enables businesses, merchants, and individuals to list merchandise and conduct sales and purchases online.",
+          "segment": "OTHERS",
+          "availableCountries": [
+            "BRA",
+            "ARG"
+          ],
+          "type": "EXTERNAL",
+          "isActive": true,
+          "helpUrl": "https://help.vtex.com/pt/tracks/configurar-integracao-do-mercado-livre--2YfvI3Jxe0CGIKoWIGQEIq",
+          "connectorVtexAdminPath": "/bridge/#/settings?openConfig=mercadolivre",
+          "connectorPageUrl": "https://apps.vtex.com/vtexbr-tiktok-tbp/p",
+          "connectorApiEndpoint": "portal.vtexcommercestable.com/api/meliintegration/notifications",
+          "channelId": 1
+        }
+      ]
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/channel-manager/connector - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/channel-manager/connector - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/channel-manager/connector - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/channel-manager/connector - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"id":{"type":"integer","description":"Connector ID."},"name":{"type":"string","description":"Connector name."},"website":{"type":"string","description":"Connector website."},"logo":{"type":"string","description":"Connector logo URL."},"description":{"type":"string","description":"Connector description."},"helpUrl":{"type":"string","description":"URL of connector integration documentation page."},"segment":{"type":"string","description":"Market segment."},"availableCountries":{"description":"List of countries where connector is available for integration.","type":"array","items":{"description":"Country code.","type":"string"}},"availableStates":{"description":"States in which the connector operates, valid only for connectors that have area restriction.","type":"array","items":{"type":"string","description":"State code."}},"type":{"description":"What type of connector, if it is native, VTEX or partner.","type":"string"},"connectorPageUrl":{"description":"URL where the merchant will be redirected to start the onboarding process.","type":"string"},"connectorVtexAdminPath":{"description":"Admin VTEX URL, where the merchant will be redirected to manage and view his connections after integration.","type":"string"},"connectorApiEndpoint":{"description":"Partner connector API base URL.","type":"string"},"channelId":{"description":"ID of the channel that a connector joins to.","type":"string"},"isGloballyAvailable":{"description":"Indicates whether connector is globally available (`true`) or not (`false`).","type":"boolean"},"ownerVtexAccount":{"description":"Connector account name in VTEX.","type":"string"},"isActive":{"description":"Indicates whether connector is active (`true`) or not (`false`).","type":"boolean"},"isCertified":{"description":"Indicates whether the connector is certified (`true`) or not (`false`).","type":"boolean"},"contactInfo":{"description":"Seller contact information.","type":"object","properties":{"name":{"description":"Name of the person responsible for the marketplace account interested in connecting to the merchant.","type":"string"},"email":{"description":"Email address of the person responsible for the marketplace account interested in connecting to the merchant.","type":"string"},"phone":{"description":"Phone of the person responsible for the marketplace account interested in connecting to the merchant.","type":"string"},"defaultMessage":{"description":"Introduction message and information of interest in the partnership with the merchant.","type":"string"}}},"isConnectionActive":{"description":"Indicates whether connection is active (`true`) or not (`false`).","type":"boolean"},"affiliateId":{"description":"Affiliate ID corresponding to the connector.","type":"string"}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Registers a new connector in our platform. The account name informed in the request should be the one owned by the partner since it is the only account that will have permission to update or delete the connector.
+
+  Possible values for field `type`:
+
+  - `APP`, if using our App Template.
+  - `EXTERNAL`, if not using App Template.
+
+  Possible values for field `segment`:
+
+  - `ADS`
+  - `APPAREL_ACCESSORIES`
+  - `BEAUTY_HEALTH`
+  - `BOOKS_EDUCATION`
+  - `CARS_AUTOPARTS`
+  - `DEPARTMENT_STORES`
+  - `ELETRONICS`
+  - `FINANCIAL_INSURANCES`
+  - `FOOD_BEVERAGES`
+  - `GROCERY`
+  - `HOME_APPLIANCES`
+  - `HOME_FURNITURE_DECOR`
+  - `JEWELRY`
+  - `PET_SHOP`
+  - `SPORTS_FITNESS`
+  - `TOURISM`
+  - `TOYS_HOBBIES`
+  - `OTHERS`
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `environment` | path | Environment to use. Used as part of the URL. (This can only be one of vtexcommercestable) |
+  | `an` | query | (Required) VTEX's account name owned by the connector/partner, ex. `apiexemple` |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": 584,
+    "name": "Mercado Livre Classic",
+    "website": "mercadolivre.com.br",
+    "logo": "https://g.foolcdn.com/art/companylogos/square/meli.png",
+    "description": "Mercado Libre operates online commerce platforms in Latin America. It operates Mercado Libre Marketplace, an automated online commerce platform that enables businesses, merchants, and individuals to list merchandise and conduct sales and purchases online.",
+    "helpUrl": "https://help.vtex.com/pt/tracks/configurar-integracao-do-mercado-livre--2YfvI3Jxe0CGIKoWIGQEIq",
+    "segment": "OTHERS",
+    "availableCountries": [
+      "BRA",
+      "ARG"
+    ],
+    "availableStates": [],
+    "type": "EXTERNAL",
+    "connectorPageUrl": "https://apps.vtex.com/vtexbr-tiktok-tbp/p",
+    "connectorVtexAdminPath": "/bridge/#/settings?openConfig=mercadolivre",
+    "connectorApiEndpoint": "portal.vtexcommercestable.com/api/meliintegration/notifications",
+    "channelId": "1",
+    "isGloballyAvailable": false,
+    "ownerVtexAccount": "vtex",
+    "isActive": true,
+    "isCertified": false,
+    "contactInfo": {
+      "name": "Jhon",
+      "email": "jhon@marketplace.com",
+      "phone": "(77) 7777-7777",
+      "defaultMessage": ""
+    },
+    "isConnectionActive": false,
+    "affiliateId": "AFT"
+  }
+  ```

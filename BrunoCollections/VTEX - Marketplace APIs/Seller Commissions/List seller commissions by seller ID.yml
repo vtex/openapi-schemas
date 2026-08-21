@@ -1,0 +1,109 @@
+info:
+  name: List seller commissions by seller ID
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/seller-register/pvt/sellers/:sellerId/commissions"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: sellerId
+      value: seller123
+      type: path
+    - name: accountName
+      value: apiexamples
+      type: path
+    - name: environment
+      value: vtexcommercestable
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/seller-register/pvt/sellers/:sellerId/commissions - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/seller-register/pvt/sellers/:sellerId/commissions - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/seller-register/pvt/sellers/:sellerId/commissions - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/seller-register/pvt/sellers/:sellerId/commissions - Schema is valid", function () {
+          const schema = {"type":"array","description":"Array with objects containing information about the category, seller and percentage of commission applied.","items":{"type":"object","description":"Object with the category properties and the commission percentage applied to it.","properties":{"categoryId":{"type":"string","description":"Marketplace's category ID that the product belongs to, configured in the Catalog."},"categoryName":{"type":"string","description":"Category name with applied commission."},"categoryFullPath":{"type":"array","description":"Full path to the SKU's category.","items":{"description":"Category level name.","type":"string"}},"productCommissionPercentage":{"type":"number","description":"Percentage of the comission applied to the product in decimals."},"freightCommissionPercentage":{"type":"number","description":"Percentage of the comission applied to the freight in decimals."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint retrieves all comissions configured for a specific seller. It is not necessary to send a request body.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  |---|---|---|
+  | Seller Register | Seller adminstration | View Seller |
+  | Seller Register | Seller administration | Save Seller |
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Seller manager | View Seller |
+  |Seller manager | Save Seller | 
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with this feature or use one of the predefined roles from the list above.
+
+   >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `sellerId` | path | (Required) A string that identifies the seller in the marketplace. This ID must be created by the marketplace and informed to the seller before the integration is built. |
+  | `accountName` | path | (Required) Name of the VTEX account that belongs to the marketplace. The notification will be posted into this account. |
+  | `environment` | path | (Required) Environment to use. Used as part of the URL. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "categoryId": "51",
+      "categoryName": "Clothes",
+      "categoryFullPath": [
+        "2.0",
+        "Boys",
+        "Clothes"
+      ],
+      "productCommissionPercentage": 7.75,
+      "freightCommissionPercentage": 2.33
+    }
+  ]
+  ```

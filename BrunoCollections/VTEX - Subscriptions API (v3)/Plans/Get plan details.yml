@@ -1,0 +1,95 @@
+info:
+  name: Get plan details
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/rns/pvt/plans/:id"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: id
+      value: catfood.subscription
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/rns/pvt/plans/:id - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/rns/pvt/plans/:id - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/rns/pvt/plans/:id - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/rns/pvt/plans/:id - Schema is valid", function () {
+          const schema = {"type":"object","description":"Subscription [plan](https://help.vtex.com/en/tutorial/subscription-plans-beta--5kczKRqHEsrs1tYtRcY8wR) object.","properties":{"id":{"type":"string","description":"Subscription plan ID."},"frequencies":{"type":"array","description":"Array of the plan frequencies.","items":{"type":"object","description":"Information about the plan periodicity and interval.","properties":{"periodicity":{"type":["string","null"],"description":"Repurchase frequency requested by the customer, defines the subscriptions recurrence period.","enum":["DAILY","WEEKLY","MONTHLY","YEARLY"]},"interval":{"type":"integer","description":"Time interval configured between subscription orders, which depends on the periodicity. For a `DAILY` periodicity, the value will be days, for `MONTHLY` it will be months, and so on."}}}},"isActive":{"type":"boolean","description":"Defines if the plan is active (`true`) or not (`false`)."},"importInProgress":{"type":"boolean","description":"Defines if a SKU importing process is in progress (`true`) or not (`false`)."},"attachmentId":{"type":"integer","description":"Plan attachment ID."},"isValid":{"type":"boolean","description":"Defines if the plan is valid (`true`) or not (`false`)."},"validationMessages":{"type":["array","null"],"description":"List of validation messages.","items":{"type":"string","description":"Validation message."}},"validity":{"type":["object","null"],"description":"Information about the period during which the subscription plan will be valid.","properties":{"begin":{"type":"string","format":"date-time","description":"Subscription plan beginning date and time in [UTC time format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"end":{"type":["string","null"],"format":"date-time","description":"Subscription plan ending date and time in [UTC time format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."}}},"purchaseDays":{"type":"array","description":"Time reference in which subscription orders will be created.","items":{"type":"string","description":"Time reference in which subscription orders will be created. It will depend on the cycle periodicity, for `WEEKLY` subscriptions, for example, the purchase day could be `Sunday`. For `MONTHLY`, would be `7`, as in the 7th day of the month. When the subscription periodicity is `DAILY`, this field corresponds to `Not_Applicable`."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint retrieves a specific plan by its ID.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `id` | path | (Required) ID from the [subscription plan](https://help.vtex.com/en/tutorial/subscription-plans-beta--5kczKRqHEsrs1tYtRcY8wR). |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "catfood.subscription",
+    "frequencies": [
+      {
+        "periodicity": "DAILY",
+        "interval": 1
+      }
+    ],
+    "isActive": true,
+    "importInProgress": false,
+    "attachmentId": 40,
+    "isValid": true,
+    "validationMessages": [],
+    "validity": null,
+    "purchaseDays": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "0"
+    ]
+  }
+  ```

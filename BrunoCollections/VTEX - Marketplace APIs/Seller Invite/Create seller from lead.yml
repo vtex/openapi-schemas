@@ -1,0 +1,84 @@
+info:
+  name: Create seller from lead
+  type: http
+  seq: 6
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/seller-register/pvt/seller-leads/:sellerLeadId/seller"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: isActive
+      value: "false"
+      type: query
+      disabled: true
+    - name: sellerLeadId
+      value: ""
+      type: path
+    - name: accountName
+      value: apiexamples
+      type: path
+    - name: environment
+      value: vtexcommercestable
+      type: path
+    - name: sellerId
+      value: seller123
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("[PUT]::/seller-register/pvt/seller-leads/:sellerLeadId/seller - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint is used by marketplace operators to create seller accounts. The request will only accept seller leads whose status is `accepted`. If they are already `connected` or `invited`, the call will not be fulfilled. 
+
+   >❗ The creation of the account at VTEX is done by an internal Billing service. There is no seller account and marketplace affiliation if you do not go through this step. 
+
+  Note that there's no specific API call that allows status changes. The operations only allow the seller lead to move forward: 
+
+   From `invite` > to `Accepted` > closing on `Create Seller`. 
+
+  If you want to change the status, you can start the process again, by deleting that lead through the *[Delete seller lead](https://developers.vtex.com/docs/api-reference/marketplace-apis#delete-/seller-register/pvt/seller-leads/-sellerLeadId-)* endpoint, and resending the invite through the *[Resend seller lead's invite](https://developers.vtex.com/docs/api-reference/marketplace-apis/#put-/seller-register/pvt/seller-leads/-sellerLeadId-/status)* endpoint. 
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Seller Register | Seller Administration | **Save Seller** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Seller manager | Save Seller |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `accountName` | path | (Required) Name of the VTEX account that belongs to the marketplace. The notification will be posted into this account. |
+  | `environment` | path | (Required) Environment to use. Used as part of the URL. |
+  | `sellerId` | path | (Required) A string that identifies the seller in the marketplace. This ID must be created by the marketplace and informed to the seller before the integration is built. |
+  | `isActive` | query | Enables to filter sellers that are active (`true`) or unactive (`false`) in the marketplace. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |

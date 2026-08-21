@@ -1,0 +1,131 @@
+info:
+  name: List all gift cards
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/giftcards/_search"
+  headers:
+    - name: Content-Type
+      value: application/vnd.vtex.giftcards.v1+json
+    - name: Accept
+      value: application/vnd.vtex.giftcards.v1+json
+    - name: REST-Range
+      value: resources=0-49
+      disabled: true
+  body:
+    type: json
+    data: |-
+      {
+        "client": {
+          "id": "3b1abc17",
+          "email": "email@domain.com",
+          "document": "234235"
+        },
+        "cart": {
+          "grandTotal": 182,
+          "relationName": null,
+          "redemptionCode": "BAHD-ASDB-ADQW-ASDQ",
+          "discounts": 20,
+          "shipping": 2,
+          "taxes": 0,
+          "items": [
+            {
+              "productId": "2000000",
+              "id": "2000002",
+              "refId": "MEV41",
+              "name": "Shoes",
+              "price": 200,
+              "quantity": 1
+            },
+            {
+              "productId": "2000000",
+              "id": "2000002",
+              "refId": "MEV41",
+              "name": "Shoes",
+              "price": 200,
+              "quantity": 1
+            }
+          ],
+          "itemsTotal": 200
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/giftcards/_search - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/giftcards/_search - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/giftcards/_search - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/giftcards/_search - Schema is valid", function () {
+          const schema = {"type":"array","items":{"description":"Response information.","required":["id","provider","balance","_self"],"type":"object","properties":{"id":{"type":"string","description":"Gift card identification."},"provider":{"type":"string","description":"Provider's name."},"balance":{"type":"number","description":"Gift card current balance."},"_self":{"required":["href"],"type":"object","description":"It is an object that carries an auto reference from the provider at the Hub (on its API).","properties":{"href":{"type":"string","description":"This is one of the fields inside the `_self`. It is exactly the route that identifies this provider on the Hub's API, but it is not the same thing as the `serviceURL`."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns a list of all gift cards available from a gift card provider for a specific customer's cart.
+
+  For scenarios in which there is a gift card with no balance associated with the customer, the payment provider must choose one of the options below to display the information in the response body and implement it on the endpoint:
+
+
+  - Response body returns the complete gift card data mentioning the balance field equal to 0 (`"balance": 0`):  In this option, whenever the customer has associated a gift card without a balance, they will need to log in to the store to access the balance information.
+
+  - The response body only returns an empty array (`[]`): The customer does not need to log in to the store to access balance information when they have a gift card with no balance associated with it.
+
+
+  > ℹ️ This request is made from VTEX to the gift card payment provider.
+
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+  | `REST-Range` | header | Pagination control. This query variable must follow the format _resources={from}-{to}_. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "id": "3ad63br54-988e-4a14-8b7f-31fc6a5b955c_24",
+      "provider": "ProviderName",
+      "balance": 5.9,
+      "_self": {
+        "href": "/gatewayqa/giftcards/3ad63br54-988e-4a14-8b7f-31fc6a5b955c_24"
+      }
+    }
+  ]
+  ```

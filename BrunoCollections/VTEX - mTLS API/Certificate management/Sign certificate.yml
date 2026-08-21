@@ -1,0 +1,77 @@
+info:
+  name: Sign certificate
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/edge/private-certificates/sign"
+  headers:
+    - name: Content-Type
+      value: text/plain
+    - name: Accept
+      value: text/plain
+  body:
+    type: text
+    data: |-
+      -----BEGIN CERTIFICATE REQUEST-----
+      ...
+      -----END CERTIFICATE REQUEST-----
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("[POST]::/api/edge/private-certificates/sign - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/edge/private-certificates/sign - Content-Type is text/plain", function () {
+          expect(String(res.getHeader("content-type"))).to.include("text/plain");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  >ℹ️ This feature is part of [VTEX Shield](https://help.vtex.com/en/tutorial/vtex-shield--2CVk6H9eY2CBtHjtDI7BFh). If you're already a VTEX client and would like to adopt VTEX Shield for your business, contact our [Commercial Support](https://help.vtex.com/es/tracks/support-at-vtex--4AXsGdGHqExp9ZkiNq9eMy/3KQWGgkPOwbFTPfBxL7YwZ). Additional fees may apply. If you're not a VTEX client yet but are interested in this solution, please complete our [contact form](https://vtex.com/us-en/contact/).
+
+  Requests a certificate signed by VTEX's Certificate Authority (CA). The request must include a valid Certificate Signing Request (CSR) generated with OpenSSL version 3.0.0 or higher.
+
+  >ℹ️ See our [mTLS implementation guide](https://developers.vtex.com/docs/guides/implementing-mtls#generating-csr) for detailed instructions on generating a valid CSR.
+
+  >❗ The account making the request must match the `OU` field in the CSR.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have the appropriate [License Manager resource](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. This is the applicable resource for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | CDN API | Certificate management | **Update certificate** | 
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add the resource above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```text
+  -----BEGIN CERTIFICATE-----
+  ...
+  -----END CERTIFICATE-----
+  ```

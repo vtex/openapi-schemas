@@ -1,0 +1,160 @@
+info:
+  name: Get list of reviews
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{baseUrl}}/reviews-and-ratings/api/reviews"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: search_term
+      value: search_term
+      type: query
+      disabled: true
+    - name: from
+      value: "0"
+      type: query
+      disabled: true
+    - name: to
+      value: "3"
+      type: query
+      disabled: true
+    - name: order_by
+      value: SearchDate:asc
+      type: query
+      disabled: true
+    - name: status
+      value: "true"
+      type: query
+      disabled: true
+    - name: product_id
+      value: "1"
+      type: query
+      disabled: true
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/reviews-and-ratings/api/reviews - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/reviews-and-ratings/api/reviews - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/reviews-and-ratings/api/reviews - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/reviews-and-ratings/api/reviews - Schema is valid", function () {
+          const schema = {"description":"Response body object.","type":"object","properties":{"data":{"description":"Array of reviews.","type":"array","items":{"description":"Review's information.","type":"object","properties":{"id":{"description":"Review ID.","type":"string"},"productId":{"description":"Product ID.","type":"string"},"rating":{"description":"Customer rating.","type":"number"},"title":{"description":"Review's title.","type":"string"},"text":{"description":"Review's text.","type":"string"},"reviewerName":{"description":"Reviewer name.","type":"string"},"shopperId":{"description":"Shopper email.","type":"string"},"reviewDateTime":{"description":"Review's date and time.","type":"string"},"searchDate":{"description":"Review's search date.","type":"string"},"verifiedPurchaser":{"description":"Indicates if the reviewer is a verified purchaser (`true`) or not (`false`).","type":"boolean"},"sku":{"description":"SKU ID.","type":["string","null"]},"approved":{"description":"Indicates if the review was approved (`true`) or not (`false`).","type":"boolean"},"location":{"description":"Review's origin location.","type":["string","null"]},"locale":{"description":"Review's locale.","type":["string","null"]},"pastReviews":{"description":"Past reviews of the same product.","type":["string","null"]}}}},"range":{"description":"Range of the reviews list.","type":"object","properties":{"total":{"description":"Total number of reviews on the list.","type":"number"},"from":{"description":"Zero base starting record number.","type":"number"},"to":{"description":"Zero base ending record number.","type":"number"}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves a list of reviews related to a product.
+  ## Permissions
+
+  This endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `search_term` | query | Returns Reviews that contain the search term in `productId`, `sku`, `shopperId`, or `reviewerName`. |
+  | `from` | query | Zero base starting record number, `0` is the default value. |
+  | `to` | query | Zero base ending record number, `3` is the default value. |
+  | `order_by` | query | Field name to order records. The field name must have the first letter uppercase. Allowed field names: `ProductId`, `ShopperId`, `Approved`, `ReviewDateTime`, `SearchDate`, `Rating`, `Locale`. Optionally add `:asc` or `:desc`. |
+  | `status` | query | Status of the review, approved (`true`) or not (`false`). |
+  | `product_id` | query | Filter the reviews by product ID. |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "data": [
+      {
+        "id": "1",
+        "productId": "880035",
+        "rating": 3,
+        "title": "anon",
+        "text": "anon",
+        "reviewerName": "anon",
+        "shopperId": "anon@email.com",
+        "reviewDateTime": "06/02/2021 20:58:43",
+        "searchDate": "2021-06-02T20:58:43Z",
+        "verifiedPurchaser": false,
+        "sku": null,
+        "approved": true,
+        "location": "",
+        "locale": null,
+        "pastReviews": null
+      },
+      {
+        "id": "2",
+        "productId": "880035",
+        "rating": 5,
+        "title": "logged in",
+        "text": "it's cool",
+        "reviewerName": "Brian",
+        "shopperId": "brian@email.com.br",
+        "reviewDateTime": "06/02/2021 21:00:00",
+        "searchDate": "2021-06-02T21:00:00Z",
+        "verifiedPurchaser": false,
+        "sku": null,
+        "approved": true,
+        "location": "",
+        "locale": null,
+        "pastReviews": null
+      },
+      {
+        "id": "c66d8bc0-787c-11ec-82ac-028dd4526e77",
+        "productId": "880035",
+        "rating": 3,
+        "title": "Korean",
+        "text": "ko-KR",
+        "reviewerName": "ko-KR",
+        "shopperId": "user@email.com",
+        "reviewDateTime": "01/18/2022 16:36:33",
+        "searchDate": "2022-01-18T16:36:33Z",
+        "verifiedPurchaser": false,
+        "sku": null,
+        "approved": true,
+        "location": null,
+        "locale": "ko-KR",
+        "pastReviews": null
+      }
+    ],
+    "range": {
+      "total": 26,
+      "from": 0,
+      "to": 3
+    }
+  }
+  ```

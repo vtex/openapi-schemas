@@ -1,0 +1,91 @@
+info:
+  name: Generate DKIM keys
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/mail-service/pvt/providers/:EmailProvider/dkim"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: EmailProvider
+      value: help@valdie.co
+      type: path
+    - name: accountName
+      value: "{{accountName}}"
+      type: path
+    - name: environment
+      value: "{{environment}}"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/mail-service/pvt/providers/:EmailProvider/dkim - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/mail-service/pvt/providers/:EmailProvider/dkim - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/mail-service/pvt/providers/:EmailProvider/dkim - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/mail-service/pvt/providers/:EmailProvider/dkim - Schema is valid", function () {
+          const schema = {"type":"object","additionalProperties":true,"properties":{"status":{"type":"string","description":"DKIM key generating status, which can be one of the following values: \r\n\r\n- Status `emailNotFound` \r\n\r\n- `emailNotVerified` \r\n\r\n- `created`","enum":["emailNotFound","emailNotVerified","created"]},"dkimKeys":{"type":["array","null"],"description":"List of DKIM keys.","items":{"type":"string","description":"DKIM keys."},"additionalProperties":true}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Create [DKIM keys](https://developers.vtex.com/docs/guides/setting-up-dkim-for-transactional-emails) for a sender that was [setup](https://help.vtex.com/en/tracks/transactional-emails--6IkJwttMw5T84mlY9RifRP/42LVaxtFb2VHX9xTZU58qC) in VTEX mail servers. 
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Message Center | Providers | **Add or edit provider** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `EmailProvider` | path | (Required) Email address for the sender that was setup in VTEX mail servers. |
+  | `accountName` | path | Name of the VTEX account. Used as part of the URL. |
+  | `environment` | path | Environment to use. Used as part of the URL. (This can only be one of vtexcommercestable) |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "status": "emailNotFound",
+    "dkimKeys": null
+  }
+  ```

@@ -1,0 +1,126 @@
+info:
+  name: Get card token by ID
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/payments/pvt/accounts/:id"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: id
+      value: minim ex voluptate
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/payments/pvt/accounts/:id - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/payments/pvt/accounts/:id - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/payments/pvt/accounts/:id - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/payments/pvt/accounts/:id - Schema is valid", function () {
+          const schema = {"type":"object","description":"Card token payload returned by the API.","properties":{"id":{"type":"string","description":"Token ID (unique identifier automatically generated during token creation and stored in the system)."},"providerId":{"type":"string","description":"Name of the payment provider responsible for the tokenized card."},"orderGroup":{"type":"string","description":"Order group ID, a segment of the order ID that groups all orders related to the same purchase. For example, in the order ID `v71021570str-02`, the order group ID is `v71021570str`."},"profileId":{"type":"string","description":"Profile ID in the Profile System (used for contract identification)."},"shopperId":{"type":"string","description":"Shopper identification."},"email":{"type":"string","description":"Email is used only if neither `profileId` nor `orderGroup` are provided."},"card":{"type":"object","description":"Card information persisted with the token.","required":["paymentSystemName","firstDigits","lastDigits"],"properties":{"paymentSystemId":{"type":"string","description":"Payment system ID in the Payment Gateway."},"paymentSystemName":{"type":"string","description":"Payment system name (card brand)."},"firstDigits":{"type":"string","description":"First six digits (BIN) of the card."},"lastDigits":{"type":"string","description":"Last four digits of the card."},"address":{"type":"object","description":"Billing address associated with the card token.","properties":{"addressType":{"type":"string","description":"Address type. Example: `Residential`."},"addressId":{"type":"string","description":"Unique identifier for the address."},"postalCode":{"type":"string","description":"Postal code (ZIP/CEP)."},"street":{"type":"string","description":"Street name."},"neighborhood":{"type":"string","description":"Neighborhood name."},"city":{"type":"string","description":"City name."},"state":{"type":"string","description":"State or province."},"country":{"type":"string","description":"Billing address country code (ISO 3166 alpha-3)."},"number":{"type":"string","description":"Street number."},"complement":{"type":"string","description":"Address complement (e.g., apartment, building)."}}},"holderName":{"type":"string","description":"Name of the cardholder as printed on the card."}}},"cardTokenData":{"type":"object","description":"Token-specific metadata used by the card token vault.","required":["type","expiration"],"properties":{"type":{"type":"string","description":"Token type stored in the vault.","enum":["FILE","TOKEN_CLIENT_ID","TOKEN_VALUE"]},"value":{"type":"string","description":"Token value to be used in transactions. Required when `type` is TOKEN_VALUE."},"expiration":{"type":"string","description":"Token expiration date in `YYYY-MM` format."},"label":{"type":"string","description":"Token alias (an alternative name to simplify token identification)."},"providerCardTokenId":{"type":"string","description":"Client ID used to retrieve the token from the provider. This field is required if the `type` is TOKEN_CLIENT_ID."},"useCvvForAuthorization":{"type":"boolean","default":false,"description":"Flag indicating if CVV is required (`true`) or not (`false`)."},"href":{"type":"string","description":"URL of the token file stored by the provider. This field is required if the `type` is FILE."}}},"extraData":{"type":"object","description":"Additional metadata stored with the token.","additionalProperties":{"type":"string","description":"Additional metadata value."}}},"required":["id","providerId","cardTokenData"]};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves data for a specific token by its ID (unique identifier automatically generated during token creation).
+
+  > ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | PCI Gateway | Payment-ViewPaymentData | **View Payment Data** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `id` | path | (Required) Token ID (unique identifier automatically generated during token creation and stored in the system). |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "tok_123456789",
+    "providerId": "brpay",
+    "orderGroup": "v71021570str",
+    "profileId": "profile-id",
+    "shopperId": "shopper-id",
+    "email": "shopper@example.com",
+    "card": {
+      "paymentSystemId": "123",
+      "paymentSystemName": "Visa",
+      "firstDigits": "000000",
+      "lastDigits": "0000",
+      "address": {
+        "addressType": "Residential",
+        "addressId": "address-id",
+        "postalCode": "00000-000",
+        "street": "Av. Example",
+        "neighborhood": "Centro",
+        "city": "Example City",
+        "state": "SP",
+        "country": "BRA",
+        "number": "1000",
+        "complement": "Apt 1"
+      },
+      "holderName": "Shopper Example"
+    },
+    "cardTokenData": {
+      "type": "TOKEN_VALUE",
+      "value": "token-value",
+      "expiration": "2025-12",
+      "label": "Primary card",
+      "providerCardTokenId": "provider-token-id",
+      "useCvvForAuthorization": false,
+      "href": "https://provider.example/token-file"
+    },
+    "extraData": {
+      "additionalProp1": "string"
+    }
+  }
+  ```

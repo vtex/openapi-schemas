@@ -1,0 +1,71 @@
+info:
+  name: Recommendation view
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/recommend-bff/v2/events/recommendation-view?an=apiexamples"
+  headers:
+    - name: x-vtex-rec-origin
+      value: apiexamples/storefront/vtex.recommendation-shelf@2.x
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: an
+      value: apiexamples
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+        "userId": "198e0f50-acf8-42f7-998a-5cd125464749",
+        "correlationId": "d2e8c706-e67c-45d7-8de9-b80976960f89",
+        "products": [
+          "14",
+          "12"
+        ],
+        "campaignId": "ca2acae8-41a4-4bcd-9ffd-0ac40b7c0a57"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("[POST]::/api/recommend-bff/v2/events/recommendation-view - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Records when a recommendation shelf enters the viewport.
+
+  ## When to send
+
+  **Web storefronts**: Automatically captured through Activity Flow when proper data attributes are rendered on the shelf container. See the integration guides for details.
+
+  **Mobile apps**: Send this event when the recommendation shelf becomes visible (e.g., when at least 50% of the shelf is visible for 1 second). Ensure events are properly debounced to prevent duplicates.
+
+  ## Important notes
+
+  - Always use the same session `recommendationsUserId` in the `userId` field for accurate tracking.
+  - Include the `correlationId` returned in the [Fetch recommendations](https://developers.vtex.com/docs/api-reference/recommendations-bff-api#get-/api/recommend-bff/v2/recommendations) response.
+  - Include the `campaignId` from `campaign.id` in the [Fetch recommendations](https://developers.vtex.com/docs/api-reference/recommendations-bff-api#get-/api/recommend-bff/v2/recommendations) response.
+  - The `products` array should contain all product IDs rendered in the shelf.
+
+  ## Permissions
+
+  This endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `an` | query | (Required) VTEX account name. Must match the account name in the `x-vtex-rec-origin` header. |
+  | `x-vtex-rec-origin` | header | (Required) Required format: `{accountName}/{sourceType}/{appOrIntegrationId}`. Must match the `an` query parameter for account name. |

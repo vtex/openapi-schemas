@@ -1,0 +1,108 @@
+info:
+  name: Create address
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/dataentities/AD/documents"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "addressLabel": "PRINCIPAL",
+        "postalCode": "48226",
+        "street": "Toringon Street",
+        "number": "11",
+        "neighborhood": "",
+        "complement": "",
+        "city": "Raleigh",
+        "state": "NC",
+        "country": "USA",
+        "receiverName": "Backpack-Klub-LLC",
+        "geoCoordinate": "",
+        "addressType": "commercial",
+        "userId": "2da4e9ab-050b-11f0-b37f-f4b136dbcce1"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/dataentities/AD/documents - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/dataentities/AD/documents - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/dataentities/AD/documents - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/dataentities/AD/documents - Schema is valid", function () {
+          const schema = {"type":"object","description":"Response body for a created address.","properties":{"Id":{"type":"string","description":"The prefixed ID of the document."},"Href":{"type":"string","description":"The URL to access the created document."},"DocumentId":{"type":"string","description":"The actual document ID (UUID) within the entity."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint allows you to register a new address, also referred to as the AD data entity.
+
+  > ⚠️ When creating addresses you must send each field according to the specifications provided. Otherwise, the Checkout module will not be able to autofill data during the shopping flow, which can block the purchase. Learn more about [SmartCheckout - Customer information automatic fill-in](https://help.vtex.com/en/tutorial/smartcheckout-preenchimento-automatico-de-dados-do-cliente--2Nuu3xAFzdhIzJIldAdtan#).
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |
+  | Master Data | Application | **Create Applications** |
+  | Master Data | Application | **View logs** |
+  | Master Data | Form | **List Forms** |
+  | Master Data | Form | **Create Forms** |
+  | Master Data | Generic resources | **Full access to forms** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "Id": "AD-4286e252-050b-11f0-b37f-d6617047d485",
+    "Href": "http://qastore.myvtex.com/api/dataentities/AD/documents/4286e252-050b-11f0-b37f-d6617047d485",
+    "DocumentId": "4286e252-050b-11f0-b37f-d6617047d485"
+  }
+  ```

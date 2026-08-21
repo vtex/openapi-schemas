@@ -1,0 +1,83 @@
+info:
+  name: Get product rating
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/reviews-and-ratings/api/rating/:productId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: productId
+      value: "1"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/reviews-and-ratings/api/rating/:productId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/reviews-and-ratings/api/rating/:productId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/reviews-and-ratings/api/rating/:productId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/reviews-and-ratings/api/rating/:productId - Schema is valid", function () {
+          const schema = {"description":"Response body object.","type":"object","properties":{"average":{"description":"Average rating of the product.","type":"number"},"totalCount":{"description":"Total amount of ranting of the product.","type":"number"},"starsFive":{"description":"Total five-star ratings received by the product.","type":"number"},"starsFour":{"description":"Total four-star ratings received by the product.","type":"number"},"starsThree":{"description":"Total three-star ratings received by the product.","type":"number"},"starsTwo":{"description":"Total two-star ratings received by the product.","type":"number"},"starsOne":{"description":"Total one-star ratings received by the product.","type":"number"}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves the rating of a product.
+   ## Permissions
+
+  This endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `productId` | path | (Required) Product ID. |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "average": 3.25,
+    "starsFive": 4,
+    "starsFour": 0,
+    "starsThree": 1,
+    "starsTwo": 0,
+    "starsOne": 3,
+    "totalCount": 8
+  }
+  ```

@@ -1,0 +1,123 @@
+info:
+  name: Update specification
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/catalog/pvt/specification/:specificationId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: specificationId
+      value: "88"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "FieldTypeId": 1,
+        "CategoryId": 0,
+        "FieldGroupId": 0,
+        "Name": "Material",
+        "Description": "Composition of the product.",
+        "Position": 1,
+        "IsFilter": false,
+        "IsRequired": false,
+        "IsOnProductDetails": false,
+        "IsStockKeepingUnit": false,
+        "IsWizard": false,
+        "IsActive": false,
+        "IsTopMenuLinkActive": false,
+        "IsSideMenuLinkActive": false,
+        "DefaultValue": "Leather"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[PUT]::/api/catalog/pvt/specification/:specificationId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PUT]::/api/catalog/pvt/specification/:specificationId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[PUT]::/api/catalog/pvt/specification/:specificationId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[PUT]::/api/catalog/pvt/specification/:specificationId - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"Id":{"type":"integer","description":"Specification ID."},"FieldTypeId":{"type":"integer","description":"Field type ID can be `1 - Text`, `2 - Multi-Line Text`, `4 - Number`, `5 - Combo`, `6 - Radio`, `7 - Checkbox`, `8 - Indexed Text`, `9 - Indexed Multi-Line Text`."},"CategoryId":{"type":"integer","description":"Category ID associated with this specification."},"FieldGroupId":{"type":"integer","description":"ID of the group of specifications that contains the new specification."},"Name":{"type":"string","description":"Specification name. Limited to 100 characters."},"Description":{"type":["string","null"],"description":"Deprecated field."},"Position":{"type":"integer","description":"Store Framework - Deprecated.\r\nLegacy CMS Portal - This position number is used in ordering the specifications both in the navigation menu and in the specification listing on the product page."},"IsFilter":{"type":"boolean","description":"Store Framework - Deprecated.\r\nLegacy CMS Portal - To allow the specification to be used as a facet (filter) on the search navigation bar."},"IsRequired":{"type":"boolean","description":"Makes the specification mandatory (`true`) or optional (`false`)."},"IsOnProductDetails":{"type":"boolean","description":"Store Framework - Deprecated.\r\nLegacy CMS Portal -If specification is visible on the product page."},"IsStockKeepingUnit":{"type":"boolean","description":"If `true`, it will be added as a SKU specification. If `false`, it will be added as a product specification field."},"IsWizard":{"type":["boolean","null"],"description":"Deprecated field."},"IsActive":{"type":"boolean","description":"Enable (`true`) or disable (`false`) specification."},"IsTopMenuLinkActive":{"type":"boolean","description":"Store Framework - Deprecated.\r\nLegacy CMS Portal - To make the specification visible in the store's upper menu."},"IsSideMenuLinkActive":{"type":"boolean","description":"Store Framework - Deprecated.\r\nLegacy CMS Portal - To make the specification field clickable in the search navigation bar."},"DefaultValue":{"type":"string","description":"Specification default value."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Updates a product specification or SKU specification.
+
+  >⚠️ It is not possible to edit `FieldTypeId`, `CategoryId`, `FieldGroupId` or `IsStockKeepingUnit` in this API call.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Catalog | Commercial | **SKU management** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `specificationId` | path | (Required) Specification's unique numerical identifier. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "Id": 88,
+    "FieldTypeId": 1,
+    "CategoryId": 4,
+    "FieldGroupId": 20,
+    "Name": "Material",
+    "Description": "Composition of the product.",
+    "Position": 1,
+    "IsFilter": true,
+    "IsRequired": true,
+    "IsOnProductDetails": false,
+    "IsStockKeepingUnit": false,
+    "IsWizard": false,
+    "IsActive": true,
+    "IsTopMenuLinkActive": false,
+    "IsSideMenuLinkActive": true,
+    "DefaultValue": "Leather"
+  }
+  ```

@@ -1,0 +1,202 @@
+info:
+  name: Get installments options
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/pvt/installments?request.value=10"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: request.value
+      value: "10"
+      type: query
+    - name: request.salesChannel
+      value: "1"
+      type: query
+      disabled: true
+    - name: request.paymentDetails[0].id
+      value: "2"
+      type: query
+      disabled: true
+    - name: request.paymentDetails[0].value
+      value: "10"
+      type: query
+      disabled: true
+    - name: request.paymentDetails[0].bin
+      value: "411111"
+      type: query
+      disabled: true
+  auth:
+    type: apikey
+    key: X-VTEX-API-AppKey
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/pvt/installments - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/pvt/installments - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/pvt/installments - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/pvt/installments - Schema is valid", function () {
+          const schema = {"required":["value","installments"],"type":"object","description":"Installments options response body information.","properties":{"value":{"type":"number","description":"Value to be paid in installments."},"installments":{"type":"array","items":{"required":["payment","options"],"type":"object","description":"Installment options information.","properties":{"payment":{"required":["id","name","bin","value","isDefault","self"],"type":"object","description":"Payment system information.","properties":{"id":{"type":"integer","description":"Payment system identification."},"name":{"type":["string","null"],"description":"Payment system name."},"bin":{"type":["string","null"],"description":"First six digits of the card number."},"value":{"type":"number","description":"Value to be paid in installments."},"isDefault":{"type":"boolean","description":"Indicates whether the payment system is automatically applied by default.","default":false},"self":{"required":["href"],"type":"object","description":"Object containing the payment system reference route.","properties":{"href":{"type":"string","description":"Payment system reference route."}}}}},"options":{"type":"array","description":"Array containing information about installment options.","items":{"required":["ruleId","quantity","value","interestRate","isExternalInstallmentService","interestTax"],"type":"object","description":"Installment options information.","properties":{"ruleId":{"type":["string","null"],"description":"Rule identification."},"quantity":{"type":"integer","description":"Number of installments."},"value":{"type":"number","description":"Value of each installment."},"interestRate":{"type":"number","description":"Interest rate (percent 0.1 = 10%)."},"isExternalInstallmentService":{"type":["number","null"],"description":"Indicates the external installment system (if applicable)."},"interestTax":{"type":["number","null"],"description":"Interest tax (percent 0.1 = 10%)."}}}}}},"description":"Installments information."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns the best installment options according to the parameters informed in the request.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | PCI Gateway | Payment-Make Payments | **View Payment Data** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `request.value` | query | (Required) Value to be divided into installments. |
+  | `request.salesChannel` | query | Sales channel identification. Attribute created by the seller in their VTEX store configuration. |
+  | `request.paymentDetails[0].id` | query | Payment system identification. |
+  | `request.paymentDetails[0].value` | query | Total value paid in installments. If applied in the search, it must be equal to the `request.value` field. |
+  | `request.paymentDetails[0].bin` | query | First six digits of the card number. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "value": 250,
+    "installments": [
+      {
+        "payment": {
+          "id": 72,
+          "name": null,
+          "bin": null,
+          "value": 250,
+          "isDefault": false,
+          "self": {
+            "href": "/api/pvt/payment-systems/72"
+          }
+        },
+        "options": [
+          {
+            "ruleId": "01a8d68b-9116-4655-83f8-3380f658ec04",
+            "quantity": 1,
+            "value": 250,
+            "interestRate": 0,
+            "isExternalInstallmentService": null,
+            "interestTax": 0
+          },
+          {
+            "ruleId": "01a8d68b-9116-4655-83f8-3380f658ec04",
+            "quantity": 2,
+            "value": 125,
+            "interestRate": 0,
+            "isExternalInstallmentService": null,
+            "interestTax": 0
+          },
+          {
+            "ruleId": "01a8d68b-9116-4655-83f8-3380f658ec04",
+            "quantity": 3,
+            "value": 83.33,
+            "interestRate": 0,
+            "isExternalInstallmentService": null,
+            "interestTax": 0
+          },
+          {
+            "ruleId": "01a8d68b-9116-4655-83f8-3380f658ec04",
+            "quantity": 4,
+            "value": 62.5,
+            "interestRate": 0,
+            "isExternalInstallmentService": null,
+            "interestTax": 0
+          }
+        ]
+      },
+      {
+        "payment": {
+          "id": 5,
+          "name": "ERedeV2 - Visa",
+          "bin": null,
+          "value": 10,
+          "isDefault": false,
+          "self": {
+            "href": "/api/pvt/payment-systems/2"
+          }
+        },
+        "options": [
+          {
+            "ruleId": "993d4d35-b64d-454d-8108-c560580160e0",
+            "quantity": 1,
+            "value": 250,
+            "interestRate": 0,
+            "isExternalInstallmentService": null,
+            "interestTax": null
+          }
+        ]
+      },
+      {
+        "payment": {
+          "id": 12,
+          "name": "PayPal - 6U0DTI3M3OKO6R",
+          "bin": null,
+          "value": 10,
+          "isDefault": false,
+          "self": {
+            "href": "/api/pvt/payment-systems/12"
+          }
+        },
+        "options": [
+          {
+            "ruleId": "9ac0fa1b-dd9d-4549-abb8-e73bbb63c280",
+            "quantity": 1,
+            "value": 250,
+            "interestRate": 0,
+            "isExternalInstallmentService": null,
+            "interestTax": null
+          }
+        ]
+      }
+    ]
+  }
+  ```

@@ -1,0 +1,89 @@
+info:
+  name: Upsert seller commissions in bulk
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/seller-register/pvt/sellers/:sellerId/commissions"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: sellerId
+      value: seller123
+      type: path
+    - name: accountName
+      value: apiexamples
+      type: path
+    - name: environment
+      value: vtexcommercestable
+      type: path
+  body:
+    type: json
+    data: |-
+      [
+        {
+          "categoryId": "6",
+          "categoryFullPath": null,
+          "productCommissionPercentage": 9.85,
+          "freightCommissionPercentage": 2.43
+        },
+        {
+          "categoryId": "6",
+          "categoryFullPath": null,
+          "productCommissionPercentage": 9.85,
+          "freightCommissionPercentage": 2.43
+        }
+      ]
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("[PUT]::/seller-register/pvt/sellers/:sellerId/commissions - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PUT]::/seller-register/pvt/sellers/:sellerId/commissions - Response has empty Body", function () {
+          const data = res.getBody();
+          expect(data === undefined || data === null || data === "").to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint is used by marketplace operators to define comissions for multiple categories, sending an array with multiple objects in the same call.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  |---|---|---|
+  | Seller Register | Seller administration | Save Seller |
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  |Seller manager | Save Seller | 
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with this feature or use one of the predefined roles from the list above.
+
+   >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `sellerId` | path | (Required) A string that identifies the seller in the marketplace. This ID must be created by the marketplace and informed to the seller before the integration is built. |
+  | `accountName` | path | (Required) Name of the VTEX account that belongs to the marketplace. The notification will be posted into this account. |
+  | `environment` | path | (Required) Environment to use. Used as part of the URL. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |

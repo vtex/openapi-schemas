@@ -1,0 +1,176 @@
+info:
+  name: List reservation by ID
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/logistics/pvt/inventory/reservations/:reservationId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: reservationId
+      value: 00-1336411707838-01
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/logistics/pvt/inventory/reservations/:reservationId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/logistics/pvt/inventory/reservations/:reservationId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/logistics/pvt/inventory/reservations/:reservationId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/logistics/pvt/inventory/reservations/:reservationId - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"LastUpdateDateUtc":{"type":"string","description":"Last update date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."},"SalesChannel":{"type":"string","description":"Sales channel ([trade policy](https://help.vtex.com/en/tutorial/how-trade-policies-work--6Xef8PZiFm40kg2STrMkMV)) valid for the reservation."},"LockId":{"type":"string","description":"Reservation ID."},"ReservationDateUtc":{"type":"string","description":"Reservation date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."},"MaximumConfirmationDateUtc":{"type":"string","description":"Maximum confirmation date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."},"Status":{"type":"integer","format":"int32","description":"Reservation status, meaning:\r\n\r\n- `0`: `NotCommitted`\r\n\r\n- `1`: `Authorized`\r\n\r\n- `2`: `Confirmed`\r\n\r\n- `3`: `Canceled_AbortedCommitted`\r\n\r\n- `4`: `Canceled_AuthorizationExpired`\r\n\r\n- `5`: `Canceled_Manually`"},"SlaRequest":{"type":"array","description":"SLA (Service Level Agreement) request information.","items":{"type":"object","description":"SLA details.","properties":{"item":{"type":"object","description":"Information about the reserved item.","properties":{"id":{"type":"string","description":"SKU ID."},"groupItemId":{"type":["string","null"],"description":"Group item ID."},"quantity":{"type":"integer","format":"int32","description":"Item quantity."},"price":{"type":"number","description":"Item price."},"modal":{"type":["string","null"],"description":"Type of [modal](https://help.vtex.com/en/tutorial/how-the-modal-works--tutorials_125), a special freight.","enum":["CHEMICALS","ELECTRONICS","FURNITURE","GLASS","LIQUID","MATTRESSES","REFRIGERATED","TIRES","WHITE_GOODS","FIREARMS"]},"additionalHandlingTime":{"type":"string","description":"Additional handling time in the format `DD.HH:MM:SS`."},"dimension":{"type":"object","description":"Item dimensions.","properties":{"weight":{"type":"number","description":"Item weight."},"height":{"type":"number","description":"Item height."},"width":{"type":"number","description":"Item width."},"length":{"type":"number","description":"Item length."},"maxSumDimension":{"type":"number","description":"Maximum sum of dimensions."}}},"kitItem":{"type":["array","null"],"items":{"type":"string","description":"Kit SKU ID."},"description":"[Kit](https://help.vtex.com/en/tutorial/what-is-a-kit--5ov5s3eHM4AqAAgqWwoc28) item information."},"unlimitedQuantity":{"type":"boolean","description":"When set as `false`, every sold unit decreases the item's available quantity. When set as `true`, the SKU from the warehouse is always available for sale — no matter how many units are sold, the SKU available quantity never decreases, and the SKU is never out of stock."},"dockId":{"type":"string","description":"[Loading dock](https://help.vtex.com/en/tutorial/loading-dock--5DY8xHEjOLYDVL41Urd5qj) ID."},"wareHouseId":{"type":"string","description":"[Warehouse](https://help.vtex.com/en/tutorial/warehouse--6oIxvsVDTtGpO7y6zwhGpb) ID."},"provider":{"type":["string","null"],"description":"SLA request provider."}}},"slaType":{"type":"string","description":"SLA (Service Level Agreement) type."},"slaTypeName":{"type":"string","description":"SLA name."},"freightTableName":{"type":"string","description":"[Shipping rate template](https://help.vtex.com/en/tutorial/shipping-rate-template--tutorials_127) name."},"freightTableId":{"type":"string","description":"Shipping rate template ID."},"listPrice":{"type":"number","description":"List price."},"promotionalPrice":{"type":"number","description":"Promotion price."},"timeToPresale":{"type":"string","description":"Time to presale in the format `D.HH:MM:SS`."},"transitTime":{"type":"string","description":"Transit time in the format `DD.HH:MM:SS`."},"dockTime":{"type":"string","description":"[Loading dock](https://help.vtex.com/en/tutorial/loading-dock--5DY8xHEjOLYDVL41Urd5qj) processing time in the format `D.HH:MM:SS`. When it was not configured, it returns `00:00:00`."},"timeToDockPlusDockTime":{"type":"string","description":"Time spent in loading dock plus `dockTime` in the format `D.HH:MM:SS`."},"totalTime":{"type":"string","description":"SLA total time in the format `DD.HH:MM:SS`."},"deliveryWindows":{"type":["object","null"],"items":{"type":"object","description":"Delivery window details.","properties":{"startDateUtc":{"type":"string","description":"Delivery window starting date and time, in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."},"endDateUtc":{"type":"string","description":"Delivery window ending date and time, in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."},"listPrice":{"type":"number","description":"List price."}}},"description":"[Delivery windows](https://help.vtex.com/en/tutorial/managing-delivery-capacity--2y217FQZCjD0I1n62yxVcz)."},"wareHouseId":{"type":"string","description":"[Warehouse](https://help.vtex.com/en/tutorial/warehouse--6oIxvsVDTtGpO7y6zwhGpb) ID."},"kitReservation":{"type":["string","null"],"description":"Kit reservation."},"dockId":{"type":"string","description":"[Loading dock](https://help.vtex.com/en/tutorial/loading-dock--5DY8xHEjOLYDVL41Urd5qj) ID."},"wmsEndPoint":{"type":["string","null"],"description":"Warehouse Management System (WMS) fulfillment endpoint."},"location":{"type":"object","description":"Shipping location information.","properties":{"zipCode":{"type":"string","description":"Shipping address postal code."},"country":{"type":"string","description":"Three-digit country code of the shipping address, in [ISO 3166 ALPHA-3](https://www.iban.com/country-codes) format."},"point":{"type":["array","null"],"description":"Location delivery point coordinates.","items":{"type":"number","description":"Location coordinates, first longitude, then latitude."}},"inStore":{"type":"object","description":"Information related to [VTEX Sales App](https://help.vtex.com/en/tracks/instore-getting-started-and-setting-up--zav76TFEZlAjnyBVL5tRc).","properties":{"IsCheckedIn":{"type":"boolean","description":"This field is set as `true` when the order was placed via [VTEX Sales App](https://help.vtex.com/en/tracks/instore-getting-started-and-setting-up--zav76TFEZlAjnyBVL5tRc) and `false` when it was not."},"StoreId":{"type":["string","null"],"description":"ID of purchases made in the GoCommerce context."}}}}},"pickupStoreInfo":{"type":["string","null"],"description":"Detailed information about a [pickup point](https://help.vtex.com/en/tutorial/pickup-points--2fljn6wLjn8M4lJHA6HP3R)."},"deliveryOnWeekends":{"type":["boolean","null"],"description":"Defines if the delivery on weekends configuration is active (`true`) or not (`false`)."},"weekendAndHolidays":{"type":"object","description":"Delivery on weekends and holidays information.","properties":{"saturday":{"type":"boolean","description":"Defines if the delivery on Saturday configuration is active (`true`) or not (`false`)."},"sunday":{"type":"boolean","description":"Defines if the delivery on Sunday configuration is active (`true`) or not (`false`)."},"holiday":{"type":"boolean","description":"Defines if the delivery on [holiday](https://help.vtex.com/en/tutorial/registering-holidays--2ItOthSEAoyAmcwsuiO6Yk) configuration is active (`true`) or not (`false`)."}}},"estimateDate":{"type":"string","description":"Delivery estimate date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."},"deliveryChannel":{"type":"string","description":"Delivery channel."},"totalTimePlusCarrierSchedule":{"type":"string","description":"Total shipping time plus carrier schedule, in the format `DD.HH:MM:SS`."},"polygonName":{"type":"string","description":"[Polygon](https://help.vtex.com/en/tutorial/registering-geolocation--tutorials_138) name."},"distanceLevel":{"type":["string","null"],"description":"SLA distance level."},"accountCarrier":{"type":"string","description":"Account carrier."},"dateOfSupplyUtc":{"type":["string","null"],"description":"Supply date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."},"supplyLotId":{"type":["string","null"],"description":"Supply lot ID."},"isExternal":{"type":"boolean","description":"Defines if the SLA request is external (`true`) or not (`false`)."}}}},"CanceledDateUtc":{"type":"string","description":"Reservation canceled date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."},"AuthorizedDateUtc":{"type":"string","description":"Authorized date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."},"ConfirmedDateUtc":{"type":"string","description":"Confirmed date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."},"Errors":{"type":["array","null"],"description":"Error details, if there are any.","items":{"type":["string","null"],"description":"Error message."}},"IsSucess":{"type":"boolean","description":"Defines if the reservation was successful (`true`) or not (`false`)."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Lists information about a [reservation](https://help.vtex.com/en/tutorial/how-does-reservation-work--tutorials_92), searching by reservation ID.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Logistics | Logistics access | **Logistics full access** |
+  | Logistics | Logistics access | **Logistics viewer** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Logistics - Full access | Logistics full access |
+  | OMS - Full access | Logistics full access |
+  | Logistics - Full access | Logistics viewer |
+  | Logistics - Read only | Logistics viewer |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `reservationId` | path | (Required) [Reservation](https://help.vtex.com/en/tutorial/how-the-reservation-works--tutorials_92) ID. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "LastUpdateDateUtc": "2024-05-01T17:14:51.5898912+00:00",
+    "SalesChannel": "1",
+    "LockId": "00-1336411707838-01",
+    "ReservationDateUtc": "2024-05-01T17:14:40.4900134+00:00",
+    "MaximumConfirmationDateUtc": "2024-06-13T17:14:40.4900134+00:00",
+    "Status": 2,
+    "SlaRequest": [
+      {
+        "item": {
+          "id": "229",
+          "groupItemId": null,
+          "quantity": 1,
+          "price": 5,
+          "modal": "FURNITURE",
+          "additionalHandlingTime": "00:00:00",
+          "dimension": {
+            "weight": 186.37,
+            "height": 23.5,
+            "width": 165,
+            "length": 67.5,
+            "maxSumDimension": 300
+          },
+          "kitItem": [],
+          "unlimitedQuantity": false,
+          "dockId": "dk_temp",
+          "warehouseId": "wh_temp",
+          "provider": null
+        },
+        "slaType": "delivery",
+        "slaTypeName": "Normal delivery",
+        "freightTableName": "Correios PAC",
+        "freightTableId": "11cc4b6",
+        "listPrice": 10.35,
+        "promotionalPrice": 10.35,
+        "timeToPresale": "00:00:00",
+        "transitTime": "1.00:00:00",
+        "dockTime": "00:00:00",
+        "timeToDockPlusDockTime": "00:00:00",
+        "totalTime": "1.00:00:00",
+        "deliveryWindows": {
+          "startDateUtc": "2024-02-25T09:00:00+00:00",
+          "endDateUtc": "2024-02-25T12:00:00+00:00",
+          "listPrice": 0
+        },
+        "wareHouseId": "wh_temp",
+        "kitReservation": null,
+        "dockId": "dk_temp",
+        "wmsEndPoint": null,
+        "location": {
+          "zipCode": "58039210",
+          "country": "BRA",
+          "point": [
+            -34.82939147949219,
+            -7.115228652954102
+          ],
+          "inStore": {
+            "isCheckedIn": false,
+            "storeId": "180082"
+          }
+        },
+        "pickupStoreInfo": null,
+        "deliveryOnWeekends": true,
+        "weekendAndHolidays": {
+          "saturday": true,
+          "sunday": true,
+          "holiday": true
+        },
+        "estimateDate": "2024-05-02T17:14:51.5742729+00:00",
+        "deliveryChannel": "delivery",
+        "totalTimePlusCarrierSchedule": "1.00:00:00",
+        "polygonName": "centerlRio",
+        "distanceLevel": null,
+        "accountCarrier": "recorrenciaqa",
+        "dateOfSupplyUtc": null,
+        "supplyLotId": null,
+        "isExternal": false
+      }
+    ],
+    "CanceledDateUtc": "0001-01-01T00:00:00+00:00",
+    "AuthorizedDateUtc": "2024-05-01T17:14:40.4900134+00:00",
+    "ConfirmedDateUtc": "2024-05-01T17:14:51.5898912+00:00",
+    "Errors": [],
+    "IsSucess": true
+  }
+  ```

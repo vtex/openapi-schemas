@@ -1,0 +1,98 @@
+info:
+  name: Get address by postal code
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/checkout/pub/postal-code/:countryCode/:postalCode"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: individualShippingEstimates
+      value: "true"
+      type: query
+      disabled: true
+    - name: countryCode
+      value: BRA
+      type: path
+    - name: postalCode
+      value: "1234000"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/checkout/pub/postal-code/:countryCode/:postalCode - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/checkout/pub/postal-code/:countryCode/:postalCode - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/checkout/pub/postal-code/:countryCode/:postalCode - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/checkout/pub/postal-code/:countryCode/:postalCode - Schema is valid", function () {
+          const schema = {"description":"Address.","type":"object","properties":{"postalCode":{"description":"Postal code.","type":"string"},"city":{"description":"City.","type":"string"},"state":{"description":"State.","type":"string"},"country":{"description":"Country.","type":"string"},"street":{"description":"Street.","type":"string"},"number":{"description":"Number.","type":"string"},"neighborhood":{"description":"Neighborhood.","type":"string"},"complement":{"description":"Complement to the shipping address, in case it applies.","type":["string","null"]},"reference":{"description":"Reference.","type":"string"},"geoCoordinates":{"description":"Geo coordinates.","type":"array","items":{"description":"Geo coordinate.","type":"integer"}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves address information for a given postal code and country.
+
+  This request can be used to implement auto complete functionality when a customer needs to fill in an address.
+
+  ## Permissions
+
+  This endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `countryCode` | path | (Required) Three letter country code refering to the `postalCode` field. |
+  | `postalCode` | path | (Required) Postal code. |
+  | `individualShippingEstimates` | query | Shows the product's estimated shipping date in the `shippingEstimate` field from the `orderForm`. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "postalCode": "12345000",
+    "city": "Rio de Janeiro",
+    "state": "RJ",
+    "country": "BRA",
+    "street": "My street",
+    "number": "34",
+    "neighborhood": "My neighborhood",
+    "complement": "Apto 101",
+    "reference": "Reference",
+    "geoCoordinates": []
+  }
+  ```

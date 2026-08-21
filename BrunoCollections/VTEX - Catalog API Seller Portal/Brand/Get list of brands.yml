@@ -1,0 +1,130 @@
+info:
+  name: Get list of brands
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/catalog-seller-portal/brands"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: q
+      value: tshirt
+      type: query
+      disabled: true
+    - name: from
+      value: "1"
+      type: query
+      disabled: true
+    - name: to
+      value: "50"
+      type: query
+      disabled: true
+    - name: orderBy
+      value: status,asc;name,asc
+      type: query
+      disabled: true
+    - name: name
+      value: Zwilling
+      type: query
+      disabled: true
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/catalog-seller-portal/brands - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/catalog-seller-portal/brands - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/catalog-seller-portal/brands - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/catalog-seller-portal/brands - Schema is valid", function () {
+          const schema = {"type":"object","required":["data","_metadata"],"properties":{"data":{"type":"array","description":"List with information about the store's brands.","items":{"type":"object","description":"Brand information.","required":["id","name","isActive","createdAt","updatedAt"],"properties":{"id":{"type":"string","description":"Brand unique identifier number."},"name":{"type":"string","description":"Brand name."},"isActive":{"type":"boolean","description":"The condition defines if the brand is active (`true`) or inactive (`false`)."},"createdAt":{"type":"string","description":"Date when the brand was created."},"updatedAt":{"type":"string","description":"Last date when the brand was updated."}}}},"_metadata":{"type":"object","description":"Information about the organization and exhibition of the brand list.","required":["total","from","to","orderBy"],"properties":{"total":{"type":"integer","description":"Total of brands on the list."},"from":{"type":"integer","description":"The first page of the interval of the brand list."},"to":{"type":"integer","description":"The last page of the interval of the brand list."},"orderBy":{"type":"string","description":"The order that the list is displayed. You can select `name`, or `updated_at` to select the order criteria. Then you can add `,` , `asc` or `desc` to define the brands order."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  >📘 This API is part of the [Seller Portal Catalog](https://help.vtex.com/en/tutorial/how-the-seller-portal-catalog-works--7pMB6YOt6YQDQQbzFB4Pxp). This functionality is in the Beta stage and can be discontinued at any moment at VTEX's discretion. VTEX will not be responsible for any instabilities caused by its use or discontinuity. If you have any questions, please contact [our Support Center](https://support.vtex.com/hc/en-us/requests). 
+
+   Retrieves general information about all brands of the store. It is mandatory to use at least one query parameter.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | CatalogV2 | Management | **Brand Read** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `q` | query | Search word. |
+  | `from` | query | The first page of the interval of the brand list. |
+  | `to` | query | The last page of the interval of the brand list. |
+  | `orderBy` | query | The order that the list is displayed. You can select `name`, or `updated_at` to select the order criteria. Then you can add `,` , `asc` or `desc` to define the brands order. |
+  | `name` | query | Brand name. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "data": [
+      {
+        "id": "863",
+        "name": "Zwilling",
+        "isActive": false,
+        "createdAt": "2021-01-18T14:41:45.696488+00:00",
+        "updatedAt": "2021-01-18T14:41:45.696488+00:00"
+      },
+      {
+        "id": "1298",
+        "name": "Zooz Pets",
+        "isActive": false,
+        "createdAt": "2021-01-18T14:45:32.900176+00:00",
+        "updatedAt": "2021-01-18T14:45:32.900176+00:00"
+      }
+    ],
+    "_metadata": {
+      "total": 1399,
+      "from": 1,
+      "to": 10,
+      "orderBy": "name,desc"
+    }
+  }
+  ```
