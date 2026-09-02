@@ -347,6 +347,190 @@
                 "deprecated": false
             }
         },
+        "/api/dataentities/{dataEntityName}/delete": {
+            "post": {
+                "tags": [
+                    "Bulk deletion"
+                ],
+                "summary": "Create bulk document deletion job",
+                "description": "Creates an asynchronous job that deletes all documents in a data entity that match a given filter.\r\n\r\nThis request does not delete any documents by itself. It creates a job and returns a `JobId`, which you must use to track the job with the [Get bulk document deletion job status](https://developers.vtex.com/docs/api-reference/master-data-api-v2#get-/api/dataentities/-dataEntityName-/delete/jobs/-jobId-) endpoint.\r\n\r\n>❗ This action cannot be undone. Deleted documents will be permanently lost.\r\n\r\n## Filter rules\r\n\r\n- The `filter` field is required.\r\n- Wildcards are not allowed. For example, `email = *@gmail.com` is rejected.\r\n- Every field used in the filter must be indexed. Internal fields, such as `createdIn`, are already indexed. For Master Data v1 entities, a field is indexed when it exists in the data entity and has `isSearchable` enabled.\r\n- Filtering on a custom field also requires sending the `schema` that declares it as indexed in the request body. In Master Data v2, a custom field is declared as indexed for filtering in the `v-indexed` array of its [schema](https://developers.vtex.com/docs/api-reference/master-data-api-v2#put-/api/dataentities/-dataEntityName-/schemas/-schemaName-).\r\n- Only one active job per account and data entity is allowed at a time.\r\n\r\n>ℹ️ Confirm how many documents match your filter before deleting them, so you can compare that number with the `DocumentsDeleted` value returned by the job status endpoint.\r\n\r\n## Errors\r\n\r\n`{field}`, `{schema}`, and `{entity}` are placeholders for values from your request, and any quotation marks around them are part of the message returned by the API. Messages marked as truncated continue beyond the text shown.\r\n\r\n| Status code | Message or cause | What to do |\r\n| - | - | - |\r\n| `400` | `The 'filter' field is required` | Send the `filter` field in the body. |\r\n| `400` | `Wildcard filters are not allowed for bulk delete` | Rewrite the filter using exact or range conditions over indexed fields. |\r\n| `400` | `The field '{field}' is not an internal indexed field, so the 'schema' that declares it as indexed must be provided` | Send the `schema` field in the body. |\r\n| `400` | `The field {field} is not indexed in the schema {schema}...` (truncated) | Mark the field as indexed in the schema and wait for reindexing, or filter on an already indexed field. |\r\n| `400` | `The field '{field}' does not exist for the data entity '{entity}'` | Correct the field name in the filter. |\r\n| `400` | `The field {field} of the data entity {entity} is not indexed (isSearchable is not enabled)...` (truncated) | Applies to Master Data v1 entities. Enable `isSearchable` on the field and wait for reindexing, or use another indexed field. |\r\n| `400` | `Invalid data entity name` | Correct the data entity name in the URL. Invalid characters are rejected. |\r\n| `409` | `Bulk deletion job creation failed for {entity}`, returned when a job is already `InProgress` for this account and data entity. | Track the existing job and resend once its status is `Success` or `Failed`. If a job appears stuck, the data entity automatically accepts new jobs after 12 hours. |\r\n| `415` | No body was sent. | Send a JSON body with the `Content-Type: application/json` header. |\r\n| `5xx` | Transient infrastructure failure during job creation. | No residual state is left behind, so you can resend the request. |\r\n\r\n## Permissions\r\n\r\nThis request requires a valid [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), sent in the `VtexIdclientAutCookie` header.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/dataEntityName"
+                    },
+                    {
+                        "name": "an",
+                        "in": "query",
+                        "description": "Name of the VTEX account that owns the data entity (for example, `apiexamples`).",
+                        "required": true,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkDeletionRequest"
+                            },
+                            "examples": {
+                                "internalField": {
+                                    "summary": "Filter on an internal field",
+                                    "value": {
+                                        "filter": "createdIn > 2026-08-16"
+                                    }
+                                },
+                                "customField": {
+                                    "summary": "Filter on a custom indexed field, which requires the schema name",
+                                    "value": {
+                                        "filter": "number = 1337",
+                                        "schema": "indexed-fields"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BulkDeletionJobResponse"
+                                },
+                                "example": {
+                                    "JobId": "01M08C83Z5D91S3CA0A15SRNV8"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BulkDeletionErrorResponse"
+                                },
+                                "examples": {
+                                    "missingFilter": {
+                                        "summary": "The filter field was not sent",
+                                        "value": {
+                                            "Message": "The 'filter' field is required"
+                                        }
+                                    },
+                                    "wildcardFilter": {
+                                        "summary": "The filter uses a wildcard",
+                                        "value": {
+                                            "Message": "Wildcard filters are not allowed for bulk delete"
+                                        }
+                                    },
+                                    "schemaRequired": {
+                                        "summary": "The filter uses a custom field and no schema was sent",
+                                        "value": {
+                                            "Message": "The field 'number' is not an internal indexed field, so the 'schema' that declares it as indexed must be provided"
+                                        }
+                                    },
+                                    "fieldDoesNotExist": {
+                                        "summary": "The filter uses a field that does not exist in the data entity",
+                                        "value": {
+                                            "Message": "The field 'number' does not exist for the data entity 'Newsletter'"
+                                        }
+                                    },
+                                    "invalidDataEntityName": {
+                                        "summary": "The data entity name in the URL is invalid",
+                                        "value": {
+                                            "Message": "Invalid data entity name"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BulkDeletionErrorResponse"
+                                },
+                                "example": {
+                                    "Message": "Bulk deletion job creation failed for Newsletter"
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "Unsupported Media Type"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/api/dataentities/{dataEntityName}/delete/jobs/{jobId}": {
+            "get": {
+                "tags": [
+                    "Bulk deletion"
+                ],
+                "summary": "Get bulk document deletion job status",
+                "description": "Retrieves the current status of a bulk document deletion job created with the [Create bulk document deletion job](https://developers.vtex.com/docs/api-reference/master-data-api-v2#post-/api/dataentities/-dataEntityName-/delete) endpoint.\r\n\r\nPoll this endpoint until the job leaves the `InProgress` status.\r\n\r\nPossible `Status` values:\r\n\r\n- `InProgress`: The job is running and documents are being deleted in batches. Keep polling and do not create another job for this data entity.\r\n- `Success`: All matching documents were deleted. Compare `DocumentsDeleted` with the number of documents you expected to delete.\r\n- `Failed`: Processing stopped after exhausting internal retries. The deletion is partial, which means that documents from completed batches were already deleted. Fix the underlying cause and create a new job with the same filter to finish the deletion.\r\n\r\n>ℹ️ This response contains at least the fields described in this reference. Other fields may be present, so make sure your integration ignores unexpected fields instead of failing.\r\n\r\n## Errors\r\n\r\n| Status code | Cause | What to do |\r\n| - | - | - |\r\n| `404` | The `jobId` does not exist for this account and data entity. Job records are also not kept indefinitely, so the record of an older job may no longer be available. | Check the `jobId`, the `an` query parameter, and the data entity in the URL. If all three are correct, the job is old enough that its record is no longer available. |\r\n\r\n## Permissions\r\n\r\nThis request requires a valid [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), sent in the `VtexIdclientAutCookie` header.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/dataEntityName"
+                    },
+                    {
+                        "name": "jobId",
+                        "in": "path",
+                        "description": "Unique identifier of the bulk deletion job, returned by the [Create bulk document deletion job](https://developers.vtex.com/docs/api-reference/master-data-api-v2#post-/api/dataentities/-dataEntityName-/delete) endpoint (for example, `01M08C83Z5D91S3CA0A15SRNV8`).",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "01M08C83Z5D91S3CA0A15SRNV8"
+                        }
+                    },
+                    {
+                        "name": "an",
+                        "in": "query",
+                        "description": "Name of the VTEX account that owns the data entity (for example, `apiexamples`).",
+                        "required": true,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BulkDeletionJobStatusResponse"
+                                },
+                                "example": {
+                                    "Status": "Success",
+                                    "DocumentsDeleted": 1000
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
+        },
         "/api/dataentities/{dataEntityName}/search": {
             "get": {
                 "tags": [
@@ -1606,6 +1790,63 @@
                         "description": "Document reference URL."
                     }
                 }
+            },
+            "BulkDeletionRequest": {
+                "type": "object",
+                "description": "Request body object.",
+                "required": [
+                    "filter"
+                ],
+                "properties": {
+                    "filter": {
+                        "type": "string",
+                        "description": "Deletion criteria, using the same syntax as the filter in the [Search documents](https://developers.vtex.com/docs/api-reference/master-data-api-v2#get-/api/dataentities/-dataEntityName-/search) request. Wildcards are not allowed and every field must be indexed."
+                    },
+                    "schema": {
+                        "type": "string",
+                        "description": "Name of the [schema](https://developers.vtex.com/docs/guides/master-data-schema-lifecycle) that declares the filtered field as indexed. Required only when the filter uses custom fields."
+                    }
+                }
+            },
+            "BulkDeletionJobResponse": {
+                "type": "object",
+                "description": "Response body object.",
+                "properties": {
+                    "JobId": {
+                        "type": "string",
+                        "description": "Unique identifier of the bulk deletion job. Use this value to track the job with the [Get bulk document deletion job status](https://developers.vtex.com/docs/api-reference/master-data-api-v2#get-/api/dataentities/-dataEntityName-/delete/jobs/-jobId-) endpoint."
+                    }
+                }
+            },
+            "BulkDeletionJobStatusResponse": {
+                "type": "object",
+                "description": "Response body object.",
+                "additionalProperties": true,
+                "properties": {
+                    "Status": {
+                        "type": "string",
+                        "description": "Current status of the bulk deletion job. Possible values: `InProgress`, `Success`, or `Failed`.",
+                        "enum": [
+                            "InProgress",
+                            "Success",
+                            "Failed"
+                        ]
+                    },
+                    "DocumentsDeleted": {
+                        "type": "integer",
+                        "description": "Number of documents that the job has deleted."
+                    }
+                }
+            },
+            "BulkDeletionErrorResponse": {
+                "type": "object",
+                "description": "Response body object.",
+                "properties": {
+                    "Message": {
+                        "type": "string",
+                        "description": "Error message."
+                    }
+                }
             }
         },
         "parameters": {
@@ -1785,6 +2026,10 @@
         },
         {
             "name": "Versions"
+        },
+        {
+            "name": "Bulk deletion",
+            "description": "Bulk deletion removes all documents in a data entity that match a filter, through an asynchronous job. This action cannot be undone."
         }
     ]
 }
