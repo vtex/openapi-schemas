@@ -1,0 +1,111 @@
+info:
+  name: Start session
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/recommend-bff/v2/users/start-session?an=apiexamples"
+  headers:
+    - name: x-vtex-rec-origin
+      value: apiexamples/storefront/vtex.recommendation-shelf@2.x
+    - name: x-forwarded-host
+      value: www.apixamples.com
+      disabled: true
+    - name: host
+      value: apiexamples.vtexcommercestable.com.br
+      disabled: true
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: apiexamples
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+        "orderFormId": "d761924de4254f6883a8ec2e9a28597d"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/recommend-bff/v2/users/start-session - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/recommend-bff/v2/users/start-session - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/recommend-bff/v2/users/start-session - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/recommend-bff/v2/users/start-session - Schema is valid", function () {
+          const schema = {"type":"object","description":"Response body for starting a user session. The returned ID is also stored in the `vtex-rec-user-id` cookie.","properties":{"recommendationsUserId":{"type":"string","description":"The recommendations user ID to use in subsequent API calls. This value is also stored in the `vtex-rec-user-id` cookie and saved in the orderForm custom data for purchase attribution."}},"required":["recommendationsUserId"]};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Starts or updates a user's recommendation session by associating the `userId` with the current `orderFormId` and returning the `recommendationsUserId` to use in subsequent requests.
+
+  This endpoint:
+  - Sets the `vtex-rec-user-id` cookie with the returned `recommendationsUserId`.
+  - Sets the `vtex-rec-user-start-session` cookie to control when a new session call is needed.
+  - Saves the recommendations identifier in the orderForm custom data for purchase attribution.
+  - Links anonymous browsing behavior to completed purchases when the order is processed.
+
+  ## When to call
+
+  **Web storefronts (headless or FastStore)**:
+  - On the first session load where an order form is available (via request body or `checkout.vtex.com` cookie).
+  - Every time the `vtex-rec-user-start-session` cookie expires.
+  - `orderFormId` is **optional** in the request body when the `checkout.vtex.com` cookie is forwarded (the API extracts it from the cookie).
+
+  **Mobile apps**:
+  - On the first session load where an `orderFormId` exists.
+  - Every time the `orderFormId` changes.
+  - Both `userId` and `orderFormId` are **required** in the request body.
+  - Ensure the HTTP client preserves cookies or stores required values for subsequent calls.
+
+  ## Permissions
+
+  This endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `an` | query | (Required) VTEX account name. Must match the account name in the `x-vtex-rec-origin` header. |
+  | `x-vtex-rec-origin` | header | (Required) Origin identifier for tracking integration sources. Required format: `{accountName}/{sourceType}/{appOrIntegrationId}`. The account name must match the `an` query parameter. Example: `apiexamples/storefront/vtex.recommendation-shelf@2.x` |
+  | `x-forwarded-host` | header | Forwarded host header, typically containing the original host requested by the client. |
+  | `host` | header | Host header containing the domain name of the API server. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "recommendationsUserId": "198e0f50-acf8-42f7-998a-5cd125464749"
+  }
+  ```

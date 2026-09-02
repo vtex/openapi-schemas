@@ -1,0 +1,81 @@
+info:
+  name: Get all content types
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/_v/cms/api/:projectId"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: projectId
+      value: faststore
+      type: path
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/_v/cms/api/:projectId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/_v/cms/api/:projectId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/_v/cms/api/:projectId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/_v/cms/api/:projectId - Schema is valid", function () {
+          const schema = {"description":"Response body object.","type":"object","properties":{"contentTypes":{"description":"Array with data of each content type.","type":"array","items":{"description":"Object with data of a specific content type.","type":"object","properties":{"id":{"description":"Content type identifier specified in the FastStore project.","type":"string"},"name":{"description":"Content type name specified in the FastStore project.","type":"string"},"configurationSchemaSets":{"description":"Array with data of the `configurationSchemaSets` tabs specified in the FastStore project.","type":"array","items":{"description":"Object with data about a specific content type tab.","type":"object","properties":{"name":{"description":"Name of the content type tab.","type":"string"},"configurations":{"description":"Custom configurations of the content type tab, which may vary based on the content type schema defined in the FastStore project.","type":"array","items":{"type":"object","description":"Object with custom configurations of the content type tab.","properties":{"name":{"description":"Section of a form.","type":"string"},"schema":{"type":"object","description":"Customizable [JSON schema](https://json-schema.org/learn/getting-started-step-by-step).","required":["title","description"],"properties":{"title":{"type":"string","description":"Section title."},"description":{"type":"string","description":"Section description."},"widget":{"type":"object","description":"[Widget](https://v1.faststore.dev/tutorials/cms-storecomponents/3#using-widgets) to be used in the UI. Should be filled with [`uiSchema`](https://react-jsonschema-form.readthedocs.io/en/docs/api-reference/uiSchema/) along with [`widgets`](https://react-jsonschema-form.readthedocs.io/en/docs/usage/widgets/) to specify which UI widget should be used to render a given field of your schema. The format should be `\"{uiSchema}\": \"{widgetName}\"`.","additionalProperties":true}},"additionalProperties":true}}}}}}}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves data from all Content Types.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | CMS | cms | **See CMS menu on the top-bar** |
+  | CMS | cms | **Settings** |
+  | CMS | GraphQL | **CMS GraphQL API** | 
+
+   There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add the resources above to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `projectId` | path | (Required) Project ID specified in the settings of the CMS (alpha) app. |
+
+  ## Example response (`200`)
+
+  _Omitted here: 8 KB. See `OK` in PostmanCollections._

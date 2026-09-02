@@ -1,0 +1,116 @@
+info:
+  name: List inventory with dispatched reservations
+  type: http
+  seq: 8
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/logistics/pvt/inventory/items/:itemId/warehouses/:warehouseId/dispatched"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: itemId
+      value: "89"
+      type: path
+    - name: warehouseId
+      value: warehouse-1-StoreName
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/logistics/pvt/inventory/items/:itemId/warehouses/:warehouseId/dispatched - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/logistics/pvt/inventory/items/:itemId/warehouses/:warehouseId/dispatched - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/logistics/pvt/inventory/items/:itemId/warehouses/:warehouseId/dispatched - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/logistics/pvt/inventory/items/:itemId/warehouses/:warehouseId/dispatched - Schema is valid", function () {
+          const schema = {"type":"array","items":{"type":"object","description":"Inventory information.","properties":{"skuId":{"type":"string","description":"SKU ID."},"warehouseId":{"type":"string","description":"Warehouse ID."},"quantity":{"type":"integer","description":"SKU quantity."},"isUnlimitedQuantity":{"type":"boolean","description":"Indicates whether the SKU's availability is unlimited (\"unlimited inventory\")."},"totalReservedQuantity":{"type":"integer","description":"Total reserved quantity of the SKU."},"dispatchedReservationsQuantity":{"type":"integer","description":"Dispatched reservations quantity."},"availableQuantity":{"type":"integer","description":"Available quantity."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  [Reservation](https://help.vtex.com/en/tutorial/how-does-reservation-work--tutorials_92) is the VTEX solution that prevents stores from selling the same item more than once. Adding products to the shopping cart does not create a reservation, this only happens after the shopper completes the purchase.
+
+  This endpoint lists your [inventory](https://help.vtex.com/en/tutorial/inventory-management--tutorials_139) information about dispatched reservations from a given warehouse. A reservation is considered dispatched after the order has passed the `authorize-fulfillment` status in the [order flow](https://help.vtex.com/en/tutorial/order-flow-and-status--tutorials_196) and is not canceled.
+
+  **Response 400 Bad Request:** When the store has more than 2.000 active reservations, you receive a `400 Bad Request` error with the message: _Too many active reservations_.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Logistics | Logistics access | **Logistics full access** |
+  | Logistics | Logistics access | **Logistics viewer** |
+  | Logistics | Logistics access | **Logistics inventory full access** |
+  | Logistics | Logistics access | **Logistics inventory read only** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Logistics - Full access | Logistics full access |
+  | OMS - Full access | Logistics full access |
+  | Logistics - Full access | Logistics viewer |
+  | Logistics - Read only | Logistics viewer |
+  | Logistics - Full access | Logistics inventory full access |
+  | OMS - Full access | Logistics inventory full access |
+  | Logistics - Full access | Logistics inventory read only |
+  | Logistics - Read only | Logistics inventory read only |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `itemId` | path | (Required) SKU unique identifier called SKU ID. This field is an equivalent to `skuId`. |
+  | `warehouseId` | path | (Required) Warehouse ID is the unique identifier of the [warehouse](https://help.vtex.com/en/tutorial/warehouse--6oIxvsVDTtGpO7y6zwhGpb). |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "skuId": "1",
+      "warehouseId": "1",
+      "quantity": 2147483647,
+      "isUnlimitedQuantity": true,
+      "totalReservedQuantity": 0,
+      "dispatchedReservationsQuantity": 0,
+      "availableQuantity": 2147483647
+    }
+  ]
+  ```

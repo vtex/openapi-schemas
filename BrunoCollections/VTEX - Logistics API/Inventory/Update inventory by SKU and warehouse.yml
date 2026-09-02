@@ -1,0 +1,91 @@
+info:
+  name: Update inventory by SKU and warehouse
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/logistics/pvt/inventory/skus/:skuId/warehouses/:warehouseId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: skuId
+      value: "25"
+      type: path
+    - name: warehouseId
+      value: store-warehouse
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "quantity": 202,
+        "unlimitedQuantity": false,
+        "dateUtcOnBalanceSystem": "2024-06-13T00:52:16",
+        "leadTime": "10.10:00:00"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("[PUT]::/api/logistics/pvt/inventory/skus/:skuId/warehouses/:warehouseId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Updates [inventory](https://help.vtex.com/en/tutorial/inventory-management--tutorials_139) quantity and [lead time](https://help.vtex.com/en/tutorial/lead-time-shipping-time-at-sku-level--16yv5Mkj6bTyWR1hCN2f4B) for a given SKU in a warehouse.
+
+  >ℹ️ If you wish to configure lead time exclusively, use the [Update inventory lead time by SKU and warehouse](https://developers.vtex.com/docs/api-reference/logistics-api#patch-/api/logistics/pvt/inventory/skus/-skuId-/warehouses/-warehouseId-/lead-time) endpoint, and if the quantity only, use the [Update inventory quantity by SKU and warehouse](https://developers.vtex.com/docs/api-reference/logistics-api#patch-/api/logistics/pvt/inventory/skus/-skuId-/warehouses/-warehouseId-/quantity) endpoint. 
+
+  This endpoint allows you to: 
+
+  - **Define a quantity:** Indicate a specific number of items of a SKU from a warehouse, and it will decrease whenever an item is sold. When the last item is sold, the SKU will run out of stock. 
+
+  - **Set an unlimited inventory:** Always have items of a SKU from a warehouse considered available for sale. When this configuration is active, the SKU never goes out of stock. 
+
+  - **Configure lead time:** Set the [lead time](https://help.vtex.com/en/tutorial/lead-time-shipping-time-at-sku-level--16yv5Mkj6bTyWR1hCN2f4B) for a given SKU from a warehouse, and this period will be added to the order total shipping time. This configuration is optional and by default it is set to `0` days. 
+
+  Successful requests receive a `200 OK` status code with `true` in the response body, and unsuccessful requests receive a `400 Bad Request` error code. 
+
+  >❗ Requests made with an incomplete response body can be successful and receive a `200 OK` message. However, sending the request body without the `leadTime` field sets the SKU [lead time](https://help.vtex.com/en/tutorial/lead-time-shipping-time-at-sku-level--16yv5Mkj6bTyWR1hCN2f4B) to `0`. The same is valid for the `quantity` field, which, if not sent, makes the SKU count equal to `0`. 
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Logistics | Logistics access | **Logistics full access** |
+  | Logistics | Logistics access | **Logistics inventory full access** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Logistics - Full access | Logistics full access |
+  | OMS - Full access | Logistics full access |
+  | Logistics - Full access | Logistics inventory full access |
+  | OMS - Full access | Logistics inventory full access |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `skuId` | path | (Required) Unique identifier of the SKU you wish to update. |
+  | `warehouseId` | path | (Required) Unique identifier of the [warehouse](https://help.vtex.com/en/tutorial/warehouse--6oIxvsVDTtGpO7y6zwhGpb) of the SKU you wish to update. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |

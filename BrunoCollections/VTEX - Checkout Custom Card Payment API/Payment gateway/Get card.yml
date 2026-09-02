@@ -1,0 +1,103 @@
+info:
+  name: Get card
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/pvt/accounts/:accountId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: accountId
+      value: 4A660C0DEA2D477C996D88C6D3FFB7C0
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/pvt/accounts/:accountId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/pvt/accounts/:accountId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/pvt/accounts/:accountId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/pvt/accounts/:accountId - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"bin":{"type":"string","description":"BIN (Bank Identification Number)."},"lastDigits":{"type":"string","description":"Last four digits of the card."},"expiryMonth":{"type":"string","description":"Expiry month."},"expiryYear":{"type":"string","description":"Expiry year."},"mask":{"type":"string","description":"Masked card number."},"paymentSystem":{"type":"integer","description":"Payment system identifier."},"paymentSystemName":{"type":"string","description":"Payment system name."},"address":{"type":"string","description":"JSON string containing address information. The JSON must include the following address information `addressType`, `addressId`, `postalCode`, `street`,`neighborhood`, `city`, `state`,`country`, `number`, `complement`."},"document":{"type":["string","null"],"description":"Document associated with the card."},"label":{"type":"string","description":"Label or description for the tokenized card."},"tokens":{"type":"array","description":"List of tokens associated with the card.","items":{"type":"object","description":"Token details.","properties":{"providerId":{"type":"string","description":"Provider identifier."},"type":{"type":"string","description":"Token type."},"value":{"type":"string","description":"Token value."},"expiration":{"type":"string","description":"Token expiration date."},"href":{"type":["string","null"],"description":"Token URL reference."},"providerCardTokentId":{"type":"string","description":"Provider card token identifier."},"useCvvForAuthorization":{"type":"boolean","description":"Indicates if CVV is required for authorization."},"extraData":{"type":["object","null"],"description":"Additional data."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves card information by account ID.
+
+  >⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.
+
+  >ℹ️ This endpoint must use the `accountAuthCookie` value generated from the [Validate client login](https://developers.vtex.com/docs/api-reference/checkout-custom-card-payment-api#post-/api/vtexid/pub/authentication/classic/validate) endpoint.
+
+  ## Permissions
+
+  This endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `accountId` | path | (Required) Unique identifier of the account. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "bin": "123231",
+    "lastDigits": "1231",
+    "expiryMonth": "05",
+    "expiryYear": "2031",
+    "mask": "1231 1231 1231 1231",
+    "paymentSystem": 2,
+    "paymentSystemName": "Visa",
+    "address": "{\"addressType\":\"billing\",\"addressId\":null,\"postalCode\":\"73065772\",\"street\":\"17395 Gutmann Expressway\",\"neighborhood\":\"John Doe\",\"city\":\"Dublin\",\"state\":\"FO\",\"country\":\"Guadeloupe\",\"number\":\"4\",\"complement\":null}",
+    "document": null,
+    "label": "01.A. Save 1 tokenized credit card via api using an external credential",
+    "tokens": [
+      {
+        "providerId": "123579",
+        "type": "TOKEN_VALUE",
+        "value": "1231123112311231",
+        "expiration": "2031-05",
+        "href": null,
+        "providerCardTokentId": "A9FC15D4B46241BCBBE13AA6C29DA721",
+        "useCvvForAuthorization": false,
+        "extraData": null
+      }
+    ]
+  }
+  ```

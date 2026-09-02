@@ -1,0 +1,63 @@
+info:
+  name: Notify promotion usage
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/notifyUsage"
+  headers:
+    - name: Content-Type
+      value: application/json; charset=utf-8
+  body:
+    type: json
+    data: |-
+      {
+        "correlationId": "7f3e2b10-2c5a-4a9e-bf6a-9b9d0c2f1a23",
+        "orderId": "099823581-1",
+        "type": "NewOrder",
+        "promotionUsages": [
+          {
+            "promotionId": "promo-1",
+            "discount": 0.75,
+            "couponCode": "coupon-code-1"
+          }
+        ]
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("[POST]::/notifyUsage - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Receives a notification when an order is created or cancelled, informing the external promotions provider which promotions and coupons were applied to the order. This allows the provider to track promotion usage, enforce usage limits, and maintain accurate promotion state.
+
+  The optional `correlationId` references the `calculatePromotion` evaluation that led to the order, when VTEX can supply it, for end-to-end tracing. Added in protocol v1.1.
+
+  In hybrid mode this notification carries **only the external provider's own promotions**. Native VTEX promotions applied to the same order are filtered out before sending, so `promotionUsages` never contains native ids. When no external promotion applied to the order, VTEX skips the call entirely.
+
+  ## Idempotency
+
+  The call times out after 5000 ms by default and is retried up to 3 times by default, with exponential backoff. The provider may therefore receive the same notification more than once and must process it idempotently, keyed by `orderId` and `type`. VTEX treats any 2xx as success and does not act on the response body.
+
+  ## Authentication
+
+  VTEX authenticates with an API key sent in a header whose name is configured per account and defaults to `Authorization`, optionally with a prefix such as `Bearer `. VTEX does not send HTTP Basic credentials, and it does not send an `Accept` header. The provider should reject unauthenticated requests with `401 Unauthorized`.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. VTEX always sends `application/json; charset=utf-8`. |

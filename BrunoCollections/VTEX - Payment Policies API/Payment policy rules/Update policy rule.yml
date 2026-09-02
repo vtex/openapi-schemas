@@ -1,0 +1,155 @@
+info:
+  name: Update policy rule
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/payment-configuration-service/policy-rules/:id?an=apiexamples"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: apiexamples
+      type: query
+    - name: id
+      value: nulla aliquip
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Exclude EBT for collection 139 in NY",
+        "expression": {
+          "and": [
+            {
+              "in": [
+                139,
+                {
+                  "var": "collectionIds"
+                }
+              ]
+            },
+            {
+              "==": [
+                {
+                  "var": "shippingState"
+                },
+                "NY"
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "priority": 90,
+        "action": "Exclude",
+        "paymentSystems": [
+          100
+        ]
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[PUT]::/api/payment-configuration-service/policy-rules/:id - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PUT]::/api/payment-configuration-service/policy-rules/:id - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[PUT]::/api/payment-configuration-service/policy-rules/:id - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[PUT]::/api/payment-configuration-service/policy-rules/:id - Schema is valid", function () {
+          const schema = {"type":"object","description":"Payment policy rule returned by the API.","required":["id","name","expression","enabled","priority","action","paymentSystems","createdAt","updatedAt"],"properties":{"id":{"type":"string","format":"^[a-f0-9]{32}$","description":"Unique identifier of the policy rule."},"name":{"type":"string","description":"Policy rule name.","minLength":1},"expression":{"type":"object","description":"JSONLogic expression evaluated against item context. Currently supports `and`, `or`, `==`, and `in`, with `collectionIds` and `shippingState` as available variables.","additionalProperties":true},"enabled":{"type":"boolean","description":"Indicates whether the policy rule is active."},"priority":{"type":"integer","format":"int32","description":"Rule priority, from `0` to `999`. Lower values have higher precedence when conflicting rules match the same item.","minimum":0,"maximum":999},"action":{"type":"string","description":"Action applied to the payment systems when the rule expression matches. Accepts `Include` or `Exclude`; value matching is case-insensitive.","enum":["Include","Exclude"]},"paymentSystems":{"type":"array","description":"Payment system IDs affected by the rule.","items":{"type":"integer","format":"int32","description":"Payment system ID."},"minItems":1},"createdAt":{"type":"string","format":"date-time","description":"Date and time when the policy rule was created in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"updatedAt":{"type":"string","format":"date-time","description":"Date and time when the policy rule was last updated in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Replaces a payment policy rule for the VTEX account identified by the `an` query parameter. Send the same request body used to create a rule. Do not include response-only fields such as `id`, `createdAt`, or `updatedAt`, and do not send a `version` field because concurrency is handled server-side.
+
+  > ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Payments | Payment Policies | **ManageStore** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `id` | path | (Required) Unique identifier of the policy rule. |
+  | `an` | query | (Required) Name of the VTEX account whose payment policy rules are being managed. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "a1b2c3d4e5f6478990abcdef12345678",
+    "name": "Exclude EBT for collection 139 in NY",
+    "expression": {
+      "and": [
+        {
+          "in": [
+            139,
+            {
+              "var": "collectionIds"
+            }
+          ]
+        },
+        {
+          "==": [
+            {
+              "var": "shippingState"
+            },
+            "NY"
+          ]
+        }
+      ]
+    },
+    "enabled": true,
+    "priority": 90,
+    "action": "Exclude",
+    "paymentSystems": [
+      100
+    ],
+    "createdAt": "2026-04-01T10:00:00Z",
+    "updatedAt": "2026-04-01T10:00:00Z"
+  }
+  ```

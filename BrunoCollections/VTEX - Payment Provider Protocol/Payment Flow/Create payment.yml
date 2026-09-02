@@ -1,0 +1,281 @@
+info:
+  name: Create payment
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/payments"
+  headers:
+    - name: X-PROVIDER-API-AppKey
+      value: "{{X-PROVIDER-API-AppKey}}"
+    - name: X-PROVIDER-API-AppToken
+      value: "{{X-PROVIDER-API-AppToken}}"
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "reference": "618272",
+        "orderId": "1072430428324",
+        "shopperInteraction": "ecommerce",
+        "transactionId": "2F023FD5A72A49D48A8633252B7CCBD6",
+        "paymentId": "01693EB95BE443AC85874E395CD91565",
+        "paymentMethod": "Diners",
+        "paymentMethodCustomCode": null,
+        "merchantName": "mystore",
+        "card": {
+          "holder": "John Doe",
+          "number": "364901****2661",
+          "csc": "***",
+          "expiration": {
+            "month": "12",
+            "year": "2020"
+          },
+          "document": "39295416023",
+          "token": null
+        },
+        "value": 31.9,
+        "referenceValue": 31.9,
+        "currency": "BRL",
+        "installments": 1,
+        "installmentsInterestRate": 0,
+        "installmentsValue": 31.9,
+        "deviceFingerprint": "75076388",
+        "ipAddress": "187.105.111.65",
+        "miniCart": {
+          "buyer": {
+            "id": "c1245228-1c68-11e6-94ac-0afa86a846a5",
+            "firstName": "John",
+            "lastName": "Doe",
+            "document": "01234567890",
+            "documentType": "cpf",
+            "corporateName": null,
+            "tradeName": null,
+            "corporateDocument": null,
+            "isCorporate": false,
+            "email": "john.doe@example.com",
+            "phone": "+5521999999999",
+            "createdDate": "2020-02-18T18:17:45"
+          },
+          "shippingAddress": {
+            "country": "BRA",
+            "street": "Praia de Botafogo St.",
+            "number": "300",
+            "complement": "3rd Floor",
+            "neighborhood": "Botafogo",
+            "postalCode": "22250040",
+            "city": "Rio de Janeiro",
+            "state": "RJ"
+          },
+          "billingAddress": {
+            "country": "BRA",
+            "street": "Brigadeiro Faria Lima Avenue",
+            "number": "4440",
+            "complement": "10th Floor",
+            "neighborhood": "Itaim Bibi",
+            "postalCode": "04538132",
+            "city": "São Paulo",
+            "state": "SP"
+          },
+          "items": [
+            {
+              "id": "8",
+              "name": "Tenis Preto I",
+              "price": 30.9,
+              "quantity": 1,
+              "discount": 0,
+              "deliveryType": "Normal",
+              "categoryId": "5",
+              "sellerId": "1"
+            }
+          ],
+          "shippingValue": 1,
+          "taxValue": 0
+        },
+        "url": "https://admin.mystore.example.com/orders?q=1072430428324",
+        "callbackUrl": "https://api.mystore.example.com/some-path/to-notify/status-changes?an=mystore",
+        "returnUrl": "https://mystore.example.com/checkout/order/1072430428324",
+        "inboundRequestsUrl": "https://api.mystore.example.com/checkout/order/1072430428324/inbound-request/:action",
+        "recipients": [
+          {
+            "id": "mymarketplace",
+            "name": "My Marketplace QA",
+            "documentType": "CNPJ",
+            "document": "99999999999999",
+            "role": "marketplace",
+            "chargeProcessingFee": true,
+            "chargebackLiable": true,
+            "amount": 31.9
+          }
+        ],
+        "merchantSettings": [
+          {
+            "name": "field1",
+            "value": "value1"
+          },
+          {
+            "name": "field2",
+            "value": "value2"
+          }
+        ],
+        "connectorMetadata": [
+          {
+            "name": "MetadataName",
+            "value": "MetadataValue"
+          }
+        ]
+      }
+  auth:
+    type: apikey
+    key: X-VTEX-API-AppKey
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/payments - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/payments - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/payments - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/payments - Schema is valid", function () {
+          const schema = {"required":["paymentId","status","authorizationId","tid","nsu","acquirer","delayToAutoSettle","delayToAutoSettleAfterAntifraud","delayToCancel"],"type":"object","description":"Create payment response body information.","properties":{"paymentId":{"type":"string","description":"VTEX identifier for this payment. The same sent in the request."},"status":{"type":"string","description":"The Provider's status for this payment. Must be one of three values:\r\n\r\n- `approved`\r\n- `denied`\r\n- `undefined`."},"authorizationId":{"type":"string","description":"Provider's unique identifier for the authorization. Should be sent when the payment is authorized. In other statuses, it should be absent or `null`."},"bankIssueInvoiceId":{"type":"string","description":"This field is deprecated, please use `paymentUrl` instead. The bank invoice URL to be presented to the end user."},"paymentUrl":{"type":["string","null"],"description":"When the payment is via bank invoice, this should be the invoice URL to be presented to the user. If the payment requires the redirection of the user, this should be the URL to redirect the user. If neither is the case, then this should be absent."},"paymentAppData":{"type":"object","description":"Object which indicates that a [Payment App](https://developers.vtex.com/docs/guides/payments-integration-payment-app) is needed to finish the payment. This object contains the data to be used by the Payment App.","required":["appName","payload"],"properties":{"appName":{"type":"string","description":"Indicates which VTEX IO app that will handle the payment flow at Checkout."},"payload":{"type":"string","description":"The payload that will be sent to your app, like a serialized JSON, for example."}}},"identificationNumber":{"type":"string","description":"The bank invoice unformatted identification number. Should only be present when the payment is made via bank invoice."},"identificationNumberFormatted":{"type":"string","description":"The bank invoice formatted identification number that will be presented to the end user."},"barCodeImageType":{"type":"string","description":"The bank invoice barcode image type. For instance, \"i25\" for Brazilian *Boleto Bancário*. Should only be present when the payment is made via bank invoice."},"barCodeImageNumber":{"type":"string","description":"The bank invoice number to generate a barcode (must follow any regulations/specifications for targeted countries). Should only be present when the payment is made via bank invoice."},"tid":{"type":"string","description":"Provider's unique identifier for the transaction."},"nsu":{"type":["string","null"],"description":"Provider's unique sequential number for the transaction."},"acquirer":{"type":["string","null"],"description":"Acquirer name (mostly used for card payments)."},"redirectUrl":{"type":"string","description":"This field is deprecated, please use `paymentUrl` instead. The URL the end user needs to be redirected to (external authentication, 3DS, etc)."},"code":{"type":["string","null"],"description":"Provider's operation/error code to be logged."},"message":{"type":["string","null"],"description":"Provider's operation/error message to be logged."},"delayToAutoSettle":{"type":"integer","description":"Total time (in seconds) before we make an automatic call to `/settlements`, regardless of whether the payment was approved by the merchant's anti-fraud provider or not. The maximum time allowed to wait for an auto capture is 604800 seconds (7 days)."},"delayToAutoSettleAfterAntifraud":{"type":"integer","description":"Total time (in seconds) before we make an automatic call to `/settlements` after merchant's antifraud approval."},"delayToCancel":{"type":"integer","description":"Total time (in seconds) to wait for an authorization and make an automatic call to `/cancellations` to cancel the payment. The minimum value is 10 minutes (600 seconds).\r\n\r\n**NOTE 1**: If you set this field to a time period of less than 24 hours (86399 seconds or less), the gateway will retry processing the payment every 1 hour. If you use a value of 24 hours (86400 seconds) or more in this field, the gateway will retry processing the payment every 4 hours.\r\n\r\n**NOTE 2**: For `delayToCancel` values between 5 minutes and 1 hour (300 and 3600 seconds), or when payment is made by [PIX](https://developers.vtex.com/docs/guides/payments-integration-pix-instant-payments-in-brazil) (Brazilian instant payment method), retry calls will occur every 5 minutes.\r\n\r\n**NOTE 3**: The maximum value allowed for the `delayToCancel` field is 30 days (2592000 seconds). However, when payment is made by [PIX](https://developers.vtex.com/docs/guides/payments-integration-pix-instant-payments-in-brazil) (Brazilian instant payment method), the values must be set between 15 and 1 hour (900 seconds and 3600 seconds)."},"maxValue":{"type":"integer","description":"The maximum value for this payment. This field allows changes to be made to transactions to settle larger amounts as a result of order changes."},"connectorMetadata":{"type":"array","description":"Array containing metadata fields sent from the provider to the payment gateway.","items":{"type":"object","description":"Metadata fields information.","required":["name","value"],"properties":{"name":{"type":"string","description":"The name of the metadata to be stored in the gateway (limited to 20 characters)."},"value":{"type":"string","description":"The value of the metadata stored (limited to 200 characters)."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates a new payment and initiates the payment flow.
+
+  > ℹ️ This request is made from VTEX to the payment provider.
+
+  Payment providers must:
+
+  - Execute authorization on payments made through credit/debit card or any synchronized payments;
+
+  - Return the required information to the customer on payments made through bank-issued invoice, redirect, or any async payments.
+
+   >ℹ️ This endpoint has to meet the principle of [idempotence](https://en.wikipedia.org/wiki/Idempotence). When calling this endpoint for the first time of a payment, without a `paymentId`, it should create a new payment. When calling this endpoint for an existing `paymentId`, it should not create another payment, but return the updated status of the existing payment instead.
+
+  ## Callbacks (asynchronous flow)
+
+  Callbacks are used for asynchronous payments, which do not receive the final status immediately. At first, an `undefined` status is returned, and the final status will be received from a callback request in the future as `authorized` or `denied`. There are two types of callbacks:
+
+  - **Notification:** If a payment returns with `undefined` status, you are expected to send us a callback/notification to update it later, sending a POST with an updated version of your response (same structure as above) to the `callbackUrl` we have provided.
+
+  - **Retry:** If a payment returns with `undefined` status, you are expected to call the retry endpoint provided by the `callbackUrl` when the processing of the payment is completed, so we make another Create Payment request to update the status with the new value (`authorized` or `denied`).
+
+  Callback requests should be authenticated using a Key and Token which you can [generate from your VTEX partner account License Manager](https://help.vtex.com/en/tutorial/api-keys--2iffYzlvvz4BDMr6WGUtet#generating-app-keys-in-your-account). To do so, `POST` your request passing the `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken` headers with your credentials. **Note:** do not mix up these credentials with the ones we send on behalf of the merchant when sending our requests.
+
+  >⚠ For integrations not using VTEX IO, use the **Notification** callback. For integrations developed using VTEX IO infrastructure, use the **Retry** callback.
+
+  ### Callback URL
+
+  The `callbackUrl` field contains an URL that the payment provider uses to make a callback and inform our gateway of the final payment status: `approved` or `denied`. 
+
+  This URL has some query parameters, including the `X-VTEX-signature`. This parameter is mandatory and contains a signature token to identify that the request has been generated from VTEX as a security measure. The signature token has at most 32 characters. You can check an example of callback URL with the signature token below:
+
+  ```
+  https://gatewayqa.vtexpayments.com.br/api/pvt/payment-provider/transactions/8FB0F111111122222333344449984ACB/payments/A2A9A25B11111111222222333327883C/callback?accountName=teampaymentsintegrations&X-VTEX-signature=R******tk
+  ```
+
+  In the [Transactions page of the Admin](https://help.vtex.com/en/tutorial/how-to-view-the-orders-details--tutorials_452), the signature token appears masked for security reasons, as in this example: `X-VTEX-signature=Rj******tk`.
+
+  When making the callback request, we recommend that payment providers use the callback URL exactly as received, which guarantees that all the parameters are included.
+
+  See below an example of a payload forwarded along with the callback URL:
+
+  ```json
+  {
+      "paymentId": "8B3BA2F4352545A8B1C5A215F356A01C",
+      "status": "approved",
+      "authorizationId": "184520",
+      "nsu": "21705348",
+      "tid": "21705348",
+      "acquirer": "pagmm",
+      "code": "0000",
+      "message": "Successfully approved transaction",
+      "delayToAutoSettle": 1200,
+      "delayToAutoSettleAfterAntifraud": 1200,
+      "delayToCancel": 86400,
+      "cardBrand": "Mastercard",
+      "firstDigits": "534696",
+      "lastDigits": "6921",
+      "maxValue": 16.6
+  }
+  ```
+
+  >ℹ️ The parameter values sent in the callback payload replace the original values informed in the **Create Payment** request.
+
+  >⚠️ If the waiting parameters (`delayToAutoSettle` and `delayToAutoSettleAfterAntifraud`) are not sent with the callback URL, the values for these parameters will be automatically set to 24 hours.
+
+  ## Beta features
+
+  The beta features available for payment providers are:
+
+  - `inboundRequestsUrl`: Allows to forward external requests back to your payment provider implementation, including the configured credentials (`X-VTEX-API-*` headers), and settings.
+
+  >ℹ You can reach out to our team by [opening a ticket](https://help.vtex.com/en/tutorial/opening-tickets-to-vtex-support--16yOEqpO32UQYygSmMSSAM) to know more about any beta features.
+
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `X-PROVIDER-API-AppKey` | header | (Required) Unique identifier created by the provider and configured on the provider configuration page (Admin VTEX). To use this header as authorization, check that the `usesProviderHeadersName` field is set to `true` in the payment provider's `configuration.json`. To check the `configuration.json` file, access the route {{connector}}/paymentProvider/configuration.json. |
+  | `X-PROVIDER-API-AppToken` | header | (Required) Unique token created by the provider and configured on the provider configuration page (Admin VTEX). To use this header as authorization, check that the `usesProviderHeadersName` field is set to `true` in the payment provider's `configuration.json`. To check the `configuration.json` file, access the route {{connector}}/paymentProvider/configuration.json |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "paymentId": "F5C1A4E20D3B4E07B7E871F5B5BC9F91",
+    "status": "approved",
+    "authorizationId": "AUT123567",
+    "nsu": "NSU987432",
+    "tid": "TID1578324421",
+    "acquirer": "FooBarPayments",
+    "delayToAutoSettle": 432000,
+    "delayToAutoSettleAfterAntifraud": 120,
+    "delayToCancel": 600,
+    "connectorMetadata": [
+      {
+        "name": "MetadataName",
+        "value": "MetadataValue"
+      }
+    ]
+  }
+  ```

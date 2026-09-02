@@ -1,0 +1,107 @@
+info:
+  name: Get coupon batch information
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/rnb/v2/pvt/coupon/group/:groupingKey"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: groupingKey
+      value: promo
+      type: path
+    - name: accountName
+      value: "{{accountName}}"
+      type: path
+    - name: environment
+      value: "{{environment}}"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/rnb/v2/pvt/coupon/group/:groupingKey - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/rnb/v2/pvt/coupon/group/:groupingKey - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/rnb/v2/pvt/coupon/group/:groupingKey - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/rnb/v2/pvt/coupon/group/:groupingKey - Schema is valid", function () {
+          const schema = {"description":"Coupon batch information.","type":"object","properties":{"configuration":{"title":"configuration","description":"Object containing the coupon's properties.","type":"object","properties":{"lastModifiedUtc":{"title":"lastModifiedUtc","description":"Date when the coupon was modified for the last time, in the UTC format.","type":"string"},"utmSource":{"title":"utmSource","description":"UTM source related to the coupon, which indicates the source of the traffic, that is, from which site, advertiser, or publication the user came from.","type":"string"},"utmCampaign":{"title":"utmCampaign","description":"UTM campaign related to the coupon, which indicates the campaign that defines a particular marketing context.","type":"string"},"isArchived":{"title":"isArchived","description":"Determines whether the coupon is archived (`true`) or not (`false`).","type":"boolean"},"maxItemsPerClient":{"title":"maxItemsPerClient","description":"This option is non-editable and visible only for existing coupons configured with this limitation in previous versions of Coupons. When enabled, it determines the maximum amount of products to which the coupon can be applied. The defined quantity is valid for one or more purchases by the same customer.","type":"number"},"expirationIntervalPerUse":{"title":"expirationIntervalPerUse","description":"This option is non-editable and visible only for existing coupons configured with this limitation in previous versions of the Coupons module. When enabled, it determines how many days after purchase the coupon will be available for use again.","type":"string"},"maxUsage":{"title":"maxUsage","description":"The maximum number of times the coupon can be used, if the coupon has limited usage.","type":"number"},"groupingKey":{"title":"groupingKey","description":"Coupon grouping key, which is the prefix for the coupon batch's generated codes.","type":"string"}}},"grouping":{"title":"grouping","description":"Coupon batch.","type":"object","properties":{"key":{"title":"key","description":"Coupon grouping key, which is the prefix for the coupon batch's generated codes.","type":"string"},"amount":{"title":"amount","description":"Amount of codes in the coupon batch.","type":"number"}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves information from a specific coupon batch based on its `groupingKey`.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Rates and Benefits | Promotions | **Manage benefits and rates** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `groupingKey` | path | (Required) Coupon grouping key, which is the prefix for the coupon batch's generated codes. |
+  | `accountName` | path | Name of the VTEX account. Used as part of the URL. |
+  | `environment` | path | Environment to use. Used as part of the URL. (This can only be one of vtexcommercestable) |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "configuration": {
+      "lastModifiedUtc": "2022-02-15T19:18:28.6409703Z",
+      "utmSource": "fb",
+      "utmCampaign": "rewards",
+      "isArchived": false,
+      "maxItemsPerClient": 13,
+      "expirationIntervalPerUse": "00:00:00",
+      "maxUsage": 11,
+      "groupingKey": "12130984756"
+    },
+    "grouping": {
+      "key": "12130984756",
+      "amount": 5
+    }
+  }
+  ```

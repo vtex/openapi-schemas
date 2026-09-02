@@ -1,0 +1,148 @@
+info:
+  name: Search B2B addresses
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/dataentities/AD/search"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: REST-Range
+      value: resources=0-10
+  params:
+    - name: _fields
+      value: addressType,city,state,country,postalCode,userId
+      type: query
+      disabled: true
+    - name: _where
+      value: userId=2da4e9ab-050b-11f0-b37f-f4b136dbcce1
+      type: query
+      disabled: true
+    - name: _sort
+      value: createdIn DESC
+      type: query
+      disabled: true
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/dataentities/AD/search - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/dataentities/AD/search - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/dataentities/AD/search - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/dataentities/AD/search - Schema is valid", function () {
+          const schema = {"type":"array","description":"List of B2B address documents matching the search criteria.","items":{"type":"object","description":"Response body for a B2B address document.","properties":{"addressLabel":{"type":["string","null"],"description":"User-defined label to identify the B2B address."},"addressType":{"type":["string","null"],"description":"Type of B2B address. `commercial` for shipping (delivery) or `invoice` for billing (payment).","enum":["commercial","invoice"]},"city":{"type":["string","null"],"description":"City of the B2B address."},"complement":{"type":["string","null"],"description":"Any additional information for the B2B address (for example, apartment or floor)."},"country":{"type":["string","null"],"description":"Country of the B2B address in three-letter [ISO 3166-1 alpha-3](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3) format (for example, `USA`)."},"geoCoordinates":{"type":["array","null"],"description":"Geographical coordinates of the B2B address as an array of doubles (latitude and longitude), or an empty array `[]`.","items":{"type":"number","format":"double","description":"Latitude or longitude value."}},"neighborhood":{"type":["string","null"],"description":"Neighborhood of the B2B address."},"number":{"type":["string","null"],"description":"Street number of the B2B address."},"postalCode":{"type":["string","null"],"description":"Postal code of the B2B address. The format must match the exact country postal code format (for example, `02999` for addresses in the USA)."},"receiverName":{"type":["string","null"],"description":"Name of the person or entity receiving at this B2B address. This field will be deprecated in favor of the [Recipients](https://developers.vtex.com/docs/api-reference/b2b-addresses#post-/api/dataentities/contact_information/documents) feature, but it must be filled with some value."},"reference":{"type":["string","null"],"description":"Optional reference point or landmark near the B2B address."},"state":{"type":["string","null"],"description":"State or province of the B2B address as a two-letter code (for example, `FL` or `SP`)."},"street":{"type":["string","null"],"description":"Street name of the B2B address."},"userId":{"type":["string","null"],"description":"ID of the buyer organization to whom the B2B address belongs."},"id":{"type":["string","null"],"description":"Unique identifier for this B2B address record."},"accountId":{"type":["string","null"],"description":"ID of the account related to this B2B address."},"accountName":{"type":["string","null"],"description":"Name of the account related to this B2B address."},"dataEntityId":{"type":["string","null"],"description":"ID of the data entity this B2B address belongs to (always `AD`)."},"createdBy":{"type":["string","null"],"description":"ID of the user who created the B2B address record."},"createdIn":{"type":["string","null"],"description":"Timestamp of when the B2B address record was created."},"updatedBy":{"type":["string","null"],"description":"ID of the user who last updated the B2B address record."},"updatedIn":{"type":["string","null"],"description":"Timestamp of the last update to the B2B address record."},"lastInteractionBy":{"type":["string","null"],"description":"ID of the user who had the last interaction with the record."},"lastInteractionIn":{"type":["string","null"],"description":"Timestamp of the last interaction with the record."},"followers":{"type":["array","null"],"description":"List of users following this B2B address record.","items":{"type":"string","description":"User ID."}},"tags":{"type":["array","null"],"description":"List of tags associated with this B2B address.","items":{"type":"string","description":"Tag value."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves B2B addresses from the `AD` data entity, with support for field selection, filtering, sorting, and pagination.
+
+  >⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.
+
+  >ℹ️ Learn more about [Pagination in the Master Data API](https://developers.vtex.com/docs/guides/pagination-in-the-master-data-api) and [Querying documents in Master Data v1](https://developers.vtex.com/docs/guides/querying-documents-in-master-data-v1).
+
+  ## Query examples
+
+  | **Filter type** | **Example** |
+  | --- | --- |
+  | **Simple filter** | `/dataentities/AD/search?userId=2da4e9ab-050b-11f0-b37f-f4b136dbcce1` |
+  | **Complex filter** | `/dataentities/AD/search?_where=(addressType=commercial OR addressType=invoice) AND country=USA` |
+  | **Date range** | `/dataentities/AD/search?_where=createdIn between 2024-01-01 AND 2025-01-01` |
+  | **Partial filter** | `/dataentities/AD/search?city=*Orlando*` |
+  | **Null values** | `/dataentities/AD/search?_where=reference is null` |
+  | **Non-null values** | `/dataentities/AD/search?_where=reference is not null` |
+  | **Difference** | `/dataentities/AD/search?_where=state<>FL` |
+
+  >⚠️ Avoid sending too many requests with wildcards (`*`) in the search parameters or that use the `keyword` parameter. This may lead to this endpoint being temporarily blocked for your account. If this happens you will receive an error with status code `503`.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Dynamic Storage | Dynamic storage generic resources | **Read only documents** |
+  | Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |
+  | Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |
+  | Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `_fields` | query | Names of the fields that will be returned per document, separated by a comma `,`. It is possible to fetch all fields using `_all` as the value of this query parameter. However, in order to avoid permission errors, we strongly recommend informing only the names of the exact fields that will be used. |
+  | `_where` | query | Defines a condition the B2B address document must comply with. When referring to fields, you can use a nested field up to the first level. For example, filter by buyer organization with `userId=2da4e9ab-050b-11f0-b37f-f4b136dbcce1`. |
+  | `_sort` | query | Defines sorting mode in two parts. The first part is the name of the field you want to sort by. In the second part, use `ASC` for ascending order or `DESC` for descending order. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+  | `REST-Range` | header | (Required) Specifies the range of documents to be returned in the response. The value should follow the format `resources={x}-{y}`, where: * `x`: Index of the first document in the returned array. * `y`: Index of the last document in the returned array + 1. This field controls pagination by defining the subset of documents to be retrieved. The maximum number of documents returned per query is limited to 100. For example, `resources=0-10` returns the first 10 documents. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "id": "4286e252-050b-11f0-b37f-d6617047d485",
+      "addressType": "commercial",
+      "addressLabel": "NC Office",
+      "receiverName": ".",
+      "street": "Toringon Street",
+      "number": "11",
+      "city": "Orlando",
+      "state": "FL",
+      "country": "USA",
+      "postalCode": "02999",
+      "geoCoordinates": [
+        28.48,
+        -81.2
+      ],
+      "userId": "2da4e9ab-050b-11f0-b37f-f4b136dbcce1"
+    },
+    {
+      "id": "7de8a913-16a4-11ef-bc95-0ac138d2d42e",
+      "addressType": "invoice",
+      "addressLabel": "Billing HQ",
+      "receiverName": ".",
+      "street": "Corporate Ave",
+      "number": "200",
+      "city": "Miami",
+      "state": "FL",
+      "country": "USA",
+      "postalCode": "33101",
+      "geoCoordinates": [],
+      "userId": "2da4e9ab-050b-11f0-b37f-f4b136dbcce1"
+    }
+  ]
+  ```

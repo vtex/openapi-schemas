@@ -1,0 +1,141 @@
+info:
+  name: List budgets
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/budgets/:contextType/:contextId"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: page
+      value: "1"
+      type: query
+      disabled: true
+    - name: pageSize
+      value: "20"
+      type: query
+      disabled: true
+    - name: minAmount
+      value: "100"
+      type: query
+      disabled: true
+    - name: maxAmount
+      value: "-98374117.74674813"
+      type: query
+      disabled: true
+    - name: status
+      value: ACTIVE
+      type: query
+      disabled: true
+    - name: name
+      value: North America Q2 Budget
+      type: query
+      disabled: true
+    - name: contextType
+      value: UNIT
+      type: path
+    - name: contextId
+      value: 093f29ac-7a1b-4d6b-a79a-48f89cf73d14
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/budgets/:contextType/:contextId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/budgets/:contextType/:contextId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/budgets/:contextType/:contextId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/budgets/:contextType/:contextId - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"pagination":{"type":"object","description":"Pagination information.","properties":{"current":{"type":"integer","description":"Current page number."},"pages":{"type":"integer","description":"Total number of pages available."},"results":{"type":"integer","description":"Total number of results across all pages."}}},"items":{"type":"array","description":"Array of budget summaries.","items":{"type":"object","description":"Budget summary object.","properties":{"id":{"type":"string","description":"Identifier of the budget."},"name":{"type":"string","description":"Name of the budget."},"startDate":{"type":"string","format":"date-time","description":"Start date of the budget in ISO 8601 format (format: YYYY-MM-DDThh:mm:ssZ)."},"endDate":{"type":"string","format":"date-time","description":"End date of the budget in ISO 8601 format (format: YYYY-MM-DDThh:mm:ssZ)."},"balance":{"type":"object","description":"Budget balance information.","properties":{"amount":{"type":"number","description":"Total budget amount."},"balanceAdjustment":{"type":"number","description":"Amount already used."},"remaining":{"type":"number","description":"Remaining budget."}}},"status":{"type":"string","description":"Current status of the allocation (`ACTIVE` or `INACTIVE`)."},"contextType":{"type":"string","description":"Defines the context type associated with the budget which must be `UNIT` in B2B context."},"contextId":{"type":"string","description":"Identifier of the context type."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves a paginated list of budgets filtered by context and amount range.
+
+  >⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | B2B | Budget | **ViewBudget** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `contextType` | path | (Required) Type of context for the budget (e.g., `UNIT`). This field can't be updated, it is used for validation. You must send the original value. |
+  | `contextId` | path | (Required) Identifier of the corresponding Unit. This field can't be updated, it is used for validation. You must send the original value. |
+  | `page` | query | Page number of the results. |
+  | `pageSize` | query | Number of items per page. |
+  | `minAmount` | query | Minimum budget amount for filtering. |
+  | `maxAmount` | query | Maximum budget amount for filtering. |
+  | `status` | query | Filter budgets by their status. Use `ACTIVE` for enabled budgets or `INACTIVE` for disabled budgets. The status `DELETED` is not applicable for budget filtering: deleted budgets are purged from the system and cannot be retrieved or filtered through the API. |
+  | `name` | query | Budget name. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "pagination": {
+      "current": 1,
+      "pages": 1,
+      "results": 2
+    },
+    "items": [
+      {
+        "id": "ffc4575e-5e5c-420e-bcb7-bf4a271f5d60",
+        "name": "Grocery Store",
+        "startDate": "2025-03-27T00:00:00.0000000Z",
+        "endDate": "2025-04-18T00:00:00.0000000Z",
+        "balance": {
+          "amount": 657,
+          "balanceAdjustment": 0,
+          "remaining": 657
+        },
+        "status": "ACTIVE",
+        "contextType": "UNIT",
+        "contextId": "unit123"
+      }
+    ]
+  }
+  ```

@@ -1,0 +1,168 @@
+info:
+  name: List pickup points by location
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/checkout/pub/pickup-points"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: geoCoordinates
+      value: -47.924747467041016; -15.832582473754883
+      type: query
+      disabled: true
+    - name: postalCode
+      value: "1234000"
+      type: query
+      disabled: true
+    - name: countryCode
+      value: BRA
+      type: query
+      disabled: true
+    - name: individualShippingEstimates
+      value: "true"
+      type: query
+      disabled: true
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/checkout/pub/pickup-points - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/checkout/pub/pickup-points - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/checkout/pub/pickup-points - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/checkout/pub/pickup-points - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"paging":{"description":"Paging.","type":"object","properties":{"page":{"description":"Page number.","type":"integer"},"pageSize":{"description":"Page size.","type":"integer"},"total":{"description":"Total pages.","type":"integer"},"pages":{"description":"Pages.","type":"integer"}}},"items":{"description":"Items.","type":"array","items":{"description":"Item information.","type":"object","properties":{"distance":{"description":"Distance.","type":"number"},"pickupPoint":{"description":"Pickup point.","type":"object","properties":{"friendlyName":{"description":"Friendly name.","type":"string"},"address":{"description":"Address.","type":"object","properties":{"addressType":{"description":"Address type.","type":"string"},"receiverName":{"description":"Receiver name.","type":"string"},"addressId":{"description":"Address ID.","type":["string","null"]},"isDisposable":{"description":"Indicates whether the address is disposable. Addresses marked as `isDisposable = true` are not saved to the shopper's profile when the order is completed, while addresses with `isDisposable = false` definitely belong to the shopper.\r\n\r\nBehavior by address type:\r\n- `giftRegistry`, `pickup`, `search`, and `inStore`: always disposable, as they do not belong to the shopper navigating the cart.\r\n- `residential`: may be disposable. Addresses from a complete shopper profile, or entered by an authenticated shopper with a complete profile, are not disposable. All other residential addresses are disposable, including those from first-time purchases, since no complete profile exists yet.\r\n- `invoice`: does not have the `isDisposable` flag, since invoice addresses are of type `Address` rather than `ShippingAddress`. In practice, only authenticated shoppers can add invoice attachments to the cart, so they are never treated as disposable.\r\n- `commercial`: corresponds to company addresses used in B2B contexts and follows the same logic as residential addresses.\r\n\r\nWhen a residential address is marked as disposable and the profile is complete, authentication is required to complete the order. Additionally, when a disposable residential address is used to complete a purchase, saved cards cannot be used.","type":"boolean"},"postalCode":{"description":"Postal code.","type":"string"},"city":{"description":"City.","type":"string"},"state":{"description":"State.","type":"string"},"country":{"description":"Country.","type":"string"},"street":{"description":"Street.","type":"string"},"number":{"description":"Number.","type":"string"},"neighborhood":{"description":"Neighborhood.","type":"string"},"complement":{"description":"Complement to the shipping address, in case it applies.","type":["string","null"]},"reference":{"description":"Racao.","type":"string"},"geoCoordinates":{"description":"Geo coordinates.","type":"array","items":{"description":"Geo coordinate.","type":"integer"}}}},"additionalInfo":{"description":"Additional info.","type":"string"},"id":{"description":"ID.","type":"string"},"businessHours":{"description":"Array with business hours.","type":"array","items":{"description":"Business hours.","type":"object","properties":{"DayOfWeek":{"description":"Day of week.","type":"integer"},"OpeningTime":{"description":"Opening time.","type":"string"},"ClosingTime":{"description":"Closing time.","type":"string"}}}}}}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves information on pickup points close to a given location determined by geocoordinates or postal code.
+
+
+  The pickup points returned are not necessarily all active ones. Make sure to validate the information consumed by integrations.
+
+  ## Permissions
+
+  This endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `geoCoordinates` | query | Geocoordinates (first longitude, then latitude) around which to search for pickup points. If you use this type of search, do not pass postal and country codes. |
+  | `postalCode` | query | Postal code around which to search for pickup points. If you use this type of search, make sure to pass a `countryCode` and do not pass `geoCoordinates`. |
+  | `countryCode` | query | Three letter country code refering to the `postalCode` field. Pass the country code only if you are searching pickup points by postal code. |
+  | `individualShippingEstimates` | query | Shows the product's estimated shipping date in the `shippingEstimate` field from the `orderForm`. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "paging": {
+      "page": 1,
+      "pageSize": 30,
+      "total": 1,
+      "pages": 1
+    },
+    "items": [
+      {
+        "distance": 0.8469786518616546,
+        "pickupPoint": {
+          "friendlyName": "physical-store-02",
+          "address": {
+            "addressType": "pickup",
+            "receiverName": "",
+            "addressId": "physical-store-02",
+            "isDisposable": true,
+            "postalCode": "23450-070",
+            "city": "Rio de Janeiro",
+            "state": "RJ",
+            "country": "BRA",
+            "street": "Praia de Botafogo",
+            "number": "132",
+            "neighborhood": "Botafogo",
+            "complement": "Apto 101",
+            "reference": "",
+            "geoCoordinates": [
+              -47,
+              -15
+            ]
+          },
+          "additionalInfo": "",
+          "id": "02_Physical",
+          "businessHours": [
+            {
+              "DayOfWeek": 0,
+              "OpeningTime": "00:00:00",
+              "ClosingTime": "23:59:00"
+            },
+            {
+              "DayOfWeek": 1,
+              "OpeningTime": "00:00:00",
+              "ClosingTime": "23:59:00"
+            },
+            {
+              "DayOfWeek": 2,
+              "OpeningTime": "00:00:00",
+              "ClosingTime": "23:59:00"
+            },
+            {
+              "DayOfWeek": 3,
+              "OpeningTime": "00:00:00",
+              "ClosingTime": "23:59:00"
+            },
+            {
+              "DayOfWeek": 4,
+              "OpeningTime": "00:00:00",
+              "ClosingTime": "23:50:00"
+            },
+            {
+              "DayOfWeek": 5,
+              "OpeningTime": "00:00:00",
+              "ClosingTime": "23:59:00"
+            },
+            {
+              "DayOfWeek": 6,
+              "OpeningTime": "00:00:00",
+              "ClosingTime": "23:59:00"
+            }
+          ]
+        }
+      }
+    ]
+  }
+  ```

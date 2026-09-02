@@ -1,0 +1,142 @@
+info:
+  name: List budget allocations
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/budgets/:contextType/:contextId/:budgetId/allocations"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: type
+      value: Location
+      type: query
+      disabled: true
+    - name: page
+      value: "1"
+      type: query
+      disabled: true
+    - name: pageSize
+      value: "20"
+      type: query
+      disabled: true
+    - name: status
+      value: ACTIVE
+      type: query
+      disabled: true
+    - name: referenceId
+      value: 4d00d477-e4fe-4345-b5cd-ba2ef1725cc8
+      type: query
+      disabled: true
+    - name: contextType
+      value: UNIT
+      type: path
+    - name: contextId
+      value: 093f29ac-7a1b-4d6b-a79a-48f89cf73d14
+      type: path
+    - name: budgetId
+      value: 019833db-27ad-7264-b104-dfed7c0fcbac
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/budgets/:contextType/:contextId/:budgetId/allocations - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/budgets/:contextType/:contextId/:budgetId/allocations - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/budgets/:contextType/:contextId/:budgetId/allocations - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/budgets/:contextType/:contextId/:budgetId/allocations - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"pagination":{"type":"object","description":"Pagination information.","properties":{"current":{"type":"integer","description":"Current page number."},"pages":{"type":"integer","description":"Total number of pages available."},"results":{"type":"integer","description":"Total number of results across all pages."}}},"items":{"type":"array","description":"List of budget allocations.","items":{"type":"object","description":"Allocation object.","properties":{"id":{"type":"string","description":"Identifier of the allocation."},"budgetId":{"type":"string","description":"Identifier of the budget to which the allocation belongs."},"linkedEntity":{"type":"object","description":"Linked entity information.","properties":{"id":{"type":"string","description":"Identifier of the entity linked to the allocation. If `type` is `User` or `Address`, this should be the identifier of the user or address, respectively. If `type` is an Accounting Field ([Custom Field](https://developers.vtex.com/docs/guides/custom-fields-integration)), this should be the **value** of that Accounting Field."},"type":{"type":"string","description":"Type of the linked entity. Currently, the accepted entity types are: `User`, `Address`, and Accounting Fields ([Custom Fields](https://developers.vtex.com/docs/guides/custom-fields-integration))."}}},"balance":{"type":"object","description":"Budget balance information.","properties":{"amount":{"type":"number","description":"Total amount allocated."},"balanceAdjustment":{"type":"number","description":"Total amount used."},"remaining":{"type":"number","description":"Current balance left for this allocation."}}},"status":{"type":"string","description":"Status of the allocation (e.g., `ACTIVE`, `INACTIVE` or `DELETE`).","enum":["ACTIVE","INACTIVE","DELETED"]},"contextType":{"type":"string","description":"Defines the context type associated with the budget which must be `UNIT` in B2B context."},"contextId":{"type":"string","description":"Identifier of the context type."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves the allocations for a specific budget, with optional filtering by entity type.
+
+  >⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | B2B | Budget | **ViewBudget** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `contextType` | path | (Required) Type of context for the budget (e.g., `UNIT`). This field can't be updated, it is used for validation. You must send the original value. |
+  | `contextId` | path | (Required) Identifier of the corresponding Unit. This field can't be updated, it is used for validation. You must send the original value. |
+  | `budgetId` | path | (Required) Identifier of the budget. |
+  | `type` | query | Filters the allocations by linked entity type. Currently, the accepted entity types are: `User`, `Address`, and Accounting Fields ([Custom Fields](https://developers.vtex.com/docs/guides/custom-fields-integration)). |
+  | `page` | query | Page number of the results. |
+  | `pageSize` | query | Number of items per page. |
+  | `status` | query | Filter allocations by their status. Use `ACTIVE` for current allocations, `INACTIVE` for temporary disabled ones, or `DELETED` for removed allocations. |
+  | `referenceId` | query | Filters the allocations by contract ID. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "pagination": {
+      "current": 1,
+      "pages": 1,
+      "results": 3
+    },
+    "items": [
+      {
+        "id": "f8dc5da1-bac5-4d5c-8907-b29f8dda4e18",
+        "budgetId": "d5793a13-c453-483b-8fc3-d17d96282c15",
+        "linkedEntity": {
+          "id": "565db6d8-e125-404d-8d9d-20d96dce10c6",
+          "type": "Cont"
+        },
+        "balance": {
+          "amount": 26,
+          "balanceAdjustment": 0,
+          "remaining": 26
+        },
+        "status": "DELETED",
+        "contextType": "UNIT",
+        "contextId": "093f29ac-7a1b-4d6b-a79a-48f89cf73d14"
+      }
+    ]
+  }
+  ```

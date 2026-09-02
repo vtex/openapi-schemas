@@ -1,0 +1,170 @@
+info:
+  name: List all connectors
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/channel-manager/connector/all?an=apiexemple&pageSize=15"
+  headers:
+    - name: accept
+      value: application/json
+    - name: content-type
+      value: application/json
+  params:
+    - name: an
+      value: apiexemple
+      type: query
+    - name: segment
+      value: department_stores
+      type: query
+      disabled: true
+    - name: orderByConnectorType
+      value: "true"
+      type: query
+      disabled: true
+    - name: active
+      value: "true"
+      type: query
+      disabled: true
+    - name: name
+      value: Dafiti
+      type: query
+      disabled: true
+    - name: page
+      value: "1"
+      type: query
+      disabled: true
+    - name: pageSize
+      value: "15"
+      type: query
+    - name: country
+      value: bra
+      type: query
+      disabled: true
+    - name: type
+      value: vtex
+      type: query
+      disabled: true
+    - name: account
+      value: cea
+      type: query
+      disabled: true
+    - name: environment
+      value: "{{environment}}"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/channel-manager/connector/all - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/channel-manager/connector/all - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/channel-manager/connector/all - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/channel-manager/connector/all - Schema is valid", function () {
+          const schema = {"description":"Expected success response from List all connector API.","type":"object","properties":{"metadata":{"title":"metadata","description":"Summary of data returned by the query.","type":"object","properties":{"totalCount":{"description":"Total data returned.","type":"number"},"currentPage":{"description":"Current result page.","type":"number"},"pageSize":{"description":"How many results will be displayed per page.","type":"number"},"totalPages":{"description":"Total pages the query returned.","type":"number"}}},"results":{"description":"Query result with information for each connector.","type":"array","items":{"description":"Connector information.","type":"object","properties":{"id":{"description":"Connector Id.","type":"number"},"name":{"description":"Connector name.","type":"string"},"website":{"description":"Connector website.","type":"string"},"logo":{"description":"URL of the logo used by the connector.","type":"string"},"description":{"description":"Connector presentation.","type":"string"},"helpUrl":{"description":"URL of connector integration documentation page.","type":"string"},"segment":{"description":"Market segment.","type":"string"},"availableCountries":{"description":"List of countries where connector is available for integration.","type":"array","items":{"description":"Country code.","type":"string"}},"availableStates":{"description":"States in which the connector operates, valid only for connectors that have area restriction.","type":"array","items":{"type":"string","description":"State code."}},"type":{"description":"What type of connector, if it is native, VTEX or partner.","type":"string"},"connectorPageUrl":{"description":"URL where the merchant will be redirected to start the onboarding process.","type":"string"},"connectorVtexAdminPath":{"description":"Admin VTEX URL, where the merchant will be redirected to manage and view his connections after integration.","type":"string"},"connectorApiEndpoint":{"description":"Partner Connector API base URL.","type":"string"},"channelId":{"description":"ID of the channel that a connector joins to.","type":"string"},"isGloballyAvailable":{"description":"In which version the connector is available.","type":"boolean"},"ownerVtexAccount":{"description":"Connector account name in VTEX.","type":"string"},"isActive":{"description":"Indicates whether the connector is active (`true`) or not (`false`).","type":"boolean"},"isCertified":{"description":"Indicates whether the connector is certified (`true`) or not (`false`).","type":"boolean"},"contactInfo":{"description":"Seller contact information.","type":"object","properties":{"name":{"description":"Name of the person responsible for the marketplace account interested in connecting to the merchant.","type":"string"},"email":{"description":"Email address of the person responsible for the marketplace account interested in connecting to the merchant.","type":"string"},"phone":{"description":"Phone of the person responsible for the marketplace account interested in connecting to the merchant.","type":"string"},"defaultMessage":{"description":"Introduction message and information of interest in the partnership with the merchant.","type":"string"}}},"isConnectionActive":{"description":"Indicates whether the connection is active (`true`) or not (`false`).","type":"boolean"},"affiliateId":{"description":"Affiliate ID corresponding to the connector.","type":"string"}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns a paginated list of all connectors' registered in Channel Manager, taking into consideration the filters informed in the query string of the request.
+
+
+  ## Permissions
+
+  This endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `environment` | path | Environment to use. Used as part of the URL. (This can only be one of vtexcommercestable) |
+  | `an` | query | (Required) Merchant's account name in VTEX, ex. `apiexemple`. |
+  | `segment` | query | Filter data by connector's segment. |
+  | `orderByConnectorType` | query | Order data using a custom logic by connector's' type, and not alphabetically. |
+  | `active` | query | Filter data by the connector's status. |
+  | `name` | query | Filter data by the connector's name. |
+  | `page` | query | Current page to load data from. |
+  | `pageSize` | query | (Required) Page size to define number of results returned. |
+  | `country` | query | Filter by connector's country. |
+  | `type` | query | Filter by connector's type. |
+  | `account` | query | Filter by connector's owner account. |
+  | `accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+  | `content-type` | header | (Required) Describes the type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "metadata": {
+      "totalCount": 513,
+      "currentPage": 1,
+      "pageSize": 15,
+      "totalPages": 35
+    },
+    "results": [
+      {
+        "id": 59,
+        "name": "4R Comercial Sao Paulo",
+        "website": "www.comercialsaopaulo.com",
+        "logo": "https://comercialsaopaulo.vtexassets.com/assets/vtex.file-manager-graphql/logo/619f6f7f-bf67-4ed1-a15a-282b51f81e06___cd0426736f2550559c8688de3378681f.jpg",
+        "description": "Somos uma empresa sedeada em Barreiras - BA, decidimos entrar no mundo do E Commerce e marketplace há alguns anos, pois já estávamos estabelecidos e sólidos com a nossa loja física em nossa cidade.\nHoje trabalhamos com um portfólio bem diversificado de produtos, que são eles:\n- Linha à bateria\n- Lazer e esporte\n- Camping\n- Ferramentas elétricas\n- Maquinários leves e pesados\n- Ferramentas manuais\n- E muitos outros segmentos\nSua ",
+        "helpUrl": "help.vtex.com/helpurl",
+        "segment": "DEPARTMENT_STORES",
+        "availableCountries": [
+          "BRA"
+        ],
+        "availableStates": [
+          "SP",
+          "PR",
+          "BA",
+          "ES",
+          "AC"
+        ],
+        "type": "VTEX",
+        "connectorPageUrl": "connector.vtex.com/connectorPageUrl",
+        "connectorVtexAdminPath": "connector.vtex.com/connectorVtexAdminPath",
+        "connectorApiEndpoint": "connector.vtex.com/connectorApiEndpoint",
+        "channelId": "1234",
+        "isGloballyAvailable": false,
+        "ownerVtexAccount": "comercialsaopaulo",
+        "isActive": false,
+        "isCertified": true,
+        "contactInfo": {
+          "name": "Jhon Jones",
+          "email": "comercialsp@comercialsaopaulo.com",
+          "phone": "(77) 7777-7777",
+          "defaultMessage": "Olá, aqui é (...) da (...). Adoraríamos incluir sua loja em nossa vitrine, pois acreditamos que (...). Seguem algumas informações importantes para darmos seguimento à nossa parceria:\n\n1) Nosso marketplace conta as categorias\n- A\n- B\n- C\n\n2) Nossa política de cobrança inclui uma taxa de (...) para cada compra, mais assinatura fixa de (...) por mês. \n\n3) Saiba mais sobre nossa política de devoluções e envio neste link (...)."
+        },
+        "isConnectionActive": false,
+        "affiliateId": "AFT"
+      }
+    ]
+  }
+  ```

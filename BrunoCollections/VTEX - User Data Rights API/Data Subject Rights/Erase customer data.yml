@@ -1,0 +1,113 @@
+info:
+  name: Erase customer data
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/user-rights/createAndProcessDeleteUserData?an=mystore"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: mystore
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+        "email": "john@mail.com"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/user-rights/createAndProcessDeleteUserData - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/user-rights/createAndProcessDeleteUserData - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/user-rights/createAndProcessDeleteUserData - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/user-rights/createAndProcessDeleteUserData - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"uuid":{"type":"string","description":"User data rights request unique identifier in [UUID](https://www.uuidtools.com/what-is-uuid) format."},"requestType":{"type":"string","description":"Type of user data rights request."},"email":{"type":"string","description":"Client email."},"status":{"type":"string","description":"Status of the user data rights request."},"dataResponse":{"type":"string","description":"Escaped JSON containing information about the status of data deletion on each VTEX system that stores client data."},"requestTime":{"type":"string","description":"Date of the user data rights request in [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html)format."},"applications":{"type":"array","description":"Array containing an object for each VTEX application that stores client data.","items":{"type":"object","description":"Object containing information about user data status in each VTEX application that stores client data.","properties":{"application":{"type":"string","description":"Abbreviated name of the application, which can be `chk` (Checkout), `orders` (Order Management System), `profileSystemV2` (PII Profile System) or `vid` (VTEX ID)."},"status":{"type":"string","description":"Status of client data in the given application. The possible values are:\n\r- `Completed` - Processing completed successfully.\n\r- `Error` - An unexpected error occurred during the process. You must make a new request.\n\r- `PendingCheck` - Pending validation. Unable to perform validation on one or more services.\n\r- `Blocked` - Pending validation. One or more services are unable to fulfill the deletion request. You need to wait and make a new request in the future.\n\r- `PendingDeletion` - It was not possible to delete data in one or more services. You must make a new request."},"errorDetail":{"type":"string","description":"In case of error, this field contains an explanatory error message. Otherwise, this field is an empty string."},"updateAt":{"type":"string","description":"Date of the latest update in client data in the given application, in UTC format."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Deletes a given customer's data collected in your store by Checkout, Orders, VTEX ID and Profile System.
+
+  >⚠️ This API is currently in closed alpha testing stage, which means that only specific customers can access it now. Do not share this documentation with people outside of your company. If you do not have access yet, please refer to the [Erasing customer data](https://help.vtex.com/en/tutorial/erasing-customer-data--1R9Fn7A06Ifj4R9YD4JTKU) guide instead.
+
+  >⚠️ Only orders with `invoiced` or `canceled` status are erased in this request.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `an` | query | Name of your VTEX account. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "uuid": "3e2f53dc-b099-4dc8-9727-581b2a97f39c",
+    "requestType": "Removal",
+    "email": "pedido2@vtexchallenge.com",
+    "status": "Completed",
+    "dataResponse": "{\r\n  \"VTEX  Checkout\": [],\r\n  \"orders\": {\r\n    \"dataStatus\": {\r\n      \"status\": \"anonymized\",\r\n      \"reason\": \"Sensitive information was anonymized rather than deleted to preserve the store metrics.\",\r\n      \"evidence\": \"Anonymized [0] orders\",\r\n      \"dryRun\": true\r\n    },\r\n    \"orders\": []\r\n  },\r\n  \"Profile System PII API\": {},\r\n  \"VTEX ID\": {\r\n    \"type\": \"https://tools.ietf.org/html/rfc7231#section-6.5.4\",\r\n    \"title\": \"Not Found\",\r\n    \"status\": 404,\r\n    \"traceId\": \"00-65d5abf9263b07eb185beee49e2075dc-b67b373e2e93dcf8-00\"\r\n  }\r\n}",
+    "requestTime": "2023-09-05T17:19:33.1969022-03:00",
+    "applications": [
+      {
+        "application": "chk",
+        "status": "Deleted",
+        "errorDetail": "",
+        "updateAt": "2023-09-05T20:20:23"
+      },
+      {
+        "application": "orders",
+        "status": "Deleted",
+        "errorDetail": "",
+        "updateAt": "2023-09-05T20:20:25"
+      },
+      {
+        "application": "profileSystemV2",
+        "status": "Deleted",
+        "errorDetail": "",
+        "updateAt": "2023-09-05T20:20:26"
+      },
+      {
+        "application": "vid",
+        "status": "Deleted",
+        "errorDetail": "",
+        "updateAt": "2023-09-05T20:20:29"
+      }
+    ]
+  }
+  ```

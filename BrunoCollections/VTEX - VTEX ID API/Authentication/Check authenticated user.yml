@@ -1,0 +1,94 @@
+info:
+  name: Check authenticated user
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/vtexid/credential/validate"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: exampleAccount
+      type: query
+      disabled: true
+    - name: environment
+      value: vtexcommercestable
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/vtexid/credential/validate - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/vtexid/credential/validate - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/vtexid/credential/validate - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/vtexid/credential/validate - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"authStatus":{"type":"string","description":"Authentication status."},"id":{"type":"string","description":"Unique identifier of the user within VTEX services."},"user":{"type":"string","description":"User email."},"account":{"type":"string","description":"VTEX account name."},"audience":{"type":"string","description":"Type of user."},"tokenType":{"type":"string","description":"Type of token."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves information about the user who is currently authenticated in your store, given an user token. If the user is not authenticated, the response for this API will be `401 (Unauthorized)`.
+
+  ## Permissions
+
+  This endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `environment` | path | (Required) Environment to be used in the request. |
+  | `an` | query | Name of your VTEX account. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "authStatus": "Success",
+    "id": "1f6c17e5-06f9-44a9-a459-b3686e03fa9d",
+    "user": "john@mail.com",
+    "account": "apiexamples",
+    "audience": "admin",
+    "tokenType": "user"
+  }
+  ```

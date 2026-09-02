@@ -1,0 +1,100 @@
+info:
+  name: Create organization unit
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/organization-units/v1"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Marketing Department"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/organization-units/v1 - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/organization-units/v1 - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/organization-units/v1 - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/organization-units/v1 - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"createdAt":{"type":"string","format":"date-time","description":"Timestamp when the organization unit was created."},"updatedAt":{"type":"string","format":"date-time","description":"Timestamp of the most recent update."},"name":{"type":"string","description":"Name of the organization unit."},"path":{"type":"object","description":"Hierarchical path of the organization unit.","properties":{"ids":{"type":"string","description":"Full ID path of the organization unit."}}},"id":{"type":"string","description":"ID of the organization unit."},"customerGroup":{"type":"object","description":"Group of customers associated with the organization unit.","properties":{"customerIds":{"type":"array","description":"List of associated customer IDs (can be empty).","items":{"type":"string","description":"ID of the customer."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates a new organization unit at the root level of the organizational hierarchy. After creation, you can move the organization unit to a desired parent using the `PUT` [Move organization unit](https://developers.vtex.com/docs/api-reference/organization-units-api#put-/api/organization-units/v1/-organizationUnitId-/path) endpoint.
+
+  >⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Organization Units | units | **Edit_Organization_Unit** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "createdAt": "2025-03-19T21:28:13.103978Z",
+    "updatedAt": "2025-03-19T21:28:13.103978Z",
+    "name": "new-unit",
+    "path": {
+      "ids": "qastore/b13531bb-8242-43fd-80f5-3263dd4e9cdd/92264b68-74da-4fc4-b51a-9ddcb8baf29a"
+    },
+    "id": "92264b68-74da-4fc4-b51a-9ddcb8baf29a",
+    "customerGroup": {
+      "customerIds": []
+    }
+  }
+  ```

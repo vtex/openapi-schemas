@@ -1,0 +1,114 @@
+info:
+  name: Update location status
+  type: http
+  seq: 1
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/fulfillment-locations/locations/:locationId/status"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: locationId
+      value: "71"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "status": "MANUALLY_PAUSED"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[PUT]::/api/fulfillment-locations/locations/:locationId/status - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PUT]::/api/fulfillment-locations/locations/:locationId/status - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[PUT]::/api/fulfillment-locations/locations/:locationId/status - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[PUT]::/api/fulfillment-locations/locations/:locationId/status - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"id":{"type":"string","description":"Unique identifier of the location."},"name":{"type":"string","description":"Name of the location."},"status":{"type":"string","enum":["ACTIVE","MANUALLY_PAUSED","PAUSED"],"description":"Current status of the location."},"timeZone":{"type":"string","description":"Time zone of the location."},"vtexAccountName":{"type":"string","description":"VTEX account name associated with the location."},"vtexAccount":{"type":"object","description":"Detailed VTEX account information.","properties":{"id":{"type":"string","description":"VTEX account unique identifier."},"name":{"type":"string","description":"Name of the VTEX account."},"companyName":{"type":"string","description":"Company name associated with the VTEX account."},"ownerAccountName":{"type":"string","description":"Owner account name."}}},"locationTasks":{"type":"array","description":"List of tasks associated with the location.","items":{"type":"object","description":"Represents a task associated with the location."}},"address":{"type":"object","description":"Address details of the location.","properties":{"formattedAddress":{"type":"string","description":"The full formatted address."},"country":{"type":"string","description":"Country where the location is situated."},"administrativeAreaLevel1":{"type":"string","description":"First administrative division (e.g., state)."},"administrativeAreaLevel2":{"type":"string","description":"Second administrative division (e.g., city)."},"postalCode":{"type":"string","description":"Postal code of the location."},"geoLocation":{"type":"object","description":"Geographic coordinates of the location.","properties":{"latitude":{"type":"number","description":"Latitude coordinate."},"longitude":{"type":"number","description":"Longitude coordinate."}}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Updates the status of a specific location (identified by `locationId`) to either `ACTIVE` or `MANUALLY_PAUSED`.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Logistics | Logistics access | **Logistics full access** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `locationId` | path | (Required) Unique identifier of the location. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "locationId_1",
+    "name": "Location A",
+    "status": "MANUALLY_PAUSED",
+    "timeZone": "America/Bahia",
+    "vtexAccountName": "",
+    "vtexAccount": {
+      "id": "1b4018ec-48bf-4a59-9eae-547403e11afc",
+      "name": "logisticsqa",
+      "companyName": "VTEX",
+      "ownerAccountName": "logisticsqa"
+    },
+    "locationTasks": [],
+    "address": {
+      "formattedAddress": "Centro Empresarial - Praia de Botafogo, 300 - 3º Andar - Botafogo, Rio de Janeiro - RJ, 22250-040, Brasil",
+      "country": "Brasil",
+      "administrativeAreaLevel1": "RJ",
+      "administrativeAreaLevel2": "Rio de Janeiro",
+      "postalCode": "22250-040",
+      "geoLocation": {
+        "latitude": -22.9443688,
+        "longitude": -43.1825604
+      }
+    }
+  }
+  ```

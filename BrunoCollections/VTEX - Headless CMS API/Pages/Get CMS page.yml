@@ -1,0 +1,191 @@
+info:
+  name: Get CMS page
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{baseUrl}}/_v/cms/api/:projectId/:content-type/:document-id"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: versionId
+      value: e7263fc8-bc68-4052-9e25-dd5a2572d3bb
+      type: query
+      disabled: true
+    - name: releaseId
+      value: 6196c277c6dce15f9709a2a7
+      type: query
+      disabled: true
+    - name: projectId
+      value: faststore
+      type: path
+    - name: content-type
+      value: plp
+      type: path
+    - name: document-id
+      value: 5af643b5-9a6d-48f2-9b34-919dd762c908
+      type: path
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/_v/cms/api/:projectId/:content-type/:document-id - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/_v/cms/api/:projectId/:content-type/:document-id - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/_v/cms/api/:projectId/:content-type/:document-id - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/_v/cms/api/:projectId/:content-type/:document-id - Schema is valid", function () {
+          const schema = {"description":"Object containing the data related to a specific page.","type":"object","required":["id","name","type","status"],"properties":{"id":{"description":"Document ID.","type":"string"},"name":{"description":"Name of the page created in the CMS app.","type":"string"},"type":{"description":"Name of the content type defined in the FastStore project.","type":"string"},"status":{"description":"Current status of the page.","type":"string"},"versionId":{"description":"Version ID.","type":"string"},"versionStatus":{"description":"Version status.","type":"string"},"sections":{"description":"Sections that compose the page.","type":"array","items":{"description":"Object with data about a specific section.","type":"object","required":["id","name","data"],"properties":{"id":{"description":"Section ID.","type":"string"},"name":{"description":"Section name.","type":"string"},"data":{"description":"Content of the Section. Varies depending on the Section schema defined in the FastStore project.","type":"object"}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Gets all data from a given page.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | CMS | cms | **See CMS menu on the top-bar** |
+  | CMS | cms | **Settings** |
+  | CMS | GraphQL | **CMS GraphQL API** | 
+
+   There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add the resources above to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `projectId` | path | (Required) Project ID specified in the settings of the CMS (alpha) app. |
+  | `content-type` | path | (Required) Content type ID defined in the FastStore project. |
+  | `document-id` | path | (Required) Document ID presented in the URL path of a CMS preview. |
+  | `versionId` | query | Version ID presented in the URL path of a CMS preview. |
+  | `releaseId` | query | Release ID presented in the URL path of a CMS preview. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "ad2fd81d-a53c-4281-8d01-a4fc2f274db3",
+    "name": "Home",
+    "type": "home",
+    "status": "published",
+    "versionId": "e3867e2c-7082-4fe6-83ed-c473242b6970",
+    "versionStatus": "publishing",
+    "sections": [
+      {
+        "id": "1651804180614",
+        "name": "Alert",
+        "data": {
+          "dismissible": true,
+          "icon": "Bell",
+          "text": "alert text",
+          "linkText": "alert link",
+          "actionLink": "link.url.com"
+        }
+      },
+      {
+        "id": "1647286556072",
+        "name": "Hero",
+        "data": {
+          "imageSrc": "https://storeframework.vtexassets.com/assets/vtex.file-manager-graphql/images/299f7d32-bb6a-40fd-82a0-4af5573ba572___17239443c00c1e894cff10ca05018058.jpg",
+          "title": "New Products Available",
+          "subtitle": "At FastStore you can shop the best tech of 2022. Enjoy and get 10% off on your first purchase.",
+          "linkText": "See all",
+          "link": "/office",
+          "imageAlt": "hero image"
+        }
+      },
+      {
+        "id": "1649293076336",
+        "name": "ProductShelf",
+        "data": {
+          "first": 5,
+          "after": "0",
+          "sort": "score_desc",
+          "selectedFacets": [
+            {
+              "key": "productClusterIds",
+              "value": "140"
+            }
+          ],
+          "title": "Most Wanted!"
+        }
+      },
+      {
+        "id": "1649293548351",
+        "name": "ProductTiles",
+        "data": {
+          "first": 3,
+          "after": "0",
+          "sort": "score_desc",
+          "selectedFacets": [
+            {
+              "key": "productClusterIds",
+              "value": "141"
+            }
+          ],
+          "title": "Just Arrived"
+        }
+      },
+      {
+        "id": "1647286735093",
+        "name": "BannerText",
+        "data": {
+          "title": "Receive our news and promotions in advance.",
+          "caption": "Enjoy and get 10% off on your first purchase!!",
+          "actionPath": "/office",
+          "actionLabel": "See all"
+        }
+      },
+      {
+        "id": "1649293131632",
+        "name": "ProductShelf",
+        "data": {
+          "first": 5,
+          "after": "0",
+          "sort": "score_desc",
+          "selectedFacets": [
+            {
+              "key": "productClusterIds",
+              "value": "142"
+            }
+          ],
+          "title": "Deals & Promotions"
+        }
+      }
+    ]
+  }
+  ```

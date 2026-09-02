@@ -1,0 +1,132 @@
+info:
+  name: Get address by version
+  type: http
+  seq: 8
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/storage/profile-system/profiles/:profileId/addresses/:addressId/versions/:addressVersionId?reason=data-validation"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: reason
+      value: data-validation
+      type: query
+    - name: alternativeKey
+      value: email
+      type: query
+      disabled: true
+    - name: profileId
+      value: 70caf394-8534-447e-a0ca-1803c669c771
+      type: path
+    - name: addressId
+      value: bf82180e-cf9e-4089-9af6-ae1518555992
+      type: path
+    - name: addressVersionId
+      value: 86dfae79-1d23-43f2-a643-2fc8f1839461
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/storage/profile-system/profiles/:profileId/addresses/:addressId/versions/:addressVersionId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/storage/profile-system/profiles/:profileId/addresses/:addressId/versions/:addressVersionId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/storage/profile-system/profiles/:profileId/addresses/:addressId/versions/:addressVersionId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/storage/profile-system/profiles/:profileId/addresses/:addressId/versions/:addressVersionId - Schema is valid", function () {
+          const schema = {"title":"Masked address response","type":"object","description":"Masked address information.","properties":{"id":{"title":"id","type":"string","description":"ID of a client's address."},"document":{"title":"Address","type":"object","description":"Address information.","required":["postalCode","countryName","administrativeAreaLevel1","locality","localityAreaLevel1","route","streetNumber","profileId"],"properties":{"postalCode":{"type":"string","description":"Address postal code."},"countryName":{"type":"string","description":"Name of the address country."},"countryCode":{"type":"string","description":"Two letter country code."},"administrativeAreaLevel1":{"type":"string","description":"Name of administrative area, such as the state or province."},"locality":{"type":"string","description":"Name of address locality, such as the city."},"localityAreaLevel1":{"type":"string","description":"Name of the address locality area, such as the neighborhood or district."},"route":{"type":"string","description":"Address route or street name."},"streetNumber":{"type":"string","description":"Address street number."},"profileId":{"title":"id","type":"string","description":"ID of the client's profile."},"contactId":{"type":"string","description":"Contact unique identifier."}}},"meta":{"title":"Address metadata","type":"object","description":"Address metadata.","required":["version","author","creationDate","lastUpdateDate"],"properties":{"version":{"type":"string","description":"Unique identifier of the address version."},"author":{"type":"string","description":"Unique identifier of the user who created the address."},"creationDate":{"type":"string","description":"Date when the address was created in ISO 8601 format."},"lastUpdateDate":{"type":"string","description":"Date when the address was last updated in ISO 8601 format."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves information of a specific version address of a given client.
+
+
+  > For security and privacy reasons, this request returns masked address data by version. For unmasked information, see [Get unmasked address by version](https://developers.vtex.com/docs/api-reference/profile-system#get-/api/storage/profile-system/profiles/-profileId-/addresses/-addressId-/versions/-addressVersionId-/unmask).
+
+
+  Learn more about the [Profile System](https://developers.vtex.com/vtex-rest-api/docs/profile-system) and its other API endpoints.
+
+  >⚠️ The Profile System is only compatible with stores using the PII data architecture from [Data Protection Plus](https://developers.vtex.com/docs/guides/data-protection-plus), which is in closed beta phase, only available in select regions.
+  >
+  > This feature is part of [VTEX Shield](https://help.vtex.com/en/tutorial/vtex-shield--2CVk6H9eY2CBtHjtDI7BFh). If you are already a VTEX customer and want to adopt VTEX Shield for your business, please contact [Commercial Support](https://help.vtex.com/en/tracks/support-at-vtex--4AXsGdGHqExp9ZkiNq9eMy/3KQWGgkPOwbFTPfBxL7YwZ). Additional fees may apply. If you are not yet a customer but are interested in this solution, please complete our [contact form](https://vtex.com/us-en/contact/).
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Profile System | Documents | **Get Item** |
+  | Profile System | Documents | **Save and Update Item** |
+  | Profile System | Documents | **Delete Item** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `profileId` | path | (Required) There are two value options for this field: 1. ID of the client's profile, as in the `id` field returned by the [Create profile](https://developers.vtex.com/docs/api-reference/profile-system#post-/api/storage/profile-system/profiles) endpoint. 2. The value of an alternative key (`email` or `document`). When using this option, the `alternativeKey` query parameter is required, to inform which key is being used. |
+  | `addressId` | path | (Required) ID of a client's specific address as returned in the [Create client address](https://developers.vtex.com/docs/api-reference/profile-system#post-/api/storage/profile-system/profiles/-profileId-/addresses) endpoint's response, in the `id` field. |
+  | `addressVersionId` | path | (Required) ID of the version of a given client's address as returned by endpoints that create or update address information in the `version` field. |
+  | `reason` | query | (Required) Reason for requesting unmasked data. |
+  | `alternativeKey` | query | When using an alternative key as `profileId` value, fill this parameter with the key you wish to use as `profileId`. There are two possible values: `email` and `document`. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "bf82180e-cf9e-4089-9af6-ae1518555992",
+    "document": {
+      "postalCode": "2****-0**",
+      "countryName": "B*****",
+      "countryCode": "BR",
+      "administrativeAreaLevel1": "RJ",
+      "locality": "L*******",
+      "localityAreaLevel1": "locality area",
+      "route": "51",
+      "streetNumber": "999",
+      "profileId": "70caf394-8534-447e-a0ca-1803c669c771"
+    },
+    "meta": {
+      "version": "c9c44895-4589-4d0d-a28d-e0e656ca1926",
+      "author": "80aa79a3-aa89-4912-a20e-8ef69af19a6c",
+      "creationDate": "2022-01-18T18:51:34.1293829+00:00",
+      "lastUpdateDate": "2022-01-18T18:51:34.1293829+00:00"
+    }
+  }
+  ```

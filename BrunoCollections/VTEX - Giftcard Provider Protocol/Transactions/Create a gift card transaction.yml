@@ -1,0 +1,171 @@
+info:
+  name: Create a gift card transaction
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/giftcards/:giftCardId/transactions"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: giftCardId
+      value: "2"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "operation": "Debit",
+        "value": 3,
+        "description": "GiftCardHub",
+        "redemptionToken": "b2dac6f2-f365-48cd-82a9-0b376a55557a",
+        "redemptionCode": "***********ASDQ",
+        "requestId": "B56CBE231DEE4E1A859183C1030CE926",
+        "orderInfo": {
+          "orderId": "v500",
+          "sequence": 5006128,
+          "cart": {
+            "items": [
+              {
+                "id": "2001023",
+                "productId": "2000492",
+                "refId": "35994",
+                "name": "Vaporizador Des. ColC4nia Branco",
+                "value": 14.99,
+                "price": 14.99,
+                "quantity": 1,
+                "shippingDiscount": 0,
+                "discount": -7.5,
+                "priceTags": [
+                  {
+                    "name": "discount@price-discount_store_183#4911bf6f-22a2-4af1-a365-cce895c3df2c",
+                    "value": 0
+                  },
+                  {
+                    "name": "discount@price-discount_store_183#4911bf6f-22a2-4af1-a365-cce895c3df2c",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "id": "2001023",
+                "productId": "2000492",
+                "refId": "35994",
+                "name": "Vaporizador Des. ColC4nia Branco",
+                "value": 14.99,
+                "price": 14.99,
+                "quantity": 1,
+                "shippingDiscount": 0,
+                "discount": -7.5,
+                "priceTags": [
+                  {
+                    "name": "discount@price-discount_store_183#4911bf6f-22a2-4af1-a365-cce895c3df2c",
+                    "value": 0
+                  },
+                  {
+                    "name": "discount@price-discount_store_183#4911bf6f-22a2-4af1-a365-cce895c3df2c",
+                    "value": 0
+                  }
+                ]
+              }
+            ],
+            "grandTotal": 0,
+            "discounts": -7.5,
+            "shipping": 7.27,
+            "taxes": 0,
+            "itemsTotal": 14.99
+          },
+          "clientProfile": {
+            "email": "michael.scott96@mail.com",
+            "firstName": "Michael",
+            "lastName": "Scott",
+            "document": "02906792063",
+            "phone": "+551111111111",
+            "birthDate": "0001-01-01T00:00:00",
+            "isCorporate": false
+          },
+          "shipping": {
+            "receiverName": "Michael Scott",
+            "postalCode": "22250040",
+            "city": "Rio de Janeiro",
+            "state": "RJ",
+            "country": "BRA",
+            "street": "Praia de Botafogo",
+            "number": "111",
+            "neighborhood": "Botafogo",
+            "complement": "House",
+            "reference": "Subway"
+          }
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/giftcards/:giftCardId/transactions - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/giftcards/:giftCardId/transactions - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/giftcards/:giftCardId/transactions - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/giftcards/:giftCardId/transactions - Schema is valid", function () {
+          const schema = {"description":"Gift card transaction response information.","required":["cardId","id","_self"],"type":"object","properties":{"cardId":{"type":"string","description":"Gift card identification."},"id":{"type":"string","description":"Transaction identification."},"_self":{"required":["href"],"type":"object","description":"It is an object that carries an auto reference from the provider at the Hub (on its API).","properties":{"href":{"type":"string","description":"This is one of the fields inside the `_self`. It is exactly the route that identifies this provider on the Hub's API, but it is not the same thing as the `serviceURL`."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates a transaction (credit or debit) for a gift card in a gift card provider and authorizes the item reservation.
+
+  > ℹ️ This request is made from VTEX to the gift card payment provider.
+
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `giftCardId` | path | (Required) Gift card identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "cardId": "24",
+    "id": "68347b311ce5407c90fa5316975d047a",
+    "_self": {
+      "href": "gatewayqa/giftcards/24/transactions/68347b311ce5407c90fa5316975d047a"
+    }
+  }
+  ```
