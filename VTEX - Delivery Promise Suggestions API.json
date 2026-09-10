@@ -26,13 +26,95 @@
         }
     ],
     "paths": {
+        "/api/logistics-shipping/zones/_search": {
+            "post": {
+                "tags": [
+                    "Logistics shipping"
+                ],
+                "summary": "Search delivery zones and pickup points",
+                "description": "Retrieves the delivery zones and the pickup points available for a given location, based on postal code, geographic coordinates, and country. This endpoint returns both the delivery zones hash (`deliveryZonesHash`) and the pickup points hash (`pickupPointsHash`) in a single response.\r\n\r\nBoth hashes represent the shopper's fulfillment context and are required by the [Get delivery suggestions](https://developers.vtex.com/docs/api-reference/delivery-promise-suggestions-api#get-/api/delivery-promise-suggestions) and [Search delivery suggestions](https://developers.vtex.com/docs/api-reference/delivery-promise-suggestions-api#post-/api/delivery-promise-suggestions/_search) endpoints, as well as by the [Intelligent Search API](https://developers.vtex.com/docs/api-reference/intelligent-search-api) endpoints.\r\n\r\n>ℹ️ This is the recommended endpoint for generating the fulfillment context hashes. It replaces the [Search delivery zones](https://developers.vtex.com/docs/api-reference/delivery-promise-suggestions-api#post-/api/logistics-shipping/delivery-zones/_search/v2) and [Search pickup points](https://developers.vtex.com/docs/api-reference/delivery-promise-suggestions-api#post-/api/logistics-shipping/pickuppoints/_search) endpoints, which are deprecated.\r\n\r\n## Hash expiration\r\n\r\nBoth hashes returned by this endpoint have a time to live (TTL) of 30 minutes. After this period, they expire and are no longer valid for use in the Delivery Promise Suggestions API and the Intelligent Search API. Requests sent with an expired hash may be rejected or return invalid responses.\r\n\r\nTo generate new hashes, call this endpoint again. There is no penalty or side effect in regenerating them. We recommend that integrations relying on these hashes call this endpoint as close as possible to the moment the hashes are used, and handle the expired hash scenario by requesting new ones.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Logistics | Logistics access | **Logistics full access** |\r\n| Logistics | Logistics access | **Logistics shipping full access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--sjGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| Logistics - Full access | Logistics full access |\r\n| Logistics - Full access | Logistics shipping full access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or API keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ZonesSearchRequest"
+                            },
+                            "example": {
+                                "country": "BRA",
+                                "zipCode": "24230220",
+                                "coordinate": {
+                                    "longitude": -43.10804748535156,
+                                    "latitude": -22.910741806030273
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ZonesResponse"
+                                },
+                                "example": {
+                                    "deliveryZoneIds": [
+                                        "BRA_COUNTRY",
+                                        "BRA_REGION_SUDESTE",
+                                        "BRA_STATE_RJ",
+                                        "BRA_SUBSTATE_RJ_REG_METROPOLITANA",
+                                        "apiexamples_1",
+                                        "apiexamples_1147da1",
+                                        "apiexamples_12ebfe9"
+                                    ],
+                                    "deliveryZonesHash": "6513033aa7857d8e10056b68b86eacc7",
+                                    "pickupPointsHash": "1e17390379ef93fe2b242483e5f80760",
+                                    "pickupDistances": [
+                                        {
+                                            "pickupId": "apiexamples_2",
+                                            "distance": 25.03369140625,
+                                            "pickupName": "Pickup | Rio de Janeiro - Irajá"
+                                        },
+                                        {
+                                            "pickupId": "apiexamples_3",
+                                            "distance": 28.024667739868164,
+                                            "pickupName": "Pickup | Itaboraí - São Joaquim"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "appKey": [],
+                        "appToken": []
+                    },
+                    {
+                        "VtexIdclientAutCookie": []
+                    }
+                ],
+                "deprecated": false
+            }
+        },
         "/api/logistics-shipping/delivery-zones/_search/v2": {
             "post": {
                 "tags": [
                     "Logistics shipping"
                 ],
                 "summary": "Search delivery zones",
-                "description": "Retrieves available delivery zones based on location information. This endpoint helps determine which delivery zones are applicable for a given address, using postal code, geographic coordinates, and country.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Logistics | Logistics access | **Logistics full access** |\r\n| Logistics | Logistics access | **Logistics shipping full access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--sjGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| Logistics - Full access | Logistics full access |\r\n| Logistics - Full access | Logistics shipping full access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or API keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "description": ">⚠️ This endpoint is deprecated. Use the [Search delivery zones and pickup points](https://developers.vtex.com/docs/api-reference/delivery-promise-suggestions-api#post-/api/logistics-shipping/zones/_search) endpoint instead, which returns both the delivery zones hash and the pickup points hash in a single response. This endpoint still works, but its use is no longer recommended.\r\n\r\nRetrieves available delivery zones based on location information. This endpoint helps determine which delivery zones are applicable for a given address, using postal code, geographic coordinates, and country.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Logistics | Logistics access | **Logistics full access** |\r\n| Logistics | Logistics access | **Logistics shipping full access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--sjGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| Logistics - Full access | Logistics full access |\r\n| Logistics - Full access | Logistics shipping full access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or API keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -89,7 +171,7 @@
                         "VtexIdclientAutCookie": []
                     }
                 ],
-                "deprecated": false
+                "deprecated": true
             }
         },
         "/api/logistics-shipping/pickuppoints/_search": {
@@ -98,7 +180,7 @@
                     "Logistics shipping"
                 ],
                 "summary": "Search pickup points",
-                "description": "Retrieves available pickup points based on location information and distance constraints. This endpoint helps find pickup locations near a given address, using postal code, geographic coordinates, country, and optional maximum distance.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Logistics | Logistics access | **Logistics full access** |\r\n| Logistics | Logistics access | **Logistics shipping full access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--sjGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| Logistics - Full access | Logistics full access |\r\n| Logistics - Full access | Logistics shipping full access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or API keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
+                "description": ">⚠️ This endpoint is deprecated. Use the [Search delivery zones and pickup points](https://developers.vtex.com/docs/api-reference/delivery-promise-suggestions-api#post-/api/logistics-shipping/zones/_search) endpoint instead, which returns both the delivery zones hash and the pickup points hash in a single response. This endpoint still works, but its use is no longer recommended.\r\n\r\nRetrieves available pickup points based on location information and distance constraints. This endpoint helps find pickup locations near a given address, using postal code, geographic coordinates, country, and optional maximum distance.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Logistics | Logistics access | **Logistics full access** |\r\n| Logistics | Logistics access | **Logistics shipping full access** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--sjGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| Logistics - Full access | Logistics full access |\r\n| Logistics - Full access | Logistics shipping full access |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or API keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -315,7 +397,7 @@
                         "VtexIdclientAutCookie": []
                     }
                 ],
-                "deprecated": false
+                "deprecated": true
             }
         },
         "/api/delivery-promise-suggestions/_search": {
@@ -569,7 +651,7 @@
                     {
                         "name": "deliveryZonesHash",
                         "in": "query",
-                        "description": "Hash representing the user's delivery context, which is a part of the fulfillment context.",
+                        "description": "Hash representing the user's delivery context, which is a part of the fulfillment context. This hash is generated by the [Search delivery zones and pickup points](https://developers.vtex.com/docs/api-reference/delivery-promise-suggestions-api#post-/api/logistics-shipping/zones/_search) endpoint and expires 30 minutes after being generated.",
                         "required": true,
                         "style": "form",
                         "explode": true,
@@ -581,7 +663,7 @@
                     {
                         "name": "pickupsHash",
                         "in": "query",
-                        "description": "Hash representing the user's pickup context, which is a part of the fulfillment context.",
+                        "description": "Hash representing the user's pickup context, which is a part of the fulfillment context. This hash corresponds to the `pickupPointsHash` field returned by the [Search delivery zones and pickup points](https://developers.vtex.com/docs/api-reference/delivery-promise-suggestions-api#post-/api/logistics-shipping/zones/_search) endpoint and expires 30 minutes after being generated.",
                         "required": true,
                         "style": "form",
                         "explode": true,
@@ -647,7 +729,7 @@
                                         {
                                             "productId": "456",
                                             "itemId": "456-1",
-                                                "suggestions": {
+                                            "suggestions": {
                                                 "delivery": [
                                                     {
                                                         "id": "standard-delivery",
@@ -752,6 +834,83 @@
             }
         },
         "schemas": {
+            "ZonesSearchRequest": {
+                "type": "object",
+                "description": "Request body for delivery zones and pickup points search queries.",
+                "required": [
+                    "zipCode",
+                    "coordinate",
+                    "country"
+                ],
+                "properties": {
+                    "zipCode": {
+                        "type": "string",
+                        "description": "Postal code of the location."
+                    },
+                    "coordinate": {
+                        "type": "object",
+                        "description": "Geographic coordinates of the location, used to calculate the distance to the available pickup points.",
+                        "properties": {
+                            "latitude": {
+                                "type": "number",
+                                "description": "Latitude of the location."
+                            },
+                            "longitude": {
+                                "type": "number",
+                                "description": "Longitude of the location."
+                            }
+                        }
+                    },
+                    "country": {
+                        "type": "string",
+                        "description": "Three-letter country code (ISO 3166-1 alpha-3)."
+                    }
+                }
+            },
+            "ZonesResponse": {
+                "type": "object",
+                "description": "Response containing the delivery zones and the pickup points available for the specified location, along with the hashes that represent the fulfillment context.",
+                "properties": {
+                    "deliveryZoneIds": {
+                        "type": "array",
+                        "description": "Array of delivery zones available for the location.",
+                        "items": {
+                            "type": "string",
+                            "description": "Unique identifier of the delivery zone."
+                        }
+                    },
+                    "deliveryZonesHash": {
+                        "type": "string",
+                        "description": "Hash representing the delivery zones context. This hash is required in the `deliveryZonesHash` field of the [Get delivery suggestions](https://developers.vtex.com/docs/api-reference/delivery-promise-suggestions-api#get-/api/delivery-promise-suggestions) and the [Search delivery suggestions](https://developers.vtex.com/docs/api-reference/delivery-promise-suggestions-api#post-/api/delivery-promise-suggestions/_search) endpoints. It expires 30 minutes after being generated."
+                    },
+                    "pickupPointsHash": {
+                        "type": "string",
+                        "description": "Hash representing the pickup points context. This hash is required in the `pickupsHash` field of the [Get delivery suggestions](https://developers.vtex.com/docs/api-reference/delivery-promise-suggestions-api#get-/api/delivery-promise-suggestions) and the [Search delivery suggestions](https://developers.vtex.com/docs/api-reference/delivery-promise-suggestions-api#post-/api/delivery-promise-suggestions/_search) endpoints. It expires 30 minutes after being generated."
+                    },
+                    "pickupDistances": {
+                        "type": "array",
+                        "description": "Array of pickup points available near the location.",
+                        "items": {
+                            "type": "object",
+                            "description": "Pickup point information.",
+                            "properties": {
+                                "pickupId": {
+                                    "type": "string",
+                                    "description": "Unique identifier of the pickup point."
+                                },
+                                "distance": {
+                                    "type": "number",
+                                    "description": "Distance from the searched location in kilometers."
+                                },
+                                "pickupName": {
+                                    "type": "string",
+                                    "description": "Human-readable name of the pickup point."
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "DeliveryZonesSearchRequest": {
                 "type": "object",
                 "description": "Request body for delivery zones search queries.",
@@ -971,11 +1130,11 @@
                     },
                     "deliveryZonesHash": {
                         "type": "string",
-                        "description": "Hash representing the user's delivery context, which is a part of the fulfillment context. This hash is generated by the [Search delivery zones](https://developers.vtex.com/docs/api-reference/delivery-promise-suggestionss-api#post-/api/logistics-shipping/delivery-zones/_search/v2) endpoint."
+                        "description": "Hash representing the user's delivery context, which is a part of the fulfillment context. This hash is generated by the [Search delivery zones and pickup points](https://developers.vtex.com/docs/api-reference/delivery-promise-suggestions-api#post-/api/logistics-shipping/zones/_search) endpoint and expires 30 minutes after being generated."
                     },
                     "pickupsHash": {
                         "type": "string",
-                        "description": "Hash representing the user's pickup context, which is a part of the fulfillment context. This hash is generated by the [Search pickup points](https://developers.vtex.com/docs/api-reference/delivery-promise-suggestionss-api#post-/api/logistics-shipping/pickuppoints/_search) endpoint."
+                        "description": "Hash representing the user's pickup context, which is a part of the fulfillment context. This hash corresponds to the `pickupPointsHash` field returned by the [Search delivery zones and pickup points](https://developers.vtex.com/docs/api-reference/delivery-promise-suggestions-api#post-/api/logistics-shipping/zones/_search) endpoint and expires 30 minutes after being generated."
                     }
                 }
             },
