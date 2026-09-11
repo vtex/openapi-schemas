@@ -1,0 +1,1162 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "VTEX CX API",
+    "description": "The VTEX CX API exposes the messaging data of a Weni project — its channels, its contacts and the analytics events in its datalake — through the VTEX CX API gateway.\n\n## Authentication\n\nAll requests are authenticated with a session token issued by Weni Connect, sent as `Authorization: Bearer {token}`. The token identifies both the user and the project, so no project identifier is sent in the path or the query string, and the user must have access to the project that token refers to. Sending a request without a valid token returns a status code `403` error.\n\n## Index\n\n### Channels\n- `GET` [List channels](https://developers.vtex.com/docs/api-reference/cx-api#get-/channels)\n\n### Contacts\n- `GET` [List contacts](https://developers.vtex.com/docs/api-reference/cx-api#get-/contacts)\n\n### Events\n- `GET` [List datalake events](https://developers.vtex.com/docs/api-reference/cx-api#get-/events)\n\n### Whatsapp flows\n- `GET` [List whatsapp flows](https://developers.vtex.com/docs/api-reference/cx-api#get-/whatsapp_flows)\n\n### Workspace\n- `GET` [Retrieve workspace details](https://developers.vtex.com/docs/api-reference/cx-api#get-/workspace)\n\n## Pagination\n\nCollection endpoints paginate in one of two ways, and each operation states which one it uses.\n\nCursor pagination returns `next` and `previous` URLs in every response. The cursor is opaque, so read it from `next` rather than building it. When both `next` and `previous` are `null`, the result fits in a single page.\n\nOffset pagination takes the `limit` and `offset` query parameters. Default page sizes differ per endpoint.\n\n## Dates\n\nEvery date and time in this API is ISO 8601 in UTC, for example `2024-05-14T18:32:07.512000Z`. Filter boundaries are inclusive unless the parameter says otherwise."
+  },
+  "servers": [
+    {
+      "url": "https://cx.vtex.com/api/v1",
+      "description": "Weni CX API gateway."
+    }
+  ],
+  "tags": [
+    {
+      "name": "Channels"
+    },
+    {
+      "name": "Contacts"
+    },
+    {
+      "name": "Events"
+    },
+    {
+      "name": "Whatsapp flows"
+    },
+    {
+      "name": "Workspace"
+    }
+  ],
+  "paths": {
+    "/channels": {
+      "get": {
+        "tags": [
+          "Channels"
+        ],
+        "summary": "List channels",
+        "description": "Returns the active channels of the project bound to the session token, from the most recently created to the oldest. A channel is a connection to a messaging provider, such as WhatsApp or an Android phone, that the project sends and receives messages through.\r\n\r\nStatus information for Android channels reflects the last time the device synchronized, so it can be `null` before the first sync.\r\n\r\n## Permissions\r\n\r\nThis endpoint requires a session token issued by Weni Connect. The token identifies the user and the project, and the user must have access to that project. Otherwise, the request returns a status code `403` error.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Accept"
+          },
+          {
+            "name": "uuid",
+            "in": "query",
+            "description": "Returns only the channel with this UUID.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "d2f9a3c1-6b47-4e58-9a2d-7c1e5b8f0a34"
+            }
+          },
+          {
+            "name": "address",
+            "in": "query",
+            "description": "Returns only the channel with this address, such as a phone number or a handle.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "+5511999998888"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque pagination cursor. Read it from the `next` URL of the previous response.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "cD0yMDI0LTA1LTE0KzE4JTNBMzIlM0EwNw=="
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "next": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "URL of the next page, or `null` on the last page."
+                    },
+                    "previous": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "URL of the previous page, or `null` on the first page."
+                    },
+                    "results": {
+                      "type": "array",
+                      "description": "Channels in this page.",
+                      "items": {
+                        "type": "object",
+                        "description": "A channel of the project.",
+                        "properties": {
+                          "uuid": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Unique identifier of the channel."
+                          },
+                          "name": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Name of the channel."
+                          },
+                          "address": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Address the channel sends from, such as a phone number or a handle."
+                          },
+                          "country": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Two-letter country code of the channel, or `null` when it is not bound to a country."
+                          },
+                          "device": {
+                            "type": "object",
+                            "nullable": true,
+                            "description": "State of the Android device backing the channel, as of its last synchronization. `null` for channels that are not Android devices.",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "Type of Android device the channel runs on."
+                              },
+                              "power_level": {
+                                "type": "integer",
+                                "description": "Battery charge of the device as a percentage, or `-1` when the device has never synchronized."
+                              },
+                              "power_status": {
+                                "type": "string",
+                                "nullable": true,
+                                "enum": [
+                                  "UNK",
+                                  "CHA",
+                                  "DIS",
+                                  "NOT",
+                                  "FUL"
+                                ],
+                                "description": "Battery status reported by the last synchronization: `UNK` unknown, `CHA` charging, `DIS` discharging, `NOT` not charging, `FUL` full. `null` before the first sync."
+                              },
+                              "power_source": {
+                                "type": "string",
+                                "nullable": true,
+                                "enum": [
+                                  "AC",
+                                  "USB",
+                                  "WIR",
+                                  "BAT"
+                                ],
+                                "description": "Power source reported by the last synchronization: `AC` power outlet, `USB` USB, `WIR` wireless, `BAT` battery. `null` before the first sync."
+                              },
+                              "network_type": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "Network the device reported on its last synchronization, such as `WIFI`. `null` before the first sync."
+                              }
+                            }
+                          },
+                          "last_seen": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Date and time the channel last contacted the server."
+                          },
+                          "created_on": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Date and time the channel was created."
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "next": null,
+                  "previous": null,
+                  "results": [
+                    {
+                      "uuid": "d2f9a3c1-6b47-4e58-9a2d-7c1e5b8f0a34",
+                      "name": "WhatsApp Store",
+                      "address": "+5511999998888",
+                      "country": "BR",
+                      "device": null,
+                      "last_seen": "2024-05-14T18:32:07.512000Z",
+                      "created_on": "2024-05-14T18:32:07.512000Z"
+                    },
+                    {
+                      "uuid": "5a7e2c94-1b8d-4f36-a9e7-3d0c6b2f8e15",
+                      "name": "Android Phone",
+                      "address": "+5511999998888",
+                      "country": "BR",
+                      "device": {
+                        "name": "Nexus 5X",
+                        "power_level": 42,
+                        "power_status": "DIS",
+                        "power_source": "BAT",
+                        "network_type": "WIFI"
+                      },
+                      "last_seen": "2024-05-14T18:32:07.512000Z",
+                      "created_on": "2024-05-14T18:32:07.512000Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/contacts": {
+      "get": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "List contacts",
+        "description": "Returns the contacts of the project bound to the session token that have not been deleted, from the most recently modified to the oldest. A contact is a person the project can send and receive messages with, identified by one or more URNs such as a WhatsApp number.\r\n\r\nPass `deleted=true` to list only deleted contacts. Deleted contacts have `null` for `name`, `language`, `blocked` and `stopped`, and empty `urns`, `groups` and `fields`.\r\n\r\n## Permissions\r\n\r\nThis endpoint requires a session token issued by Weni Connect. The token identifies the user and the project, and the user must have access to that project. Otherwise, the request returns a status code `403` error.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Accept"
+          },
+          {
+            "name": "uuid",
+            "in": "query",
+            "description": "Returns only the contact with this UUID.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "5a7e2c94-1b8d-4f36-a9e7-3d0c6b2f8e15"
+            }
+          },
+          {
+            "name": "urn",
+            "in": "query",
+            "description": "Returns only the contact with this URN.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "whatsapp:5511999998888"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Returns contacts whose name contains this value. The match is case insensitive.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "Ana Silva"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Returns contacts whose name equals this value, or that have this URN.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "whatsapp:5511999998888"
+            }
+          },
+          {
+            "name": "group",
+            "in": "query",
+            "description": "Returns contacts that belong to the group with this UUID or name. An unknown group returns an empty list.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "d2f9a3c1-6b47-4e58-9a2d-7c1e5b8f0a34"
+            }
+          },
+          {
+            "name": "deleted",
+            "in": "query",
+            "description": "When `true`, returns only deleted contacts. The default is to return contacts that have not been deleted.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "example": true
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "description": "Returns only contacts whose `modified_on` is on or before this date and time.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-05-14T18:32:07.512000Z"
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "description": "Returns only contacts whose `modified_on` is on or after this date and time.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-05-14T18:32:07.512000Z"
+            }
+          },
+          {
+            "name": "order_by",
+            "in": "query",
+            "description": "Field to sort by. Use `created_on` for oldest first, `-created_on` for newest first, or `modified_on` for oldest modified first. The default is newest modified first.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created_on",
+                "-created_on",
+                "modified_on"
+              ],
+              "example": "modified_on"
+            }
+          },
+          {
+            "name": "reverse",
+            "in": "query",
+            "description": "When `true`, inverts the default order so the oldest modified contacts come first. Ignored when `order_by` is set.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "example": true
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of contacts to return in this page. The default is 250.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "example": 42
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque pagination cursor. Read it from the `next` URL of the previous response.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "cD0yMDI0LTA1LTE0KzE4JTNBMzIlM0EwNw=="
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "next": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "URL of the next page, or `null` on the last page."
+                    },
+                    "previous": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "URL of the previous page, or `null` on the first page."
+                    },
+                    "results": {
+                      "type": "array",
+                      "description": "Contacts in this page.",
+                      "items": {
+                        "type": "object",
+                        "description": "A contact of the project.",
+                        "properties": {
+                          "uuid": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Unique identifier of the contact."
+                          },
+                          "name": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Name of the contact. `null` when the contact has been deleted."
+                          },
+                          "language": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Preferred language of the contact as an ISO 639-3 code, or `null` when it is not set or the contact has been deleted."
+                          },
+                          "urns": {
+                            "type": "array",
+                            "description": "URNs of the contact, such as a WhatsApp number. Empty when the contact has been deleted.",
+                            "items": {
+                              "type": "string",
+                              "description": "URN in `scheme:path` form."
+                            }
+                          },
+                          "groups": {
+                            "type": "array",
+                            "description": "Static groups the contact belongs to. Empty when the contact has been deleted.",
+                            "items": {
+                              "type": "object",
+                              "description": "A group the contact belongs to.",
+                              "properties": {
+                                "uuid": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "description": "Unique identifier of the group."
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Name of the group."
+                                }
+                              }
+                            }
+                          },
+                          "fields": {
+                            "type": "object",
+                            "description": "Custom fields of the contact, keyed by field key. Empty when the contact has been deleted.",
+                            "additionalProperties": {
+                              "type": "string",
+                              "nullable": true,
+                              "description": "Serialized value of the custom field, or `null` when it is empty."
+                            }
+                          },
+                          "blocked": {
+                            "type": "boolean",
+                            "nullable": true,
+                            "description": "Whether the contact is blocked. `null` when the contact has been deleted."
+                          },
+                          "stopped": {
+                            "type": "boolean",
+                            "nullable": true,
+                            "description": "Whether the contact has opted out. `null` when the contact has been deleted."
+                          },
+                          "created_on": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Date and time the contact was created."
+                          },
+                          "modified_on": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Date and time the contact was last modified."
+                          },
+                          "last_seen_on": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true,
+                            "description": "Date and time the contact last communicated with the project, or `null` when they never have."
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "next": null,
+                  "previous": null,
+                  "results": [
+                    {
+                      "uuid": "5a7e2c94-1b8d-4f36-a9e7-3d0c6b2f8e15",
+                      "name": "Ana Silva",
+                      "language": "por",
+                      "urns": [
+                        "whatsapp:5511999998888"
+                      ],
+                      "groups": [
+                        {
+                          "uuid": "d2f9a3c1-6b47-4e58-9a2d-7c1e5b8f0a34",
+                          "name": "example"
+                        }
+                      ],
+                      "fields": {
+                        "example": "example"
+                      },
+                      "blocked": false,
+                      "stopped": false,
+                      "created_on": "2024-05-14T18:32:07.512000Z",
+                      "modified_on": "2024-05-14T18:32:07.512000Z",
+                      "last_seen_on": "2024-05-14T18:32:07.512000Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "List datalake events",
+        "description": "Returns analytics events from the project datalake for the given date range, newest first. Each event is a JSON object whose fields depend on how the event was recorded; string values that contain JSON are parsed into objects when possible.\r\n\r\nPass `silver=true` and `table` to include rows from a silver-layer table. When `silver` is `true`, `table` is required.\r\n\r\n## Permissions\r\n\r\nThis endpoint requires a session token issued by Weni Connect. The token identifies the user and the project, and the user must have access to that project. Otherwise, the request returns a status code `403` error.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Accept"
+          },
+          {
+            "name": "date_start",
+            "in": "query",
+            "description": "Start of the date range, inclusive.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-05-14T00:00:00Z"
+            }
+          },
+          {
+            "name": "date_end",
+            "in": "query",
+            "description": "End of the date range, inclusive.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-05-14T23:59:59Z"
+            }
+          },
+          {
+            "name": "key",
+            "in": "query",
+            "description": "Returns only events with this key.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "example"
+            }
+          },
+          {
+            "name": "contact_urn",
+            "in": "query",
+            "description": "Returns only events for this contact URN.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "whatsapp:5511999998888"
+            }
+          },
+          {
+            "name": "value_type",
+            "in": "query",
+            "description": "Returns only events with this value type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "example"
+            }
+          },
+          {
+            "name": "value",
+            "in": "query",
+            "description": "Returns only events with this value.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "example"
+            }
+          },
+          {
+            "name": "metadata",
+            "in": "query",
+            "description": "Returns only events whose metadata matches this value.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "example"
+            }
+          },
+          {
+            "name": "metadata_key",
+            "in": "query",
+            "description": "Returns only events that have this metadata key.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "example"
+            }
+          },
+          {
+            "name": "metadata_value",
+            "in": "query",
+            "description": "Returns only events whose metadata key has this value.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "example"
+            }
+          },
+          {
+            "name": "event_name",
+            "in": "query",
+            "description": "Returns only events with this name.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "example"
+            }
+          },
+          {
+            "name": "group_by",
+            "in": "query",
+            "description": "Groups results by this field before returning them.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "example"
+            }
+          },
+          {
+            "name": "silver",
+            "in": "query",
+            "description": "When `true`, also reads from the silver datalake layer. Requires `table`.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "example": true
+            }
+          },
+          {
+            "name": "table",
+            "in": "query",
+            "description": "Silver-layer table name. Required when `silver` is `true`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "example"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of events to return. The default is 100.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "example": 42
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of events to skip before returning results. The default is 0.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "example": 42
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "description": "Events that match the filters.",
+                  "items": {
+                    "type": "object",
+                    "description": "An analytics event from the project datalake. Fields vary by event type; common ones include `date`, `event_name`, `contact_urn`, `key`, `value`, and `metadata`.",
+                    "additionalProperties": true
+                  }
+                },
+                "example": [
+                  {
+                    "date": "2024-05-14T18:32:07.512000Z",
+                    "event_name": "example",
+                    "contact_urn": "whatsapp:5511999998888",
+                    "key": "example",
+                    "value": "example",
+                    "metadata": {
+                      "example": "example"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Validation errors keyed by query parameter name.",
+                  "additionalProperties": {
+                    "type": "array",
+                    "description": "Validation messages for the parameter.",
+                    "items": {
+                      "type": "string",
+                      "description": "Validation message for the field."
+                    }
+                  }
+                },
+                "example": {
+                  "date_start": [
+                    "This field is required."
+                  ],
+                  "table": [
+                    "This field is required when silver=true."
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Message describing why the datalake query failed."
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Internal server error."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/whatsapp_flows": {
+      "get": {
+        "tags": [
+          "Whatsapp flows"
+        ],
+        "summary": "List whatsapp flows",
+        "description": "Returns the active WhatsApp Flows of the project bound to the session token, from the most recently created to the oldest. A WhatsApp Flow is a form-like interaction that runs inside a WhatsApp conversation, created on Meta and synchronized into the project.\r\n\r\nThe `assets` object lists the screens a flow contains and the variables its screens collect, so an integration can build a payload for the flow without reading its full definition. Both are refreshed on every synchronization with Meta.\r\n\r\n## Permissions\r\n\r\nThis endpoint requires a session token issued by Weni Connect. The token identifies the user and the project, and the user must have access to that project. Otherwise, the request returns a status code `403` error.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Accept"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Returns only the flow with this Meta flow ID.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "1234567890123456"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Returns flows whose name contains this value. The match is case insensitive.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "Welcome survey"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "description": "Returns only flows whose `created_on` is on or before this date and time.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-05-14T18:32:07.512000Z"
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "description": "Returns only flows whose `created_on` is on or after this date and time.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-05-14T18:32:07.512000Z"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque pagination cursor. Read it from the `next` URL of the previous response.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "cD0yMDI0LTA1LTE0KzE4JTNBMzIlM0EwNw=="
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "next": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "URL of the next page, or `null` on the last page."
+                    },
+                    "previous": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "URL of the previous page, or `null` on the first page."
+                    },
+                    "results": {
+                      "type": "array",
+                      "description": "WhatsApp Flows in this page.",
+                      "items": {
+                        "type": "object",
+                        "description": "A WhatsApp Flow of the project.",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Identifier of the flow on Meta."
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Name of the flow."
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "DRAFT",
+                              "PUBLISHED",
+                              "DEPRECATED",
+                              "BLOCKED",
+                              "THROTTLED"
+                            ],
+                            "description": "Status of the flow on Meta: `DRAFT` not published yet, `PUBLISHED` available to send, `DEPRECATED` withdrawn, `BLOCKED` blocked by Meta, `THROTTLED` temporarily limited by Meta."
+                          },
+                          "assets": {
+                            "type": "object",
+                            "description": "Screens and variables read from the flow definition on the last synchronization.",
+                            "properties": {
+                              "screens": {
+                                "type": "array",
+                                "description": "Identifiers of the screens the flow contains.",
+                                "items": {
+                                  "type": "string",
+                                  "description": "Identifier of a screen."
+                                }
+                              },
+                              "variables": {
+                                "type": "array",
+                                "description": "Names of the variables the flow's screens collect.",
+                                "items": {
+                                  "type": "string",
+                                  "description": "Name of a variable."
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "next": null,
+                  "previous": null,
+                  "results": [
+                    {
+                      "id": "1234567890123456",
+                      "name": "Welcome survey",
+                      "status": "PUBLISHED",
+                      "assets": {
+                        "screens": [
+                          "WELCOME",
+                          "MIDDLE"
+                        ],
+                        "variables": [
+                          "question1Checkbox",
+                          "checkbox_source"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/workspace": {
+      "get": {
+        "tags": [
+          "Workspace"
+        ],
+        "summary": "Retrieve workspace details",
+        "description": "Returns the workspace of the project bound to the session token. A workspace is that project: its name, country, languages, timezone, date style and whether it anonymizes contact phone numbers.\r\n\r\nThere is one workspace per token, so this endpoint does not paginate and has no query parameters.\r\n\r\n## Permissions\r\n\r\nThis endpoint requires a session token issued by Weni Connect. The token identifies the user and the project, and the user must have access to that project. Otherwise, the request returns a status code `403` error.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Accept"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "The workspace of the project bound to the session token.",
+                  "properties": {
+                    "uuid": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "Unique identifier of the workspace."
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Name of the workspace."
+                    },
+                    "country": {
+                      "type": "string",
+                      "description": "ISO 3166-1 alpha-2 country code of the workspace, such as `BR`. Empty when the workspace has no country."
+                    },
+                    "languages": {
+                      "type": "array",
+                      "description": "ISO 639-3 language codes the workspace uses in flows, in preference order.",
+                      "items": {
+                        "type": "string",
+                        "description": "ISO 639-3 language code."
+                      }
+                    },
+                    "primary_language": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "ISO 639-3 code of the first language in `languages`, or `null` when the list is empty."
+                    },
+                    "timezone": {
+                      "type": "string",
+                      "description": "IANA timezone of the workspace, such as `America/Sao_Paulo`."
+                    },
+                    "date_style": {
+                      "type": "string",
+                      "enum": [
+                        "day_first",
+                        "month_first",
+                        "year_first"
+                      ],
+                      "description": "How dates are displayed: `day_first` is DD-MM-YYYY, `month_first` is MM-DD-YYYY, `year_first` is YYYY-MM-DD."
+                    },
+                    "anon": {
+                      "type": "boolean",
+                      "description": "Whether the workspace anonymizes contact phone numbers."
+                    }
+                  }
+                },
+                "example": {
+                  "uuid": "d2f9a3c1-6b47-4e58-9a2d-7c1e5b8f0a34",
+                  "name": "Support",
+                  "country": "BR",
+                  "languages": [
+                    "por"
+                  ],
+                  "primary_language": "por",
+                  "timezone": "America/Sao_Paulo",
+                  "date_style": "day_first",
+                  "anon": false
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "sessionToken": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "sessionToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Session token issued by Weni Connect, sent as `Authorization: Bearer {token}`. The token identifies both the user and the project, so no project ID is passed in the path or query string."
+      }
+    },
+    "parameters": {
+      "Content-Type": {
+        "name": "Content-Type",
+        "in": "header",
+        "description": "Type of the content being sent.",
+        "required": true,
+        "style": "simple",
+        "schema": {
+          "type": "string",
+          "example": "application/json"
+        }
+      },
+      "Accept": {
+        "name": "Accept",
+        "in": "header",
+        "description": "HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand.",
+        "required": true,
+        "style": "simple",
+        "schema": {
+          "type": "string",
+          "example": "application/json"
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "detail": {
+                  "type": "string",
+                  "description": "Reason the request was not authenticated."
+                }
+              }
+            },
+            "example": {
+              "detail": "Authentication credentials were not provided."
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "detail": {
+                  "type": "string",
+                  "description": "Reason access to the project was denied."
+                }
+              }
+            },
+            "example": {
+              "detail": "You do not have permission to perform this action."
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "detail": {
+                  "type": "string",
+                  "description": "Reason the resource could not be found."
+                }
+              }
+            },
+            "example": {
+              "detail": "Not found."
+            }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "Too Many Requests",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "detail": {
+                  "type": "string",
+                  "description": "Throttling message, including how long to wait before retrying."
+                }
+              }
+            },
+            "example": {
+              "detail": "Request was throttled. Expected available in 60 seconds."
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "detail": {
+                  "type": "string",
+                  "description": "Generic error message. Retry the request and contact support if it persists."
+                }
+              }
+            },
+            "example": {
+              "detail": "Internal server error."
+            }
+          }
+        }
+      }
+    }
+  }
+}
