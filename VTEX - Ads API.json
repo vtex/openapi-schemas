@@ -2435,6 +2435,363 @@
                 }
             }
         },
+        "/report/publisher/hour": {
+            "servers": [
+                {
+                    "url": "https://api-retail-media.newtail.com.br",
+                    "description": "VTEX Ads server."
+                }
+            ],
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Get publisher hourly report",
+                "description": "Retrieves hourly performance metrics for the publisher on a single date and, optionally, on a second date to compare against.\r\n\r\nThe publisher is always resolved from the authenticated account. This endpoint takes no path parameter and no `publisher_id` query parameter, and it ignores `publisher_id` when sent in the query string. This is the same account resolution model used by `GET` [Get network publishers report](https://developers.vtex.com/docs/api-reference/vtex-ads-api#get-/report/network/publishers). Unlike that report, this endpoint is not restricted to accounts operating in the Network format. It behaves the same way for Network format accounts and regular publisher accounts.\r\n\r\nThis endpoint is not paginated and accepts no `page`, `quantity`, `count`, `order_by`, or `order_direction` parameters. The response is capped at 48 rows: up to 24 hourly rows for `date`, plus up to 24 more rows when `compare_date` is sent. Rows are always ordered by `date` and then `hour`, in ascending order.\r\n\r\n>ℹ️ The `date` and `hour` values in the response are already localized to the publisher's time zone. Do not convert them.\r\n\r\n>⚠️ This endpoint is limited to 100 requests per minute per account. Exceeding the limit returns `429 Too Many Requests`.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "description": "Date for hourly metrics in `YYYY-MM-DD` format. This parameter is required. If it is missing or malformed, the request returns `422 Unprocessable Entity`.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-09-08"
+                        }
+                    },
+                    {
+                        "name": "compare_date",
+                        "in": "query",
+                        "description": "Second date to compare against `date`, in `YYYY-MM-DD` format. Use it to compare two periods, such as the current date and the same weekday of the previous week. This date must be a different date from `date`. Otherwise, the request returns `422 Unprocessable Entity`. If this parameter is omitted, the response contains rows for `date` only.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-09-01"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK\n\nReport returned successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "description": "Array of hourly metrics rows, ordered by `date` and then `hour`, in ascending order. It contains up to 24 rows for `date`, plus up to 24 more rows when `compare_date` is sent, for a maximum of 48 rows.",
+                                            "items": {
+                                                "type": "object",
+                                                "description": "Hourly metrics row.",
+                                                "properties": {
+                                                    "date": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "description": "Date covered by the metrics row, in `YYYY-MM-DD` format. This value is already localized to the publisher's time zone, so no conversion is needed."
+                                                    },
+                                                    "hour": {
+                                                        "type": "integer",
+                                                        "minimum": 0,
+                                                        "maximum": 23,
+                                                        "description": "Hour of the day covered by the metrics row, from `0` to `23`. This value is already localized to the publisher's time zone, so no conversion is needed."
+                                                    },
+                                                    "metrics": {
+                                                        "type": "object",
+                                                        "description": "Performance metrics object. Values cover only the `date` and `hour` of the row. All metric values are returned as strings regardless of their numeric nature.",
+                                                        "properties": {
+                                                            "impressions": {
+                                                                "type": "string",
+                                                                "description": "Total number of ad impressions."
+                                                            },
+                                                            "views": {
+                                                                "type": "string",
+                                                                "description": "Total number of ad views."
+                                                            },
+                                                            "clicks": {
+                                                                "type": "string",
+                                                                "description": "Total number of ad clicks."
+                                                            },
+                                                            "conversions": {
+                                                                "type": "string",
+                                                                "description": "Total number of conversions."
+                                                            },
+                                                            "conversions_click": {
+                                                                "type": "string",
+                                                                "nullable": true,
+                                                                "description": "Total number of ad-driven conversions attributed to a click. Returns `null` when click attribution is not available for the hour."
+                                                            },
+                                                            "conversion_rate": {
+                                                                "type": "string",
+                                                                "description": "Conversion rate percentage."
+                                                            },
+                                                            "conversion_rate_click": {
+                                                                "type": "string",
+                                                                "nullable": true,
+                                                                "description": "Click-attributed conversion rate percentage, calculated as `conversions_click / clicks`. Returns `null` when click attribution is not available for the hour."
+                                                            },
+                                                            "total_conversions_items_quantity": {
+                                                                "type": "string",
+                                                                "description": "Total quantity of items across all ad-driven conversions. Sums the quantities of every item in each conversion event (for example, if a shopper buys two units of a product after clicking an ad, this metric increases by 2)."
+                                                            },
+                                                            "total_conversions_items_quantity_click": {
+                                                                "type": "string",
+                                                                "nullable": true,
+                                                                "description": "Total quantity of items across all click-attributed conversions. Sums the quantities of every item in each click-attributed conversion event (for example, if a shopper buys two units of a product after clicking an ad, this metric increases by 2). Returns `null` when click attribution is not available for the hour."
+                                                            },
+                                                            "ctr": {
+                                                                "type": "string",
+                                                                "description": "Click-through rate percentage."
+                                                            },
+                                                            "income": {
+                                                                "type": "string",
+                                                                "description": "Total income generated."
+                                                            },
+                                                            "income_click": {
+                                                                "type": "string",
+                                                                "nullable": true,
+                                                                "description": "Total income generated from click-attributed conversions. Returns `null` when click attribution is not available for the hour."
+                                                            },
+                                                            "ecpm": {
+                                                                "type": "string",
+                                                                "description": "Effective cost per mille (CPM)."
+                                                            },
+                                                            "total_spent": {
+                                                                "type": "string",
+                                                                "description": "Total amount spent."
+                                                            },
+                                                            "cpa": {
+                                                                "type": "string",
+                                                                "description": "Cost per acquisition."
+                                                            },
+                                                            "avg_cpc": {
+                                                                "type": "string",
+                                                                "description": "Average cost per click."
+                                                            },
+                                                            "avg_cpm": {
+                                                                "type": "string",
+                                                                "description": "Average cost per mille."
+                                                            },
+                                                            "conversions_quantity": {
+                                                                "type": "string",
+                                                                "description": "Total number of ad-driven conversions (sales attributed to an ad). Counts each conversion event as 1, regardless of how many items were purchased (for example, if a shopper buys two units of a product after clicking an ad, this metric increases by 1)."
+                                                            },
+                                                            "roas": {
+                                                                "type": "string",
+                                                                "description": "Return on ad spend."
+                                                            },
+                                                            "roas_click": {
+                                                                "type": "string",
+                                                                "nullable": true,
+                                                                "description": "Return on ad spend calculated using click-attributed conversion value only (`income_click / total_spent`). Returns `null` when click attribution is not available for the hour."
+                                                            },
+                                                            "adcost": {
+                                                                "type": "string",
+                                                                "description": "Ad cost."
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "metricsColumns": {
+                                            "type": "object",
+                                            "description": "Type information for the metrics returned in `data`, keyed by metric name. Each entry has a `type` field whose value is a metric type, such as `integer`, `percent`, or `money`. This object may not include every metric returned in `data`."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "data": [
+                                        {
+                                            "date": "2026-09-01",
+                                            "hour": 0,
+                                            "metrics": {
+                                                "impressions": "1120471",
+                                                "views": "139888",
+                                                "clicks": "1578",
+                                                "conversions": "45",
+                                                "conversions_click": "7",
+                                                "conversion_rate": "0.03",
+                                                "conversion_rate_click": "0.44",
+                                                "total_conversions_items_quantity": "46",
+                                                "total_conversions_items_quantity_click": "8",
+                                                "ctr": "0.14",
+                                                "income": "58437.41",
+                                                "income_click": "4610.0100",
+                                                "ecpm": "0.05",
+                                                "total_spent": "1209.13418000",
+                                                "cpa": "26.29",
+                                                "avg_cpc": "0.77",
+                                                "avg_cpm": "1.08",
+                                                "conversions_quantity": "46",
+                                                "roas": "48.33",
+                                                "adcost": "2.07",
+                                                "roas_click": "3.81"
+                                            }
+                                        },
+                                        {
+                                            "date": "2026-09-01",
+                                            "hour": 1,
+                                            "metrics": {
+                                                "impressions": "1061675",
+                                                "views": "122341",
+                                                "clicks": "1046",
+                                                "conversions": "22",
+                                                "conversions_click": "7",
+                                                "conversion_rate": "0.02",
+                                                "conversion_rate_click": "0.67",
+                                                "total_conversions_items_quantity": "22",
+                                                "total_conversions_items_quantity_click": "7",
+                                                "ctr": "0.10",
+                                                "income": "20369.11",
+                                                "income_click": "4782.8900",
+                                                "ecpm": "0.02",
+                                                "total_spent": "861.39154000",
+                                                "cpa": "39.15",
+                                                "avg_cpc": "0.82",
+                                                "avg_cpm": "0.81",
+                                                "conversions_quantity": "22",
+                                                "roas": "23.65",
+                                                "adcost": "4.23",
+                                                "roas_click": "5.55"
+                                            }
+                                        },
+                                        {
+                                            "date": "2026-09-01",
+                                            "hour": 2,
+                                            "metrics": {
+                                                "impressions": "835349",
+                                                "views": "81169",
+                                                "clicks": "692",
+                                                "conversions": "36",
+                                                "conversions_click": "6",
+                                                "conversion_rate": "0.04",
+                                                "conversion_rate_click": "0.87",
+                                                "total_conversions_items_quantity": "36",
+                                                "total_conversions_items_quantity_click": "6",
+                                                "ctr": "0.08",
+                                                "income": "23577.10",
+                                                "income_click": "1483.1000",
+                                                "ecpm": "0.03",
+                                                "total_spent": "613.10489000",
+                                                "cpa": "17.03",
+                                                "avg_cpc": "0.89",
+                                                "avg_cpm": "0.73",
+                                                "conversions_quantity": "36",
+                                                "roas": "38.46",
+                                                "adcost": "2.60",
+                                                "roas_click": "2.42"
+                                            }
+                                        },
+                                        {
+                                            "date": "2026-09-08",
+                                            "hour": 0,
+                                            "metrics": {
+                                                "impressions": "653032",
+                                                "views": "136902",
+                                                "clicks": "1561",
+                                                "conversions": "65",
+                                                "conversions_click": "25",
+                                                "conversion_rate": "0.05",
+                                                "conversion_rate_click": "1.60",
+                                                "total_conversions_items_quantity": "67",
+                                                "total_conversions_items_quantity_click": "27",
+                                                "ctr": "0.24",
+                                                "income": "56963.86",
+                                                "income_click": "7489.0500",
+                                                "ecpm": "0.09",
+                                                "total_spent": "1085.92282000",
+                                                "cpa": "16.21",
+                                                "avg_cpc": "0.70",
+                                                "avg_cpm": "1.66",
+                                                "conversions_quantity": "67",
+                                                "roas": "52.46",
+                                                "adcost": "1.91",
+                                                "roas_click": "6.90"
+                                            }
+                                        }
+                                    ],
+                                    "metricsColumns": {
+                                        "impressions": {
+                                            "type": "integer"
+                                        },
+                                        "views": {
+                                            "type": "integer"
+                                        },
+                                        "clicks": {
+                                            "type": "integer"
+                                        },
+                                        "ctr": {
+                                            "type": "percent"
+                                        },
+                                        "conversions": {
+                                            "type": "integer"
+                                        },
+                                        "conversions_click": {
+                                            "type": "integer"
+                                        },
+                                        "conversion_rate": {
+                                            "type": "percent"
+                                        },
+                                        "conversion_rate_click": {
+                                            "type": "percent"
+                                        },
+                                        "income": {
+                                            "type": "money"
+                                        },
+                                        "ecpm": {
+                                            "type": "money"
+                                        },
+                                        "roas": {
+                                            "type": "money"
+                                        },
+                                        "adcost": {
+                                            "type": "percent"
+                                        },
+                                        "total_spent": {
+                                            "type": "money"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized\n\nMissing or invalid authentication credentials."
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity\n\nField validation error."
+                    },
+                    "429": {
+                        "description": "Too Many Requests\n\nThis endpoint is limited to 100 requests per minute per account.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "description": "Rate limit error message."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "error": "Rate limit exceeded for this account"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/campaign/v2": {
             "servers": [
                 {
