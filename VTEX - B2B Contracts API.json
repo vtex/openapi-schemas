@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "B2B Contracts API",
-        "description": "The B2B Contracts API allows you to create, retrieve, update, and delete contract documents stored in the `CL` data entity. Contracts represent B2B buyer accounts and carry restriction settings that control catalog visibility, checkout payment methods, and allowed payment systems.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n> ⚠️ When creating or updating contracts you must send each field according to the specifications provided. Otherwise, the Checkout module will not be able to autofill data during the shopping flow, which can block the purchase. Learn more about [SmartCheckout - Customer information automatic fill-in](https://help.vtex.com/en/tutorial/smartcheckout-preenchimento-automatico-de-dados-do-cliente--2Nuu3xAFzdhIzJIldAdtan#).",
+        "description": "The B2B Contracts API allows you to create, retrieve, update, and delete contract documents stored in the `CL` data entity. Contracts represent B2B buyer accounts and carry restriction settings that control catalog visibility, checkout payment methods, and allowed payment systems.\r\n\r\nA contract can also represent a prospect, which is a B2B buyer account registered before its review concludes. The `prospectWorkflow` field carries that review state. To learn how to assemble a prospect and move it through review, see [Managing B2B prospects](https://developers.vtex.com/docs/guides/b2b-prospect-management).\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\r\n\r\n> ⚠️ When creating or updating contracts you must send each field according to the specifications provided. Otherwise, the Checkout module will not be able to autofill data during the shopping flow, which can block the purchase. Learn more about [SmartCheckout - Customer information automatic fill-in](https://help.vtex.com/en/tutorial/smartcheckout-preenchimento-automatico-de-dados-do-cliente--2Nuu3xAFzdhIzJIldAdtan#).",
         "version": "1.0"
     },
     "servers": [
@@ -62,6 +62,9 @@
                                 "stateRegistration": "",
                                 "isFreeStateRegistration": true,
                                 "priceTables": "CL4000060,CL3000007",
+                                "prospectWorkflow": "PENDING",
+                                "approved": false,
+                                "isActive": false,
                                 "restrictions": {
                                     "vtex.catalog": {
                                         "assortmentIds": [
@@ -194,6 +197,7 @@
                                     "localeDefault": null,
                                     "attach": null,
                                     "approved": null,
+                                    "prospectWorkflow": null,
                                     "birthDate": null,
                                     "businessPhone": "1122223333",
                                     "carttag": null,
@@ -307,6 +311,9 @@
                                 "stateRegistration": "",
                                 "isFreeStateRegistration": true,
                                 "priceTables": "CL4000060,CL3000007",
+                                "prospectWorkflow": "PENDING",
+                                "approved": false,
+                                "isActive": false,
                                 "restrictions": {
                                     "vtex.catalog": {
                                         "assortmentIds": [
@@ -522,6 +529,24 @@
                         "type": "string",
                         "description": "Comma-separated list of price tables."
                     },
+                    "prospectWorkflow": {
+                        "type": "string",
+                        "enum": [
+                            "PENDING",
+                            "APPROVED",
+                            "REJECTED"
+                        ],
+                        "nullable": true,
+                        "description": "Review state of a contract that represents a prospect, which is a B2B buyer account registered before its review concludes. Stored values are uppercase: `PENDING` means the prospect is under review, `APPROVED` means the review accepted the prospect, and `REJECTED` means the review refused it. At creation, omitting this field or sending `null` produces an ordinary contract rather than a prospect. The field is present on the `CL` entity for every account, with no merchant schema update. Before moving a prospect to `APPROVED`, the caller must confirm at least these two conditions: an organization unit exists whose `contractIds` scope contains this contract ID, and at least one active address in the `AD` data entity carries this contract ID in `userId`. A direct write does not refuse an ineligible approval, so those checks are yours to run. Send `approved` as `true` in the same request. Approval is a state change, not provisioning: moving a prospect to `APPROVED` creates no organization unit, address, or storefront user. To learn more, see [Managing B2B prospects](https://developers.vtex.com/docs/guides/b2b-prospect-management)."
+                    },
+                    "approved": {
+                        "type": "boolean",
+                        "description": "Indicates whether the contract is approved to operate. Send `false` when creating a prospect. When moving `prospectWorkflow` to `APPROVED`, send `true` in the same request. When moving it to `REJECTED`, send `false`."
+                    },
+                    "isActive": {
+                        "type": "boolean",
+                        "description": "Indicates whether the contract is active. Send `false` when creating a prospect so that the contract stays inactive while its review runs."
+                    },
                     "restrictions": {
                         "type": "object",
                         "description": "Object with restriction definitions for `vtex.catalog`, `vtex.checkout`, and `vtex.payments`.",
@@ -674,6 +699,26 @@
                         "nullable": true,
                         "description": "Indicates newsletter opt-in status."
                     },
+                    "prospectWorkflow": {
+                        "type": "string",
+                        "enum": [
+                            "PENDING",
+                            "APPROVED",
+                            "REJECTED"
+                        ],
+                        "nullable": true,
+                        "description": "Review state of a contract that represents a prospect, which is a B2B buyer account registered before its review concludes. The field carries uppercase `PENDING` while the prospect is under review, `APPROVED` after the review accepts the prospect, and `REJECTED` after the review refuses it. On ordinary contracts, which never went through prospect review, the field carries `null`."
+                    },
+                    "approved": {
+                        "type": "boolean",
+                        "nullable": true,
+                        "description": "Indicates whether the contract is approved to operate. A prospect carries `false` at creation and `true` after you move `prospectWorkflow` to `APPROVED`. This field can be `null` on contracts that never went through prospect review."
+                    },
+                    "isActive": {
+                        "type": "boolean",
+                        "nullable": true,
+                        "description": "Indicates whether the contract is active. A prospect carries `false` at creation and stays inactive while its review runs."
+                    },
                     "createdIn": {
                         "type": "string",
                         "nullable": true,
@@ -688,6 +733,11 @@
                         "type": "string",
                         "nullable": true,
                         "description": "Unique contract ID."
+                    },
+                    "userId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Contract ID referenced by addresses in the `AD` data entity. This field carries the same value as `CL.id`, and each `AD` address points to its contract through its own `userId` field. Before approving a prospect, the caller must confirm that at least one active `AD` address references this contract ID."
                     },
                     "dataEntityId": {
                         "type": "string",
