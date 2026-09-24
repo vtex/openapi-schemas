@@ -1,0 +1,115 @@
+info:
+  name: Get Log Data by logId
+  type: http
+  seq: 11
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/sent-offers/feeds/:feedId/skus/:skuId/interactions/:interactionId/logs/:logId?an={{accountName}}"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: "{{accountName}}"
+      type: query
+    - name: feedId
+      value: vtex.amazon
+      type: path
+    - name: skuId
+      value: "1234"
+      type: path
+    - name: interactionId
+      value: d3rdjjf094ma0do
+      type: path
+    - name: logId
+      value: "123456"
+      type: path
+    - name: environment
+      value: vtexcommercestable
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/sent-offers/feeds/:feedId/skus/:skuId/interactions/:interactionId/logs/:logId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/sent-offers/feeds/:feedId/skus/:skuId/interactions/:interactionId/logs/:logId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/sent-offers/feeds/:feedId/skus/:skuId/interactions/:interactionId/logs/:logId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/sent-offers/feeds/:feedId/skus/:skuId/interactions/:interactionId/logs/:logId - Schema is valid", function () {
+          const schema = {"title":"GetLog","type":"object","example":{"id":"91957CA041E343D8B921CECFBF9D8443","description":"Log description","date":"2022-05-16T09:16:00Z","agent":"MARKETPLACE","evidence":{},"errors":[{"code":"AUTH-001","externalCode":"MYCODE-01","title":"Error ao autenticar no marketplace","description":"Token inválido","closableOrigins":["inventory"]}],"type":"failure"},"properties":{"id":{"type":"string","description":"Connectors must extend the Sent Offers' codes by adding their own code IDs for mapping specific scenarios that apply to their own system. They can send those codes through a suffix ID added in an existing code."},"description":{"type":"string","description":"Log description"},"date":{"type":"string","description":"Date when the log was created."},"agent":{"type":"string","description":"Entity responsible for creating the entry."},"evidence":{"type":"object","description":"cURL with the call that the connector has made for a VTEX system."},"errors":{"type":"array","items":{"title":"Error","type":"object","properties":{"code":{"type":"string"},"externalCode":{"type":"string"},"title":{"type":"string"},"description":{"type":"string"},"closableOrigins":{"type":"array","items":{"type":"string"}}},"description":"A description about errors."}},"type":{"type":"string","description":"Type of log."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  >❗The Offer Management module has been discontinued and is no longer supported. The module has been replaced by Offer Status.
+  To learn more, visit the [announcement](https://help.vtex.com/pt/announcements/modulo-status-dos-anuncios-para-integracoes-com-marketplaces-vtex--1EeGgit1Brq3mmm8qhv2m3).
+
+   In [Offer Management](https://developers.vtex.com/vtex-rest-api/docs/sent-offers-integration-guide-connectors), logs are the granular details of actions that happen within an [interaction](https://developers.vtex.com/docs/api-reference/marketplace-apis-offer-management#post-/api/sent-offers/feeds/-feedId-/skus/-skuId-/interactions), organized in a timeline. All interaction's micro-steps will be represented through logs; they are how interactions become visible in Offer Management UI. 
+
+  A unique code called `logId` is used to identify every log created. This endpoint enables the retrieval of information about a log by searching through its `logId`.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `feedId` | path | (Required) The `feedId` attribute that identifies a feed between a seller and a channel, follows a standardized pattern that will be used by connectors when establishing the connection between the two. It follows the pattern `vendor.channel`. |
+  | `skuId` | path | (Required) This attribute is the SKU ID in the seller's perspective, registered in their VTEX Catalog. |
+  | `interactionId` | path | (Required) This attribute is the code used to identify an existing interaction. |
+  | `logId` | path | (Required) A log's identifying code. This attribute is obtained from the Open Log API, or from the response of a Search Interactions API. |
+  | `environment` | path | (Required) Environment to use. Used as part of the URL. |
+  | `an` | query | (Required) Name of the VTEX account. Used as query param. |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "91957CA041E343D8B921CECFBF9D8443",
+    "description": "Log description",
+    "date": "2022-05-16T09:16:00Z",
+    "agent": "MARKETPLACE",
+    "evidence": {},
+    "errors": [
+      {
+        "code": "AUTH-001",
+        "externalCode": "MYCODE-01",
+        "title": "Error ao autenticar no marketplace",
+        "description": "Token inválido",
+        "closableOrigins": [
+          "inventory"
+        ]
+      }
+    ],
+    "type": "failure"
+  }
+  ```

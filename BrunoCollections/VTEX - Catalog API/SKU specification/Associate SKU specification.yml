@@ -1,0 +1,97 @@
+info:
+  name: Associate SKU specification
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/catalog/pvt/stockkeepingunit/:skuId/specification"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: skuId
+      value: "1234568387"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "FieldId": 13,
+        "FieldValueId": 101
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/catalog/pvt/stockkeepingunit/:skuId/specification - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/catalog/pvt/stockkeepingunit/:skuId/specification - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/catalog/pvt/stockkeepingunit/:skuId/specification - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/catalog/pvt/stockkeepingunit/:skuId/specification - Schema is valid", function () {
+          const schema = {"type":"object","description":"Object with the response.","properties":{"Id":{"type":"integer","description":"ID of the association of the specification and the SKU. This ID is used to update or delete the specification."},"SkuId":{"type":"integer","description":"SKU ID."},"FieldId":{"type":"integer","description":"Specification field ID."},"FieldValueId":{"type":"integer","description":"Specification value ID. Required only for `FieldTypeId` as `5`, `6` and `7`."},"Text":{"type":"string","description":"Value of specification. Only for `FieldTypeId` different from `5`, `6` and `7`."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Associates a previously created specification to an SKU.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Catalog | Content | **SKUs** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `skuId` | path | (Required) SKU's unique numerical identifier. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "Id": 1505,
+    "SkuId": 1234568387,
+    "FieldId": 193,
+    "FieldValueId": 360,
+    "Text": "Size 10"
+  }
+  ```

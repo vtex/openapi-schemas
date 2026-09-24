@@ -1,0 +1,128 @@
+info:
+  name: List supply lots
+  type: http
+  seq: 9
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/logistics/pvt/inventory/items/:skuId/warehouses/:warehouseId/supplyLots"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: skuId
+      value: "36"
+      type: path
+    - name: warehouseId
+      value: whs15hs6c
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/logistics/pvt/inventory/items/:skuId/warehouses/:warehouseId/supplyLots - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/logistics/pvt/inventory/items/:skuId/warehouses/:warehouseId/supplyLots - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/logistics/pvt/inventory/items/:skuId/warehouses/:warehouseId/supplyLots - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/logistics/pvt/inventory/items/:skuId/warehouses/:warehouseId/supplyLots - Schema is valid", function () {
+          const schema = {"type":"array","items":{"type":"object","description":"Supply lot details.","properties":{"skuId":{"type":"string","description":"SKU ID related to the supply lot."},"warehouseId":{"type":"string","description":"[Warehouse](https://help.vtex.com/en/tutorial/warehouse--6oIxvsVDTtGpO7y6zwhGpb) ID where the SKU supply lot will arrive."},"dockId":{"type":"string","description":"[Loading dock](https://help.vtex.com/en/tutorial/loading-dock--5DY8xHEjOLYDVL41Urd5qj) ID."},"totalQuantity":{"type":"integer","description":"Total quantity scheduled for the SKU in the supply lot."},"reservedQuantity":{"type":"integer","description":"Total [reserved quantity](https://help.vtex.com/en/tutorial/how-does-reservation-work--tutorials_92) scheduled for the SKU in the supply lot."},"availableQuantity":{"type":"integer","description":"Available quantity scheduled for the SKU in the supply lot."},"isUnlimited":{"type":"boolean","description":"Indicates if the unlimited inventory is activated so the SKU availability for sales is unlimited (`true`), or not (`false`)."},"salesChannel":{"type":"array","description":"List of sales channels ([trade policies](https://help.vtex.com/en/tutorial/how-trade-policies-work--6Xef8PZiFm40kg2STrMkMV) associated with the supply lot.","items":{"type":"string","description":"Sales channel (trade policy) ID."}},"deliveryChannels":{"type":"array","description":"List of delivery channels type associated with the supply lot.","items":{"type":"string","description":"Delivery channel type.","enum":["delivery","pickup"]}},"timeToRefill":{"type":["string","null"],"description":"Time to refill in the format `HH:MM:SS`."},"dateOfSupplyUtc":{"type":"string","description":"Date and time scheduled for the SKU from the warehouse to have quantity and availability for sales again. The format is [ISO 8601 time zone offset](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."},"supplyLotId":{"type":"string","description":"Supply lot ID."},"keepSellingAfterExpiration":{"type":"boolean","description":"Defines if the SKU from the warehouse should be available for sales after running _out-of-stock_ (`true`), or not (`false`)."},"transfer":{"type":["string","null"],"description":"Transfer system."},"leadTime":{"type":["string","null"],"description":"[Lead time](https://help.vtex.com/en/tutorial/lead-time-shipping-time-at-sku-level--16yv5Mkj6bTyWR1hCN2f4B) is an optional time configuration for a SKU in a warehouse. It can be handling time, fabrication or how long it takes for the item to be available to be shipped to customers. The lead time is a part of the total shipping time and is considered for shipping date calculation. The format is `DD.HH:MM:SS`."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Lists supply lots of a SKU in a given [warehouse](https://help.vtex.com/en/tutorial/warehouse--6oIxvsVDTtGpO7y6zwhGpb).
+
+  In architectures with franchise accounts or multiple sellers, the scheduled lead time of supply lots is not considered during seller selection or SLA calculation, so this feature may not behave as expected in these scenarios.
+
+  In architectures that use Delivery Promise, supply lots are not considered in the SLA calculation, which may cause divergences between the lead time configured in the supply lot and the lead time displayed to the shopper.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Logistics | Logistics access | **Logistics full access** |
+  | Logistics | Logistics access | **Logistics viewer** |
+  | Logistics | Logistics access | **Logistics inventory full access** |
+  | Logistics | Logistics access | **Logistics inventory read only** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Logistics - Full access | Logistics full access |
+  | OMS - Full access | Logistics full access |
+  | Logistics - Full access | Logistics viewer |
+  | Logistics - Read only | Logistics viewer |
+  | Logistics - Full access | Logistics inventory full access |
+  | OMS - Full access | Logistics inventory full access |
+  | Logistics - Full access | Logistics inventory read only |
+  | Logistics - Read only | Logistics inventory read only |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `skuId` | path | (Required) SKU ID. |
+  | `warehouseId` | path | (Required) ID of the [warehouse](https://help.vtex.com/en/tutorial/warehouse--6oIxvsVDTtGpO7y6zwhGpb) where the SKU is located. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "skuId": "12",
+      "warehouseId": "124816",
+      "dockId": "1839",
+      "totalQuantity": 0,
+      "reservedQuantity": 0,
+      "availableQuantity": 0,
+      "isUnlimited": false,
+      "salesChannel": [
+        "1"
+      ],
+      "deliveryChannels": [
+        "delivery"
+      ],
+      "timeToRefill": "12:50:00",
+      "dateOfSupplyUtc": "2025-10-18T00:00:00+00:00",
+      "supplyLotId": "supplyId1",
+      "keepSellingAfterExpiration": true,
+      "transfer": null,
+      "leadTime": "10.00:00:00"
+    }
+  ]
+  ```

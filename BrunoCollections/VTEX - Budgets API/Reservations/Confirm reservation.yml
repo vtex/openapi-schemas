@@ -1,0 +1,121 @@
+info:
+  name: Confirm reservation
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/budgets/:contextType/:contextId/:budgetId/allocations/:allocationId/reservations/:reservationId/confirmation"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: contextType
+      value: UNIT
+      type: path
+    - name: contextId
+      value: 093f29ac-7a1b-4d6b-a79a-48f89cf73d14
+      type: path
+    - name: budgetId
+      value: 019833db-27ad-7264-b104-dfed7c0fcbac
+      type: path
+    - name: allocationId
+      value: 324b5750-c827-4a6b-a670-c9297c832f4e
+      type: path
+    - name: reservationId
+      value: b0e55425-a981-4d00-b6a2-9c7294d3d2b3
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "requestedBy": "user1@email.com"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/budgets/:contextType/:contextId/:budgetId/allocations/:allocationId/reservations/:reservationId/confirmation - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/budgets/:contextType/:contextId/:budgetId/allocations/:allocationId/reservations/:reservationId/confirmation - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/budgets/:contextType/:contextId/:budgetId/allocations/:allocationId/reservations/:reservationId/confirmation - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/budgets/:contextType/:contextId/:budgetId/allocations/:allocationId/reservations/:reservationId/confirmation - Schema is valid", function () {
+          const schema = {"type":"object","description":"Response containing reservation details.","properties":{"id":{"type":"string","description":"Identifier of the reservation."},"budgetId":{"type":"string","description":"Identifier of the associated budget."},"allocationId":{"type":"string","description":"Identifier of the associated allocation."},"origin":{"type":"string","description":"The origin of the reservation (e.g., order system)."},"reference":{"type":"string","description":"Reference tied to the reservation (e.g., order ID)."},"amount":{"type":"number","description":"Amount reserved."},"requestedBy":{"type":"string","format":"email","description":"Email of the user who requested the reservation."},"date":{"type":"string","format":"date-time","description":"Reservation date (ISO format: YYYY-MM-DDThh:mm:ssZ)."},"type":{"type":"string","description":"Type of transaction (`DEBIT`, meaning a regular transaction or `CREDIT` indicating a refund).","enum":["DEBIT","CREDIT"]},"contextType":{"type":"string","description":"Defines the context type associated with the budget which must be `UNIT` in B2B context."},"contextId":{"type":"string","description":"Identifier of the corresponding Unit."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Confirms a reservation under a specific allocation in a VTEX budget.
+
+  >⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | B2B | Budget | **ManageBudgets** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `contextType` | path | (Required) Type of context for the budget (e.g., `UNIT`). This field can't be updated, it is used for validation. You must send the original value. |
+  | `contextId` | path | (Required) Identifier of the corresponding Unit. This field can't be updated, it is used for validation. You must send the original value. |
+  | `budgetId` | path | (Required) Identifier of the budget. |
+  | `allocationId` | path | (Required) Identifier of the allocation. |
+  | `reservationId` | path | (Required) Identifier of the reservation. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "b0e55425-a981-4d00-b6a2-9c7294d3d2b3",
+    "budgetId": "137793ab-efb6-4af7-a287-dd864cda336b",
+    "allocationId": "324b5750-c827-4a6b-a670-c9297c832f4e",
+    "origin": "manual-adjustment",
+    "reference": "6a2d99e3-76e6-46ec-9764-49e0a7b71331",
+    "amount": -150,
+    "requestedBy": "user1@email.com",
+    "date": "2025-07-22T20:43:56.8455190Z",
+    "type": "DEBIT",
+    "contextType": "UNIT",
+    "contextId": "093f29ac-7a1b-4d6b-a79a-48f89cf73d14"
+  }
+  ```

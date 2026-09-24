@@ -1,0 +1,122 @@
+info:
+  name: List all SKUs in a sales channel
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/catalog_system/pvt/sku/stockkeepingunitidsbysaleschannel?sc=1"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: sc
+      value: "1"
+      type: query
+    - name: page
+      value: "1"
+      type: query
+      disabled: true
+    - name: pageSize
+      value: "1"
+      type: query
+      disabled: true
+    - name: onlyAssigned
+      value: "true"
+      type: query
+      disabled: true
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/catalog_system/pvt/sku/stockkeepingunitidsbysaleschannel - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/catalog_system/pvt/sku/stockkeepingunitidsbysaleschannel - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/catalog_system/pvt/sku/stockkeepingunitidsbysaleschannel - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/catalog_system/pvt/sku/stockkeepingunitidsbysaleschannel - Schema is valid", function () {
+          const schema = {"type":"array","description":"List of SKU IDs of the sales channel.","items":{"type":"integer","description":"SKU ID."}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves a list of SKU IDs of a sales channel.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Catalog API | General | View Product |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `sc` | query | (Required) Sales channel's unique numerical identifier. |
+  | `page` | query | Page number. |
+  | `pageSize` | query | Number of items in the page. |
+  | `onlyAssigned` | query | If set as `false`, it allows the user to decide if the SKUs that are not assigned to a specific sales channel should be also returned. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    405380,
+    405381,
+    405382,
+    405383,
+    405384,
+    405385,
+    405386,
+    405387,
+    405388,
+    405389,
+    405390,
+    405391,
+    405392,
+    405393,
+    405394,
+    405395,
+    405396,
+    405397,
+    405398,
+    405399,
+    405400,
+    405556
+  ]
+  ```

@@ -1,0 +1,86 @@
+info:
+  name: Get attempt of correction of a misspelled term
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/correction_search"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: query
+      value: shirt
+      type: query
+      disabled: true
+    - name: locale
+      value: en-US
+      type: query
+      disabled: true
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/correction_search - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/correction_search - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/correction_search - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/correction_search - Schema is valid", function () {
+          const schema = {"type":"object","description":"Response body object.","properties":{"correction":{"type":"object","description":"Object that indicates if the term was misspelled and suggests a possible correction.","properties":{"misspelled":{"type":"boolean","description":"Defines whether the term was misspelled (`true`) or not (`false`)."},"correction":{"type":"boolean","description":"Defines whether the API was able to suggest a correction (`true`) or not (`false`)."},"text":{"type":"string","description":"The corrected term. If the API was not able to correct the term, it will show the original search term."},"highlighted":{"type":"string","description":"The same as `text`, but it highlights the corrected word. Useful when there is more than one word."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Tries to correct a misspelled term from the search.
+
+  >ℹ️ Migrate to [Intelligent Search API v1](https://developers.vtex.com/docs/api-reference/intelligent-search-api-v1) for HTTP caching, lower latency, and a simpler URL structure. The new endpoint is: `GET` [Get attempt of correction of a misspelled term](https://developers.vtex.com/docs/api-reference/intelligent-search-api-v1#get-/correction-search). See the [migration guide](https://developers.vtex.com/docs/guides/migrating-to-intelligent-search-api-v1).
+
+  ## Permissions
+
+  This endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `query` | query | Search term. It can contain any character. This parameter is named `query` in the API. The short form **`q`** is an alias for `query` and has the same semantics. You can search for products or SKUs using specific ID types by adding search parameters (query) at the end of the store URL, respecting one of the following structures: - **Single item search:** `?query=[id type]:[id_1]`. Example: `?query=product:98765` - **Multiple items search:** `?query=[id type]:[id_1];[id_2];[id_3]`. Example: `?query=product:98765;98743` >⚠️ All searched IDs should be of the same type. ## Search by ID On the Intelligent Search API, search products or SKUs by ID by sending the value in the `query` or `q` query parameter on requests such as `/product_search/{facets}`. The `{facets}` path must include the required `trade-policy` facet and any optional filters. - **Product ID:** `.../product_search/trade-policy/1?query=product:98765` or `.../product_search/trade-policy/1?query=product.id:98765`. - **SKU ID:** `.../product_search/trade-policy/1?query=sku.id:12345` or `.../product_search/trade-policy/1?query=sku:12345`. ## Supported ID types The possible value types for the ID segment are `product.id`, `sku.id`, `sku.ean`, `sku.reference`, `product.link`, or `id` (ProductID, ProductRefID, SKUID, SKURefID, and EAN). \| ID Type \| Query format \| Example \| \| - \| - \| - \| \| Product ID \| `?query=product:<id>` or `?query=product.id:<id>` \| `?query=product:98765` \| \| SKU ID \| `?query=sku:<id>` or `?query=sku.id:<id>` \| `?query=sku.id:12345` \| \| Reference ID \| `?query=sku.reference:<id>` \| `?query=sku.reference:REF123` \| \| EAN \| `?query=sku.ean:<id>` \| `?query=sku.ean:7891234567890` \| \| Slug \| `?query=product.link:<link>` \| `?query=product.link:blue-shirt` \| |
+  | `locale` | query | Indicates the target language as a BCP 47 language code. The Intelligent Search must have indexed the account in the target language. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "correction": {
+      "correction": true,
+      "misspelled": true,
+      "text": "mountain bike",
+      "highlighted": "mountain <em>bike</em>"
+    }
+  }
+  ```

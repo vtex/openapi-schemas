@@ -1,0 +1,242 @@
+info:
+  name: Get ads performance report
+  type: http
+  seq: 8
+
+http:
+  method: GET
+  url: "{{baseUrl}}/ad/results/v2?start_date=2025-01-01&end_date=2025-01-31"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: start_date
+      value: 2025-01-01
+      type: query
+    - name: end_date
+      value: 2025-01-31
+      type: query
+    - name: campaign_name
+      value: Holiday Sale
+      type: query
+      disabled: true
+    - name: campaign_id
+      value: campaign-id
+      type: query
+      disabled: true
+    - name: advertiser_id
+      value: advertiser-id
+      type: query
+      disabled: true
+    - name: product_sku
+      value: SKU-123
+      type: query
+      disabled: true
+    - name: ad_status
+      value: enabled
+      type: query
+      disabled: true
+    - name: ad_type
+      value: banner
+      type: query
+      disabled: true
+    - name: targeting_type
+      value: category
+      type: query
+      disabled: true
+    - name: show_inactive
+      value: "false"
+      type: query
+      disabled: true
+    - name: account_info
+      value: "false"
+      type: query
+      disabled: true
+    - name: page
+      value: "1"
+      type: query
+      disabled: true
+    - name: quantity
+      value: "100"
+      type: query
+      disabled: true
+    - name: count
+      value: "false"
+      type: query
+      disabled: true
+    - name: order_by
+      value: income
+      type: query
+      disabled: true
+    - name: order_direction
+      value: desc
+      type: query
+      disabled: true
+    - name: download
+      value: "false"
+      type: query
+      disabled: true
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/ad/results/v2 - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/ad/results/v2 - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/ad/results/v2 - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/ad/results/v2 - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"total":{"type":"integer","description":"Total number of ads."},"pages":{"type":"integer","description":"Total number of pages for pagination."},"currentPage":{"type":"integer","description":"Current page number."},"data":{"type":"array","description":"Array of ad objects.","items":{"type":"object","description":"Ad object.","properties":{"id":{"type":"string","description":"Unique ad identifier."},"campaign_id":{"type":"string","description":"Associated campaign identifier."},"url":{"type":"string","description":"Ad destination URL."},"settings":{"type":"object","description":"Ad-specific settings object. The fields are dynamic and may vary depending on the ad type.","properties":{"cpc":{"type":"number","description":"Cost per click value.","format":"double"},"cpm":{"type":"number","description":"Cost per mille value.","format":"double"},"type":{"type":"string","description":"Ad type."},"categories":{"type":"array","description":"Targeted categories array.","items":{"type":"string","description":"Category name."}},"keywords":{"type":"array","description":"Targeted keywords array.","items":{"type":"string","description":"Keyword."}}}},"disabled_at":{"type":["string","null"],"description":"Ad disabled date in ISO 8601 format."},"created_at":{"type":"string","description":"Ad creation date in ISO 8601 format."},"updated_at":{"type":"string","description":"Ad last update date in ISO 8601 format."},"deleted_at":{"type":["string","null"],"description":"Ad deletion date in ISO 8601 format."},"status":{"type":"string","description":"Ad status."},"aid":{"type":"integer","description":"Ad internal ID."},"asset_type":{"type":"string","description":"Asset type (for example, `image`, `video`)."},"active":{"type":"boolean","description":"Whether the ad is active."},"product_id":{"type":["string","null"],"description":"Associated product identifier (when applicable)."},"product_sku":{"type":["string","null"],"description":"Associated product SKU (when applicable)."},"name":{"type":["string","null"],"description":"Product name (when applicable)."},"image_url":{"type":["string","null"],"description":"Product image URL (when applicable)."},"categories":{"type":"array","description":"Ad categories array (when applicable).","items":{"type":"string","description":"Category name."}},"campaign_name":{"type":"string","description":"Associated campaign name."},"ad_type":{"type":"string","description":"Advertisement type."},"campaign_status":{"type":"string","description":"Associated campaign status."},"campaign_settings":{"type":"object","description":"Associated campaign settings. The fields are dynamic and may vary depending on the campaign type.","properties":{"daily_budget":{"type":"number","description":"Daily budget amount.","format":"double"},"cpm":{"type":"number","description":"Cost per mille value.","format":"double"},"budget_type":{"type":"string","description":"Budget distribution type."}}},"publisher_id":{"type":"string","description":"Publisher identifier."},"advertiser_id":{"type":"string","description":"Advertiser identifier."},"advertiser_name":{"type":"string","description":"Advertiser name."},"advertiser_account_id":{"type":"string","description":"Advertiser account identifier."},"publisher_name":{"type":"string","description":"Publisher name."},"publisher_account_id":{"type":"string","description":"Publisher account identifier."},"ad_id":{"type":"string","description":"Unique identifier of the ad."},"conversions_quantity":{"type":"string","description":"Total quantity of conversions."},"is_running":{"type":"boolean","description":"Whether the ad is currently running."},"advertiser_tags":{"type":["array","null"],"description":"Tags associated with the advertiser.","items":{"type":"string","description":"Advertiser tag."}},"pending":{"type":"array","description":"Pending operations awaiting review for this campaign/ad. Empty when there is nothing pending.","items":{"type":"object","description":"Pending operation entry, grouping a `label` with its `quantity`.","properties":{"label":{"type":"string","description":"Type of pending operation. Currently, only `ads` is returned, indicating ads awaiting review.","enum":["ads"]},"quantity":{"type":"integer","description":"Number of pending items of the given `label`."}}}},"metrics":{"type":"object","description":"Ad performance metrics object. All metric values are returned as strings regardless of their numeric nature.","properties":{"clicks":{"type":"string","description":"Total number of clicks."},"conversions":{"type":"string","description":"Total number of conversions."},"total_conversions_items_quantity":{"type":"string","description":"Total quantity of items across all ad-driven conversions. Sums the quantities of every item in each conversion event (for example, if a shopper buys two units of a product after clicking an ad, this metric increases by 2)."},"impressions":{"type":"string","description":"Total number of impressions."},"views":{"type":"string","description":"Total number of views."},"conversions_click":{"type":"string","description":"Number of conversions attributed to clicks."},"conversions_view":{"type":"string","description":"Number of conversions attributed to views."},"conversion_rate":{"type":"string","description":"Consolidated conversion rate percentage, calculated as total conversions divided by the sum of clicks and views (`total_conversions / (total_clicks + total_views)`). This is the default conversion rate and considers both click- and view-attributed conversions."},"conversion_rate_click":{"type":"string","description":"Conversion rate percentage considering click-attributed conversions only, calculated as `conversions_click / total_clicks`."},"conversion_rate_view":{"type":"string","description":"Conversion rate percentage considering view-attributed conversions only, calculated as `conversions_view / total_views`."},"ctr":{"type":"string","description":"Click-through rate percentage."},"roas":{"type":"string","description":"Consolidated return on ad spend, combining click- and view-attributed revenue across all ad formats."},"roas_click":{"type":"string","description":"Return on ad spend calculated using click-attributed revenue only."},"roas_view":{"type":"string","description":"Return on ad spend calculated using view-attributed revenue only."},"roas_halo":{"type":"string","description":"Halo return on ad spend: incremental revenue from non-advertised products purchased in the same order as advertised products (the halo effect), divided by ad spend."},"roas_overall":{"type":"string","description":"Total return on ad spend, combining direct revenue from the advertised product with halo revenue from other products in the same order, divided by the ad investment. Measures the campaign's total impact on the whole order."},"adcost":{"type":"string","description":"Ad cost percentage."},"income":{"type":"string","description":"Total income generated."},"total_spent":{"type":"string","description":"Total amount spent."},"ecpm":{"type":"string","description":"Effective cost per mille (CPM)."},"cpa":{"type":"string","description":"Cost per acquisition."},"avg_cpc":{"type":"string","description":"Average cost per click."},"avg_cpm":{"type":"string","description":"Average cost per mille."},"halo_revenue":{"type":"string","description":"Incremental revenue from non-advertised products that were purchased in the same order as an advertised product, attributed to the ad's spillover (halo) effect."},"halo_orders":{"type":"string","description":"Number of orders with at least one halo item."},"halo_items":{"type":"string","description":"Quantity of halo items sold."}}}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Fetches all available ads, applying filters as needed. The data is returned in JSON format by default, but can be exported as an XLSX file by setting `download=true`.
+
+  >ℹ️ Paused ads are excluded from the default response. To include paused ads, set `show_inactive=true`.
+
+  >⚠️ This endpoint is limited to 100 requests per minute per account. Exceeding the limit returns `429 Too Many Requests`.
+
+  ## Permissions
+
+  This endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `start_date` | query | (Required) Start date for metrics in `YYYY-MM-DD` format. |
+  | `end_date` | query | (Required) End date for metrics in `YYYY-MM-DD` format. |
+  | `campaign_name` | query | Filters ads by campaign name. |
+  | `campaign_id` | query | Filters ads by campaign ID. |
+  | `advertiser_id` | query | Filters ads by advertiser ID. |
+  | `product_sku` | query | Filters ads by product SKU. |
+  | `ad_status` | query | Filters ads by status. |
+  | `ad_type` | query | Filters by ad type. |
+  | `targeting_type` | query | Filters by targeting type. |
+  | `show_inactive` | query | If `true`, includes paused ads. |
+  | `account_info` | query | If `true`, includes detailed account information in the result. |
+  | `page` | query | Page number of the results. |
+  | `quantity` | query | Number of items per page. When `download=true`, the BFF requests up to `20000` rows for XLSX generation. |
+  | `count` | query | If `true`, returns the total number of available records. |
+  | `order_by` | query | Field used to sort results. |
+  | `order_direction` | query | Sort direction. |
+  | `download` | query | If `true`, returns an XLSX file buffer for download instead of JSON. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "total": 1,
+    "pages": 1,
+    "currentPage": 1,
+    "data": [
+      {
+        "id": "ad-id",
+        "campaign_id": "campaign-id",
+        "url": "ad-url",
+        "settings": {
+          "cpc": 1.5,
+          "type": "banner",
+          "categories": [],
+          "keywords": [
+            "keyword",
+            "other keyword"
+          ]
+        },
+        "disabled_at": null,
+        "created_at": "2025-01-27T23:18:16.330Z",
+        "updated_at": "2025-01-27T23:18:16.330Z",
+        "deleted_at": null,
+        "status": "enabled",
+        "aid": 1234,
+        "asset_type": "image",
+        "active": true,
+        "product_id": null,
+        "product_sku": null,
+        "name": null,
+        "image_url": null,
+        "categories": [
+          "National Beers",
+          "National Beers > Drinks"
+        ],
+        "campaign_name": "Campaign Name",
+        "ad_type": "banner",
+        "campaign_status": "running",
+        "campaign_settings": {
+          "daily_budget": 185000,
+          "cpm": 10000,
+          "budget_type": "evenly"
+        },
+        "publisher_id": "publisher-id",
+        "advertiser_id": "advertiser-id",
+        "advertiser_name": "Advertiser Name",
+        "advertiser_account_id": "advertiser-account-id",
+        "publisher_name": "Publisher Name",
+        "publisher_account_id": "publisher-account-id",
+        "ad_id": "ad-id",
+        "conversions_quantity": "1",
+        "is_running": true,
+        "advertiser_tags": null,
+        "pending": [],
+        "metrics": {
+          "clicks": "53",
+          "conversions": "1",
+          "total_conversions_items_quantity": "1",
+          "impressions": "2900",
+          "views": "2689",
+          "conversions_click": "1",
+          "conversions_view": "0",
+          "conversion_rate": "0.04",
+          "conversion_rate_click": "1.89",
+          "conversion_rate_view": "0.00",
+          "ctr": "1.83",
+          "roas": "0.18",
+          "roas_click": "0.12",
+          "roas_view": "0.06",
+          "roas_halo": "0.07",
+          "roas_overall": "0.25",
+          "adcost": "540.94",
+          "income": "5361.00",
+          "total_spent": "29000.0000",
+          "ecpm": "1.85",
+          "cpa": "29000.00",
+          "avg_cpc": "547.17",
+          "avg_cpm": "10000.00",
+          "halo_revenue": "2100.00",
+          "halo_orders": "1",
+          "halo_items": "2"
+        }
+      }
+    ]
+  }
+  ```

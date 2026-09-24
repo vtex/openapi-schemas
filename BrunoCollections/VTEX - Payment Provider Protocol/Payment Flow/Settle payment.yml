@@ -1,0 +1,149 @@
+info:
+  name: Settle payment
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/payments/:paymentId/settlements"
+  headers:
+    - name: X-PROVIDER-API-AppKey
+      value: "{{X-PROVIDER-API-AppKey}}"
+    - name: X-PROVIDER-API-AppToken
+      value: "{{X-PROVIDER-API-AppToken}}"
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: paymentId
+      value: F5C1A4E20D3B4E07B7E871F5B5BC9F91
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "transactionId": "D3AA1FC8372E430E8236649DB5EBD08E",
+        "requestId": "2019-02-04T22:53:42-40000",
+        "paymentId": "F5C1A4E20D3B4E07B7E871F5B5BC9F91",
+        "value": 45,
+        "authorizationId": "5784589",
+        "tid": "5784589",
+        "nsu": "NSU987432",
+        "recipients": [
+          {
+            "id": "mystore",
+            "name": "Company XPTO",
+            "documentType": "CNPJ",
+            "document": "05314972000174",
+            "role": "marketplace",
+            "chargeProcessingFee": true,
+            "chargebackLiable": true,
+            "amount": 7.2
+          },
+          {
+            "id": "sellerA",
+            "name": "Company ABC",
+            "documentType": "CNPJ",
+            "document": "24830098000172",
+            "role": "seller",
+            "chargeProcessingFee": false,
+            "chargebackLiable": false,
+            "amount": 37.8,
+            "commissionAmount": 7.2
+          }
+        ],
+        "sandboxMode": false,
+        "merchantSettings": [
+          {
+            "name": "Public Merchant ID Test.",
+            "value": "1"
+          }
+        ],
+        "connectorMetadata": [
+          {
+            "name": "MetadataName",
+            "value": "MetadataValue"
+          }
+        ]
+      }
+  auth:
+    type: apikey
+    key: X-VTEX-API-AppKey
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/payments/:paymentId/settlements - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/payments/:paymentId/settlements - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/payments/:paymentId/settlements - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/payments/:paymentId/settlements - Schema is valid", function () {
+          const schema = {"required":["paymentId","settleId","value","code","message","requestId"],"type":"object","description":"Settle payment response body information.","properties":{"paymentId":{"type":"string","description":"The same `paymentId` sent in the request."},"settleId":{"type":"string","description":"VTEX identifier for this settlement."},"value":{"type":"number","description":"The amount to be settled."},"code":{"type":["string","null"],"description":"Provider's operation/error code to be logged."},"message":{"type":"string","description":"Provider's operation/error message to be logged."},"requestId":{"type":"string","description":"The same `requestId` sent in the request."},"connectorMetadata":{"type":"array","description":"Array containing metadata fields sent from the provider to the payment gateway.","items":{"type":"object","description":"Metadata fields information.","required":["name","value"],"properties":{"name":{"type":"string","description":"The name of the metadata to be stored in the gateway (limited to 20 characters)."},"value":{"type":"string","description":"The value of the metadata stored (limited to 200 characters)."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Settles a payment that was previously approved.
+
+  > ℹ️ This request is made from VTEX to the payment provider.
+
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `paymentId` | path | (Required) VTEX payment identifier. |
+  | `X-PROVIDER-API-AppKey` | header | (Required) Unique identifier created by the provider and configured on the provider configuration page (Admin VTEX). To use this header as authorization, check that the `usesProviderHeadersName` field is set to `true` in the payment provider's `configuration.json`. To check the `configuration.json` file, access the route {{connector}}/paymentProvider/configuration.json. |
+  | `X-PROVIDER-API-AppToken` | header | (Required) Unique token created by the provider and configured on the provider configuration page (Admin VTEX). To use this header as authorization, check that the `usesProviderHeadersName` field is set to `true` in the payment provider's `configuration.json`. To check the `configuration.json` file, access the route {{connector}}/paymentProvider/configuration.json |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "paymentId": "F5C1A4E20D3B4E07B7E871F5B5BC9F91",
+    "settleId": "2EA354989E7E4BBC9F9D7B66674C2574",
+    "value": 57,
+    "code": null,
+    "message": "Successfully settled",
+    "requestId": "DCEAA1FC8372E430E8236649DB5EBD08E",
+    "connectorMetadata": [
+      {
+        "name": "MetadataName",
+        "value": "MetadataValue"
+      }
+    ]
+  }
+  ```

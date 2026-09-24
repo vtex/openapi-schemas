@@ -1,0 +1,121 @@
+info:
+  name: Get B2B address by ID
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/dataentities/AD/documents/:addressId"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: _fields
+      value: _all
+      type: query
+      disabled: true
+    - name: addressId
+      value: 4286e252-050b-11f0-b37f-d6617047d485
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/dataentities/AD/documents/:addressId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/dataentities/AD/documents/:addressId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/dataentities/AD/documents/:addressId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/dataentities/AD/documents/:addressId - Schema is valid", function () {
+          const schema = {"type":"object","description":"Response body for a B2B address document.","properties":{"addressLabel":{"type":["string","null"],"description":"User-defined label to identify the B2B address."},"addressType":{"type":["string","null"],"description":"Type of B2B address. `commercial` for shipping (delivery) or `invoice` for billing (payment).","enum":["commercial","invoice"]},"city":{"type":["string","null"],"description":"City of the B2B address."},"complement":{"type":["string","null"],"description":"Any additional information for the B2B address (for example, apartment or floor)."},"country":{"type":["string","null"],"description":"Country of the B2B address in three-letter [ISO 3166-1 alpha-3](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3) format (for example, `USA`)."},"geoCoordinates":{"type":["array","null"],"description":"Geographical coordinates of the B2B address as an array of doubles (latitude and longitude), or an empty array `[]`.","items":{"type":"number","format":"double","description":"Latitude or longitude value."}},"neighborhood":{"type":["string","null"],"description":"Neighborhood of the B2B address."},"number":{"type":["string","null"],"description":"Street number of the B2B address."},"postalCode":{"type":["string","null"],"description":"Postal code of the B2B address. The format must match the exact country postal code format (for example, `02999` for addresses in the USA)."},"receiverName":{"type":["string","null"],"description":"Name of the person or entity receiving at this B2B address. This field will be deprecated in favor of the [Recipients](https://developers.vtex.com/docs/api-reference/b2b-addresses#post-/api/dataentities/contact_information/documents) feature, but it must be filled with some value."},"reference":{"type":["string","null"],"description":"Optional reference point or landmark near the B2B address."},"state":{"type":["string","null"],"description":"State or province of the B2B address as a two-letter code (for example, `FL` or `SP`)."},"street":{"type":["string","null"],"description":"Street name of the B2B address."},"userId":{"type":["string","null"],"description":"ID of the buyer organization to whom the B2B address belongs."},"id":{"type":["string","null"],"description":"Unique identifier for this B2B address record."},"accountId":{"type":["string","null"],"description":"ID of the account related to this B2B address."},"accountName":{"type":["string","null"],"description":"Name of the account related to this B2B address."},"dataEntityId":{"type":["string","null"],"description":"ID of the data entity this B2B address belongs to (always `AD`)."},"createdBy":{"type":["string","null"],"description":"ID of the user who created the B2B address record."},"createdIn":{"type":["string","null"],"description":"Timestamp of when the B2B address record was created."},"updatedBy":{"type":["string","null"],"description":"ID of the user who last updated the B2B address record."},"updatedIn":{"type":["string","null"],"description":"Timestamp of the last update to the B2B address record."},"lastInteractionBy":{"type":["string","null"],"description":"ID of the user who had the last interaction with the record."},"lastInteractionIn":{"type":["string","null"],"description":"Timestamp of the last interaction with the record."},"followers":{"type":["array","null"],"description":"List of users following this B2B address record.","items":{"type":"string","description":"User ID."}},"tags":{"type":["array","null"],"description":"List of tags associated with this B2B address.","items":{"type":"string","description":"Tag value."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves information of a specific B2B address by its unique identifier.
+
+  >⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Dynamic Storage | Dynamic storage generic resources | **Read only documents** |
+  | Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |
+  | Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |
+  | Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `addressId` | path | (Required) ID of the B2B address to retrieve. |
+  | `_fields` | query | Specifies which fields of the document should be included in the response. Use `_all` to return all fields, or provide a comma-separated list of field names. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "addressLabel": "NC Office",
+    "addressType": "commercial",
+    "city": "Orlando",
+    "complement": "",
+    "country": "USA",
+    "geoCoordinates": [
+      28.48,
+      -81.2
+    ],
+    "neighborhood": "",
+    "number": "11",
+    "postalCode": "02999",
+    "receiverName": ".",
+    "reference": null,
+    "state": "FL",
+    "street": "Toringon Street",
+    "userId": "2da4e9ab-050b-11f0-b37f-f4b136dbcce1",
+    "id": "4286e252-050b-11f0-b37f-d6617047d485",
+    "accountId": "5f1fe23b-9fd1-417d-a4aa-14df38e7746e",
+    "accountName": "qastore",
+    "dataEntityId": "AD",
+    "createdBy": "c83ea7ed-f875-4a10-b0a0-98d96aedab06",
+    "createdIn": "2025-03-19T21:44:01.4199691Z",
+    "updatedBy": null,
+    "updatedIn": null,
+    "lastInteractionBy": "c83ea7ed-f875-4a10-b0a0-98d96aedab06",
+    "lastInteractionIn": "2025-03-19T21:44:01.4199691Z",
+    "followers": [],
+    "tags": []
+  }
+  ```

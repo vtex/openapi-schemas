@@ -1,0 +1,103 @@
+info:
+  name: List all gift card transactions
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/giftcardproviders/:giftCardProviderId/giftcards/:giftCardId/transactions"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: giftCardProviderId
+      value: GiftCardExample
+      type: path
+    - name: giftCardId
+      value: 7d1dfc17-989e-4t21-8b7f-5103c6a5b925c_70
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/giftcardproviders/:giftCardProviderId/giftcards/:giftCardId/transactions - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/giftcardproviders/:giftCardProviderId/giftcards/:giftCardId/transactions - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/giftcardproviders/:giftCardProviderId/giftcards/:giftCardId/transactions - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/giftcardproviders/:giftCardProviderId/giftcards/:giftCardId/transactions - Schema is valid", function () {
+          const schema = {"type":"array","items":{"type":"object","description":"Transaction information.","properties":{"cardId":{"type":"string","description":"Gift card identification."},"id":{"type":"string","description":"Transaction identification."},"_self":{"type":"object","description":"Object that carries an auto reference from the provider at the Hub (on its API).","properties":{"href":{"type":"string","description":"This is one of the fields inside the `_self`. It is exactly the route that identifies this provider on the Hub's API, but it is not the same thing as the `serviceURL`."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns the IDs of all transactions performed on a gift card.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | GiftCard | GiftCard | **View Gift Card providers** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `giftCardProviderId` | path | (Required) Gift card provider identification. |
+  | `giftCardId` | path | (Required) Gift card identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "cardId": "7d1dfc17-989e-4t21-8b7f-5103c6a5b925c_70",
+      "id": "jac68316306453f4b8tr3fdb892dfba1",
+      "_self": {
+        "href": "cosmetics2/giftcardproviders/GiftCardExample3/giftcards/7d1dfc17-989e-4t21-8b7f-5103c6a5b925c_70/transactions/jac68316306453f4b8tr3fdb892dfba1"
+      }
+    },
+    {
+      "cardId": "7d1dfc17-989e-4t21-8b7f-5103c6a5b925c_70",
+      "id": "g4a348e1d1f146ba25e19bb016cc6f18",
+      "_self": {
+        "href": "cosmetics2/giftcardproviders/GiftCardExample3/giftcards/7d1dfc17-989e-4t21-8b7f-5103c6a5b925c_70/transactions/g4a348e1d1f146ba25e19bb016cc6f18"
+      }
+    }
+  ]
+  ```

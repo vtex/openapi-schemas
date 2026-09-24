@@ -1,0 +1,175 @@
+info:
+  name: List Payment Provider Manifest
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/manifest"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/manifest - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/manifest - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/manifest - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/manifest - Schema is valid", function () {
+          const schema = {"required":["paymentMethods"],"type":"object","description":"Payment provider manifest response body information.","properties":{"paymentMethods":{"type":"array","description":"Describes each payment method supported by payment provider and exposed its respective metadata.","items":{"type":"object","description":"Payment methods information.","required":["name","allowsSplit"],"properties":{"name":{"type":"string","description":"Payment method name."},"allowsSplit":{"type":"string","description":"Describes which transaction flow stage the connector should receive payment split data. Check more details on the [Split Payouts on the Payment Provider Protocol](https://developers.vtex.com/vtex-rest-api/docs/split-payouts-on-payment-provider-protocol) article.","enum":["onAuthorize","onCapture","disabled"]}}}},"customFields":{"type":"array","description":"Describes the customized fields supported by the connector. Except for `appKey` or `appToken` values, which must be defined in homonymous fields, any other security data should be sent or stored as `password` type fields.","items":{"type":"object","description":"Custom fields information.","properties":{"name":{"type":"string","description":"Custom field name."},"type":{"type":"string","description":"Custom field type.","enum":["text","password","select"]},"options":{"type":"array","description":"In case of `select` type, the possible params are `text` and `value`.","items":{"type":"object","description":"Custom field information.","properties":{"text":{"type":"string","description":"Custom field description."},"value":{"type":"string","description":"Custom field value."}}}}}}},"autoSettleDelay":{"type":"object","description":"Describes the allowed delay value for the auto settle capture. Accepted values: `minimum` and `maximum` in whole hours (decimals are not allowed). Check more details on the [Custom Auto Capture Feature](https://developers.vtex.com/vtex-rest-api/docs/custom-auto-capture-feature) article.","required":["minimum","maximum"],"properties":{"minimum":{"type":"string","description":"Minimum amount of time to auto settle in hours."},"maximum":{"type":"string","description":"Maximum amount of time to auto settle in hours."}}},"metadataFields":{"type":"array","description":"Array containing the names of the metadata fields sent from the provider to the payment gateway. Limitations: the array must contain a maximum of 3 strings, and each of them, a maximum of 20 characters.","items":{"type":"string","description":"Metadata fields information."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Exposes the provider manifest, including metadata settings such as payment methods, split configuration, and custom fields.
+
+  > ℹ️ This request is made from VTEX to the payment provider.
+
+  ## Available payment methods
+
+  | Payment Method | Type | Country |
+  |---|---|---|
+  | `Visa` | Credit Card | Global |
+  | `Mastercard` | Credit Card | Global |
+  | `American Express` | Credit Card | Global |
+  | `Discover` | Credit Card | Global |
+  | `JCB` | Credit Card | Global |
+  | `Diners` | Credit Card | Global |
+  | `Elo` | Credit Card | Brazil |
+  | `Hipercard` | Credit Card | Brazil |
+  | `Aura` | Credit Card | Brazil |
+  | `Banricompras` | Credit Card | Brazil |
+  | `Credz` | Credit Card | Brazil |
+  | `Cabal` | Credit Card | Argentina, Brazil, Uruguay, Paraguay |
+  | `Patagonia 365` | Credit Card | Argentina |
+  | `Cartes Bancaires (CB)` | Credit Card | France |
+  | `VirtualDebitElo` | Debit Card | Brazil |
+  | `Visa Electron` | Debit Card | Global |
+  | `Maestro` | Debit Card | Global |
+  | `Mastercard Debit` | Debit Card | Global |
+  | `Débito Online` | Debit Card | Brazil |
+  | `Cobranded` | Card | Global |
+  | `Privatelabels` | Card | Global |
+  | `Apple Pay` | Digital Wallet | Global |
+  | `Google Pay` | Digital Wallet | Global |
+  | `Promissories` | Generic | Global |
+  | `Cash` | Generic | Global |
+  | `Pix` | Online Transfer | Brazil |
+  | `Safetypay` | Online Transfer | Americas and Europe |
+  | `BankInvoice` | Offline/Voucher | Brazil (Boleto Bancário) |
+  | `FichaDeposito` | Offline/Voucher | Mexico |
+  | `Rapipago` | Offline/Voucher | Argentina |
+  | `OXXO` | Offline/Voucher | Mexico |
+  | `Voucher` | Offline/Voucher | Mexico |
+  | `Bitcoin` | Cryptocurrency | Global |
+  | `Venda Direta Credito` | Credit Card (Physical) | Global |
+  | `Venda Direta Debito` | Debit Card (Physical) | Global | 
+
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "paymentMethods": [
+      {
+        "name": "Visa",
+        "allowsSplit": "onCapture"
+      },
+      {
+        "name": "Pix",
+        "allowsSplit": "disabled"
+      },
+      {
+        "name": "Mastercard",
+        "allowsSplit": "onCapture"
+      },
+      {
+        "name": "American Express",
+        "allowsSplit": "onCapture"
+      },
+      {
+        "name": "BankInvoice",
+        "allowsSplit": "onAuthorize"
+      },
+      {
+        "name": "Privatelabels",
+        "allowsSplit": "disabled"
+      },
+      {
+        "name": "Promissories",
+        "allowsSplit": "disabled"
+      }
+    ],
+    "customFields": [
+      {
+        "name": "Merchant's custom field",
+        "type": "text"
+      },
+      {
+        "name": "Merchant's custom select field",
+        "type": "select",
+        "options": [
+          {
+            "text": "Field option 1",
+            "value": "1"
+          },
+          {
+            "text": "Field option 2",
+            "value": "2"
+          },
+          {
+            "text": "Field option 3",
+            "value": "3"
+          }
+        ]
+      }
+    ],
+    "autoSettleDelay": {
+      "minimum": "0",
+      "maximum": "720"
+    },
+    "metadataFields": [
+      "MetadataName1",
+      "MetadataName2"
+    ]
+  }
+  ```

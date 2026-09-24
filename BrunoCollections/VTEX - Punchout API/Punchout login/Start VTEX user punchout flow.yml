@@ -1,0 +1,87 @@
+info:
+  name: Start VTEX user punchout flow
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/authenticator/v1/punchout/start"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: returnURL
+      value: /path
+      type: query
+      disabled: true
+  body:
+    type: json
+    data: |-
+      {
+        "username": "user@example.com",
+        "password": "mypassword123"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/authenticator/v1/punchout/start - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/authenticator/v1/punchout/start - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/authenticator/v1/punchout/start - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/authenticator/v1/punchout/start - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"url":{"type":"string","description":"URL containing a one-time token for authentication. The token expires after 5 minutes and is single-use to prevent replay attacks."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Initiates punchout authentication for an existing VTEX user.
+
+  This endpoint validates the credentials against the VTEX user database. If validation succeeds, it returns a URL containing a one-time token that can be accessed via web browser to start an authenticated session. 
+
+  ## Permissions
+
+  This endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `returnURL` | query | Optional path that will complement the `storeHost` for post-authentication redirection. This value is validated against a list of authorized hosts to prevent open redirect vulnerabilities. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "url": "https://apiexamples.com/intermediate-path?token=xyz123"
+  }
+  ```

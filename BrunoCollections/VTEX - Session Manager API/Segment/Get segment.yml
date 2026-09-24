@@ -1,0 +1,85 @@
+info:
+  name: Get segment
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/segments"
+  headers:
+    - name: Accept
+      value: application/json
+  auth:
+    type: apikey
+    key: vtex_session
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/segments - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/segments - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/segments - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/segments - Schema is valid", function () {
+          const schema = {"type":"object","description":"Object containing information about the segment.","properties":{"campaigns":{"type":["string","null"],"description":"Campaigns associated with the session."},"channel":{"type":"string","description":"[Trade policy](https://help.vtex.com/en/tutorial/how-trade-policies-work--6Xef8PZiFm40kg2STrMkMV) ID."},"priceTables":{"type":["string","null"],"description":"Price tables associated with the session."},"regionId":{"type":"string","description":"ID of the session's region."},"utm_campaign":{"type":["string","null"],"description":"UTM campaign code."},"utm_source":{"type":["string","null"],"description":"UTM source code."},"utmi_campaign":{"type":["string","null"],"description":"UTMI campaign code."},"currencyCode":{"type":"string","description":"Currency code."},"currencySymbol":{"type":"string","description":"Currency symbol."},"countryCode":{"type":"string","description":"Country code."},"cultureInfo":{"type":"string","description":"Locale that provides culture-specific information, such as the language, sublanguage, country/region, calendar, and conventions associated with a particular culture. Read [this documentation](https://learn.microsoft.com/en-us/dotnet/api/system.globalization.cultureinfo?view=net-7.0#culture-names-and-identifiers) for more details."},"channelPrivacy":{"type":"string","description":"Defines whether or not the channel is private."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves information about the segment, which contains additional data related to the session's context.
+
+
+  You can add certain public fields as the query string and the system will attempt to fulfill it. Values such as `cultureInfo` and `utm` are overwriteable, just keep in mind such changes will not be reflected in the client's session.
+
+
+  If you wish to change the value on the session (and thus be reflected on the segment without special query strings), then use the [Edit session](https://developers.vtex.com/docs/api-reference/session-manager-api#patch-/api/sessions) endpoint.
+
+  ## Permissions
+
+  This endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "campaigns": null,
+    "channel": "1",
+    "priceTables": null,
+    "regionId": "v2.1BB18CE648B5111D0933734ED83EC783",
+    "utm_campaign": null,
+    "utm_source": null,
+    "utmi_campaign": null,
+    "currencyCode": "BRL",
+    "currencySymbol": "R$",
+    "countryCode": "BRA",
+    "cultureInfo": "en-US",
+    "channelPrivacy": "public"
+  }
+  ```

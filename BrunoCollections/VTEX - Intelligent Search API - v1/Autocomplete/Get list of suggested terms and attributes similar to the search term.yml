@@ -1,0 +1,108 @@
+info:
+  name: Get list of suggested terms and attributes similar to the search term
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/autocomplete-suggestions"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: query
+      value: shirt
+      type: query
+      disabled: true
+    - name: locale
+      value: en-US
+      type: query
+      disabled: true
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/autocomplete-suggestions - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/autocomplete-suggestions - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/autocomplete-suggestions - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/autocomplete-suggestions - Schema is valid", function () {
+          const schema = {"type":"object","description":"Response body object.","properties":{"searches":{"type":"array","description":"List of suggested facets and terms.","items":{"type":"object","description":"Suggested facet or term.","properties":{"term":{"type":"string","description":"Search term."},"count":{"type":"number","description":"Number of times the term was searched."},"attributes":{"type":["array","null"],"description":"List of facets in which the term can be searched.","items":{"type":"object","description":"Facet information.","properties":{"key":{"type":"string","description":"Facet key."},"value":{"type":"string","description":"Facet value."},"labelKey":{"type":"string","description":"Human-readable format of the facet key."},"labelValue":{"type":"string","description":"Human-readable format of the facet value."}}}}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Lists the suggested terms and attributes similar to the search term.
+
+  For more information, check the Intelligent Search [Autocomplete](https://help.vtex.com/docs/tutorials/autocomplete) guide.
+
+  >ℹ️ **Segment context:** Intelligent Search API (Legacy) previously read `locale` from `segment.cultureInfo` in the VTEX segment cookie. In v1, pass it directly as a query parameter.
+
+  >ℹ️ **Caching:** Responses are cached for public sales channels. Always read the `Cache-Control` response header at runtime to determine cacheability.
+
+  If `query` is missing or empty, the response is `{ "searches": [] }`.
+
+  ## Permissions
+
+  This endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/docs/tutorials/license-manager-resources).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `query` | query | Search term. It can contain any character. This parameter is named `query` in the API. The short form **`q`** is an alias for `query` and has the same semantics. You can search for products or SKUs using specific ID types by adding search parameters at the end of the store URL: - **Single item search:** `?query=[id type]:[id_1]`. Example: `?query=product:98765` - **Multiple items search:** `?query=[id type]:[id_1];[id_2];[id_3]`. Example: `?query=product:98765;98743` >⚠️ All searched IDs should be of the same type. ## Supported ID types \| ID Type \| Query format \| Example \| \| - \| - \| - \| \| Product ID \| `?query=product:<id>` or `?query=product.id:<id>` \| `?query=product:98765` \| \| SKU ID \| `?query=sku:<id>` or `?query=sku.id:<id>` \| `?query=sku.id:12345` \| \| Reference ID \| `?query=sku.reference:<id>` \| `?query=sku.reference:REF123` \| \| EAN \| `?query=sku.ean:<id>` \| `?query=sku.ean:7891234567890` \| \| Slug \| `?query=product.link:<link>` \| `?query=product.link:blue-shirt` \| |
+  | `locale` | query | Indicates the target language as a BCP 47 language code. The Intelligent Search must have indexed the account in the target language. Intelligent Search API (Legacy) previously read this from `segment.cultureInfo`. In v1, pass the value directly as a query parameter. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "searches": [
+      {
+        "term": "tv",
+        "count": 28861,
+        "attributes": [
+          {
+            "key": "department",
+            "value": "tvs-and-video",
+            "labelKey": "Department",
+            "labelValue": "TVs and Video"
+          }
+        ]
+      },
+      {
+        "term": "smarth tv",
+        "count": 2308
+      },
+      {
+        "term": "rack tv",
+        "count": 589
+      }
+    ]
+  }
+  ```

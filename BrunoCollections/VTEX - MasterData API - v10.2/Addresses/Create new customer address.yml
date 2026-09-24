@@ -1,0 +1,110 @@
+info:
+  name: Create new customer address
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/dataentities/AD/documents"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/vnd.vtex.ds.v10+json
+  params:
+    - name: _schema
+      value: schema
+      type: query
+      disabled: true
+  body:
+    type: json
+    data: |-
+      {
+        "addressName": "My house",
+        "addressLabel": "NC Office",
+        "addressType": "commercial",
+        "receiverName": "Clark Kent",
+        "city": "Raleigh",
+        "state": "NC",
+        "country": "USA",
+        "postalCode": "12345",
+        "street": "Main Street",
+        "number": "300",
+        "neighborhood": "Downtown",
+        "complement": "3rd floor",
+        "reference": "Next to the park",
+        "geoCoordinate": "40.7128,-74.0060",
+        "userId": "7e03m794-a33a-11e9-84rt6-0adfa64s5a8e"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/dataentities/AD/documents - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/dataentities/AD/documents - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/dataentities/AD/documents - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/dataentities/AD/documents - Schema is valid", function () {
+          const schema = {"required":["Id","Href"],"type":"object","description":"Response body object.","properties":{"Id":{"type":"string","description":"ID of the document that was created or updated."},"Href":{"type":"string","description":"Document reference URL."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates new customer address. 
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |
+  | Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |
+  | Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `_schema` | query | Name of the [schema](https://developers.vtex.com/docs/guides/master-data-schema-lifecycle) that the document complies with.  This field is required when using `_where` or `_fields` query parameters. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "Id": "AD-b818cbda-e489-11e6-94f4-0ac138d2d42e",
+    "Href": "http://api.vtex.com/my-store-name/dataentities/AD/documents/b818cbda-e489-11e6-94f4-0ac138d2d42e"
+  }
+  ```

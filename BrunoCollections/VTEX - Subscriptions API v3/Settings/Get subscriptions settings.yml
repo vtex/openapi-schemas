@@ -1,0 +1,101 @@
+info:
+  name: Get subscriptions settings
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/rns/settings"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/rns/settings - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/rns/settings - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/rns/settings - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/rns/settings - Schema is valid", function () {
+          const schema = {"description":"VTEX account subscriptions settings.","type":"object","required":["slaOption","defaultSla","isUsingV3","onMigrationProcess","executionHourInUtc","workflowVersion","deliveryChannels","randomIdGeneration","isMultipleInstallmentsEnabledOnCreation","isMultipleInstallmentsEnabledOnUpdate","orderCustomDataAppId","postponeExpiration","manualPriceAllowed","useItemPriceFromOriginalOrder"],"properties":{"slaOption":{"description":"Service Level Agreement (SLA) option, which is the shipping method. The possible values are:\r\n- `NONE`: The platform automatically chooses the smallest cost for shipping method at the time of the subscription cycle generation.\r\n- `CHEAPEST`: Smallest cost for shipping method at the time of cycle generation.\r\n- `CUSTOMER_CHOICE`: The customer can select the desired shipping method at checkout for every new subscription order.\r\n- `STORE_CHOICE`: The store sets the preferred shipping method. This is configured in the `defaultSla` field.","type":"string","enum":["NONE","CHEAPEST","CUSTOMER_CHOICE","STORE_CHOICE"]},"defaultSla":{"description":"This field contains the shipping method set by the store for new cycle generation. The only case when its value is not `null` is when the `slaOption` field is set as `STORE_CHOICE`.","type":["string","null"]},"isUsingV3":{"description":"Indicates if the store uses the updated Subscriptions V3 (`true`) or a previous version (`false`).","type":"boolean"},"onMigrationProcess":{"description":"Indicates if the store is in the process of migrating to Subscriptions V3 (`true`) or not (`false`).","type":"boolean"},"executionHourInUtc":{"description":"Indicates the time future subscription orders will be generated.","type":"integer"},"workflowVersion":{"description":"Workflow version.","type":"string"},"deliveryChannels":{"description":"Array containing delivery channels.","type":"array","items":{"description":"Type of delivery channel. The values that are possible are: `pickupInPoint` for [pickup point](https://help.vtex.com/en/tutorial/pickup-points--2fljn6wLjn8M4lJHA6HP3R) and `delivery` for regular delivery.","type":"string","enum":["delivery","pickupInPoint"]}},"randomIdGeneration":{"description":"Defines if subscription order IDs are randomly generated (`true`) or not (`false`).","type":"boolean"},"isMultipleInstallmentsEnabledOnCreation":{"description":"Defines if the store allows multiple installments when a subscription is created (`true`) or not (`false`).","type":"boolean"},"isMultipleInstallmentsEnabledOnUpdate":{"description":"Defines if the store allows multiple installments when the subscription is updated (`true`) or not (`false`).","type":"boolean"},"attachmentPreferences":{"type":"object","description":"Store settings on how to process original orders with SKUs that contain [attachments](https://help.vtex.com/en/tutorial/what-is-an-attachment--aGICk0RVbqKg6GYmQcWUm).","properties":{"enableAttachments":{"type":"boolean","description":"Defines if the store [keeps attachments from original orders](https://developers.vtex.com/docs/guides/how-to-keep-attachments-from-original-orders-in-subscriptions) and subscription orders incorporate them (`true`) or if these attachments are disconsidered (`false`). By default, this field is set as `false`."},"splitSameSkuWithDifferentAttachments":{"type":"boolean","description":"Defines if the [same SKUs that contain different attachments](https://developers.vtex.com/docs/guides/how-to-keep-attachments-from-original-orders-in-subscriptions) in the original order are split (`true`) or not (`false`). By default, this field is set as `false`. It can only be set as `true` if the `enableAttachments` field is also set as `true`."}}},"orderCustomDataAppId":{"description":"When there are custom fields configured, this field passes along the `customData` information in the original order to the next subscriptions orders.","type":["string","null"]},"postponeExpiration":{"description":"Defines if the expiration of subscriptions can be postponed (`true`) or not (`false`).","type":"boolean"},"manualPriceAllowed":{"description":"Defines if the [manual price](https://help.vtex.com/en/tutorial/change-the-price-of-an-item-in-the-shopping-cart--7Cd37aCAmtL1qmoZJJvjNf) configuration is enabled for subscriptions items (`true`), or not (`false`). This is valid for all existing subscriptions, provided that there is a manual price configured and that the `isUsingV3` field is set as `true`.","type":"boolean"},"useItemPriceFromOriginalOrder":{"description":"When set to `true`, this property enables using the manual price for each item from the original subscription order. This is only valid for new subscriptions created from the moment this configuration is enabled. For this to work, it is mandatory that the `manualPriceAllowed` and `isUsingV3` properties are set to `true`.","type":"boolean"}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves information about the subscriptions settings of your store.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Subscriptions | ApplicationAccess | **Subscription admin** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "slaOption": "STORE_CHOICE",
+    "defaultSla": "Express",
+    "isUsingV3": true,
+    "onMigrationProcess": false,
+    "executionHourInUtc": 9,
+    "workflowVersion": "1.1",
+    "deliveryChannels": [
+      "delivery",
+      "pickupInPoint"
+    ],
+    "randomIdGeneration": false,
+    "isMultipleInstallmentsEnabledOnCreation": true,
+    "isMultipleInstallmentsEnabledOnUpdate": true,
+    "attachmentPreferences": {
+      "enableAttachments": false,
+      "splitSameSkuWithDifferentAttachments": false
+    },
+    "orderCustomDataAppId": "customData.customFieldName",
+    "postponeExpiration": false,
+    "manualPriceAllowed": true,
+    "useItemPriceFromOriginalOrder": true
+  }
+  ```

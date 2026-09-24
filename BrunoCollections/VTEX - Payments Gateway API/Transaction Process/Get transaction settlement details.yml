@@ -1,0 +1,116 @@
+info:
+  name: Get transaction settlement details
+  type: http
+  seq: 8
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/pvt/transactions/:transactionId/settlements"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: transactionId
+      value: A3BDE325F76B4B758B398D900DF06150
+      type: path
+  auth:
+    type: apikey
+    key: X-VTEX-API-AppKey
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/pvt/transactions/:transactionId/settlements - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/pvt/transactions/:transactionId/settlements - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/pvt/transactions/:transactionId/settlements - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/pvt/transactions/:transactionId/settlements - Schema is valid", function () {
+          const schema = {"required":["requests","actions"],"type":"object","description":"Transaction settlement details response body information.","properties":{"requests":{"type":"array","items":{"required":["id","date","value"],"type":"object","description":"Requests information.","properties":{"id":{"type":"string","description":"Transaction identification. This is the same `transactionId` value sent in the request path."},"date":{"type":"string","description":"Transaction settlement date."},"value":{"type":"number","description":"Transaction settlement value."}}},"description":"Array containing requests information."},"actions":{"type":"array","items":{"required":["paymentId","payment","date","type","value","connectorResponse"],"type":"object","description":"Actions information.","properties":{"paymentId":{"type":"string","description":"Payment identification."},"payment":{"required":["href"],"type":"object","description":"Object containing the transaction settlement reference route.","properties":{"href":{"type":"string","description":"Transaction reference settlement route."}}},"date":{"type":"string","description":"Transaction settlement date."},"type":{"type":"string","description":"Settlement action date."},"value":{"type":"integer","description":"Transaction settlement value."},"connectorResponse":{"type":["string","null"],"description":"Connector transaction response information. This object can return different fields according to the internal configuration of each connector (payment provider), for example, `Tid`, `ReturnCode`, `authId`, among others)."}}},"description":"Array containing actions information."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns settlement data associated with a specific transaction.
+
+  The response body of this endpoint may return different information depending on the status of the settlement request for the queried transaction:
+
+  - **Transaction settlement not requested or initiated:** The response body does not return any data.
+
+  - **Settlement request initiated, but not completed as there are items that have not yet been invoiced in the order:** The response body will only display the `request` array information.
+
+  - **Transaction settlement completed:** The response body will display the `request` and `actions` arrays information.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | PCI Gateway | Payment-Make Payments | **View Payment Data** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `transactionId` | path | (Required) Transaction identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "requests": [
+      {
+        "id": "AFB933448FFD4867BF82BCC7026A082C",
+        "date": "2018-06-05T13:08:22",
+        "value": 4499000
+      }
+    ],
+    "actions": [
+      {
+        "paymentId": "87055E7199A446519EB07F1243D5B8BE",
+        "payment": {
+          "href": "/api/pvt/transactions/074D48049B19403A930FA848C6BE4AF9/payments/87055E7199A446519EB07F1243D5B8BE"
+        },
+        "date": "2018-06-05T12:55:58.6262759Z",
+        "type": "auto-settlement",
+        "value": 4499000,
+        "connectorResponse": null
+      }
+    ]
+  }
+  ```

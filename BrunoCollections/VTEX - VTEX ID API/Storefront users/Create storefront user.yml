@@ -1,0 +1,122 @@
+info:
+  name: Create storefront user
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/authenticator/v1/storefront/users"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: isLegacyPassword
+      value: "true"
+      type: query
+      disabled: true
+  body:
+    type: json
+    data: |-
+      {
+        "identifiers": [
+          {
+            "type": "username",
+            "value": "beneson_test_21"
+          },
+          {
+            "type": "email",
+            "value": "beneson2010@gmail.com"
+          },
+          {
+            "type": "phoneNumber",
+            "value": "415-602-8838"
+          }
+        ]
+      }
+  auth:
+    type: apikey
+    key: X-VTEX-API-AppKey
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/authenticator/v1/storefront/users - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/authenticator/v1/storefront/users - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/authenticator/v1/storefront/users - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/authenticator/v1/storefront/users - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"userId":{"type":"string","description":"Unique user identifier (GUID)."},"identifier":{"type":"string","description":"Primary identifier used for the user (typically the first one provided in the request)."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates a new storefront user in VTEX ID with one or more authentication identifiers (username, email, or phone number).
+
+  The created user is not linked to any Organization Unit and does not have storefront permissions. For more information on how to provision B2B users, see the [B2B user provisioning guide](https://developers.vtex.com/docs/guides/b2b-user-provisioning).
+
+  > ⚠️ This feature is only available for stores using [B2B Buyer Portal](https://help.vtex.com/docs/tutorials/b2b-buyer-portal), which is currently available to selected accounts.
+
+  ## Notes and limitations
+
+  - There are currently **no APIs for updating authentication identifiers**. For update-related needs, contact our [Support](https://support.vtex.com/hc/en-us/).
+  - Although `phoneNumber` can be registered and used for authentication, it is **not yet supported for password recovery**.
+  - Once a storefront user is added, authentication identifiers cannot be edited or removed. If incorrect data is uploaded, you must create a new user.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | VTEX ID | User Management | **Create User** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `isLegacyPassword` | query | Flag indicating whether the user's password should be validated against an external legacy authentication system on their first login. Set to `true` for B2B password migration scenarios where users are being migrated from a legacy platform. When `true`, the user's first login will trigger validation against the configured middleware endpoint. Set to `false` (default) for standard user creation where users will need to define a new password. See the [B2B password migration guide](https://developers.vtex.com/docs/guides/b2b-password-migration) for more information. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`201`)
+
+  ```json
+  {
+    "userId": "f0a15a42-f7fc-4b09-a9ab-fabc76d9f332",
+    "identifier": "beneson_test_21"
+  }
+  ```

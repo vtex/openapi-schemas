@@ -1,0 +1,178 @@
+info:
+  name: Get all CMS pages by content type
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/_v/cms/api/:projectId/:content-type"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: page
+      value: "15"
+      type: query
+      disabled: true
+    - name: versionId
+      value: e7263fc8-bc68-4052-9e25-dd5a2572d3bb
+      type: query
+      disabled: true
+    - name: releaseId
+      value: 6196c277c6dce15f9709a2a7
+      type: query
+      disabled: true
+    - name: filters[{field}]
+      value: published
+      type: query
+      disabled: true
+    - name: projectId
+      value: faststore
+      type: path
+    - name: content-type
+      value: plp
+      type: path
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/_v/cms/api/:projectId/:content-type - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/_v/cms/api/:projectId/:content-type - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/_v/cms/api/:projectId/:content-type - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/_v/cms/api/:projectId/:content-type - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"hasNextPage":{"description":"Indicates if there are more items to fetch.","type":"boolean"},"totalItems":{"description":"Total number of results.","type":"integer"},"data":{"description":"Array with data from all pages of the given content type.","type":"array","items":{"description":"Object with data from a specific page.","type":"object","properties":{"id":{"description":"Document ID presented in the URL path of a CMS preview.","type":"string"},"name":{"description":"Name of the page created via the CMS interface.","type":"string"},"type":{"description":"Name of the content type defined in the FastStore project.","type":"string"},"status":{"description":"Current status of the page.","type":"string"},"versionId":{"description":"Version ID.","type":"string"},"versionStatus":{"description":"Version status.","type":"string"},"sections":{"description":"Sections that compose the page.","type":"array","items":{"description":"Object with data about a specific section.","type":"object","properties":{"id":{"description":"Section ID.","type":"string"},"name":{"description":"Section name.","type":"string"},"data":{"description":"Custom field values of the Section. Varies depending on the Section schema defined in the FastStore project.","type":"object"}}}},"parameters":{"description":"Object with the configuration values of a `configurationSchemaSets` tab. Varies depending on the content type schema defined in the FastStore project.","type":"object"}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Gets data from all pages of a given content type.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | CMS | cms | **See CMS menu on the top-bar** |
+  | CMS | cms | **Settings** |
+  | CMS | GraphQL | **CMS GraphQL API** | 
+
+   There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add the resources above to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `projectId` | path | (Required) Project ID specified in the settings of the CMS (alpha) app. |
+  | `content-type` | path | (Required) Content type identifier defined in the FastStore project. |
+  | `page` | query | The page number to retrieve in a paginated list of results. If not specified, the default return is 10 items per page. |
+  | `versionId` | query | Version ID presented in the URL path of a CMS preview. |
+  | `releaseId` | query | Release ID presented in the URL path of a CMS preview. |
+  | `filters[{field}]` | query | Filter results by a property of the page (e.g., `filters[status]`) or by a nested custom field of the `parameters` object (e.g., `filters[parameters.collection.sort]`). *Replace {field} with the desired property.* |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "hasNextPage": false,
+    "totalItems": 2,
+    "data": [
+      {
+        "id": "d05d3db8-62b2-4f0b-9b70-d6d25ff29b6e",
+        "name": "Electronics",
+        "type": "plp",
+        "status": "published",
+        "versionId": "ed51d1cd-e020-4f16-b48b-ca83e720472d",
+        "versionStatus": "published",
+        "sections": [
+          {
+            "id": "1632244409269",
+            "name": "RichText",
+            "data": {
+              "content": "{\"blocks\":[{\"key\":\"dtg7g\",\"text\":\"-\",\"type\":\"unstyled\",\"depth\":0,\"inlineStyleRanges\":[],\"entityRanges\":[],\"data\":{}}],\"entityMap\":{}}"
+            }
+          },
+          {
+            "id": "1632244445091",
+            "name": "RichText",
+            "data": {
+              "content": "{\"blocks\":[{\"key\":\"2qtft\",\"text\":\",\",\"type\":\"unstyled\",\"depth\":0,\"inlineStyleRanges\":[],\"entityRanges\":[],\"data\":{}}],\"entityMap\":{}}"
+            }
+          }
+        ],
+        "parameters": {
+          "collection": {
+            "sort": "\"\"",
+            "brandId": "123"
+          }
+        }
+      },
+      {
+        "id": "4ab6388d-79e6-492f-adda-3e251b85eeb6",
+        "name": "Beauty",
+        "type": "plp",
+        "status": "published",
+        "versionId": "95f940d4-584e-4b3d-9872-8c713ba42583",
+        "versionStatus": "published",
+        "sections": [
+          {
+            "id": "1643319987751",
+            "name": "SearchBanner",
+            "data": {
+              "desktop": {
+                "srcSet": "https://storecomponents.vtexassets.com/assets/vtex.file-manager-graphql/images/dda7c17e-5182-4439-b5af-94f651e2d835___1ef09be73ec9e80c719da13432666441.jpeg"
+              },
+              "mobile": {
+                "srcSet": "https://storecomponents.vtexassets.com/assets/vtex.file-manager-graphql/images/ed8ef334-c1e5-4269-8728-34dbffeda424___1ef09be73ec9e80c719da13432666441.jpeg"
+              },
+              "title": "beauty",
+              "description": "beauty products",
+              "alt": "beauty"
+            }
+          }
+        ],
+        "parameters": {
+          "collection": {
+            "sort": "\"\"",
+            "seo": {
+              "title": "Page title",
+              "slug": "/beauty",
+              "description": "beauty products"
+            },
+            "clusterId": "1182"
+          }
+        }
+      }
+    ]
+  }
+  ```

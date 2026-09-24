@@ -1,0 +1,74 @@
+info:
+  name: Search by store facets
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/catalog_system/pub/facets/search/:term?map=c"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: map
+      value: c
+      type: query
+    - name: term
+      value: "2"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/catalog_system/pub/facets/search/:term - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/catalog_system/pub/facets/search/:term - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/catalog_system/pub/facets/search/:term - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/catalog_system/pub/facets/search/:term - Schema is valid", function () {
+          const schema = {"type":"object","required":["Departments","Brands","SpecificationFilters","CategoriesTrees","PriceRanges","Summary"],"properties":{"Departments":{"type":"array","description":"Array of general information about the categories.","items":{"type":"object","required":["Quantity","Position","Name","Link","LinkEncoded","Map","Value"],"properties":{"Quantity":{"type":"integer","description":"Quantity of facets."},"Position":{"type":["integer","null"],"description":"Position of the facets."},"Name":{"type":"string","description":"Category name."},"Link":{"type":"string","description":"Link of the facet."},"LinkEncoded":{"type":"string","description":"Encoded link of the facet."},"Map":{"type":"string","description":"Mapping of the facet."},"Value":{"type":"string","description":"Value of the facet."}}}},"Brands":{"type":"array","description":"Array of general information about the brands.","items":{"type":"object","required":["Quantity","Position","Name","Link","LinkEncoded","Map","Value"],"properties":{"Quantity":{"type":"integer","description":"Quantity of facets."},"Position":{"type":["integer","null"],"description":"Position of the facet."},"Name":{"type":"string","description":"Brand name."},"Link":{"type":"string","description":"Link of the facet."},"LinkEncoded":{"type":"string","description":"Enconded link of the facet."},"Map":{"type":"string","description":"Mapping of the facet."},"Value":{"type":"string","description":"Value of the facet."}}}},"SpecificationFilters":{"type":"object","description":"Object with general information of specifications."},"CategoriesTrees":{"type":"array","description":"Array of the category tree.","items":{"type":"object","required":["Id","Quantity","Position","Name","Link","LinkEncoded","Map","Value","Children"],"properties":{"Id":{"type":"integer","description":"Category ID."},"Quantity":{"type":"integer","description":"Quantity of the facets."},"Position":{"type":["integer","null"],"description":"Position of the facet."},"Name":{"type":"string","description":"Category name."},"Link":{"type":"string","description":"Link of the facet."},"LinkEncoded":{"type":"string","description":"Encoded link of the facet."},"Map":{"type":"string","description":"Mapping of the facet."},"Value":{"type":"string","description":"Value of the facet."},"Children":{"type":"array","description":"Category children.","items":{"type":"object","required":["Id","Quantity","Position","Name","Link","LinkEncoded","Map","Value","Children"],"properties":{"Id":{"type":"integer","description":"Category ID."},"Quantity":{"type":"integer","description":"Quantity of the facets."},"Position":{"type":["integer","null"],"description":"Position of the facet."},"Name":{"type":"string","description":"Category name."},"Link":{"type":"string","description":"Link of the facet."},"LinkEncoded":{"type":"string","description":"Encoded link of the facet."},"Map":{"type":"string","description":"Mapping of the facet."},"Value":{"type":"string","description":"Value of the facet."},"Children":{"type":"array","description":"Category children."}}}}}}},"PriceRanges":{"type":"array","description":"Array with general information of the price ranges."},"Summary":{"type":"object","description":"Summary of the facets.","required":["Departments","CategoriesTrees","Brands","PriceRanges","SpecificationFilters"],"properties":{"Departments":{"type":"object","description":"Departments' quantity of displayed and total items.","required":["DisplayedItems","TotalItems"],"properties":{"DisplayedItems":{"type":"integer","description":"Quantity of displayed items."},"TotalItems":{"type":"integer","description":"Quantity of total items."}}},"CategoriesTrees":{"type":"object","description":"Category tree's quantity of displayed and total items.","required":["DisplayedItems","TotalItems"],"properties":{"DisplayedItems":{"type":"integer","description":"Quantity of displayed items."},"TotalItems":{"type":"integer","description":"Quantity of total items."}}},"Brands":{"type":"object","description":"Brands' quantity of displayed and total items.","required":["DisplayedItems","TotalItems"],"properties":{"DisplayedItems":{"type":"integer","description":"Quantity of displayed items."},"TotalItems":{"type":"integer","description":"Quantity of total items."}}},"PriceRanges":{"type":"object","description":"Price ranges' quantity of displayed and total items.","required":["DisplayedItems","TotalItems"],"properties":{"DisplayedItems":{"type":"integer","description":"Quantity of displayed items."},"TotalItems":{"type":"integer","description":"Quantity of total items."}}},"SpecificationFilters":{"type":"object","description":"Specification filters' quantity of displayed and total items."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves products by store facets. The result order is descending, from the highest product ID to the lowest.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `term` | path | (Required) Term used for the facet's search. You can search for as much term as you want. The term can be: `categoryId`, `brandId`, `specificationId`. |
+  | `map` | query | (Required) Mapping of the term. It can be `c` for a category, `b` for a brand, or `specificationFilter_{specificationId}` for a specification. You need to include a map for each term you are searching for in the same term's order. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+
+  ## Example response (`200`)
+
+  _Omitted here: 8 KB. See `OK` in PostmanCollections._

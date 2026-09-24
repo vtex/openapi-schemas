@@ -1,0 +1,107 @@
+info:
+  name: Mark an invoice as paid
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/creditcontrol/accounts/:creditAccountId/invoices/:invoiceId/payments"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: creditAccountId
+      value: 01bce461-9g03-12ds-8217-b3d39271e15b
+      type: path
+    - name: invoiceId
+      value: A424887D0F2D45028FE5C96E9B0E1A2D-01
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/creditcontrol/accounts/:creditAccountId/invoices/:invoiceId/payments - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/creditcontrol/accounts/:creditAccountId/invoices/:invoiceId/payments - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/creditcontrol/accounts/:creditAccountId/invoices/:invoiceId/payments - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/creditcontrol/accounts/:creditAccountId/invoices/:invoiceId/payments - Schema is valid", function () {
+          const schema = {"required":["id","friendlyId","status","value","accountId","creditValue","createdAt","updatedAt","originalDueDate","dueDate","installment","orderId","transactionId","numberOfInstallments","creditAccountId"],"type":"object","properties":{"id":{"type":"string","description":"Invoice identification."},"friendlyId":{"type":"string","description":"Simplified identification of an invoice. This code is created automatically, always associated with an existing invoice. It consists of an 8-digit random ID (of numbers and letters) and the installment."},"status":{"type":"string","description":"Invoice status.","enum":["Opened","Paid","Cancelled"]},"value":{"type":"number","description":"Invoice value."},"accountId":{"type":"string","description":"Account identification. It is the same `checkingAccountId` parameter used in other Customer Credit API endpoints."},"creditValue":{"type":"number","description":"Credit value."},"createdAt":{"type":"string","description":"Invoice creation date."},"updatedAt":{"type":"string","description":"Date of the last update made to the invoice."},"originalDueDate":{"type":"string","description":"Original invoice expiration date."},"dueDate":{"type":"string","description":"Modified invoice expiration date."},"installment":{"type":"number","description":"Identification of installment number."},"orderId":{"type":"string","description":"Identification of the order that generated the invoice."},"transactionId":{"type":"string","description":"Identification of the invoice transaction. This is the same number as the `id` field, removing the last three characters."},"numberOfInstallments":{"type":"number","description":"Number of installments."},"creditAccountId":{"type":"string","description":"Credit account identification. It is the same `accountId` parameter used in other Customer Credit API endpoints."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Records the payment of an invoice.
+
+  This operation causes a balance restore with the invoice value to the checking account.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Credit Control | Main | **Main Access** |
+  | Credit Control | Invoices | **Pay Invoice** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `creditAccountId` | path | (Required) Credit account identification. |
+  | `invoiceId` | path | (Required) Invoice identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "A424887D0F2D45028FE5C96E9B0E1A2D-01",
+    "friendlyId": "u8KFsGDk-1",
+    "status": "Paid",
+    "value": 5.01,
+    "accountId": "fcba59e0-7f26-11ee-ba3c-511336e1518b",
+    "creditValue": 0,
+    "createdAt": "2023-11-09T18:26:43.2112234Z",
+    "updatedAt": "2023-11-09T18:26:43.289316Z",
+    "originalDueDate": "2023-12-09T18:26:43.2112234Z",
+    "dueDate": "2023-12-09T18:26:43.2112234Z",
+    "installment": 1,
+    "orderId": "1375060513100-01",
+    "transactionId": "A424887D0F2D45028FE5C96E9B0E1A2D",
+    "numberOfInstallments": 1,
+    "creditAccountId": "fcba59e0-7f26-11ee-ba3c-511336e1518b"
+  }
+  ```

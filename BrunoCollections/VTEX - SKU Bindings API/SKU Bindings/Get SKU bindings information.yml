@@ -1,0 +1,119 @@
+info:
+  name: Get SKU bindings information
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/sku-binding/pvt/skuseller/admin"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: sellerId
+      value: vtxkfj7352
+      type: query
+      disabled: true
+    - name: skuId
+      value: "1"
+      type: query
+      disabled: true
+    - name: sellerSkuId
+      value: "71"
+      type: query
+      disabled: true
+    - name: isActive
+      value: "true"
+      type: query
+      disabled: true
+    - name: size
+      value: "1"
+      type: query
+      disabled: true
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/sku-binding/pvt/skuseller/admin - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/sku-binding/pvt/skuseller/admin - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/sku-binding/pvt/skuseller/admin - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/sku-binding/pvt/skuseller/admin - Schema is valid", function () {
+          const schema = {"type":"array","items":{"type":"object","description":"SKU bindings information regarding a given seller ID.","properties":{"IsPersisted":{"type":"boolean","description":"Defines if the seller is persisted."},"IsRemoved":{"type":"boolean","description":"Defines if the seller is removed."},"SkuSellerId":{"type":"integer","description":"SKU Binding ID."},"UpdateDate":{"type":"string","description":"Date when the SKU binding was updated for the last time, in UTC format."},"RequestedUpdateDate":{"type":["string","null"],"description":"Date when an SKU binding update was requested for the last time, in UTC format."},"SellerStockKeepingUnitId":{"type":"string","description":"SKU ID in the seller's store."},"SellerId":{"type":"string","description":"ID that identifies the seller in the marketplace. It can be the same as the seller name or a unique number. Check the **Sellers management** section in the Admin to get the correct ID."},"StockKeepingUnitId":{"type":"integer","description":"SKU ID in the VTEX marketplace."},"IsActive":{"type":"boolean","description":"Defines if the SKU binding is active."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves SKU bindings administrative information using optional query params `sellerId`, `skuId`, `sellerSkuId` and `IsActive` to filter results and `size` to restrict the amount of results.
+
+   > ℹ This path is an updated version of `/api/catalog_system/pvt/skuseller/admin`.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Catalog API | General | **View Product** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `sellerId` | query | ID that identifies the seller in the marketplace. It can be the same as the seller name or a unique number. Check the **Sellers management** section in the Admin to get the correct ID. |
+  | `skuId` | query | SKU's unique identifier in the marketplace. |
+  | `sellerSkuId` | query | SKU ID in the seller's store. |
+  | `isActive` | query | Defines if the SKU binding is active. |
+  | `size` | query | Amount of results. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "IsPersisted": true,
+      "IsRemoved": false,
+      "SkuSellerId": 102,
+      "UpdateDate": "2025-04-12T20:06:59.413Z",
+      "RequestedUpdateDate": null,
+      "SellerStockKeepingUnitId": "71",
+      "SellerId": "fashionstore",
+      "StockKeepingUnitId": 25,
+      "IsActive": true
+    }
+  ]
+  ```

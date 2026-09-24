@@ -1,0 +1,102 @@
+info:
+  name: Start authentication
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/vtexid/pub/authentication/start?scope=accountName"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: scope
+      value: accountName
+      type: query
+    - name: fingerprint
+      value: "12345"
+      type: query
+      disabled: true
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/vtexid/pub/authentication/start - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/vtexid/pub/authentication/start - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/vtexid/pub/authentication/start - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/vtexid/pub/authentication/start - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"authenticationToken":{"type":"string","description":"Authentication token provided to the user, valid for 24 hours."},"oauthProviders":{"type":"array","description":"List of available OAuth providers.","items":{"type":"object","description":"OAuth provider information.","properties":{"providerName":{"type":"string","description":"Name of the OAuth provider."},"className":{"type":"string","description":"Class name associated with the provider."},"expectedContext":{"type":"array","description":"Additional context expected by the provider.","items":{"type":"string","description":"Additional context."}}}}},"showClassicAuthentication":{"type":"boolean","description":"Indicates whether classic authentication is enabled (`true`) or not (`false`)."},"showAccessKeyAuthentication":{"type":"boolean","description":"Indicates whether access key authentication is enabled (`true`) or not (`false`)."},"showPasskeyAuthentication":{"type":"boolean","description":"Indicates whether passkey authentication is enabled (`true`) or not (`false`)."},"authCookie":{"type":["string","null"],"description":"Authentication cookie if available."},"isAuthenticated":{"type":"boolean","description":"Indicates whether the user is authenticated."},"selectedProvider":{"type":["string","null"],"description":"Currently selected authentication provider, if any."},"samlProviders":{"type":"array","description":"List of available SAML providers.","items":{"type":"string","description":"SAML provider."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Starts the authentication flow for a user in your store. This endpoint returns an authentication token valid for 24 hours.
+
+  ## Permissions
+
+  This endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `scope` | query | (Required) Account name. |
+  | `fingerprint` | query | Optional device fingerprint for enhanced security. Generated client-side using JavaScript libraries that collect anonymized device and browser parameters to create a unique identifier. When submitted in this request, it must later be provided when making a request to [refresh token](https://developers.vtex.com/docs/api-reference/vtex-id-api#post-/api/vtexid/refreshtoken/webstore). |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "authenticationToken": "C17BCD635B637E66BF2BBE07CEED0B1B7425387FB8D6E42FE68EBCE7A49193F2",
+    "oauthProviders": [
+      {
+        "providerName": "Google",
+        "className": "google-plus",
+        "expectedContext": []
+      },
+      {
+        "providerName": "Facebook",
+        "className": "facebook",
+        "expectedContext": []
+      }
+    ],
+    "showClassicAuthentication": true,
+    "showAccessKeyAuthentication": true,
+    "showPasskeyAuthentication": false,
+    "authCookie": null,
+    "isAuthenticated": false,
+    "selectedProvider": null,
+    "samlProviders": []
+  }
+  ```

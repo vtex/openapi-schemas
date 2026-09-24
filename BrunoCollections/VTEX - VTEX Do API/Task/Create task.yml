@@ -1,0 +1,113 @@
+info:
+  name: Create task
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/tasks"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "target": [
+          {
+            "id": "v964735bdev-01",
+            "type": "order",
+            "url": "https://basedevmkp.environment.com.br/admin/checkout/#/orders/v964741bdev-01"
+          },
+          {
+            "id": "v964735bdev-01",
+            "type": "order",
+            "url": "https://basedevmkp.environment.com.br/admin/checkout/#/orders/v964741bdev-01"
+          }
+        ],
+        "domain": "oms",
+        "context": "Marketplace",
+        "name": "pricing",
+        "priority": "Critical",
+        "surrogateKey": "5052243-0",
+        "dueDate": "2024-05-01",
+        "assignee": {
+          "email": "blake.smith@email.com",
+          "id": null,
+          "name": "Blake Smith"
+        },
+        "followers": [
+          {
+            "email": "celaena.sardothien@email.com",
+            "id": null,
+            "name": "Celaena Sardothien"
+          },
+          {
+            "email": "celaena.sardothien@email.com",
+            "id": null,
+            "name": "Celaena Sardothien"
+          }
+        ],
+        "description": "This task is important",
+        "parentTaskId": null
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/tasks - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/tasks - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/tasks - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/tasks - Schema is valid", function () {
+          const schema = {};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates a new task in [VTEX DO](https://help.vtex.com/en/tutorial/vtex-do--7KMbRL4OslN8DTX9oiuCiu).
+
+  ## Permissions
+
+  This endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {}
+  ```

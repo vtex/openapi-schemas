@@ -1,0 +1,146 @@
+info:
+  name: Get ads
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/v1/rma/:publisher_id"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: publisher_id
+      value: 0d675bf6-03f6-4b81-9617-e79dffddc3ab
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "session_id": "f361661f5986477990092a34562f18347",
+        "user_id": "6a746448cf5942bcaa3da426844ad115",
+        "context": "search",
+        "channel": "site",
+        "term": "desodorante",
+        "placements": {
+          "searchTopBanner": {
+            "quantity": 1,
+            "size": "desktop",
+            "types": [
+              "banner"
+            ],
+            "assets_type": [
+              "image"
+            ]
+          },
+          "searchShelf": {
+            "quantity": 3,
+            "types": [
+              "product"
+            ]
+          }
+        },
+        "tags": [
+          "Mega Maio"
+        ]
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/v1/rma/:publisher_id - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/v1/rma/:publisher_id - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/v1/rma/:publisher_id - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/v1/rma/:publisher_id - Schema is valid", function () {
+          const schema = {"type":"object","additionalProperties":{"type":"array","description":"List of ads for a specific placement.","items":{"type":"object","description":"Ad object.","properties":{"ad_id":{"type":"string","description":"Unique identifier of the ad."},"media_url":{"type":"string","description":"URL of the image or video to be displayed. Present for banner, sponsored_brand, and digital_signage ad types."},"type":{"type":"string","description":"Type of ad.","enum":["banner","product","sponsored_brand","digital_signage"]},"seller_id":{"type":["string","null"],"description":"Identifier of the seller."},"click_url":{"type":"string","description":"URL of the click event beacon for the ad."},"impression_url":{"type":"string","description":"URL of the impression event beacon for the ad."},"view_url":{"type":"string","description":"URL of the view event beacon for the ad."},"product_sku":{"type":"string","description":"Product identifier. Present when ad type is 'product'."},"products":{"type":"array","description":"Array of products associated with the sponsored brand. Present when ad type is 'sponsored_brand'.","items":{"type":"object","description":"Product associated with the sponsored brand.","properties":{"product_sku":{"type":"string","description":"SKU of the associated product."},"media_url":{"type":"string","description":"URL of the product image."}}}},"duration":{"type":"number","description":"Duration of the ad display in seconds. Present when ad type is 'digital_signage'.","format":"double"}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieve Product and Banner ad formats based on context and placements.
+
+  ## Permissions
+
+  This endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).
+
+  ## Request best practices
+
+  - **HTTP persistence:** Prefer persistent connections (`Connection: keep-alive`).
+  - **Timeout:** Apply a 500-600 ms timeout to the ad query.
+
+  ## Context-specific fields
+
+  The `context` value determines which additional fields are required in the request body. The example below uses the `search` context — adapt it to your context using the table below. Include only the fields listed for your context (in addition to the common required fields `session_id`, `context`, `channel`, and `placements`).
+
+  | `context` | Additional required fields | Notes |
+  | --- | --- | --- |
+  | `home` | None | Use generic placements (top banner, home shelf). |
+  | `category` | `category_name` | Provide the full breadcrumb path (for example, `Daily Care > Deodorant > Spray`). |
+  | `search` | `term` | Send the search query. Optionally pass `tags` to scope eligible ads. |
+  | `product_page` | `product_sku` | SKU of the product currently being viewed. |
+  | `brand_page` | `brand_name` | Name of the brand. Pair with `sponsored_brand` placements when applicable. |
+  | `digital_signage` | `device_id`, `store_name` | Use `digital_signage` placements and the `app` channel. |
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `publisher_id` | path | (Required) Publisher identifier provided by your account manager |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "placementName1": [
+      {
+        "ad_id": "6d2d8837-bf5a-4ba4-90d2-5546cb18d5ce",
+        "media_url": "https://cdn.newtail.com.br/retail_media/ads/2023/05/03/f97a938660e56fe38a9c9ade21c27df8-1280x256-red.png",
+        "type": "banner",
+        "click_url": "https://events.newtail-media.newtail.com.br/v1/beacon/click/6d2d8837-bf5a-4ba4-90d2-5546cb18d5ce?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=banner",
+        "impression_url": "https://events.newtail-media.newtail.com.br/v1/beacon/impression/6d2d8837-bf5a-4ba4-90d2-5546cb18d5ce?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=banner",
+        "view_url": "https://events.newtail-media.newtail.com.br/v1/beacon/view/6d2d8837-bf5a-4ba4-90d2-5546cb18d5ce?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=banner"
+      }
+    ],
+    "placementName2": [
+      {
+        "ad_id": "846fbf5e-6980-4a5e-a4a1-9b2a2dcbafb7",
+        "product_sku": "10001236",
+        "type": "product",
+        "click_url": "https://events.newtail-media.newtail.com.br/v1/beacon/click/846fbf5e-6980-4a5e-a4a1-9b2a2dcbafb7?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=product",
+        "impression_url": "https://events.newtail-media.newtail.com.br/v1/beacon/impression/846fbf5e-6980-4a5e-a4a1-9b2a2dcbafb7?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=product",
+        "view_url": "https://events.newtail-media.newtail.com.br/v1/beacon/view/846fbf5e-6980-4a5e-a4a1-9b2a2dcbafb7?publisher_id=0d675bf6-03f6-4b81-9617-e79dffddc3ab&ad_type=product"
+      }
+    ]
+  }
+  ```

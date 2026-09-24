@@ -1,0 +1,104 @@
+info:
+  name: Change credit limit of an account
+  type: http
+  seq: 7
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/creditcontrol/accounts/:creditAccountId/creditlimit"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: creditAccountId
+      value: 01bce461-9g03-12ds-8217-b3d39271e15b
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "value": 5500
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[PUT]::/api/creditcontrol/accounts/:creditAccountId/creditlimit - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PUT]::/api/creditcontrol/accounts/:creditAccountId/creditlimit - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[PUT]::/api/creditcontrol/accounts/:creditAccountId/creditlimit - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[PUT]::/api/creditcontrol/accounts/:creditAccountId/creditlimit - Schema is valid", function () {
+          const schema = {"required":["id","balance","status","creditLimit","updatedAt","createdAt","availableCredit","preAuthorizedCredit","email","tolerance","availableBalance"],"type":"object","properties":{"id":{"type":"string","description":"Credit customer account identification."},"balance":{"type":"number","description":"Account balance value. If this number is negative, it means that the account has a debit instead of a credit to be used."},"status":{"type":"string","description":"Credit customer account status."},"creditLimit":{"type":"number","description":"Maximum credit amount on the account."},"updatedAt":{"type":"string","description":"Date of the last update made to the account."},"createdAt":{"type":"string","description":"Account creation date."},"description":{"type":"string","description":"This field is deprecated."},"availableCredit":{"type":"number","description":"Credit amount available on the account."},"preAuthorizedCredit":{"type":"number","description":"Credit value that can only be used by the account owner after the merchant releases a specific purchase transaction."},"email":{"type":"string","description":"Account owner email."},"tolerance":{"type":"number","description":"Account credit tolerance (in decimals). This value represents the increase in credit on an account. For example, a value of `0.30` indicates that the account owner can use up to 30% above the account's original maximum credit amount."},"availableBalance":{"type":"number","description":"Balance available for use on the account."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Increases or decreases the credit limit of a [customer credit account](https://help.vtex.com/en/tracks/customer-credit-getting-started--1hCRg21lXYy2seOKgqQ2CC/7FHLd0cmxqqGeEUuc8uioU).
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Credit Control | Main | **Main Access** |
+  | Credit Control | Checking Accounts | **Edit credits** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `creditAccountId` | path | (Required) Credit account identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "fcba59e0-7f26-11ee-ba3c-511336e1518b",
+    "balance": -15,
+    "status": "Open",
+    "creditLimit": 5500,
+    "updatedAt": "2023-11-22T19:35:40.0047136Z",
+    "createdAt": "2023-11-09T17:39:52.151897Z",
+    "description": "This field is deprecated and is returned as an empty string.",
+    "availableCredit": 5500,
+    "preAuthorizedCredit": 0,
+    "email": "test@test.com",
+    "tolerance": 0.3,
+    "availableBalance": 5500
+  }
+  ```

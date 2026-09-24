@@ -1,0 +1,114 @@
+info:
+  name: Send invoice
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/pvt/orders/:marketplaceOrderId/invoice"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: marketplaceOrderId
+      value: 1138342255777-01
+      type: path
+    - name: marketplaceServicesEndpoint
+      value: marketplaceservicesendpoint.myvtex.com
+      type: path
+    - name: invoiceNumber
+      value: NFe-00002
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "type": "Output",
+        "invoiceNumber": "NFe-00002",
+        "items": [
+          {
+            "id": "6",
+            "quantity": 1,
+            "price": 5500
+          },
+          {
+            "id": "6",
+            "quantity": 1,
+            "price": 5500
+          }
+        ],
+        "courier": "courier-example",
+        "trackingNumber": "12345678abc",
+        "trackingUrl": "https://courier-example.com/tracking",
+        "issuanceDate": "2021-05-21T10:00:00",
+        "invoiceValue": 6000
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/pvt/orders/:marketplaceOrderId/invoice - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/pvt/orders/:marketplaceOrderId/invoice - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/pvt/orders/:marketplaceOrderId/invoice - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/pvt/orders/:marketplaceOrderId/invoice - Schema is valid", function () {
+          const schema = {"properties":{"date":{"type":"string","description":"Request processing date and time."},"orderId":{"type":"string","description":"Order ID referring to the Invoice number sent."},"receipt":{"type":"string","description":"Requisition receipt code."}},"example":{"date":"2021-06-09T15:22:56.7612218-02:00","orderId":"1138342255777-01","receipt":"527b1ae251264ef1b7a9b597cd8f16b9"}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This request is sent by the external seller to the VTEX marketplace to send invoice information.
+
+  This can be necessary in a regular order or in the case of a return. The `type` field is used to indicate which of these is the case.
+
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `marketplaceOrderId` | path | (Required) Identifies the order in the marketplace. |
+  | `marketplaceServicesEndpoint` | path | (Required) This is an endpoint sent from VTEX to the external seller in the [Order placement request](https://developers.vtex.com/docs/api-reference/marketplace-protocol-external-seller-fulfillment#post-/pvt/orders). |
+  | `invoiceNumber` | path | (Required) Invoice number. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "date": "2021-06-09T15:22:56.7612218-02:00",
+    "orderId": "1138342255777-01",
+    "receipt": "527b1ae251264ef1b7a9b597cd8f16b9"
+  }
+  ```

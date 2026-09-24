@@ -1,0 +1,102 @@
+info:
+  name: Get conversation messages
+  type: http
+  seq: 10
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/rns/pub/subscriptions/:subscriptionId/conversation-message"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: subscriptionId
+      value: 123456789abc
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/rns/pub/subscriptions/:subscriptionId/conversation-message - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/rns/pub/subscriptions/:subscriptionId/conversation-message - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/rns/pub/subscriptions/:subscriptionId/conversation-message - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/rns/pub/subscriptions/:subscriptionId/conversation-message - Schema is valid", function () {
+          const schema = {"type":"array","items":{"type":"object","description":"Each message exchanged with the customer related to the subscription.","properties":{"id":{"type":"string","description":"Message ID."},"from":{"type":"object","description":"Information regarding the message sender.","properties":{"conversationRelatedTo":{"type":"string","description":"ID of the subscription related to the message."},"conversationSubject":{"type":"string","description":"Subject of the conversation."},"emailAlias":{"type":"string","description":"Email alias."},"aliasMaskType":{"type":"string","description":"Alias [mask type](https://help.vtex.com/en/tutorial/how-communication-with-the-client-is-made-during-the-order-flow--tutorials_195)."},"email":{"type":"string","description":"Sender email address."},"name":{"type":"string","description":"Sender name."},"role":{"type":["string","null"],"description":"Sender [role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc)."}}},"to":{"type":"array","description":"Information regarding the message receiver.","items":{"type":"object","description":"Message receiver details.","properties":{"conversationRelatedTo":{"type":"string","description":"ID of the subscription related to the message."},"conversationSubject":{"type":"string","description":"Subject of the conversation."},"emailAlias":{"type":"string","description":"Email alias."},"aliasMaskType":{"type":"string","description":"Alias [mask type](https://help.vtex.com/en/tutorial/how-communication-with-the-client-is-made-during-the-order-flow--tutorials_195)."},"email":{"type":"string","description":"Customer email address."},"name":{"type":"string","description":"Customer name."},"role":{"type":"string","description":"Role identification."}}}},"subject":{"type":"string","description":"Message subject."},"firstWords":{"type":"string","description":"First words of the message text."},"body":{"type":"string","description":"HTML content of the message's body."},"hasAttachment":{"type":"boolean","description":"Indicates if the message has [attachments](https://help.vtex.com/en/tutorial/what-is-an-attachment--aGICk0RVbqKg6GYmQcWUm) (`true`) or not (`false`)."},"attachmentNames":{"type":["array","null"],"description":"Attachment names.","items":{"type":["string","null"],"description":"Attachment name."}},"date":{"type":"string","description":"Message date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieve all conversation messages sent to a customer regarding a subscription.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `subscriptionId` | path | (Required) [Subscription](https://help.vtex.com/en/tutorial/how-subscriptions-work--frequentlyAskedQuestions_4453) ID. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "id": "2024-07-25t22-01-08_80e67e10318d4a73a66dbfdb3d471cfb",
+      "from": {
+        "conversationRelatedTo": "875a3b36d02e17058ed46e5b0c50353c",
+        "conversationSubject": "rns",
+        "emailAlias": "a506b3df1b584381b2838447a44d0579@ct.vtex.com.br",
+        "aliasMaskType": "0",
+        "email": "noreply@vtexcommerce.com.br",
+        "name": "no reply",
+        "role": null
+      },
+      "to": [
+        {
+          "conversationRelatedTo": "875a3b36d02e17058ed46e5b0c50353c",
+          "conversationSubject": "rns",
+          "emailAlias": "dda23454991e4cfea71ca7beb4ec0aad@ct.vtex.com.br",
+          "aliasMaskType": "0",
+          "email": "sophia.smith@email.com",
+          "name": "Sophia Smith",
+          "role": "Customer"
+        }
+      ],
+      "subject": "Your subscription was confirmed",
+      "firstWords": "Hello, your subscription was successfully created! We will email you a confirmation after each order payment is approved.",
+      "body": "<html> <head> <script async=\"\" crossorigin=\"anonymous\" src=\"https://edge.fullstory.com/s/fs.js\"></script> </head> <body> <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"> <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>test</title> <!--[if gte mso 9]> <xml> <o:OfficeDocumentSettings> <o:AllowPNG></o:AllowPNG> <o:PixelsPerInch>96</o:PixelsPerInch> </o:OfficeDocumentSettings> </xml> <![endif]--> <style> a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; } </style> <style> @media (max-width: 600px) { img { max-width: 100% !important; height: auto !important; } } </style> <style> @media screen and (min-width: 30em) { .mv1-ns { margin-top: .25rem !important; margin-bottom: .25rem !important; } .mv4-ns { margin-top: 2rem !important; margin-bottom: 2rem !important; } } </style> <table width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\"<td style=\"font-size: 16px; line-height: 24px; box-sizing: border-box; border-collapse: collapse; text-align: left; width: 50% !important; \" align=\"left\"> <div style=\"box-sizing: border-box; margin-bottom: .25rem !important;\"> <strong>Próxima compra</strong></div> <div style=\"box-sizing: border-box !important;\"> 25/12/2021 </div> </td> </tr> <tr style=\"box-sizing: border-box !important;\"> <td style=\"font-size: 16px; line-height: 24px; box-sizing: border-box; border-collapse: collapse; text-align: left; width: 50% !important; \" align=\"left\"> <div style=\"box-sizing: border-box; margin-bottom: .25rem !important;\"> <strong>Entrega estimada</strong></div> <div style=\"box-sizing: border-box !important;\"> 13/01/2022 </div> </td> </tr> </tbody> </table> </div> </td> </tr> <tr style=\"box-sizing: border-box !important;\"> <td style=\"padding-left: 2rem !important;padding-right: 2rem !important;font-size: 14px; line-height: 32px; box-sizing: border-box; border-collapse: collapse; text-align: left; padding-bottom: 1rem !important; \" align=\"left\"> <table> <tbody> <tr> <td> <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"32\" height=\"20\" fill=\"#3F3F40\" /> <rect x=\"14\" y=\"24\" width=\"18\" height=\"16\" rx=\"4\" fill=\"#3F3F40\" /> </svg>  </td> <td> <div style=\"margin-left: 1rem;\"> ************2503 </div> </td> </tr> </tbody> </table> </div> </div> </td> </tr> !important; \" align=\"left\"> <p style=\"box-sizing: border-box !important;\"> Atenciosamente,<br>Equipe CeA. </p> </td> </tr> </tbody> </table> </td> </tr> </tbody> </table> </body> </html>",
+      "hasAttachment": false,
+      "attachmentNames": [],
+      "date": "2024-07-25T22:01:25Z"
+    }
+  ]
+  ```

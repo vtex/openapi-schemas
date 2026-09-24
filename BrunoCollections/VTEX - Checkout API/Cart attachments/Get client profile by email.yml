@@ -1,0 +1,153 @@
+info:
+  name: Get client profile by email
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/checkout/pub/profiles?email=clark.kent@examplemail.com"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: email
+      value: clark.kent@examplemail.com
+      type: query
+    - name: ensureComplete
+      value: "false"
+      type: query
+      disabled: true
+    - name: individualShippingEstimates
+      value: "true"
+      type: query
+      disabled: true
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/checkout/pub/profiles - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/checkout/pub/profiles - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/checkout/pub/profiles - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/checkout/pub/profiles - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"userProfileId":{"type":"string","description":"Unique ID associated with the customer profile."},"profileProvider":{"type":"string","description":"Profile provider."},"availableAccounts":{"type":"array","description":"Available accounts.","items":{"type":"string","description":"Account name."}},"availableAddresses":{"type":"array","description":"Information on each available address.","items":{"type":"object","description":"Address information.","properties":{"addressType":{"type":"string","description":"Address type."},"receiverName":{"type":"string","description":"Name of the receiver."},"addressId":{"type":["string","null"],"description":"Address ID."},"isDisposable":{"type":"boolean","description":"Indicates whether the address is disposable. Addresses marked as `isDisposable = true` are not saved to the shopper's profile when the order is completed, while addresses with `isDisposable = false` definitely belong to the shopper.\r\n\r\nBehavior by address type:\r\n- `giftRegistry`, `pickup`, `search`, and `inStore`: always disposable, as they do not belong to the shopper navigating the cart.\r\n- `residential`: may be disposable. Addresses from a complete shopper profile, or entered by an authenticated shopper with a complete profile, are not disposable. All other residential addresses are disposable, including those from first-time purchases, since no complete profile exists yet.\r\n- `invoice`: does not have the `isDisposable` flag, since invoice addresses are of type `Address` rather than `ShippingAddress`. In practice, only authenticated shoppers can add invoice attachments to the cart, so they are never treated as disposable.\r\n- `commercial`: corresponds to company addresses used in B2B contexts and follows the same logic as residential addresses.\r\n\r\nWhen a residential address is marked as disposable and the profile is complete, authentication is required to complete the order. Additionally, when a disposable residential address is used to complete a purchase, saved cards cannot be used."},"city":{"type":"string","description":"City of the address."},"state":{"type":"string","description":"State of the address."},"country":{"type":"string","description":"Country of the address. ISO three-letter code."},"street":{"type":"string","description":"Street of the address."},"number":{"type":"string","description":"Number of the address."},"neighborhood":{"type":"string","description":"Neighborhood of the address."},"complement":{"type":["string","null"],"description":"Complement to the address."},"reference":{"type":["string","null"],"description":"Reference that may help in the location of the address."},"geoCoordinates":{"type":"array","description":"Array containing two floats with geocoordinates, first longitude, then latitude.","items":{"type":"number","description":"Geocoordinates numbers."}}}}},"userProfile":{"type":"object","description":"Customer profile information.","properties":{"email":{"type":["string","null"],"description":"Email address."},"firstName":{"type":["string","null"],"description":"First name."},"lastName":{"type":"string","description":"Last name."},"document":{"type":"string","description":"Document."},"documentType":{"type":"string","description":"Document type."},"phone":{"type":"string","description":"Telephone number."},"corporateName":{"type":["string","null"],"description":"Name of the company. Used for corporate clients."},"tradeName":{"type":["string","null"],"description":"Trade name. Used for corporate clients."},"corporateDocument":{"type":["string","null"],"description":"Document. Used for corporate clients."},"stateInscription":{"type":["string","null"],"description":"State inscription. Used for corporate clients."},"corporatePhone":{"type":["string","null"],"description":"Telephone number. Used for corporate clients."},"isCorporate":{"type":"boolean","description":"Indicates whether the client is corporate."},"profileCompleteOnLoading":{"type":["boolean","null"],"description":"Profile complete when loading."},"profileErrorOnLoading":{"type":["boolean","null"],"description":"Profile error when loading."},"customerClass":{"type":["string","null"],"description":"Customer class."}}},"isComplete":{"type":"boolean","description":"Indicates whether customer profile is complete."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves a client's profile information by providing an email address.
+
+
+  If the response body fields are empty, the following situations may have occurred:
+
+
+  1. There is no client registered with the email address provided in your store, or;
+
+  2. Client profile is invalid or incomplete. However, you can use the query parameter `ensureComplete=false` to get incomplete profiles. For more information, see [SmartCheckout - Customer information automatic fill-in](https://help.vtex.com/en/tutorial/smartcheckout-customer-information-automatic-fill-in--2Nuu3xAFzdhIzJIldAdtan).
+
+  >⚠️ The authentication of this endpoint can change depending on the customer context. If you are consulting information from a customer with a complete profile on the store, the response will return the customer's data masked. You can only access the customer data with an authenticated request.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Checkout | CheckoutResources | **Shopping Cart Full Access** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Checkout Admin | Shopping Cart Full Access |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `email` | query | (Required) Client's email address to be searched. |
+  | `ensureComplete` | query | Indicates whether the returned profiles must be complete or not. |
+  | `individualShippingEstimates` | query | Shows the product's estimated shipping date in the `shippingEstimate` field from the `orderForm`. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "userProfileId": "fb542e51-5488-4c34-8d17-ed8fcf597a94",
+    "profileProvider": "VTEX",
+    "availableAccounts": [],
+    "availableAddresses": [
+      {
+        "addressType": "residential",
+        "receiverName": "Clark Kent",
+        "addressId": "666c2e830bd9474ab6f6cc53fb6dd2d2",
+        "isDisposable": false,
+        "postalCode": "12345-000",
+        "city": "Metropolis",
+        "state": "NY",
+        "country": "USA",
+        "street": "My street",
+        "number": "123",
+        "neighborhood": "My neighborhood",
+        "complement": "Complement",
+        "reference": "Reference",
+        "geoCoordinates": [
+          -47.924747467041016,
+          -15.832582473754883
+        ]
+      }
+    ],
+    "userProfile": {
+      "email": "clark.kent@example.com",
+      "firstName": "Clark",
+      "lastName": "Kent",
+      "document": "12345678900",
+      "documentType": "cpf",
+      "phone": "+556199999999",
+      "corporateName": "company-name",
+      "tradeName": "trade-name",
+      "corporateDocument": "12345678000100",
+      "stateInscription": "12345678",
+      "corporatePhone": "551100988887777",
+      "isCorporate": false,
+      "profileCompleteOnLoading": false,
+      "profileErrorOnLoading": false,
+      "customerClass": null
+    },
+    "isComplete": true
+  }
+  ```

@@ -1,0 +1,171 @@
+info:
+  name: Start a new transaction
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/pvt/transactions"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "value": 20000,
+        "referenceId": "1234567",
+        "channel": "cosmetics2",
+        "salesChannel": "1",
+        "urn": "urn:amazon:webservices:clientvpn"
+      }
+  auth:
+    type: apikey
+    key: X-VTEX-API-AppKey
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/pvt/transactions - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/pvt/transactions - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/pvt/transactions - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/pvt/transactions - Schema is valid", function () {
+          const schema = {"required":["id","transactionId","referenceKey","interactions","settlements","payments","refunds","cancellations","capabilities","timeoutStatus","totalRefunds","status","value","receiverUri","startDate","authorizationToken","authorizationDate","commitmentToken","commitmentDate","refundingToken","refundingDate","cancelationToken","cancelationDate","fields","ipAddress","sessionId","macId","vtexFingerprint","chargeback","whiteSignature","owner","orderId","userAgent","acceptHeader","antifraudTid","antifraudResponse","antifraudReference","antifraudAffiliationId","channel","salesChannel","urn","softDescriptor","markedForRecurrence","buyer"],"type":"object","description":"New transaction response body information.","properties":{"id":{"type":"string","description":"Transaction identification."},"transactionId":{"type":"string","description":"Transaction identification (same value of the `id` field)."},"referenceKey":{"type":"string","description":"Identification number that relates the transaction to a purchase order. It can be also used for anti-fraud to identify the transaction."},"interactions":{"required":["href"],"type":"object","description":"Object containing the reference route of transaction interactions.","properties":{"href":{"type":"string","description":"Transaction interaction reference route."}}},"settlements":{"required":["href"],"type":"object","description":"Object containing the reference route of transaction settlements.","properties":{"href":{"type":"string","description":"Transaction settlement reference route."}}},"payments":{"required":["href"],"type":"object","description":"Object containing the reference route of transaction payments.","properties":{"href":{"type":"string","description":"Transaction payment reference route."}}},"refunds":{"required":["href"],"type":"object","description":"Object containing the reference route of transaction refunds.","properties":{"href":{"type":"string","description":"Transaction refund reference route."}}},"cancellations":{"required":["href"],"type":"object","description":"Object containing the reference route of transaction cancellations.","properties":{"href":{"type":"string","description":"Transaction cancellation reference route."}}},"capabilities":{"required":["href"],"type":"object","description":"Object containing the reference route of transaction capabilities.","properties":{"href":{"type":"string","description":"Transaction capabilities reference route."}}},"timeoutStatus":{"type":"number","description":"Field that represents the possible transaction timeout statuses. Possible statuses and meanings: `0` = NotStarted, `1` = CancellingOrFinishing, `2` = CancellingOrFinishingByTimeout, `3` = CancelledOrFinished and `4` = TriesExceeded.","enum":[0,1,2,3,4]},"totalRefunds":{"type":"number","description":"Total refunded transaction amount."},"status":{"type":"string","description":"Transaction status."},"value":{"type":"number","description":"Transaction value."},"receiverUri":{"type":["string","null"],"description":"Receiver [URI](https://en.wikipedia.org/wiki/Uniform_Resource_Identifier) information."},"startDate":{"type":"string","description":"Transaction start date."},"authorizationToken":{"type":["string","null"],"description":"Transaction authorization token."},"authorizationDate":{"type":["string","null"],"description":"Transaction authorization date."},"commitmentToken":{"type":["string","null"],"description":"Transaction completion token."},"commitmentDate":{"type":["string","null"],"description":"Transaction completion date."},"refundingToken":{"type":["string","null"],"description":"Transaction refund token."},"refundingDate":{"type":["string","null"],"description":"Transaction refund date."},"cancelationToken":{"type":["string","null"],"description":"Transaction cancellation token."},"cancelationDate":{"type":["string","null"],"description":"Transaction cancellation date."},"fields":{"type":"array","items":{"required":["name","value"],"type":"object","description":"Transaction parameters information.","properties":{"name":{"type":"string","description":"Transaction parameter name."},"value":{"type":"string","description":"Transaction parameter value."}}},"description":"Field containing transaction information."},"ipAddress":{"type":["string","null"],"description":"IP address information."},"sessionId":{"type":["string","null"],"description":"Session identification."},"macId":{"type":["string","null"],"description":"Random [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier) V4 generated when the Request Capture receives a session that does not contain the macID already set. This value is set to the cookie `VtexRCMacIdv7`. The cookie has 1 year of expiration."},"vtexFingerprint":{"type":["string","null"],"description":"VTEX fingerprint information."},"chargeback":{"type":["string","null"],"description":"Chargeback information."},"whiteSignature":{"type":["string","null"],"description":"White signature (anti-fraud list) information."},"owner":{"type":"string","description":"Responsible for transaction request."},"orderId":{"type":["string","null"],"description":"Order identitication."},"userAgent":{"type":["string","null"],"description":"HTTP client used in the transaction."},"acceptHeader":{"type":["string","null"],"description":"Type of content accepted in the transaction request header."},"antifraudTid":{"type":["string","null"],"description":"Anti-fraud transaction identification."},"antifraudResponse":{"type":["string","null"],"description":"Anti-fraud response information."},"antifraudReference":{"type":["string","null"],"description":"Anti-fraud reference information."},"antifraudAffiliationId":{"type":["string","null"],"description":"Anti-fraud affiliation identification."},"channel":{"type":"string","description":"Store where the transaction was initiated."},"salesChannel":{"type":"string","description":"Sales channel information."},"urn":{"type":["string","null"],"description":"[URN](https://en.wikipedia.org/wiki/Uniform_Resource_Name) information."},"softDescriptor":{"type":["string","null"],"description":"Custom field for a transaction that can be displayed on the customer's invoice."},"markedForRecurrence":{"type":"boolean","description":"Indicates whether the payment transaction should be recurring."},"buyer":{"type":["object","null"],"description":"Buyer information.","properties":{"firstName":{"type":"string","description":"Buyer first name."},"lastName":{"type":"string","description":"Buyer last name."},"documentType":{"type":"string","description":"Type of the document informed by the buyer."},"document":{"type":"string","description":"Document informed by the buyer."},"email":{"type":"string","description":"Buyer email address."},"address":{"type":"string","description":"Buyer address."},"phone":{"type":"string","description":"Buyer phone number."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This request is the first step to create a new transaction.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | PCI Gateway | Payment-Make Payments | **Process payments** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "46351F157C624CBA926359ADED377265",
+    "transactionId": "46351F157C624CBA926359ADED377265",
+    "referenceKey": "1234567",
+    "interactions": {
+      "href": "/api/pvt/transactions/46351F157C624CBA926359ADED377265/interactions"
+    },
+    "settlements": {
+      "href": "/api/pvt/transactions/46351F157C624CBA926359ADED377265/settlements"
+    },
+    "payments": {
+      "href": "/api/pvt/transactions/46351F157C624CBA926359ADED377265/payments"
+    },
+    "refunds": {
+      "href": "/api/pvt/transactions/46351F157C624CBA926359ADED377265/refunds"
+    },
+    "cancellations": {
+      "href": "/api/pvt/transactions/46351F157C624CBA926359ADED377265/cancellations"
+    },
+    "capabilities": {
+      "href": "/api/pvt/transactions/46351F157C624CBA926359ADED377265/capabilities"
+    },
+    "timeoutStatus": 0,
+    "totalRefunds": 0,
+    "status": "Started",
+    "value": 20000,
+    "receiverUri": "https://cosmetics2.vtexpayments.com.br/split/46351F157C624CBA926359ADED377265/payments",
+    "startDate": "2023-12-15T19:53:59.4307279Z",
+    "authorizationToken": null,
+    "authorizationDate": null,
+    "commitmentToken": null,
+    "commitmentDate": null,
+    "refundingToken": null,
+    "refundingDate": null,
+    "cancelationToken": null,
+    "cancelationDate": null,
+    "fields": [
+      {
+        "name": "owner",
+        "value": "teste_1@test.com"
+      },
+      {
+        "name": "lastTransitionDate",
+        "value": "12/15/2023 7:53:59 PM"
+      },
+      {
+        "name": "TotalTimeSpentInTransitionsUntilThisTransition",
+        "value": "0"
+      },
+      {
+        "name": "channel",
+        "value": "cosmetics2"
+      },
+      {
+        "name": "salesChannel",
+        "value": "1"
+      }
+    ],
+    "ipAddress": null,
+    "sessionId": null,
+    "macId": null,
+    "vtexFingerprint": null,
+    "chargeback": null,
+    "whiteSignature": null,
+    "owner": "teste_1@test.com",
+    "orderId": null,
+    "userAgent": null,
+    "acceptHeader": null,
+    "antifraudTid": null,
+    "antifraudResponse": null,
+    "antifraudReference": null,
+    "antifraudAffiliationId": null,
+    "channel": "cosmetics2",
+    "salesChannel": "1",
+    "urn": null,
+    "softDescriptor": null,
+    "markedForRecurrence": false,
+    "buyer": null
+  }
+  ```

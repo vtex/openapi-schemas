@@ -1,0 +1,201 @@
+info:
+  name: New Order Integration
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/order-integration/orders?affiliateId=MKP"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: apiexamples
+      type: query
+      disabled: true
+    - name: affiliateId
+      value: MKP
+      type: query
+    - name: accountName
+      value: apiexamples
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "marketplaceOrderId": "123",
+        "connectorName": "SkyHub",
+        "connectorEndpoint": "https://connector-endpoint.com/api/vtex",
+        "marketplaceOrderStatus": "new",
+        "marketplacePaymentValue": 3025,
+        "marketplaceInterestValue": 0,
+        "priceDivergenceAllowanceRate": 0.05,
+        "allowFranchises": false,
+        "pickupAccountName": "testAccount",
+        "items": [
+          {
+            "id": "1",
+            "price": 975,
+            "quantity": 1
+          }
+        ],
+        "clientProfileData": {
+          "email": "email@email.com.br",
+          "firstName": "John",
+          "lastName": "Doe",
+          "phone": "99999999999",
+          "document": "99999999999",
+          "corporateDocument": null,
+          "corporatePhone": null,
+          "corporateName": null,
+          "tradeName": null,
+          "stateInscription": null
+        },
+        "shippingData": {
+          "logisticsInfo": [
+            {
+              "price": 2050,
+              "selectedDeliveryChannel": "delivery",
+              "selectedSla": "Express",
+              "lockTTL": "1d",
+              "shippingEstimate": "2d",
+              "deliveryIds": [
+                {
+                  "warehouseId": "AR1"
+                }
+              ]
+            }
+          ],
+          "selectedAddresses": [
+            {
+              "addressType": "Residential",
+              "addressId": "1",
+              "receiverName": "John Doe",
+              "postalCode": "81020-235",
+              "city": "Curitiba",
+              "state": "PR",
+              "country": "BRA",
+              "street": "Rua Eduardo Carlos Pereira",
+              "number": "4125",
+              "neighborhood": "Portão",
+              "complement": "101",
+              "geoCoordinates": {
+                "latitude": -29.5,
+                "longitude": -45.8
+              }
+            }
+          ],
+          "isFob": true,
+          "isMarketplaceFulfillment": true,
+          "trackingHints": [
+            {
+              "trackingId": "BR123456789",
+              "courierName": "Correios",
+              "trackingUrl": "https://tracking.example.com/BR123456789",
+              "trackingLabel": "Correios Express"
+            }
+          ]
+        },
+        "invoiceData": {
+          "userPaymentInfo": {
+            "paymentMethods": [
+              "creditCardPaymentGroup"
+            ]
+          }
+        },
+        "customData": {
+          "customApps": [
+            {
+              "id": "marketplace-integration",
+              "major": 1,
+              "fields": {
+                "marketplacePaymentMethod": "credit card"
+              }
+            }
+          ]
+        },
+        "taxData": [
+          {
+            "skuId": "1",
+            "value": 150
+          }
+        ],
+        "openTextField": "Additional order information."
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/order-integration/orders - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/order-integration/orders - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/order-integration/orders - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/order-integration/orders - Schema is valid", function () {
+          const schema = {"required":["marketplaceOrderId","accountName","code","flow","success","operationId","errors","fields","message"],"type":"object","description":"Object for delivery by seller integration.","properties":{"marketplaceOrderId":{"type":["string","null"],"description":"String that indicates the order's ID in the marketplace."},"accountName":{"type":"string","description":"String that indicates which account made the request."},"code":{"type":"string","description":"String with a internal Channel Order API code that classifies the response. The possible values returned in this field are described in the [Response Codes]() section."},"flow":{"type":"string","description":"String containing the name of the flow responsible for the response. This field can contain the following values: \n\n`PlaceOrder`: when integrating new orders \n\n`ApproveOrder`: when approving existing orders \n\n`Unknown`: when we’re not able to identify the flow."},"success":{"type":"boolean","description":"Boolean that indicates if the response is successful or not."},"operationId":{"type":["string","null"],"description":"String GUID that identifies the operation in our service. This field can be used to help us analyze unexpected errors or behaviors."},"errors":{"type":["array","null"],"description":"List with errors related to the response, if there's any.","items":{"type":"object","description":"Information about an item.","required":["source","code","description"],"properties":{"source":{"type":"string","description":"Includes the following fields pointing out the context of the error: \n\n`Fulfillment` \n\n`Checkout` \n\n`Order Integration`."},"code":{"type":"string","description":"String containing the code returned by the source. Example value: If the source is `Fulfillment`, the code can be FMT005 to indicate that the item(s) in the order are not available.","enum":["FMT001","FMT002","FMT003","FMT004","FMT005"]},"description":{"type":"string","description":"String containing the error message and description returned by the source."}}}},"fields":{"type":["object","null"],"description":"Structure with important fields for the connector. This structure is only returned if the response is successful.","required":["mainOrderId"],"properties":{"mainOrderId":{"type":"string","description":"String with the order’s ID inside the main seller account in VTEX."},"franchiseOrderId":{"type":"string","description":"String with the order's ID inside the franchise seller account in VTEX. Only returned if the order was integrated using the [Multilevel Omnichannel Inventory](https://help.vtex.com/en/tutorial/multilevel-omnichannel-inventory--7M1xyCZWUyCB7PcjNtOyw4) feature, that is: \n\n- `allowFranchises` field set to `true` when integrating the order \r\n- SLA chosen for the order is from a franchise account."}}},"message":{"type":"string","description":"String with a message explaining the code returned in the response."}},"example":{"marketplaceOrderId":null,"accountName":"grocery1","code":"SOI003","flow":"PlaceOrder","success":true,"operationId":null,"errors":null,"fields":{"mainOrderId":"MKP-123456789","franchiseOrderId":"432874921387409182347"},"message":"Order successfully enqueued"}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  API to integrate an external channel's order into the VTEX plataform.
+
+  This process is asynchronous and a notification with the order's integration results will be sent to the endpoint specified in the **connectorEndpoint** field in [App Template](https://developers.vtex.com/vtex-rest-api/docs/external-marketplace-integration-app-template), if the connector uses our App template. The field **connectorName** is also optional for connectors that use our App Template and authenticate using the app's auth cookie. If the account is not informed in the URL host, it should also be defined as a query string parameter in the route: `an={account}`. 
+
+  For a detailed explanation of the steps required to develop a custom connector to become an external marketplace for VTEX sellers, check out our complete [External Marketplace Integration Guide](https://developers.vtex.com/vtex-rest-api/docs/external-marketplace-integration-guide).
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `accountName` | path | (Required) Parameter should indicate the name of the VTEX account where the order is being integrated or updated, meaning the seller responsible for the order. |
+  | `an` | query | Parameter should indicate the name of the VTEX account where the order is being integrated or updated, meaning the seller responsible for the order. |
+  | `affiliateId` | query | (Required) ID identifying the marketplace where the order originates. This ID is configured in the seller's VTEX account, and should be informed to the marketplace. |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "marketplaceOrderId": null,
+    "accountName": "grocery1",
+    "code": "SOI003",
+    "flow": "PlaceOrder",
+    "success": true,
+    "operationId": null,
+    "errors": null,
+    "fields": null,
+    "message": "Order successfully enqueued"
+  }
+  ```

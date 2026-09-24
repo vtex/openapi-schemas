@@ -1,0 +1,118 @@
+info:
+  name: Import prices
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/price-importer/pvt/import/:importType"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: dolore Excepteur pariatur
+      type: query
+      disabled: true
+    - name: output
+      value: none
+      type: query
+      disabled: true
+    - name: importType
+      value: fixed-prices
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "contentType": "text/csv",
+        "contentLengthBytes": 524288000
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/price-importer/pvt/import/:importType - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/price-importer/pvt/import/:importType - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/price-importer/pvt/import/:importType - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/price-importer/pvt/import/:importType - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"batchId":{"type":"string","format":"uuid","description":"Unique identifier for the batch job."},"status":{"type":"string","description":"Initial status of the batch job. Returns `AWAITING_UPLOAD` indicating the batch was created and is waiting for the file upload."},"upload":{"type":"object","description":"Pre-signed upload details used to upload the CSV file directly to storage.","properties":{"method":{"type":"string","description":"HTTP method to use for the upload. Always `PUT`."},"url":{"type":"string","format":"uri","description":"Pre-signed URL for the CSV file upload."},"headers":{"type":"object","description":"Required headers for the upload request."},"expiresAt":{"type":"string","format":"date-time","description":"URL expiration timestamp in ISO 8601 format."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Starts an asynchronous batch pricing import job. Send a request specifying the import type (`base-prices` for base prices or `fixed-prices` for fixed prices) and the file metadata. The API returns a pre-signed upload URL and a unique batch ID to track the import.
+
+  After receiving the response, upload the CSV file directly to the pre-signed URL returned in `upload.url` using the `PUT` method. This pre-signed URL is mandatory for the upload step. Do not replace it with the API base URL or any other endpoint.
+
+  The upload request must include the header `Content-Type: text/csv`, along with any additional headers provided in the `upload.headers` object. The maximum file size is 500 MB.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Pricing | Price List | **Modify prices** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `importType` | path | (Required) Type of price import. Use `base-prices` for base prices or `fixed-prices` for fixed prices. |
+  | `an` | query | Tenant account identifier. Can be sent as a query string or identified through the host URL. |
+  | `output` | query | Output notification method for when the import job finishes. The target email or webhook URL is configured separately. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "batchId": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "AWAITING_UPLOAD",
+    "upload": {
+      "method": "PUT",
+      "url": "https://pricing-bucket.s3.amazonaws.com/imports/550e8400.csv?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=600",
+      "headers": {
+        "Content-Type": "text/csv"
+      },
+      "expiresAt": "2026-01-12T20:10:00Z"
+    }
+  }
+  ```

@@ -1,0 +1,84 @@
+info:
+  name: Asynchronous login
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/auth"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "username": "clientUserName",
+        "password": "32gv34fs"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/auth - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/auth - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/auth - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/auth - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"authenticated":{"type":"boolean","description":"If the authentication was successful (`true`) or not (`false`)."},"created":{"type":"string","description":"Creation date in [UTC time format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"expiration":{"type":"string","description":"Expiration date in [UTC time format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"accessToken":{"type":"string","description":"Acess token."},"message":{"type":"string","description":"Authentication message."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint permits the user to acquire the mandatory authentication to access the [VTEX Tracking](https://help.vtex.com/en/tutorial/vtex-tracking-overview--1uDRquVudbPuoK05MtbZGh) endpoints. 
+  > There is a single version of VTEX Tracking API, so it is no longer necessary to specify the version on the URL, as explained in this [release note](https://developers.vtex.com/updates/release-notes/vtex-tracking-api-changes-in-all-paths). The previous routes were not deprecated and can still be used, and if there is a breaking change, it will be informed.
+
+  ## Permissions
+
+  This endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "authenticated": true,
+    "created": "2024-04-11T09:14:41.3695207Z",
+    "expiration": "2024-05-11T09:14:41.3695207Z",
+    "accessToken": "32985745",
+    "message": "Authenticated"
+  }
+  ```

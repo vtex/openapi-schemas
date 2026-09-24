@@ -1,0 +1,91 @@
+info:
+  name: Create new API Key
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/vlm/appkeys"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "label": "my new API Key"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/vlm/appkeys - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/vlm/appkeys - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/vlm/appkeys - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/vlm/appkeys - Schema is valid", function () {
+          const schema = {"description":"Response body of sucessful call to /api/vlm/appkeys.","required":["id","appKey","appToken","label","createdIn","isActive"],"type":"object","properties":{"id":{"description":"ID of the API key.","type":"string"},"appKey":{"description":"AppKey.","type":"string"},"appToken":{"description":"AppToken. For security reasons, it should always be null.","type":["string","null"]},"label":{"description":"Label of the API key.","type":"string"},"createdIn":{"description":"Creation date of the API key.","type":"string","format":"date-time"},"isActive":{"description":"Defines if the API key is active (`true`) or not (`false`).","type":"boolean"}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates a new pair of `API Key` and `appToken`. 
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | License Manager | Services access control | **Save user** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | User Administrator - RESTRICTED | Save user |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "a2555e95-9db8-48be-94f8-2a28577c0b4a",
+    "appKey": "vtexappkey-myaccount-ORYNWX",
+    "appToken": "WNVUJKYFKJFLTPXHQGAZDHPBHSDQVJJWSFZUBOGCKPEXAIFHTPANKJTOXUKRIIJAAJSOPCFBAXOODRABMUXFJVLJLKWGEOUCFDXRPRRQKYNNUFLGTIEOKERFXJCFFYXL",
+    "label": "my new API Key",
+    "createdIn": "2018-07-04T14:09:08.2718405Z",
+    "isActive": true
+  }
+  ```

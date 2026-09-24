@@ -1,0 +1,93 @@
+info:
+  name: List all gift card transactions
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/giftcards/:giftCardId/transactions"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: giftCardId
+      value: "2"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/giftcards/:giftCardId/transactions - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/giftcards/:giftCardId/transactions - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/giftcards/:giftCardId/transactions - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/giftcards/:giftCardId/transactions - Schema is valid", function () {
+          const schema = {"type":"array","items":{"description":"Gift card transaction response information.","required":["cardId","id","_self"],"type":"object","properties":{"cardId":{"type":"string","description":"Gift card identification."},"id":{"type":"string","description":"Transaction identification."},"_self":{"required":["href"],"type":"object","description":"It is an object that carries an auto reference from the provider at the Hub (on its API).","properties":{"href":{"type":"string","description":"This is one of the fields inside the `_self`. It is exactly the route that identifies this provider on the Hub's API, but it is not the same thing as the `serviceURL`."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns the IDs of all transactions performed in a gift card provider for a specific gift card.
+
+  > ℹ️ This request is made from VTEX to the gift card payment provider.
+
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `giftCardId` | path | (Required) Gift card identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "cardId": "3b1abc17-988e-4a14-8b7f-31fc6a5b955c_24",
+      "id": "68347b311ce5407c90fa5316975d047a",
+      "_self": {
+        "href": "gatewayqa/giftcards/3b1abc17-988e-4a14-8b7f-31fc6a5b955c_24/transactions/68347b311ce5407c90fa5316975d047a"
+      }
+    },
+    {
+      "cardId": "3b1abc17-988e-4a14-8b7f-31fc6a5b955c_24",
+      "id": "e122ebd4501a4b3b93640b7444ac425d",
+      "_self": {
+        "href": "gatewayqa/giftcards/3b1abc17-988e-4a14-8b7f-31fc6a5b955c_24/transactions/e122ebd4501a4b3b93640b7444ac425d"
+      }
+    }
+  ]
+  ```

@@ -1,0 +1,102 @@
+info:
+  name: Seller opt-in or opt-out
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/rnb/pvt/calculatorconfiguration/:promotionId/seller-opt?an=mystore"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+    - name: if-Match
+      value: 2025-05-27T14:05:41.7706903Z
+  params:
+    - name: an
+      value: mystore
+      type: query
+    - name: promotionId
+      value: d8a10358-cbb7-42ae-b020-91e104d997e7
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "sellerIds": [
+          "seller-id-1",
+          "seller-id-2"
+        ],
+        "operation": "OptIn"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/rnb/pvt/calculatorconfiguration/:promotionId/seller-opt - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/rnb/pvt/calculatorconfiguration/:promotionId/seller-opt - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/rnb/pvt/calculatorconfiguration/:promotionId/seller-opt - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/rnb/pvt/calculatorconfiguration/:promotionId/seller-opt - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"lastModified":{"type":"string","description":"Timestamp of the promotion's last modification (UTC)."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Adds or removes one or more sellers to or from a specified promotion.
+
+  >⚠️ When the first seller opts in to an inactive promotion, it's activated, and when the last seller opts out, it's deactivated.
+
+
+  ## Permissions
+
+  Any user or [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `401` error. These are the applicable resources for this endpoint
+
+  | **Product**             | **Category**                  | **Resource**                          |
+  | ----------------------- | ----------------------------- | ------------------------------------- |
+  | Rates and Benefits      | Manage external seller promos | **External_Seller_Promotions**        |
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `promotionId` | path | (Required) The ID of the promotion. |
+  | `an` | query | (Required) The VTEX account name that owns the promotion. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+  | `if-Match` | header | (Required) Must match the current `lastModified` value of the promotion. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "lastModified": "2025-05-27T14:05:41.7706903Z"
+  }
+  ```

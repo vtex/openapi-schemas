@@ -1,0 +1,315 @@
+info:
+  name: Order placement
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/pvt/orders"
+  headers:
+    - name: content-length
+      value: "2183"
+    - name: authorization
+      value: VTEX key="appKey" token="appToken"
+    - name: Accept
+      value: application/json
+    - name: accept-enconding
+      value: gzip, deflate
+    - name: x-vtex-operation-id
+      value: 8032114b-63e9-4e64-b30c-f7afcf676d7a
+    - name: x-forwarded-proto
+      value: https
+    - name: x-forwarded-for
+      value: 179.35.30.186, 130.176.35.67, 172.16.247.49
+    - name: x-vtex-cache-client-bypass
+      value: "1"
+    - name: Content-Type
+      value: application/json
+    - name: traceparent
+      value: 00-083c0ca18bc8d94183f333809a70cd64-bf5e9a641e230540-00
+  params:
+    - name: fulfillmentEndpoint
+      value: marketplaceexample.externalseller.com
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "marketplaceOrderId": "1138342255777-01",
+        "marketplaceServicesEndpoint": "https://marketplaceservicesendpoint.myvtex.com/",
+        "marketplacePaymentValue": 2499,
+        "items": [
+          {
+            "id": "123456789abc",
+            "quantity": 1,
+            "seller": "seller-example",
+            "commission": 0,
+            "freightCommission": 0,
+            "price": 2499,
+            "bundleItems": [
+              {
+                "id": 12,
+                "quantity": 2
+              },
+              {
+                "id": 5,
+                "quantity": 1
+              }
+            ],
+            "itemsAttachment": [
+              {
+                "id": "attachment-1",
+                "name": "Product Manual",
+                "url": "https://example.com/manual.pdf"
+              }
+            ],
+            "attachments": [
+              {
+                "id": "attachment-2",
+                "name": "Product Image",
+                "url": "https://example.com/image.jpg"
+              }
+            ],
+            "priceTags": [
+              {
+                "identifier": "1234abc-5678b-1234c",
+                "isPercentual": false,
+                "name": "discount@name-1234abc-5678b-1234c",
+                "rawValue": 12,
+                "value": 1200
+              }
+            ],
+            "measurementUnit": "g",
+            "unitMultiplier": 1,
+            "isGift": false
+          }
+        ],
+        "paymentData": null,
+        "clientProfileData": {
+          "email": "customer@examplemail.com",
+          "firstName": "first-name",
+          "lastName": "last-name",
+          "documentType": "cpf",
+          "document": "123456789",
+          "phone": "+55110988887777",
+          "corporateName": null,
+          "tradeName": null,
+          "corporateDocument": null,
+          "stateInscription": null,
+          "corporatePhone": null,
+          "isCorporate": false
+        },
+        "shippingData": {
+          "address": {
+            "addressType": "residential",
+            "receiverName": "receiver-name",
+            "addressId": "Home",
+            "postalCode": "12345-000",
+            "city": "Rio de Janeiro",
+            "state": "Rio de Janeiro",
+            "country": "BRA",
+            "street": "Praia de Botafogo",
+            "number": "300",
+            "neighborhood": "Botafogo",
+            "complement": "3rd floor",
+            "reference": "Grey building",
+            "geoCoordinates": [
+              "49.334934",
+              "25.401705"
+            ]
+          },
+          "logisticsInfo": [
+            {
+              "itemIndex": 0,
+              "selectedSla": "Express",
+              "lockTTL": "8d",
+              "shippingEstimate": "7d",
+              "price": 1099,
+              "deliveryWindow": {
+                "startDateUtc": "2016-04-20T08:00:00+00:00",
+                "endDateUtc": "2016-04-20T12:00:00+00:00",
+                "listPrice": 10
+              }
+            }
+          ],
+          "updateStatus": "updated"
+        },
+        "marketingData": {
+          "utmSource": "Facebook",
+          "utmMedium": "CPC",
+          "utmCampaign": "Black friday",
+          "utmiPage": "utmi_page-example",
+          "utmiPart": "utmi_part-exmaple",
+          "utmiCampaign": "utmi_campaign-exmaple"
+        },
+        "openTextField": "open-text-example"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/pvt/orders - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/pvt/orders - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/pvt/orders - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/pvt/orders - Schema is valid", function () {
+          const schema = {"description":"Expected response from the Order Placement endpoint.","type":"object","properties":{"marketplaceOrderId":{"description":"Number of the order in the marketplace.","type":"string"},"orderId":{"description":"Order number.","type":"string"},"followUpEmail":{"description":"Email for contact with the store (seller).","type":"string"},"items":{"description":"List of order items.","type":"array","items":{"description":"Details of an order item.","type":"object","properties":{"id":{"type":"string","description":"SKU ID."},"quantity":{"type":"integer","description":"Quantity of the item."},"seller":{"type":"string","description":"ID of the seller registered in VTEX."},"commission":{"type":"integer","description":"Comission."},"freightCommission":{"type":"integer","description":"Freight comission."},"price":{"type":"number","description":"SKU price. The last two digits are the cents. For example, $24.99 is represented 2499."},"bundleItems":{"type":"array","description":"Information on services sold along with the SKU. Example: a gift package.","items":{"description":"An item included in a bundle, representing a service or product.","type":"object","properties":{"type":{"type":"string","description":"Service type."},"id":{"type":"integer","description":"Service identifier."},"name":{"type":"string","description":"Service name."},"price":{"type":"integer","description":"Service price. The last two digits are the cents."}}}},"itemsAttachment":{"type":"array","description":"Attachments sold with the SKU.","items":{"type":"object","description":"An attachment associated with an item, containing additional information or customization requested by the customer.","properties":{"name":{"type":"string","description":"Attachment name."},"content":{"type":"string","description":"Content referring to the customization requested by the customer."}}}},"attachments":{"type":"array","description":"Array containing information on attachments.","items":{"type":"object","description":"Attachment information.","properties":{"id":{"type":"string","description":"Unique identifier of the attachment."},"name":{"type":"string","description":"Name of the attachment."},"url":{"type":"string","description":"URL of the attachment."}}}},"priceTags":{"type":"array","description":"Array of price tags. Each one modifies the price in some way, like discounts or rates that apply to the item in the context of the order.","items":{"description":"Details of a price tag affecting the item's price.","type":"object","properties":{"identifier":{"type":"string","description":"Price tag identifier."},"isPercentual":{"type":"boolean","description":"`true` if price tag value is applied through a percentage."},"name":{"type":"string","description":"Price tag name."},"rawValue":{"type":"integer","description":"Price tag value."},"value":{"type":"integer","description":"Price tag raw value."}}}},"measurementUnit":{"type":"string","description":"SKU measurement unit."},"unitMultiplier":{"type":"integer","description":"SKU unit multiplier."},"isGift":{"type":"boolean","description":"`true` if the item is a gift."}}}},"clientProfileData":{"description":"Customer's data.","type":"object","properties":{"email":{"type":"string","description":"Customer's email address."},"firstName":{"type":"string","description":"Customer's first name."},"lastName":{"type":"string","description":"Customer's last name."},"documentType":{"type":"string","description":"Type of the document informed by the customer."},"document":{"type":"string","description":"Document number informed by the customer."},"phone":{"type":"string","description":"Customer's phone number."},"corporateName":{"type":["string","null"],"description":"Company name, if the customer is a legal entity."},"tradeName":{"type":["string","null"],"description":"Trade name, if the customer is a legal entity."},"corporateDocument":{"type":["string","null"],"description":"Corporate document, if the customer is a legal entity."},"stateInscription":{"type":["string","null"],"description":"State inscription, if the customer is a legal entity."},"corporatePhone":{"type":["string","null"],"description":"Corporate phone number, if the customer is a legal entity."},"isCorporate":{"type":["boolean","null"],"description":"`true` if the customer is a legal entity.","default":false}}},"shippingData":{"description":"Shipping information.","type":"object","properties":{"address":{"type":"object","description":"Shipping address.","required":["addressType","receiverName","postalCode","city","state","country","street","neighborhood","number"],"properties":{"addressType":{"type":"string","description":"Type of address. For example, `Residential` or `Pickup`, among others."},"receiverName":{"type":"string","description":"Name of the person who is going to receive the order."},"addressId":{"type":"string","description":"Address ID."},"postalCode":{"type":"string","description":"Postal Code."},"city":{"type":"string","description":"City of the shipping address."},"state":{"type":"string","description":"State of the shipping address."},"country":{"type":"string","description":"Three letter ISO code of the country of the shipping address."},"street":{"type":"string","description":"Street of the shipping address."},"number":{"type":"string","description":"Number of the building, house or apartment in the shipping address."},"neighborhood":{"type":"string","description":"Neighborhood of the shipping address."},"complement":{"type":"string","description":"Complement to the shipping address in case it applies."},"reference":{"type":"string","description":"Complement that might help locate the shipping address more precisely in case of delivery."},"geoCoordinates":{"type":"array","description":"Geographic coordinates of the delivery address. This may be used instead of the postalCode, in case the marketplace is configured to accept geolocation. Example of value: `[-22.9443504,-43.1825635]`.","items":{"description":"Coordinate value.","type":"string"}}}},"logisticsInfo":{"type":"array","description":"Array of objects containing logistics information of each item.","items":{"description":"Logistics information for a specific item.","type":"object","required":["itemIndex","selectedSla","price"],"properties":{"itemIndex":{"type":"integer","description":"Index of the item in the `items` array, starting from 0."},"selectedSla":{"type":"string","description":"Selected shipping option."},"lockTTL":{"type":"string","description":"Logistics reservation waiting time."},"shippingEstimate":{"type":"string","description":"Estimated time until delivery for the item."},"price":{"type":"integer","description":"Shipping price for the item. Does not account for the whole order's shipping price."},"deliveryWindow":{"type":"object","description":"Scheduled delivery window information, in case it applies to the item.","properties":{"startDateUtc":{"type":"string","description":"Scheduled delivery window start date in UTC."},"endDateUtc":{"type":"string","description":"Scheduled delivery window end date in UTC."},"listPrice":{"type":"number","description":"Scheduled delivery window list price."}}}}}}}},"paymentData":{"type":["object","null"],"description":"In other contexts, this field tipically holds an object with payment information. However, since the payment is processed by the marketplace, it will be sent to the seller as `null` in this context."},"customData":{"description":"Custom data for the order.","type":"object"},"allowMultipleDeliveries":{"description":"Flag for permission of multiple deliveries.","type":"boolean"}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This request is sent by VTEX to the external seller once the customer finishes their checkout, to let the seller know there is a newly placed order. It does that by calling the **Order Placement** endpoint, which needs to be implemented by the seller.
+
+  The marketplace will send information such as the items contained in the cart, the client’s profile data, the shipping data, and the payment data. With all that, the seller will be able to create the order in their store.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | VTEX Fulfilment | Fulfilment Resources | **Place Orders** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Create orders | Place Orders |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `fulfillmentEndpoint` | path | (Required) This is the fulfillment endpoint registered for each specific external seller in the **seller management** section of VTEX's admin panel. |
+  | `content-length` | header | (Required) Length of the request body. |
+  | `authorization` | header | (Required) Indicates authorization. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+  | `accept-enconding` | header | (Required) Indicates the types of response enconding the client can understand. |
+  | `x-vtex-operation-id` | header | (Required) VTEX operation ID. |
+  | `x-forwarded-proto` | header | (Required) Determines the protocol used by the client in the request. |
+  | `x-forwarded-for` | header | (Required) Identifies the originating IP address of the HTTP client. |
+  | `x-vtex-cache-client-bypass` | header | (Required) VTEX cache client bypass. |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `traceparent` | header | (Required) Identifies the incoming request in a tracing system. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "marketplaceOrderId": "959311095",
+    "orderId": "7890",
+    "followUpEmail": "seller@example.com",
+    "items": [
+      {
+        "id": "2002495",
+        "quantity": 1,
+        "seller": "1",
+        "commission": 0,
+        "freightCommission": 0,
+        "price": 2499,
+        "bundleItems": [],
+        "itemAttachment": {
+          "name": null,
+          "content": {}
+        },
+        "attachments": [],
+        "priceTags": [],
+        "measurementUnit": "g",
+        "unitMultiplier": 1,
+        "isGift": false
+      }
+    ],
+    "clientProfileData": {
+      "email": "customer@examplemail.com.br",
+      "firstName": "John",
+      "lastName": "Smith",
+      "documentType": "taxpayer registration number",
+      "document": "33333333333",
+      "phone": "+55110988887777",
+      "corporateName": null,
+      "tradeName": null,
+      "corporateDocument": null,
+      "stateInscription": null,
+      "corporatePhone": null,
+      "isCorporate": false,
+      "userProfileId": null
+    },
+    "shippingData": {
+      "address": {
+        "addressType": "residencial",
+        "receiverName": "John Smith",
+        "addressId": "Home",
+        "postalCode": "12345-000",
+        "city": "Rio de Janeiro",
+        "state": "RJ",
+        "country": "BRA",
+        "street": "Praia de Botafogo",
+        "number": "300",
+        "neighborhood": "Botafogo",
+        "complement": "3rd floor",
+        "reference": "Grey building",
+        "geoCoordinates": [
+          "49.334934",
+          "25.401705"
+        ]
+      },
+      "logisticsInfo": [
+        {
+          "itemIndex": 0,
+          "selectedSla": "Express",
+          "lockTTL": "8d",
+          "shippingEstimate": "7d",
+          "price": 1099,
+          "deliveryWindow": {
+            "startDateUtc": "2016-04-20T08:00:00+00:00",
+            "endDateUtc": "2016-04-20T12:00:00+00:00",
+            "listPrice": 10
+          }
+        }
+      ]
+    },
+    "customData": {
+      "openTextField": null,
+      "marketingData": {
+        "utmSource": "buscape",
+        "utmMedium": "",
+        "utmCampaign": "freeshipping",
+        "utmiPage": "_",
+        "utmiPart": "BuscaFullText",
+        "utmiCampaign": "artscase for iphone 5"
+      }
+    },
+    "paymentData": null,
+    "allowMultipleDeliveries": true
+  }
+  ```

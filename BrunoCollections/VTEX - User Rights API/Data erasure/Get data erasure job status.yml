@@ -1,0 +1,82 @@
+info:
+  name: Get data erasure job status
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/user-rights/forget/jobs/:jobId"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: jobId
+      value: urn:uuid:a68f086c-8cbe-29bd-3135-85464b16de20
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/user-rights/forget/jobs/:jobId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/user-rights/forget/jobs/:jobId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/user-rights/forget/jobs/:jobId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/user-rights/forget/jobs/:jobId - Schema is valid", function () {
+          const schema = {"type":"object","required":["status","message"],"properties":{"status":{"type":"string","description":"Current state of the data erasure job. Possible values: `InProgress`, `Success`, or `Failed`.","enum":["InProgress","Success","Failed"]},"message":{"type":"string","description":"Human-readable description of the current job state."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  > ⚠️ This endpoint is in **closed beta** and currently available for selected accounts only.
+
+  Retrieves the current status of a data erasure job created via the [Create data erasure job](https://developers.vtex.com/docs/api-reference/user-rights-api#post-/api/user-rights/forget/jobs) endpoint.
+
+  Possible `status` values:
+
+  - `InProgress`: The deletion is still being processed. Keep polling.
+  - `Success`: The user's data has been deleted.
+  - `Failed`: The deletion could not be completed. See the `message` field for details.
+
+  >ℹ️ We recommend polling this endpoint with a frequency no higher than every 30 seconds.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `jobId` | path | (Required) Unique identifier of the data erasure job, returned by the [Create data erasure job](https://developers.vtex.com/docs/api-reference/user-rights-api#post-/api/user-rights/forget/jobs) endpoint. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "status": "InProgress",
+    "message": "Processing deletion request."
+  }
+  ```

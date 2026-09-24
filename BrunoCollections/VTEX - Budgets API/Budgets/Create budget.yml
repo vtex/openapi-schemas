@@ -1,0 +1,213 @@
+info:
+  name: Create budget
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/budgets/:contextType/:contextId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: contextType
+      value: UNIT
+      type: path
+    - name: contextId
+      value: 093f29ac-7a1b-4d6b-a79a-48f89cf73d14
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Grocery Store",
+        "description": "Bermudian Dollar (customarily known as Bermuda Dollar)",
+        "amount": 956,
+        "cycleConfiguration": {
+          "startDate": "2025-04-01T00:00:00.0000000Z",
+          "endDate": "2025-04-08T00:00:00.0000000Z",
+          "autoResetOnPeriodEnd": true,
+          "carryOverBalance": true
+        },
+        "notificationSettings": {
+          "enable": false,
+          "thresholds": [
+            {
+              "type": "PERCENT",
+              "Value": 99
+            }
+          ],
+          "recipients": [
+            {
+              "type": "Email",
+              "identifier": "user1@email.com"
+            }
+          ]
+        },
+        "allocations": [
+          {
+            "linkedEntity": {
+              "id": "4de8235f-ff2d-451b-bfcf-9873aeb9feee",
+              "type": "User"
+            },
+            "amount": 639,
+            "referenceId": "8f6b3712-4c05-4ce5-8057-63fd0d69a587",
+            "notificationSettings": {
+              "enable": false,
+              "thresholds": [
+                {
+                  "type": "PERCENT",
+                  "Value": 99
+                }
+              ],
+              "recipients": [
+                {
+                  "type": "Email",
+                  "identifier": "user1@email.com"
+                }
+              ]
+            }
+          }
+        ]
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/budgets/:contextType/:contextId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/budgets/:contextType/:contextId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/budgets/:contextType/:contextId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/budgets/:contextType/:contextId - Schema is valid", function () {
+          const schema = {"type":"object","description":"Response containing budget details.","properties":{"id":{"type":"string","description":"Identifier of the budget."},"name":{"type":"string","description":"Name of the budget."},"description":{"type":"string","description":"Description of the budget."},"balance":{"type":"object","description":"Budget balance information.","properties":{"amount":{"type":"number","description":"Total amount in the budget."},"balanceAdjustment":{"type":"number","description":"Amount already utilized."},"remaining":{"type":"number","description":"Remaining budget."}}},"cycleConfiguration":{"type":"object","description":"Configuration for budget cycle in response.","properties":{"startDate":{"type":"string","format":"date-time","description":"Start date of the budget cycle (ISO format: YYYY-MM-DDThh:mm:ssZ)."},"endDate":{"type":"string","format":"date-time","description":"End date of the budget cycle (ISO format: YYYY-MM-DDThh:mm:ssZ)."},"autoResetOnPeriodEnd":{"type":"boolean","description":"Condition if the period will auto reset when ended."},"carryOverBalance":{"type":"boolean","description":"Condition if the remain balance will be transferred to the next cycle."},"nextRenewal":{"type":"string","format":"date-time","description":"Next cycle renewal date (format: YYYY-MM-DDThh:mm:ssZ)."}}},"notificationSettings":{"type":"object","description":"Thresholds that trigger a notification based on usage. Applies to both Budgets and Allocations.","properties":{"enable":{"type":"boolean","description":"Enables notifications."},"thresholds":{"type":"array","description":"Array of threshold configurations.","items":{"type":"object","description":"Threshold configuration.","properties":{"type":{"type":"string","description":"Defines whether the threshold is based on percentage of usage or a fixed amount.","enum":["PERCENT","AMOUNT"]},"Value":{"type":"number","description":"The value of the threshold. For `\"PERCENT\"`, 100 means fully used (0 available); values above 100 indicate overuse."}}}},"recipients":{"type":"array","description":"List of recipients to notify.","items":{"type":"object","description":"Recipient information.","properties":{"type":{"type":"string","description":"Type of notification."},"identifier":{"type":"string","format":"email","description":"Email identifier to send notifications."}}}}}},"status":{"type":"string","description":"Current status of the budget (e.g., `ACTIVE`, `INACTIVE`).","enum":["ACTIVE","INACTIVE"]},"contextType":{"type":"string","description":"Defines the context type associated with the budget which must be `UNIT` in B2B context."},"contextId":{"type":"string","description":"Identifier of the context type."},"allocations":{"type":"array","description":"Optional list of initial allocations to create with the budget.","items":{"type":"object","description":"Allocation object.","properties":{"id":{"type":"string","description":"Unique identifier of the allocation."},"budgetId":{"type":"string","description":"Identifier of the associated budget."},"linkedEntity":{"type":"object","description":"Entity to which the allocation is linked.","properties":{"id":{"type":"string","description":"Identifier of the entity linked to the allocation. If `type` is `User` or `Address`, this should be the identifier of the user or address, respectively. If `type` is an Accounting Field ([Custom Field](https://developers.vtex.com/docs/guides/custom-fields-integration)), this should be the **value** of that Accounting Field."},"type":{"type":"string","description":"Type of the linked entity. Currently, the accepted entity types are: `User`, `Address`, and Accounting Fields ([Custom Fields](https://developers.vtex.com/docs/guides/custom-fields-integration))."}}},"balance":{"type":"object","description":"Financial details of the allocation.","properties":{"amount":{"type":"number","description":"Total amount allocated."},"balanceAdjustment":{"type":"number","description":"Amount already used from the allocation."},"remaining":{"type":"number","description":"Remaining balance."}}},"notificationSettings":{"type":"object","description":"Thresholds that trigger a notification based on usage. Applies to both Budgets and Allocations.","properties":{"enable":{"type":"boolean","description":"Enables notifications."},"thresholds":{"type":"array","description":"Array of threshold configurations.","items":{"type":"object","description":"Threshold configuration.","properties":{"type":{"type":"string","description":"Defines whether the threshold is based on percentage of usage or a fixed amount.","enum":["PERCENT","AMOUNT"]},"Value":{"type":"number","description":"The value of the threshold. For `\"PERCENT\"`, 100 means fully used (0 available); values above 100 indicate overuse."}}}},"recipients":{"type":"array","description":"List of recipients to notify.","items":{"type":"object","description":"Recipient information.","properties":{"type":{"type":"string","description":"Type of notification."},"identifier":{"type":"string","format":"email","description":"Email identifier to send notifications."}}}}}},"status":{"type":"string","description":"Current status of the allocation (e.g., `ACTIVE`)."},"referenceId":{"type":"string","description":"Identifier of the related contract."},"contextType":{"type":"string","description":"Defines the context type associated with the budget which must be `UNIT` in B2B context."},"contextId":{"type":"string","description":"Identifier of the context type."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates a new budget with optional allocations and cycle configuration.
+
+  >⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | B2B | Budget | **ManageBudgets** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `contextType` | path | (Required) Type of context for the budget (e.g., `UNIT`). This field can't be updated, it is used for validation. You must send the original value. |
+  | `contextId` | path | (Required) Identifier of the corresponding Unit. This field can't be updated, it is used for validation. You must send the original value. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "0197c1e3-a82f-7746-8614-bf518e625a92",
+    "name": "USER 1",
+    "description": "USER 1",
+    "balance": {
+      "amount": 1000,
+      "balanceAdjustment": 0,
+      "remaining": 1000
+    },
+    "cycleConfiguration": {
+      "startDate": "2025-01-01T00:00:00.0000000Z",
+      "endDate": "2055-01-01T00:00:00.0000000Z",
+      "autoResetOnPeriodEnd": true,
+      "carryOverBalance": true,
+      "nextRenewal": "2055-01-01T00:00:00.0000000Z"
+    },
+    "notificationSettings": {
+      "enable": false,
+      "thresholds": [
+        {
+          "type": "PERCENT",
+          "Value": 99
+        }
+      ],
+      "recipients": [
+        {
+          "type": "Email",
+          "identifier": "user1@email.com"
+        }
+      ]
+    },
+    "status": "ACTIVE",
+    "contextType": "UNIT",
+    "contextId": "093f29ac-7a1b-4d6b-a79a-48f89cf73d14",
+    "allocations": [
+      {
+        "id": "0197c1e3-a82f-7747-8534-2aed2ba95417",
+        "budgetId": "0197c1e3-a82f-7746-8614-bf518e625a92",
+        "linkedEntity": {
+          "id": "8f6b3712-4c05-4ce5-8057-63fd0d69a587",
+          "type": "USER"
+        },
+        "balance": {
+          "amount": 1000,
+          "balanceAdjustment": 0,
+          "remaining": 1000
+        },
+        "notificationSettings": {
+          "enable": false,
+          "thresholds": [
+            {
+              "type": "PERCENT",
+              "Value": 99
+            }
+          ],
+          "recipients": [
+            {
+              "type": "Email",
+              "identifier": "user1@email.com"
+            }
+          ]
+        },
+        "status": "ACTIVE",
+        "referenceId": "8f6b3712-4c05-4ce5-8057-63fd0d69a587",
+        "contextType": "UNIT",
+        "contextId": "093f29ac-7a1b-4d6b-a79a-48f89cf73d14"
+      }
+    ]
+  }
+  ```

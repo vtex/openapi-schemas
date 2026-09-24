@@ -1,0 +1,104 @@
+info:
+  name: Add user to organization unit
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/vtexid/organization-units/:organizationUnitId/users?force=false"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: force
+      value: "false"
+      type: query
+    - name: organizationUnitId
+      value: 8d8b68e2-89e1-4d9f-b7c3-3a7f2c8e9d1a
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "userIds": [
+          "92264b68-74da-4fc4-b51a-9ddcb8baf29a"
+        ]
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/vtexid/organization-units/:organizationUnitId/users - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/vtexid/organization-units/:organizationUnitId/users - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/vtexid/organization-units/:organizationUnitId/users - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/vtexid/organization-units/:organizationUnitId/users - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"organizationUnitId":{"type":"string","description":"ID of the organization unit."},"addedUserIds":{"type":"array","description":"List of user IDs that were successfully added to the organization unit.","items":{"type":"string","description":"ID of the user that was added to the organization unit."}},"failedUserIds":{"type":"array","description":"List of user IDs that were not added to the organization unit (can be empty).","items":{"type":"string","description":"ID of the user that was not added to the organization unit."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Adds a user to a specific organization unit. 
+
+  >⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Organization Units | units | **Edit_Organization_Unit** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `organizationUnitId` | path | (Required) Unique identifier (GUID) of the organization unit. |
+  | `force` | query | (Required) Indicates whether user should be forcefully moved to the organization unit in case they are already assigned to another organization unit. If set to `true`, users already assigned to the organization unit will be returned in `addedUserIds`. If set to  `false`, those users will appear in `failedUserIds` instead. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "organizationUnitId": "b13531bb-8242-43fd-80f5-3263dd4e9cdd",
+    "addedUserIds": [
+      "468cc9c0-e8bd-4826-b7a6-13dce147dc26"
+    ],
+    "failedUserIds": []
+  }
+  ```

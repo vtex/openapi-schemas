@@ -1,0 +1,92 @@
+info:
+  name: Get coupon by coupon code
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/rnb/pvt/coupon/:couponCode"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: couponCode
+      value: promo10
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/rnb/pvt/coupon/:couponCode - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/rnb/pvt/coupon/:couponCode - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/rnb/pvt/coupon/:couponCode - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/rnb/pvt/coupon/:couponCode - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"lastModifiedUtc":{"type":"string","description":"Date and time of the last update of the coupon in UTC format."},"utmSource":{"type":"string","description":"UTM source code."},"utmCampaign":{"type":"string","description":"UTM campaign code."},"couponCode":{"type":"string","description":"Coupon code."},"isArchived":{"type":"boolean","description":"Defines if the coupon is archived (`true`) or not (`false`)."},"maxItemsPerClient":{"type":"integer","description":"Maximum items per client that the coupon can be applied."},"expirationIntervalPerUse":{"type":"string","description":"Coupon expiration interval per use."},"maxUsage":{"type":"integer","description":"Amount of times the coupon can be used."},"groupingKey":{"type":"string","description":"If the coupon was created as a [multiple coupon](https://developers.vtex.com/docs/api-reference/promotions-and-taxes-api/#post-/api/rnb/pvt/multiple-coupons) or using [Generate coupons in bulk](https://developers.vtex.com/docs/api-reference/promotions-and-taxes-api/#post-/api/rnb/pvt/coupons), this field returns the original `couponCode` informed."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves a specific coupon by its coupon code.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Rates and Benefits | Promotions | **Manage benefits and rates** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `couponCode` | path | (Required) Coupon Code |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "lastModifiedUtc": "2021-11-10T14:24:39.3683694Z",
+    "utmSource": "coupon3",
+    "couponCode": "test",
+    "isArchived": false,
+    "maxItemsPerClient": 10,
+    "expirationIntervalPerUse": "00:00:00",
+    "maxUsage": 1
+  }
+  ```

@@ -1,0 +1,123 @@
+info:
+  name: Retrieve prices
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/pricing-hub/prices?an=apiexamples"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: an
+      value: apiexamples
+      type: query
+    - name: environment
+      value: "{{environment}}"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "items": [
+          {
+            "index": 0,
+            "skuId": "13",
+            "quantity": 1,
+            "brandId": "2000000",
+            "sellerId": "1",
+            "priceTableIds": [],
+            "categoriesIds": [
+              "1"
+            ]
+          }
+        ],
+        "UtmSource": "facebook",
+        "UtmMedium": "social",
+        "UtmCampaign": "summer",
+        "UtmInternalCampaign": "sale",
+        "salesChannel": "1",
+        "email": "customer@email.com"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/pricing-hub/prices - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/pricing-hub/prices - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/pricing-hub/prices - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/pricing-hub/prices - Schema is valid", function () {
+          const schema = {"required":["items"],"type":"object","properties":{"items":{"type":"array","items":{"required":["index","skuId","price","costPrice","listPrice","priceTable","priceValidUntil"],"type":"object","description":"Each price item.","properties":{"index":{"type":"integer","description":"The same index referring to Checkout's cart that was passed to the API."},"skuId":{"type":"string","description":"The same skuId that was passed to the API."},"price":{"type":"number","description":"The price returned by the pricing API that was used by Pricing Hub. It is measured in cents, so 5000 means 50,00 in local currency."},"costPrice":{"type":"number","description":"The cost price returned by the pricing API that was used by Pricing Hub. It is measured in cents, so 5000 means 50,00 in local currency."},"listPrice":{"type":"number","description":"The list price returned by the pricing API that was used by Pricing Hub. It is measured in cents, so 5000 means 50,00 in local currency."},"priceTable":{"type":"string","description":"The price table that was used to price the item."},"priceValidUntil":{"type":"string","description":"The moment up until the price is valid. After that moment, it will be necessary to call the pricing API again. The format of the string is in RFC3339."}}},"description":"List of items and their respective prices applied by Pricing Hub."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  >⚠️ This API has been deprecated. If you need to associate prices with specific customers, we recommend using the [Audience API](https://developers.vtex.com/docs/api-reference/audience-api).
+
+  This route retrieves and applies prices for the items that are passed in the request. Pricing Hub will select the pricing method that will be used for each item and will fetch their respective price from the selected pricing method.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `environment` | path | Environment to use. Used as part of the URL. (This can only be one of vtexcommercestable) |
+  | `an` | query | (Required) Name of the VTEX account. Used as part of the URL. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "items": [
+      {
+        "index": 0,
+        "skuId": "14",
+        "price": 1875,
+        "costPrice": 750,
+        "listPrice": 2500,
+        "priceTable": "1",
+        "priceValidUntil": "2022-03-24T14:57:19Z"
+      },
+      {
+        "index": 0,
+        "skuId": "14",
+        "price": 200,
+        "costPrice": 200,
+        "listPrice": 200,
+        "priceTable": "1",
+        "priceValidUntil": "2022-03-04T20:00:18Z"
+      }
+    ]
+  }
+  ```

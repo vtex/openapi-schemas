@@ -1,0 +1,84 @@
+info:
+  name: Provider authentication
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/authorization/redirect?applicationId=vtex&token={{token}}"
+  headers:
+    - name: X-PROVIDER-API-AppKey
+      value: "{{X-PROVIDER-API-AppKey}}"
+    - name: X-PROVIDER-API-AppToken
+      value: "{{X-PROVIDER-API-AppToken}}"
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: applicationId
+      value: vtex
+      type: query
+    - name: token
+      value: "{{token}}"
+      type: query
+  auth:
+    type: apikey
+    key: X-VTEX-API-AppKey
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("[GET]::/authorization/redirect - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Use the application of provider for merchant's authentication.
+
+  VTEX will redirect the merchant to your application using the `token` we retrieved earlier.
+
+  You're expected to have a signup/signin process on your side in order to authenticate the merchant, either as a new or as an existent user.
+
+  At this point, you can present your terms an conditions, a contract, and ask for merchant's final agreement to use your services.
+
+  Finally, you need to generate an `authorizationCode` that you must concatenate to the `returnUrl` we send earlier.
+
+  Example:
+
+  `returnUrl` = `https://admin.mystore.example.com/provider-return?authorizationCode=`
+
+  `authorizationCode` = `7940597D-A63B`
+
+  Redirect the merchant to:
+
+  `https://admin.mystore.example.com/provider-return?authorizationCode=7940597D-A63B` 
+
+   For more information about the Payment Provider Protocol (PPP) merchant authentication procedure, visit [Configuration Flow](https://developers.vtex.com/docs/guides/payments-integration-implementing-a-payment-provider#configuration-flow).
+
+  > ℹ️ This request is made from VTEX to the payment provider.
+
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `applicationId` | query | (Required) VTEX application identifier. |
+  | `token` | query | (Required) You must generate a token that will be used to identify the same context when we redirect the merchant to your application. |
+  | `X-PROVIDER-API-AppKey` | header | (Required) Unique identifier created by the provider and configured on the provider configuration page (Admin VTEX). To use this header as authorization, check that the `usesProviderHeadersName` field is set to `true` in the payment provider's `configuration.json`. To check the `configuration.json` file, access the route {{connector}}/paymentProvider/configuration.json. |
+  | `X-PROVIDER-API-AppToken` | header | (Required) Unique token created by the provider and configured on the provider configuration page (Admin VTEX). To use this header as authorization, check that the `usesProviderHeadersName` field is set to `true` in the payment provider's `configuration.json`. To check the `configuration.json` file, access the route {{connector}}/paymentProvider/configuration.json |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |

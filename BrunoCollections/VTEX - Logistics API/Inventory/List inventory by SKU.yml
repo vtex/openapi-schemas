@@ -1,0 +1,132 @@
+info:
+  name: List inventory by SKU
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/logistics/pvt/inventory/skus/:skuId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: skuId
+      value: "36"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/logistics/pvt/inventory/skus/:skuId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/logistics/pvt/inventory/skus/:skuId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/logistics/pvt/inventory/skus/:skuId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/logistics/pvt/inventory/skus/:skuId - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"skuId":{"type":"string","description":"SKU ID."},"balance":{"type":"array","description":"List with warehouses' inventory details.","items":{"type":"object","description":"Warehouse inventory details.","properties":{"warehouseId":{"type":"string","description":"[Warehouse](https://help.vtex.com/en/tutorial/warehouse--6oIxvsVDTtGpO7y6zwhGpb) ID."},"warehouseName":{"type":"string","description":"Warehouse name."},"totalQuantity":{"type":"integer","format":"int32","description":"Total quantity of items of the given SKU."},"reservedQuantity":{"type":"integer","format":"int32","description":"SKU reserved quantity."},"hasUnlimitedQuantity":{"type":"boolean","description":"When set as `false`, every sold unit decreases the item's available quantity. When set as `true`, the SKU from the warehouse is always available for sale. No matter how many units are sold, the SKU available quantity never decreases, and the SKU is never out of stock."},"timeToRefill":{"type":["string","null"],"description":"Time to refill."},"dateOfSupplyUtc":{"type":["string","null"],"description":"Supply date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ss.ssZ`."},"leadTime":{"type":"string","description":"[Lead time](https://help.vtex.com/en/tutorial/lead-time-shipping-time-at-sku-level--16yv5Mkj6bTyWR1hCN2f4B) is an optional time configuration you can make for a SKU in a warehouse. It can be handling time, fabrication or how long it takes for the item to be available to be shipped to customers. The lead time is a part of the total shipping time and will be considered for shipping date calculation. The format is `DD.HH:MM:SS`."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Lists [inventory](https://help.vtex.com/en/tutorial/inventory-management--tutorials_139) information, searching by SKU ID.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Logistics | Logistics access | **Logistics full access** |
+  | Logistics | Logistics access | **Logistics viewer** |
+  | Logistics | Logistics access | **Logistics inventory full access** |
+  | Logistics | Logistics access | **Logistics inventory read only** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Logistics - Full access | Logistics full access |
+  | OMS - Full access | Logistics full access |
+  | Logistics - Full access | Logistics viewer |
+  | Logistics - Read only | Logistics viewer |
+  | Logistics - Full access | Logistics inventory full access |
+  | OMS - Full access | Logistics inventory full access |
+  | Logistics - Full access | Logistics inventory read only |
+  | Logistics - Read only | Logistics inventory read only |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `skuId` | path | (Required) Every SKU has a unique identifier called SKU ID. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "skuId": "10",
+    "balance": [
+      {
+        "warehouseId": "1fabf84",
+        "warehouseName": "Main Warehouse",
+        "totalQuantity": 0,
+        "reservedQuantity": 0,
+        "hasUnlimitedQuantity": false,
+        "timeToRefill": null,
+        "dateOfSupplyUtc": null,
+        "leadTime": "00:00:00"
+      },
+      {
+        "warehouseId": "14e3fcc",
+        "warehouseName": "Warehouse dew56",
+        "totalQuantity": 0,
+        "reservedQuantity": 0,
+        "hasUnlimitedQuantity": false,
+        "timeToRefill": null,
+        "dateOfSupplyUtc": null,
+        "leadTime": "1.00:00:00"
+      },
+      {
+        "warehouseId": "102e53e",
+        "warehouseName": "wh-03",
+        "totalQuantity": 0,
+        "reservedQuantity": 0,
+        "hasUnlimitedQuantity": false,
+        "timeToRefill": null,
+        "dateOfSupplyUtc": null,
+        "leadTime": "00:00:00"
+      }
+    ]
+  }
+  ```
