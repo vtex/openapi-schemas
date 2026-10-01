@@ -347,6 +347,189 @@
                 "deprecated": false
             }
         },
+        "/api/dataentities/{dataEntityName}/delete": {
+            "post": {
+                "tags": [
+                    "Bulk deletion"
+                ],
+                "summary": "Create bulk document deletion job",
+                "description": "Creates an asynchronous job that deletes all documents in a data entity that match a given filter.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\nThis request does not delete any documents by itself. It creates a job and returns a `JobId`, which you must use to track the job with the [Get bulk document deletion job status](https://developers.vtex.com/docs/api-reference/master-data-api-v2#get-/api/dataentities/-dataEntityName-/delete/jobs/-jobId-) endpoint.\r\n\r\n>❗ This action cannot be undone. Deleted documents will be permanently lost.\r\n\r\n## Filter rules\r\n\r\n- The `filter` field is required.\r\n- Wildcards are not allowed. For example, `email = *@gmail.com` is rejected.\r\n- Every field used in the filter must be indexed. Internal fields, such as `createdIn`, are already indexed.\r\n- Filtering on a custom field also requires sending the `schema` that declares it as indexed in the request body. A custom field is declared as indexed for filtering in the `v-indexed` array of its [schema](https://developers.vtex.com/docs/api-reference/master-data-api-v2#put-/api/dataentities/-dataEntityName-/schemas/-schemaName-).\r\n- Only one active job per account and data entity is allowed at a time.\r\n\r\n>ℹ️ Confirm how many documents match your filter before deleting them, so you can compare that number with the `DocumentsDeleted` value returned by the job status endpoint.\r\n\r\n## Errors\r\n\r\n`{field}`, `{schema}`, and `{entity}` are placeholders for values from your request, and any quotation marks around them are part of the message returned by the API. Messages marked as truncated continue beyond the text shown.\r\n\r\n| Status code | Message or cause | What to do |\r\n| - | - | - |\r\n| `400` | `The 'filter' field is required.` | Send the `filter` field in the body. |\r\n| `400` | `Wildcard filters are not allowed for bulk delete.` | Rewrite the filter using exact or range conditions over indexed fields. |\r\n| `400` | `The field '{field}' is not an internal indexed field, so the 'schema' that declares it as indexed must be provided.` | Send the `schema` field in the body. |\r\n| `400` | `The field '{field}' is not indexed in the schema '{schema}'...` (truncated) | Mark the field as indexed in the schema and wait for reindexing, or filter on an already indexed field. |\r\n| `400` | `Invalid data entity name.` | Correct the data entity name in the URL. Invalid characters are rejected. |\r\n| `400` | The request body is empty or is not valid JSON. This response uses the standard validation error format and does not include the `Message` field. | Send a valid JSON body. |\r\n| `409` | `Bulk deletion job creation failed for entity {entity}`, returned when a job is already `InProgress` for this account and data entity. | Track the existing job and resend once its status is `Success` or `Failed`. If a job appears stuck, the data entity automatically accepts new jobs after 12 hours. |\r\n| `415` | The `Content-Type: application/json` header is missing or the media type is not supported. | Send the `Content-Type: application/json` header. |\r\n| `5xx` | Transient infrastructure failure during job creation. | No residual state is left behind, so you can resend the request. |\r\n\r\n## Permissions\r\n\r\nThis request requires a valid [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), sent in the `VtexIdclientAutCookie` header.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Content-Type"
+                    },
+                    {
+                        "$ref": "#/components/parameters/dataEntityName"
+                    },
+                    {
+                        "name": "an",
+                        "in": "query",
+                        "description": "Name of the VTEX account that owns the data entity (for example, `apiexamples`).",
+                        "required": true,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkDeletionRequest"
+                            },
+                            "examples": {
+                                "internalField": {
+                                    "summary": "Filter on an internal field",
+                                    "value": {
+                                        "filter": "createdIn > 2026-08-16"
+                                    }
+                                },
+                                "customField": {
+                                    "summary": "Filter on a custom indexed field, which requires the schema name",
+                                    "value": {
+                                        "filter": "number = 1337",
+                                        "schema": "indexed-fields"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BulkDeletionJobResponse"
+                                },
+                                "example": {
+                                    "JobId": "01M08C83Z5D91S3CA0A15SRNV8"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BulkDeletionErrorResponse"
+                                },
+                                "examples": {
+                                    "missingFilter": {
+                                        "summary": "The filter field was not sent",
+                                        "value": {
+                                            "Message": "The 'filter' field is required."
+                                        }
+                                    },
+                                    "wildcardFilter": {
+                                        "summary": "The filter uses a wildcard",
+                                        "value": {
+                                            "Message": "Wildcard filters are not allowed for bulk delete."
+                                        }
+                                    },
+                                    "schemaRequired": {
+                                        "summary": "The filter uses a custom field and no schema was sent",
+                                        "value": {
+                                            "Message": "The field 'number' is not an internal indexed field, so the 'schema' that declares it as indexed must be provided."
+                                        }
+                                    },
+                                    "invalidDataEntityName": {
+                                        "summary": "The data entity name in the URL is invalid",
+                                        "value": {
+                                            "Message": "Invalid data entity name."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BulkDeletionErrorResponse"
+                                },
+                                "example": {
+                                    "Message": "Bulk deletion job creation failed for entity Newsletter"
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "Unsupported Media Type\n\nReturned when the JSON content type header is missing or the media type is not supported."
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/api/dataentities/{dataEntityName}/delete/jobs/{jobId}": {
+            "get": {
+                "tags": [
+                    "Bulk deletion"
+                ],
+                "summary": "Get bulk document deletion job status",
+                "description": "Retrieves the current status of a bulk document deletion job created with the [Create bulk document deletion job](https://developers.vtex.com/docs/api-reference/master-data-api-v2#post-/api/dataentities/-dataEntityName-/delete) endpoint.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\nPoll this endpoint until the job leaves the `InProgress` status.\r\n\r\nPossible `Status` values:\r\n\r\n- `InProgress`: The job is running and documents are being deleted in batches. Keep polling and do not create another job for this data entity.\r\n- `Success`: All matching documents were deleted. Compare `DocumentsDeleted` with the number of documents you expected to delete.\r\n- `Failed`: Processing stopped after exhausting internal retries. The deletion is partial, which means that documents from completed batches were already deleted. Fix the underlying cause and create a new job with the same filter to finish the deletion.\r\n\r\n## Errors\r\n\r\n| Status code | Cause | What to do |\r\n| - | - | - |\r\n| `404` | The `jobId` does not exist for this account and data entity, or the job was created more than 60 days ago. Job records are kept for 60 days after creation. | Check the `jobId`, the `an` query parameter, and the data entity in the URL. If all three are correct, the job is older than 60 days and its record is no longer available. |\r\n\r\n## Permissions\r\n\r\nThis request requires a valid [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), sent in the `VtexIdclientAutCookie` header.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/dataEntityName"
+                    },
+                    {
+                        "name": "jobId",
+                        "in": "path",
+                        "description": "Unique identifier of the bulk deletion job, returned by the [Create bulk document deletion job](https://developers.vtex.com/docs/api-reference/master-data-api-v2#post-/api/dataentities/-dataEntityName-/delete) endpoint (for example, `01M08C83Z5D91S3CA0A15SRNV8`).",
+                        "required": true,
+                        "style": "simple",
+                        "schema": {
+                            "type": "string",
+                            "example": "01M08C83Z5D91S3CA0A15SRNV8"
+                        }
+                    },
+                    {
+                        "name": "an",
+                        "in": "query",
+                        "description": "Name of the VTEX account that owns the data entity (for example, `apiexamples`).",
+                        "required": true,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "apiexamples"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BulkDeleteJobStatusResponseVO"
+                                },
+                                "example": {
+                                    "JobId": "01M08C83Z5D91S3CA0A15SRNV8",
+                                    "Entity": "Newsletter",
+                                    "Status": "Success",
+                                    "Filter": "number < 100",
+                                    "DocumentsDeleted": 19,
+                                    "CreatedAt": "2026-08-07T15:48:15.4804028Z",
+                                    "UpdatedAt": "2026-08-07T19:31:10.654298Z"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
+        },
         "/api/dataentities/{dataEntityName}/search": {
             "get": {
                 "tags": [
@@ -388,8 +571,7 @@
                             "REST-Content-Range": {
                                 "schema": {
                                     "type": "string",
-                                    "description": "Indicates the range of documents returned in the current response, as well as the total number of documents available in the dataset. The value follows the format `resources={x}-{y}/{total}`, where:\n* `x`: Index of the first document in the returned array.\n* `y`: Index of the last document in the returned array + 1.\n* `total`: Total number of documents that match the query.\nFor example, `resources=0-10/98` indicates that documents from 0 to 9 are returned out of a total of 98 matching documents.",
-                                    "example": "resources=0-10/98"
+                                    "description": "Indicates the range of documents returned in the current response, as well as the total number of documents available in the dataset. The value follows the format `resources={x}-{y}/{total}`, where:\n* `x`: Index of the first document in the returned array.\n* `y`: Index of the last document in the returned array + 1.\n* `total`: Total number of documents that match the query.\nFor example, `resources=0-10/98` indicates that documents from 0 to 9 are returned out of a total of 98 matching documents."
                                 }
                             }
                         },
@@ -454,7 +636,7 @@
                         }
                     },
                     "503": {
-                        "description": "Service Unavailable\n\nWildcard queries temporarily blocked due to excessive usage. Consider adjusting your code to remove them or reduce the rate of search requests with wildcards (*). This temporary block may also be due to excessive use of requests with the parameter `keyword`."
+                        "description": "Service Unavailable\n\nWildcard queries are temporarily blocked due to excessive wildcard or keyword usage so reduce those requests and try again later."
                     }
                 },
                 "deprecated": false
@@ -555,7 +737,7 @@
                         }
                     },
                     "429": {
-                        "description": "Too Many Requests\n\nWildcard queries temporarily blocked due to excessive usage. Consider adjusting your code to remove them or reduce the rate of search requests with wildcards (*). This temporary block may also be due to excessive use of requests with the parameter `keyword`."
+                        "description": "Too Many Requests\n\nWildcard queries are temporarily blocked due to excessive wildcard or keyword usage so reduce those requests and try again later."
                     }
                 },
                 "deprecated": false
@@ -653,7 +835,7 @@
                     "Schemas"
                 ],
                 "summary": "Save schema by name",
-                "description": "Creates or edits a data entity schema. Learn more about [Master Data schemas](https://developers.vtex.com/vtex-rest-api/docs/master-data-schema-lifecycle).\r\n\r\n> Note that if you send a `schemaName` that does not exist for that data entity, this request will create it.\r\n\r\nThis request can also be used to [create or edit Master Data v2 triggers](https://developers.vtex.com/vtex-rest-api/docs/setting-up-triggers-in-master-data-v2).\r\n\r\n> Each Master Data v2 data entity can have up to 60 schemas.\r\n\r\n## Indexing fields for search, scroll and sort\r\n\r\nTo filter or sort by a field in [Search documents](https://developers.vtex.com/docs/api-reference/master-data-api-v2#get-/api/dataentities/-dataEntityName-/search) or [Scroll documents](https://developers.vtex.com/docs/api-reference/master-data-api-v2#get-/api/dataentities/-dataEntityName-/scroll), add that field to the `v-indexed` array in the schema. This is the schema-level index (separate from the [indices](https://developers.vtex.com/docs/api-reference/master-data-api-v2#get-/api/dataentities/-dataEntityName-/indices) endpoint).\r\n\r\n- `v-indexed`: Array of property names that Master Data v2 must index for `/search`, `/scroll`, and `_sort`. Use it whenever you want to use `_where`, `_sort`, or range filters (e.g. `_where=postalCode between 10000 AND 20000`) on that field. Indexing runs asynchronously after the schema is saved.\r\n- `filterable` and `searchable`: Apply to the UI (e.g. Master Data v1/CRM-style behavior). They do **not** create the index used by `/search`; only `v-indexed` does.\r\n\r\n**Example request body with `v-indexed`:**\r\n\r\n```json\r\n{\r\n  \"properties\": {\r\n    \"skuId\": { \"type\": \"string\" },\r\n    \"postalCode\": { \"type\": \"string\" }\r\n  },\r\n  \"v-indexed\": [\"postalCode\"]\r\n}\r\n```\r\n\r\n> ℹ️ Use `v-indexed` when you need fields to be filterable/sortable in `/search`. Use the [/indices](https://developers.vtex.com/docs/api-reference/master-data-api-v2#put-/api/dataentities/-dataEntityName-/indices) endpoint when you need entity-level uniqueness, composite keys, or relationships between entities.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>\u2757 To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "description": "Creates or edits a data entity schema. Learn more about [Master Data schemas](https://developers.vtex.com/vtex-rest-api/docs/master-data-schema-lifecycle).\r\n\r\n> Note that if you send a `schemaName` that does not exist for that data entity, this request will create it.\r\n\r\nThis request can also be used to [create or edit Master Data v2 triggers](https://developers.vtex.com/vtex-rest-api/docs/setting-up-triggers-in-master-data-v2).\r\n\r\n> Each Master Data v2 data entity can have up to 60 schemas.\r\n\r\n## Indexing fields for search, scroll and sort\r\n\r\nTo filter or sort by a field in [Search documents](https://developers.vtex.com/docs/api-reference/master-data-api-v2#get-/api/dataentities/-dataEntityName-/search) or [Scroll documents](https://developers.vtex.com/docs/api-reference/master-data-api-v2#get-/api/dataentities/-dataEntityName-/scroll), add that field to the `v-indexed` array in the schema. This is the schema-level index (separate from the [indices](https://developers.vtex.com/docs/api-reference/master-data-api-v2#get-/api/dataentities/-dataEntityName-/indices) endpoint).\r\n\r\n- `v-indexed`: Array of property names that Master Data v2 must index for `/search`, `/scroll`, and `_sort`. Use it whenever you want to use `_where`, `_sort`, or range filters (e.g. `_where=postalCode between 10000 AND 20000`) on that field. Indexing runs asynchronously after the schema is saved.\r\n- `filterable` and `searchable`: Apply to the UI (e.g. Master Data v1/CRM-style behavior). They do **not** create the index used by `/search`; only `v-indexed` does.\r\n\r\n**Example request body with `v-indexed`:**\r\n\r\n```json\r\n{\r\n  \"properties\": {\r\n    \"skuId\": { \"type\": \"string\" },\r\n    \"postalCode\": { \"type\": \"string\" }\r\n  },\r\n  \"v-indexed\": [\"postalCode\"]\r\n}\r\n```\r\n\r\n> ℹ️ Use `v-indexed` when you need fields to be filterable/sortable in `/search`. Use the [/indices](https://developers.vtex.com/docs/api-reference/master-data-api-v2#put-/api/dataentities/-dataEntityName-/indices) endpoint when you need entity-level uniqueness, composite keys, or relationships between entities.\r\n\r\n## Reindex lock\r\n\r\nSaving a schema can trigger a full reindex of the data entity. The reindex lock works in two stages:\r\n\r\n1. **Locking the data entity:** The lock starts only when a schema save triggers a reindex. Schema saves that don't trigger a reindex never lock the data entity.\r\n2. **While the lock is active:** Every later schema save for that same data entity is rejected with `423 Locked`, including saves that would not trigger a reindex on their own. The response states that the reindex is still in progress.\r\n\r\nA schema save can trigger a new reindex of the same data entity only after an interval of 12 hours. Don't calculate a retry time from this interval. To know when the data entity accepts schema saves again, read the `Message` field of the `423 Locked` response, which states the time after which you can retry. When that time is not available, the message asks you to try again later.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\r\n\r\n>\u2757 To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
                 "operationId": "Saveschemabyname",
                 "parameters": [
                     {
@@ -676,7 +858,8 @@
                                     "value": {
                                         "properties": {
                                             "name": {
-                                                "type": "string"
+                                                "type": "string",
+                                                "description": "Customer name."
                                             }
                                         }
                                     }
@@ -686,10 +869,12 @@
                                     "value": {
                                         "properties": {
                                             "skuId": {
-                                                "type": "string"
+                                                "type": "string",
+                                                "description": "SKU identifier."
                                             },
                                             "postalCode": {
-                                                "type": "string"
+                                                "type": "string",
+                                                "description": "Postal code."
                                             }
                                         },
                                         "v-indexed": [
@@ -719,6 +904,37 @@
                                 },
                                 "example": {
                                     "Message": "JSON Schema persisted successfully. Revalidation and indexing process running in background."
+                                }
+                            }
+                        }
+                    },
+                    "423": {
+                        "description": "Locked",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Response body object.",
+                                    "properties": {
+                                        "Message": {
+                                            "type": "string",
+                                            "description": "Message stating that a full reindex of the data entity is in progress. When a retry time is available, the message also states the time after which you can retry the schema save. Otherwise, it falls back to asking you to try again later."
+                                        }
+                                    }
+                                },
+                                "examples": {
+                                    "reindexInProgress": {
+                                        "summary": "Lock with retry time",
+                                        "value": {
+                                            "Message": "A recent schema change triggered a full reindex of this data entity that is still in progress. Please try again after 01/02/2024 00:00:00 +00:00."
+                                        }
+                                    },
+                                    "reindexInProgressNoDate": {
+                                        "summary": "Lock without retry time",
+                                        "value": {
+                                            "Message": "A recent schema change triggered a full reindex of this data entity that is still in progress. Please try again later."
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1307,7 +1523,8 @@
                     "v-indexed": {
                         "type": "array",
                         "items": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Name of a property to index."
                         },
                         "description": "Names of properties to index for /search, /scroll, and _sort. Required for reliable filtering (e.g. _where=field=value) and sorting (_sort=field ASC). Indexing is asynchronous after schema save."
                     }
@@ -1606,6 +1823,84 @@
                         "description": "Document reference URL."
                     }
                 }
+            },
+            "BulkDeletionRequest": {
+                "type": "object",
+                "description": "Request body object.",
+                "required": [
+                    "filter"
+                ],
+                "properties": {
+                    "filter": {
+                        "type": "string",
+                        "description": "Deletion criteria, using the same syntax as the filter in the [Search documents](https://developers.vtex.com/docs/api-reference/master-data-api-v2#get-/api/dataentities/-dataEntityName-/search) request. Wildcards are not allowed and every field must be indexed."
+                    },
+                    "schema": {
+                        "type": "string",
+                        "description": "Name of the [schema](https://developers.vtex.com/docs/guides/master-data-schema-lifecycle) that declares the filtered field as indexed. Required only when the filter uses custom fields."
+                    }
+                }
+            },
+            "BulkDeletionJobResponse": {
+                "type": "object",
+                "description": "Response body object.",
+                "properties": {
+                    "JobId": {
+                        "type": "string",
+                        "description": "Unique identifier of the bulk deletion job. Use this value to track the job with the [Get bulk document deletion job status](https://developers.vtex.com/docs/api-reference/master-data-api-v2#get-/api/dataentities/-dataEntityName-/delete/jobs/-jobId-) endpoint."
+                    }
+                }
+            },
+            "BulkDeleteJobStatusResponseVO": {
+                "type": "object",
+                "description": "Response body object.",
+                "properties": {
+                    "JobId": {
+                        "type": "string",
+                        "description": "Unique identifier of the bulk deletion job."
+                    },
+                    "Entity": {
+                        "type": "string",
+                        "description": "Name of the data entity whose documents the job deletes."
+                    },
+                    "Status": {
+                        "type": "string",
+                        "description": "Current status of the bulk deletion job. Possible values: `InProgress`, `Success`, or `Failed`.",
+                        "enum": [
+                            "InProgress",
+                            "Success",
+                            "Failed"
+                        ]
+                    },
+                    "Filter": {
+                        "type": "string",
+                        "description": "Deletion criteria sent when the job was created."
+                    },
+                    "DocumentsDeleted": {
+                        "type": "integer",
+                        "description": "Number of documents that the job has deleted."
+                    },
+                    "CreatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date and time when the job was created, in the ISO 8601 format."
+                    },
+                    "UpdatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date and time when the job was last updated, in the ISO 8601 format."
+                    }
+                }
+            },
+            "BulkDeletionErrorResponse": {
+                "type": "object",
+                "description": "Response body object.",
+                "properties": {
+                    "Message": {
+                        "type": "string",
+                        "description": "Error message."
+                    }
+                }
             }
         },
         "parameters": {
@@ -1785,6 +2080,10 @@
         },
         {
             "name": "Versions"
+        },
+        {
+            "name": "Bulk deletion",
+            "description": "Bulk deletion removes all documents in a data entity that match a filter, through an asynchronous job. This action cannot be undone."
         }
     ]
 }
