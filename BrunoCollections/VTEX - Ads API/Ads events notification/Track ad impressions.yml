@@ -1,0 +1,93 @@
+info:
+  name: Track ad impressions
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/v1/beacon/impression/:ad_id"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: pos
+      value: "1"
+      type: query
+      disabled: true
+    - name: ad_id
+      value: 4a94bc6e-7db1-425f-8430-cb4d17488b3b
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "user_id": "6f92d1e9-00b6-4f8b-9645-faeab321e1cc"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/v1/beacon/impression/:ad_id - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/v1/beacon/impression/:ad_id - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/v1/beacon/impression/:ad_id - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/v1/beacon/impression/:ad_id - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"messages":{"type":"array","description":"List of messages from the server.","items":{"type":"string","description":"Message from the server."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Track when an ad is rendered on a page. An impression does not determine whether the ad became visible to the user. Visibility is tracked by the separate `view` event. Do not construct the event URL manually. Always use the URL provided from `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-).
+
+  >ℹ️ Fire this event whenever a page loads that contains rendered ads.
+
+  ## Permissions
+
+  This endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `ad_id` | path | (Required) Unique identifier of the ad. |
+  | `pos` | query | Position of the ad. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`202`)
+
+  ```json
+  {
+    "messages": [
+      "impression will be processed soon"
+    ]
+  }
+  ```

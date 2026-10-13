@@ -1,0 +1,106 @@
+info:
+  name: Get checkout configuration
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/checkout/configuration/ui?an=12872182"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: "12872182"
+      type: query
+    - name: accountName
+      value: "{{accountName}}"
+      type: path
+    - name: environment
+      value: "{{environment}}"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/checkout/configuration/ui - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/checkout/configuration/ui - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/checkout/configuration/ui - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/checkout/configuration/ui - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"brand":{"type":"object","properties":{"logo":{"type":"string","description":"Store's logotype that will be displayed to the shopper during the checkout process.","example":"logo.png"},"actionColor":{"type":"string","description":"Color used for action elements, such as buttons, within the checkout interface.","example":"Red"}}},"cart":{"type":"object","properties":{"minimumPurchaseAmount":{"type":"integer","description":"Minimum purchase amount required for a shopper's cart to qualify for a purchase.","example":123},"maximumItemsInCart":{"type":"integer","description":"Maximum number of items allowed in the cart per transaction.","example":10},"promoCode":{"type":"boolean","description":"Indicates whether the cart allows promotional codes or discount coupons. Enabling this feature provides shoppers with the option to input promo codes during checkout.","example":true},"shippingPreview":{"type":"boolean","description":"Indicates whether the cart provides a preview of shipping costs before finalizing the purchase. Enabling this feature allows shoppers to view estimated shipping charges early in the checkout process.","example":false},"skuPrice":{"type":"string","description":"Specifies the pricing model used for displaying prices in the cart, either based on individual SKUs or the total price only.","enum":["TotalOnly","SkuAndTotalPrice"]}}},"orderReview":{"type":"object","description":"Object of tooltips that provide additional information regarding the order review process.","properties":{"taxesToolTip":{"type":"string","description":"This tooltip includes details such as how taxes are calculated, applicable tax rates, or explanations about specific tax-related charges.","example":"X state tax: $10"}}},"advanced":{"type":"object","description":"Object containing advanced configuration of the checkout.","properties":{"adobeAnalyticsPlataformId1":{"type":"string","description":"[Adobe Analytics Platform](https://business.adobe.com/products/analytics/adobe-analytics.html) ID used for tracking analytics data.","example":"adobeAnalyticsPlataformId1"},"adobeAnalyticsPlataformId2":{"type":"string","description":"Additional [Adobe Analytics Platform](https://business.adobe.com/products/analytics/adobe-analytics.html) ID for tracking analytics data.","example":"launch-er45i4b9pp90-development.min.js"},"googleMapsApiKey":{"type":"string","description":"API key used for accessing Google Maps services, such as geocoding or mapping functionality. This key is required for integrating Google Maps features into the application.","example":"googleMapsApiKey"}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  >📘 This functionality is in the beta stage and can be discontinued at any moment at VTEX's discretion. VTEX will not be responsible for any instabilities caused by its use or discontinuity. If you have any questions, please contact [our Support Center](https://support.vtex.com/hc/en-us/requests).
+
+  Retrieves a single configuration of the checkout process for the store.
+
+  ## Permissions
+
+  This endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `accountName` | path | Name of the VTEX account. Used as part of the URL |
+  | `environment` | path | Environment to use. Used as part of the URL. (This can only be one of vtexcommercestable) |
+  | `an` | query | (Required) Checkout configuration ID. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "brand": {
+      "logo": "logo.png",
+      "actionColor": "Red"
+    },
+    "cart": {
+      "minimumPurchaseAmount": 123,
+      "maximumItemsInCart": 10,
+      "promoCode": true,
+      "shippingPreview": false,
+      "skuPrice": "TotalOnly"
+    },
+    "orderReview": {
+      "taxesToolTip": "X state tax: $10"
+    },
+    "advanced": {
+      "adobeAnalyticsPlataformId1": "adobeAnalyticsPlataformId1",
+      "adobeAnalyticsPlataformId2": "launch-er45i4b9pp90-development.min.js",
+      "googleMapsApiKey": "googleMapsApiKey"
+    }
+  }
+  ```

@@ -1,0 +1,231 @@
+info:
+  name: Get full schema
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/storage/profile-system/schemas/profileSystem"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/storage/profile-system/schemas/profileSystem - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/storage/profile-system/schemas/profileSystem - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/storage/profile-system/schemas/profileSystem - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/storage/profile-system/schemas/profileSystem - Schema is valid", function () {
+          const schema = {"title":"Schema","type":"object","description":"Schema information.","required":["title","type","description","required","properties"],"properties":{"title":{"type":"string","description":"Schema title."},"type":{"type":"string","description":"Schema type."},"description":{"type":"string","description":"Schema's human readable description."},"required":{"type":"array","description":"Schema required fields.","items":{"type":"string","description":"Key of a field that is required in the schema."}},"properties":{"type":"object","description":"Object describing each field in your desired schema. In this object, each property is a new object, describing the field according to: `type` (string); `sensitive` (boolean); `pii` (boolean) and `items.type` (if field is array).","properties":{"additionalProperties":{"type":"object","description":"Schema of any given field described in the `properties` field.","required":["type","sensitive","pii"],"properties":{"type":{"type":"string","description":"Schema property type."},"sensitive":{"type":"boolean","description":"Indicates whether the property is sensitive data. Set to `true` if `pii` is `true` and set to `false` if `pii` is `false`."},"pii":{"type":"boolean","description":"Indicates whether the property is Personal Identifiable Information (PII)."},"items":{"type":"object","description":"Object containing the type of the items if the field is an array. Typically, arrays will contain strings and will be used for fields such as `email`.","properties":{"type":{"type":"string","description":"Field type."}}}}}}},"documentTTL":{"type":"integer","description":"Document time to live, in days. After this many days from its creation or update, any document cerated from this schema will be deleted."},"version":{"type":"integer","description":"Schema version."},"v-indexed":{"type":"array","description":"List of fields to be indexed.","items":{"type":"string","description":"Field to be indexed."}},"v-unique":{"type":"array","description":"List of fields that must be unique.","items":{"type":"string","description":"Field that must be unique."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves the full profile schema, including custom fields.
+
+
+  Learn more about the [Profile System](https://developers.vtex.com/vtex-rest-api/docs/profile-system) and its other API endpoints.
+
+  >⚠️ The Profile System is only compatible with stores using the PII data architecture from [Data Protection Plus](https://developers.vtex.com/docs/guides/data-protection-plus), which is in closed beta phase, only available in select regions.
+  >
+  > This feature is part of [VTEX Shield](https://help.vtex.com/en/tutorial/vtex-shield--2CVk6H9eY2CBtHjtDI7BFh). If you are already a VTEX customer and want to adopt VTEX Shield for your business, please contact [Commercial Support](https://help.vtex.com/en/tracks/support-at-vtex--4AXsGdGHqExp9ZkiNq9eMy/3KQWGgkPOwbFTPfBxL7YwZ). Additional fees may apply. If you are not yet a customer but are interested in this solution, please complete our [contact form](https://vtex.com/us-en/contact/). 
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Profile System | Documents | **Get Item** |
+  | Profile System | Documents | **Save and Update Item** |
+  | Profile System | Documents | **Delete Item** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "title": "Profile System Profile Schema",
+    "description": "Schema used for integration testing with Checkout",
+    "type": "object",
+    "properties": {
+      "firstName": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "sensitive": true,
+        "pii": true
+      },
+      "lastName": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "sensitive": true,
+        "pii": true
+      },
+      "email": {
+        "type": "string",
+        "sensitive": true,
+        "pii": true
+      },
+      "corporateName": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "sensitive": false,
+        "pii": false
+      },
+      "fancyName": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "sensitive": false,
+        "pii": false
+      },
+      "document": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "sensitive": true,
+        "pii": true
+      },
+      "businessDocument": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "sensitive": false,
+        "pii": false
+      },
+      "documentType": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "sensitive": false,
+        "pii": false
+      },
+      "homePhone": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "sensitive": true,
+        "pii": true
+      },
+      "cellPhone": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "sensitive": true,
+        "pii": true
+      },
+      "businessPhone": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "sensitive": false,
+        "pii": false
+      },
+      "gender": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "sensitive": true,
+        "pii": false
+      },
+      "birthdate": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "sensitive": true,
+        "pii": true
+      },
+      "priceTable": {
+        "type": "string",
+        "sensitive": false,
+        "pii": false
+      },
+      "tags": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "items": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "sensitive": false,
+        "pii": false
+      },
+      "customerCode": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "sensitive": true,
+        "pii": true
+      }
+    },
+    "required": [
+      "email"
+    ],
+    "additionalProperties": true,
+    "v-indexed": [
+      "email",
+      "document"
+    ],
+    "v-unique": [
+      "email"
+    ]
+  }
+  ```

@@ -1,0 +1,134 @@
+info:
+  name: Get a gift card from a gift card provider
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/giftcardproviders/:giftCardProviderId/giftcards/_search"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+    - name: REST-Range
+      value: resources=0-49
+      disabled: true
+  params:
+    - name: giftCardProviderId
+      value: GiftCardExample
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "client": {
+          "id": "3b1abc17-988e-4a14-8b7f-31fc6a5b955c",
+          "email": "email@domain.com",
+          "document": "42151783120"
+        },
+        "cart": {
+          "grandTotal": 0,
+          "relationName": "loyalty-program",
+          "redemptionCode": "***********ASDQ",
+          "discounts": 20,
+          "shipping": 2,
+          "taxes": 0,
+          "items": [
+            {
+              "productId": "2000000",
+              "id": "2000002",
+              "refId": "MEV41",
+              "name": "Shoes",
+              "price": 200,
+              "quantity": 1
+            },
+            {
+              "productId": "2000000",
+              "id": "2000002",
+              "refId": "MEV41",
+              "name": "Shoes",
+              "price": 200,
+              "quantity": 1
+            }
+          ],
+          "itemsTotal": 200
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/giftcardproviders/:giftCardProviderId/giftcards/_search - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/giftcardproviders/:giftCardProviderId/giftcards/_search - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/giftcardproviders/:giftCardProviderId/giftcards/_search - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/giftcardproviders/:giftCardProviderId/giftcards/_search - Schema is valid", function () {
+          const schema = {"type":"array","items":{"type":"object","description":"Gift card information.","properties":{"id":{"type":"string","description":"Gift card identification."},"provider":{"type":"string","description":"Gift card provider name."},"balance":{"type":"number","description":"Gift card current balance."},"_self":{"type":"object","description":"Object that carries an auto reference from the provider at the Hub (on its API).","properties":{"href":{"type":"string","description":"This is one of the fields inside the `_self`. It is exactly the route that identifies this provider on the Hub's API, but it is not the same thing as the `serviceURL`."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns all gift cards from a gift card provider according to the filters.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | GiftCard | GiftCard | **View Gift Card providers** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `giftCardProviderId` | path | (Required) Gift card provider identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+  | `REST-Range` | header | Pagination control. This query variable must follow the format `_resources={from}-{to}_`. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "id": "262498",
+      "provider": "GiftCardExample",
+      "balance": 45.5,
+      "_self": {
+        "href": "cosmet/giftcardproviders/GiftCardExample/giftcards/262498"
+      }
+    }
+  ]
+  ```

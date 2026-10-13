@@ -1,0 +1,222 @@
+info:
+  name: Search all invoices
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/creditcontrol/invoices?creditAccountId=01bce461-9g03-12ds-8217-b3d39271e15b"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: from
+      value: "1"
+      type: query
+      disabled: true
+    - name: to
+      value: "300"
+      type: query
+      disabled: true
+    - name: createdDateFrom
+      value: 2023-01-20
+      type: query
+      disabled: true
+    - name: createdDateTo
+      value: 2023-01-25
+      type: query
+      disabled: true
+    - name: dueDateFrom
+      value: 2023-01-20
+      type: query
+      disabled: true
+    - name: dueDateTo
+      value: 2023-01-25
+      type: query
+      disabled: true
+    - name: value
+      value: "101.22"
+      type: query
+      disabled: true
+    - name: status
+      value: Paid
+      type: query
+      disabled: true
+    - name: friendlyId
+      value: u8KFsGDk-1
+      type: query
+      disabled: true
+    - name: observation
+      value: Some observation about the invoice
+      type: query
+      disabled: true
+    - name: creditAccountId
+      value: 01bce461-9g03-12ds-8217-b3d39271e15b
+      type: query
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/creditcontrol/invoices - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/creditcontrol/invoices - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/creditcontrol/invoices - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/creditcontrol/invoices - Schema is valid", function () {
+          const schema = {"required":["data","summary"],"type":"object","properties":{"data":{"type":"array","description":"Data information.","items":{"required":["id","friendlyId","status","value","accountId","creditValue","createdAt","updatedAt","originalDueDate","dueDate","installment","orderId","transactionId","numberOfInstallments","creditAccountId"],"type":"object","description":"Object with information about each invoice.","properties":{"id":{"type":"string","description":"Invoice identification."},"friendlyId":{"type":"string","description":"Simplified identification of an invoice. This code is created automatically, always associated with an existing invoice. It consists of an 8-digit random ID (of numbers and letters) and the installment."},"status":{"type":"string","description":"Invoice status.","enum":["Opened","Paid","Cancelled"]},"value":{"type":"number","description":"Invoice value."},"accountId":{"type":"string","description":"Account identification. It is the same `creditAccountId` parameter used in other Customer Credit API endpoints."},"creditValue":{"type":"number","description":"Credit value."},"createdAt":{"type":"string","description":"Invoice creation date."},"resolvedAt":{"type":["string","null"],"description":"Invoice closing date."},"updatedAt":{"type":"string","description":"Date of the last update made to the invoice."},"paymentLink":{"type":["string","null"],"description":"Link (URL) created to direct the customer to an invoice payment environment (optional)."},"originalDueDate":{"type":"string","description":"Original invoice expiration date."},"dueDate":{"type":"string","description":"Modified invoice expiration date."},"installment":{"type":"number","description":"Identification of installment number."},"orderId":{"type":"string","description":"Identification of the order that generated the invoice."},"observation":{"type":["string","null"],"description":"Observation notes about the invoice."},"transactionId":{"type":"string","description":"Identification of the invoice transaction. This is the same number as the `id` field, removing the last three characters."},"numberOfInstallments":{"type":"number","description":"Number of installments."},"creditAccountId":{"type":"string","description":"Credit account identification. It is the same `accountId` parameter used in other Customer Credit API endpoints."}}}},"summary":{"required":["total","count"],"type":"object","description":"Summary information.","properties":{"total":{"type":"number","description":"Total amount payable (sum of invoices listed with status `Open`)."},"count":{"type":"integer","description":"Number of invoices listed."},"totalPaid":{"type":"number","description":"Total amount paid (sum of invoices listed with status `Paid`)."},"totalCancelled":{"type":"number","description":"Total amount canceled (sum of invoices listed with status `Cancelled`)."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns a list of invoices related to payment orders created through [customer credit accounts](https://help.vtex.com/en/tracks/customer-credit-getting-started--1hCRg21lXYy2seOKgqQ2CC/7FHLd0cmxqqGeEUuc8uioU).
+
+  >ℹ️ Query parameters can be used individually or combined to filter invoice results.
+
+  ### Queries to filter results
+
+  - **By the location of the invoices in the list (quantity of invoices)**: `?from={int}&to={int}`
+  - **By creation date**: `?createdDateFrom={dateISO8601}&createDateTo={dateISO8601}`. The dates should be in ISO8601 format.
+  - **By due date**: `?dueDateFrom={dateISO8601}&dueDateTo={dateISO8601}`. The dates should be in ISO8601 format.
+  - **By value**: `?value={decimal}`
+  - **By status**: `?status={string}`
+  - **By Id**: `?friendlyId={string}`
+  - **By observation**: `?observation={string}`
+  - **By creditAccountId**: `?creditAccountId={creditAcountId}`
+
+  ### Combining filters
+
+  You can use the `op` query parameter to specify if filters will be evaluated as `AND` or `OR` for the query. The default behavior when there is more than one query parameter is `AND`.
+
+  Example:
+
+  For the query `?value=100&status=Paid`, the criteria will build **value = 100 AND status = Paid**.
+
+  For the same query, adding the `op` parameter (`?value=100&status=Paid&op=or`), the criteria will build **value = 100 OR status = Paid**.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Credit Control | Main | **Main Access** |
+  | Credit Control | Invoices | **Read Invoices** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `from` | query | Indicates the starting position of the invoice to be searched in the invoice list. For example, the value `1` indicates that the first invoice in the list will be returned. |
+  | `to` | query | Indicates the final position of the invoice to be searched in the invoice list. For example, if the value of `from` is equal to `1` and `to` is `300`, information from 300 invoices will be displayed in the response body of the request. |
+  | `createdDateFrom` | query | Indicates the initial creation date of invoices that should be searched in the invoice list based on their creation date. The dates should be in ISO8601 format. |
+  | `createdDateTo` | query | Indicates the final creation date of invoices that should be searched in the invoice list based on their creation date. The dates should be in ISO8601 format. |
+  | `dueDateFrom` | query | Indicates the initial due date of invoices that should be searched in the invoice list based on their creation date. The dates should be in ISO8601 format. |
+  | `dueDateTo` | query | Indicates the final due date of invoices that should be searched in the invoice list based on their creation date. The dates should be in ISO8601 format. |
+  | `value` | query | Indicates the value of the invoices to be searched for. It must be completed with a decimal value. |
+  | `status` | query | Indicates the status of the invoices to be searched for. |
+  | `friendlyId` | query | Simplified identification of an invoice. This code is created automatically, always associated with an existing invoice. It consists of an 8-digit random ID (of numbers and letters) and the installment. |
+  | `observation` | query | Observation notes about the invoice. |
+  | `creditAccountId` | query | (Required) Credit account identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "data": [
+      {
+        "id": "A424887D0F2D45028FE5C96E9B0E1A2D-01",
+        "friendlyId": "u8KFsGDk-1",
+        "status": "Paid",
+        "value": 5.01,
+        "accountId": "fcba59e0-7f26-11ee-ba3c-511336e1518b",
+        "creditValue": 0,
+        "createdAt": "2023-11-09T18:26:43.2112234Z",
+        "resolvedAt": "2023-11-13T19:12:17.2778233Z",
+        "updatedAt": "2023-11-13T19:12:17.3403115Z",
+        "paymentLink": "https://www.teste.com.br",
+        "originalDueDate": "2023-12-09T18:26:43.2112234Z",
+        "dueDate": "2023-12-09T18:26:43.2112234Z",
+        "installment": 1,
+        "orderId": "1375060513100-01",
+        "observation": "Open test",
+        "transactionId": "A424887D0F2D45028FE5C96E9B0E1A2D",
+        "numberOfInstallments": 1,
+        "creditAccountId": "fcba59e0-7f26-11ee-ba3c-511336e1518b"
+      },
+      {
+        "id": "742F1758D81F4E93BC2A3F8A382D44A8-01",
+        "friendlyId": "8UfrLSCc-1",
+        "status": "Opened",
+        "value": 0.91,
+        "accountId": "fcba59e0-7f26-11ee-ba3c-511336e1518b",
+        "creditValue": 0,
+        "createdAt": "2023-11-10T19:46:50.551354Z",
+        "updatedAt": "2023-11-14T12:07:21.9823956Z",
+        "originalDueDate": "2023-12-10T19:46:50.551354Z",
+        "dueDate": "2023-12-18T19:46:50.551354Z",
+        "installment": 1,
+        "orderId": "1375070513102-01",
+        "transactionId": "742F1758D81F4E93BC2A3F8A382D44A8",
+        "numberOfInstallments": 1,
+        "creditAccountId": "fcba59e0-7f26-11ee-ba3c-511336e1518b"
+      },
+      {
+        "id": "742235D7E5E840798EC28A02EBA9E855-01",
+        "friendlyId": "mvOEfmdk-1",
+        "status": "Cancelled",
+        "value": 1.21,
+        "accountId": "fcba59e0-7f26-11ee-ba3c-511336e1518b",
+        "creditValue": 0,
+        "createdAt": "2023-11-13T18:05:39.1334296Z",
+        "resolvedAt": "2023-11-13T19:25:22.1919688Z",
+        "updatedAt": "2023-11-13T19:25:22.3326219Z",
+        "originalDueDate": "2023-12-13T18:05:39.1334296Z",
+        "dueDate": "2023-12-13T18:05:39.1334296Z",
+        "installment": 1,
+        "orderId": "1376020513104-01",
+        "transactionId": "742235D7E5E840798EC28A02EBA9E855",
+        "numberOfInstallments": 1,
+        "creditAccountId": "fcba59e0-7f26-11ee-ba3c-511336e1518b"
+      }
+    ],
+    "summary": {
+      "total": 0.91,
+      "count": 3,
+      "totalPaid": 5.01,
+      "totalCancelled": 1.21
+    }
+  }
+  ```

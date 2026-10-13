@@ -1,0 +1,107 @@
+info:
+  name: Create or update a gift card provider by ID
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/giftcardproviders/:giftCardProviderId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: giftCardProviderId
+      value: customProvider
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "serviceUrl": "https://api.vtex.com.br/example",
+        "oauthProvider": "vtex",
+        "preAuthEnabled": true,
+        "cancelEnabled": true,
+        "appKey": "key",
+        "appToken": "token",
+        "id": "customProvider"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[PUT]::/api/giftcardproviders/:giftCardProviderId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PUT]::/api/giftcardproviders/:giftCardProviderId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[PUT]::/api/giftcardproviders/:giftCardProviderId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[PUT]::/api/giftcardproviders/:giftCardProviderId - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"id":{"type":"string","description":"Gift card provider identification."},"serviceUrl":{"type":"string","description":"URL from the provider."},"oauthProvider":{"type":"string","description":"Provider's authentication."},"preAuthEnabled":{"type":"boolean","description":"Related to the pre-authorization that can happen on the transaction generated through the provider."},"cancelEnabled":{"type":"boolean","description":"Indicates whether it is possible to cancel the transaction, generated through the provider."},"_self":{"type":"object","description":"Object that carries an auto reference from the provider at the Hub (on its API).","items":{"type":"object","description":"Provider route information.","properties":{"href":{"type":"string","description":"This is one of the fields inside the `_self`. It is exactly the route that identifies this provider on the Hub's API, but it is not the same thing as the `serviceURL`."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Create or update a gift card provider from a store.
+
+  > ⚠️ The `appkey` and `apptoken` fields are not mandatory for the native VTEX gift card, only for [external gift card providers](https://developers.vtex.com/updates/release-notes/2024-05-27-changes-in-authentication-requirements-for-external-gift-card-providers).
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | GiftCard | GiftCard | **Edit Gift Card providers** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `giftCardProviderId` | path | (Required) Gift card provider identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "customProvider",
+    "serviceUrl": "https://api.vtex.com.br/basedevmkp",
+    "oauthProvider": "vtex",
+    "preAuthEnabled": true,
+    "cancelEnabled": true,
+    "_self": {
+      "href": "cosmetics2/giftcardproviders/customprovider"
+    }
+  }
+  ```

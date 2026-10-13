@@ -1,0 +1,111 @@
+info:
+  name: Get account's matcher settings
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: "{{baseUrl}}/suggestions/configuration/account/config"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: accountName
+      value: apiexamples
+      type: path
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/suggestions/configuration/account/config - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/suggestions/configuration/account/config - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/suggestions/configuration/account/config - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/suggestions/configuration/account/config - Schema is valid", function () {
+          const schema = {"description":"Response from Get Account's Matcher Settings endpoint with information about current matcher score setting, rules, spec mapping, and matchFlux.","type":"object","properties":{"score":{"description":"[Matcher](https://help.vtex.com/pt/tutorial/entendendo-a-pontuacao-do-vtex-matcher--tutorials_424) rates received SKUs by comparing the data sent by sellers to existing fields in the marketplace. The calculation of these scores determines whether the product has been: `Approved`, `Pending` or `Denied`.","type":"object","properties":{"approve":{"type":"integer","description":"Minimum approval score set by the marketplace.","default":80},"pending":{"type":"integer","description":"Minimum value for the ad to be pending.","default":31},"reject":{"type":"integer","description":"Bounce score set by marketplace.","default":30}}},"matchers":{"description":"Array of objects that presents a list of matchers configured in the marketplace. If the marketplace has more than one matcher configured in the account, an array will be displayed for each matcher.\n\n By default, the VTEX Matcher is set up automatically in VTEX account.","type":"array","items":{"type":"object","description":"An object representing a single matcher configuration.","properties":{"matcherId":{"type":"string","description":"The Matcher Id."},"hook-base-address":{"type":"string","description":"The base address of the Matcher hook."},"isActive":{"type":"boolean","description":"Indicates if Matcher is active or not. `TRUE` = Matcher is active or `FALSE` = Matcher is inactive."}}}},"rules":{"description":"Arrays object that contains the rules defined for product approval.","type":"object","properties":{"item":{"type":"array","description":"A list of rules for items.","items":{"type":"object","description":"A rule for items."}},"product":{"type":"array","description":"A list of rules for products.","items":{"type":"object","description":"A rule for products."}}}},"SpecificationsMapping":{"type":"array","description":"List of product specifications and SKU attributes configured for mapping.","items":{"type":"object","description":"A specification mapping entry."}},"matchFlux":{"type":"string","description":"This field shows what type of approval setting is being applied to SKUs received from a seller. \n\nPossible values include: \n\n-`default`: where Matcher reviews the SKU and approves it based on its score. \n\n-`manual`: for manual approvals via incoming SKU UI or mailing API. \n\n-`autoApprove`: so that every SKU received from a given seller is automatically approved, regardless of its Matcher Score."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint will be used by the marketplace to query the matcher's current approval settings on their incoming SKUs module. If the account has no matcher configured, the response will be `404 Not Found`. 
+
+  For account approval configuration information, with response including specification information, see [Get Account Approval Settings](https://developers.vtex.com/docs/api-reference/marketplace-apis-suggestions#get-/suggestions/configuration) terminal. 
+
+  The [VTEX matcher](https://help.vtex.com/pt/tutorial/entendendo-a-punctuacao-do-vtex-matcher--tutorials_424) is a tool used by marketplaces to evaluate SKUs corresponding to information from an advertisement of the seller, with those of items already present in the marketplace catalog.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | ---------- | ------------ | ------------ |
+  | Channels | UI resources | **Save suggestion rules** |
+  | Suggestion| Suggestion resources | **Main access** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `accountName` | path | (Required) Name of the VTEX account that belongs to the marketplace. All data extracted, and changes added will be posted into this account. |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "score": {
+      "approve": 85,
+      "pending": 31,
+      "reject": 30
+    },
+    "matchers": [
+      {
+        "matcherId": "example-matcher",
+        "hook-base-address": "http://portal.vtexinternal.com.br/api/u90/hooks",
+        "isActive": true,
+        "updatesNotificationEndpoint": null,
+        "description": null
+      }
+    ],
+    "rules": {
+      "item": [],
+      "product": []
+    },
+    "specificationsMapping": [],
+    "matchFlux": "Default"
+  }
+  ```

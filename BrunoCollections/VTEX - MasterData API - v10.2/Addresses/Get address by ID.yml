@@ -1,0 +1,120 @@
+info:
+  name: Get address by ID
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/dataentities/AD/documents/:addressId?_fields=_all"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/vnd.vtex.ds.v10+json
+  params:
+    - name: _fields
+      value: _all
+      type: query
+    - name: addressId
+      value: 4286e252-050b-11f0-b37f-d6617047d485
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/dataentities/AD/documents/:addressId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/dataentities/AD/documents/:addressId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/dataentities/AD/documents/:addressId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/dataentities/AD/documents/:addressId - Schema is valid", function () {
+          const schema = {"type":"object","description":"Response body for an address document.","properties":{"addressLabel":{"type":["string","null"],"description":"A user-defined label to identify the address."},"addressType":{"type":["string","null"],"description":"The type of address: `commercial` for shipping, `invoice` for billing.","enum":["commercial","invoice"]},"city":{"type":["string","null"],"description":"The city of the address."},"complement":{"type":["string","null"],"description":"Any additional information for the address (e.g., apartment, floor)."},"country":{"type":["string","null"],"description":"The country of the address in three-letter code format (e.g., `\"USA\"`)."},"countryfake":{"type":["string","null"],"description":"Placeholder or optional country value."},"geoCoordinate":{"type":["string","null"],"description":"Geographical coordinates of the address (latitude and longitude)."},"neighborhood":{"type":["string","null"],"description":"The neighborhood of the address."},"number":{"type":["string","null"],"description":"The street number of the address."},"postalCode":{"type":["string","null"],"description":"The postal code of the address. The format must be compatible with the address country postal code format. (e.g., `00000` for addresses in the USA)."},"receiverName":{"type":["string","null"],"description":"The name of the person or entity receiving at this address."},"reference":{"type":["string","null"],"description":"Optional reference point or landmark near the address."},"state":{"type":["string","null"],"description":"The state or province of the address."},"street":{"type":["string","null"],"description":"The street name of the address."},"userId":{"type":["string","null"],"description":"The ID of the user or related entity."},"id":{"type":["string","null"],"description":"Unique identifier for this address record."},"accountId":{"type":["string","null"],"description":"ID of the account related to this address."},"accountName":{"type":["string","null"],"description":"Name of the account related to this address."},"dataEntityId":{"type":["string","null"],"description":"ID of the data entity this address belongs to (always `\"AD\"`)."},"createdBy":{"type":["string","null"],"description":"ID of the user who created the address record."},"createdIn":{"type":["string","null"],"description":"Timestamp of when the address record was created."},"updatedBy":{"type":["string","null"],"description":"ID of the user who last updated the address record."},"updatedIn":{"type":["string","null"],"description":"Timestamp of the last update to the address record."},"lastInteractionBy":{"type":["string","null"],"description":"ID of the user who had the last interaction with the record."},"lastInteractionIn":{"type":["string","null"],"description":"Timestamp of the last interaction with the record."},"followers":{"type":["array","null"],"description":"List of users following this address record.","items":{"type":"string","description":"User ID."}},"tags":{"type":["array","null"],"description":"List of tags associated with this address.","items":{"type":"string","description":"Tag value."}},"auto_filter":{"type":["string","null"],"description":"Optional field used for automatic filtering or categorization."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint retrieves information of a specific address by its unique identifier.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Dynamic Storage | Dynamic storage generic resources | **Read only documents** |
+  | Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |
+  | Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |
+  | Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `addressId` | path | (Required) ID of the address to retrieve. |
+  | `_fields` | query | (Required) Specifies that all fields of the document should be included in the response. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "addressLabel": "NC Office",
+    "addressType": "commercial",
+    "city": "Raleigh",
+    "complement": "",
+    "country": "USA",
+    "countryfake": null,
+    "geoCoordinate": "",
+    "neighborhood": "",
+    "number": "11",
+    "postalCode": "48226",
+    "receiverName": "Backpack-Klub-LLC",
+    "reference": null,
+    "state": "NC",
+    "street": "Toringon Street",
+    "userId": "2da4e9ab-050b-11f0-b37f-f4b136dbcce1",
+    "id": "4286e252-050b-11f0-b37f-d6617047d485",
+    "accountId": "5f1fe23b-9fd1-417d-a4aa-14df38e7746e",
+    "accountName": "qastore",
+    "dataEntityId": "AD",
+    "createdBy": "c83ea7ed-f875-4a10-b0a0-98d96aedab06",
+    "createdIn": "2025-03-19T21:44:01.4199691Z",
+    "updatedBy": null,
+    "updatedIn": null,
+    "lastInteractionBy": "c83ea7ed-f875-4a10-b0a0-98d96aedab06",
+    "lastInteractionIn": "2025-03-19T21:44:01.4199691Z",
+    "followers": [],
+    "tags": [],
+    "auto_filter": null
+  }
+  ```

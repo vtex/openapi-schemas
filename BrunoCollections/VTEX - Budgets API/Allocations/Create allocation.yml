@@ -1,0 +1,152 @@
+info:
+  name: Create allocation
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/budgets/:contextType/:contextId/:budgetId/allocations"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: contextType
+      value: UNIT
+      type: path
+    - name: contextId
+      value: 093f29ac-7a1b-4d6b-a79a-48f89cf73d14
+      type: path
+    - name: budgetId
+      value: 019833db-27ad-7264-b104-dfed7c0fcbac
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "linkedEntity": {
+          "id": "f07c85ed-ea1f-443e-953d-0f1b094ed012",
+          "type": "CostCenter"
+        },
+        "referenceId": "4d00d477-e4fe-4345-b5cd-ba2ef1725cc8",
+        "amount": 658,
+        "notificationSettings": {
+          "enable": false,
+          "thresholds": [
+            {
+              "type": "PERCENT",
+              "Value": 99
+            }
+          ],
+          "recipients": [
+            {
+              "type": "Email",
+              "identifier": "user1@email.com"
+            }
+          ]
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/budgets/:contextType/:contextId/:budgetId/allocations - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/budgets/:contextType/:contextId/:budgetId/allocations - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/budgets/:contextType/:contextId/:budgetId/allocations - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/budgets/:contextType/:contextId/:budgetId/allocations - Schema is valid", function () {
+          const schema = {"type":"object","description":"Response containing allocation details.","properties":{"id":{"type":"string","description":"Identifier of the allocation."},"budgetId":{"type":"string","description":"Identifier of the budget."},"linkedEntity":{"type":"object","description":"Linked entity information.","properties":{"id":{"type":"string","description":"Identifier of the entity linked to the allocation. If `type` is `User` or `Address`, this should be the identifier of the user or address, respectively. If `type` is an Accounting Field ([Custom Field](https://developers.vtex.com/docs/guides/custom-fields-integration)), this should be the **value** of that Accounting Field."},"type":{"type":"string","description":"Type of the linked entity. Currently, the accepted entity types are: `User`, `Address`, and Accounting Fields ([Custom Fields](https://developers.vtex.com/docs/guides/custom-fields-integration))."}}},"balance":{"type":"object","description":"Budget balance information.","properties":{"amount":{"type":"number","description":"Total amount in the budget."},"balanceAdjustment":{"type":"number","description":"Amount already utilized."},"remaining":{"type":"number","description":"Remaining budget."}}},"notificationSettings":{"type":"object","description":"Thresholds that trigger a notification based on usage. Applies to both Budgets and Allocations.","properties":{"enable":{"type":"boolean","description":"Enables notifications."},"thresholds":{"type":"array","description":"Array of threshold configurations.","items":{"type":"object","description":"Threshold configuration.","properties":{"type":{"type":"string","description":"Defines whether the threshold is based on percentage of usage or a fixed amount.","enum":["PERCENT","AMOUNT"]},"Value":{"type":"number","description":"The value of the threshold. For `\"PERCENT\"`, 100 means fully used (0 available); values above 100 indicate overuse."}}}},"recipients":{"type":"array","description":"List of recipients to notify.","items":{"type":"object","description":"Recipient information.","properties":{"type":{"type":"string","description":"Type of notification."},"identifier":{"type":"string","format":"email","description":"Email identifier to send notifications."}}}}}},"status":{"type":"string","description":"Current status of the allocation (e.g., `ACTIVE` or `INACTIVE`).","enum":["ACTIVE","INACTIVE","DELETED"]},"referenceId":{"type":"string","description":"Identifier of the related entity (e.g., Identifier of a contract)."},"contractId":{"type":"string","description":"Identifier of the contract. Alternative field to `referenceId`."},"contextType":{"type":"string","description":"Defines the context type associated with the budget which must be `UNIT` in B2B context."},"contextId":{"type":"string","description":"Identifier of the corresponding Unit."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates a new allocation within a specific VTEX budget.
+
+  >⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | B2B | Budget | **ManageBudgets** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `contextType` | path | (Required) Type of context for the budget (e.g., `UNIT`). This field can't be updated, it is used for validation. You must send the original value. |
+  | `contextId` | path | (Required) Identifier of the corresponding Unit. This field can't be updated, it is used for validation. You must send the original value. |
+  | `budgetId` | path | (Required) Identifier of the budget. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "0197c1f6-eca5-7553-bbf1-34d3cc4ccf2d",
+    "budgetId": "0197c1eb-3f62-73e1-93a2-6fa5d37b74f1",
+    "linkedEntity": {
+      "id": "3bfdafe0-a111-4ce9-9205-1dd5f872b44e",
+      "type": "CostCenter"
+    },
+    "balance": {
+      "amount": 358,
+      "balanceAdjustment": 0,
+      "remaining": 358
+    },
+    "notificationSettings": {
+      "enable": false,
+      "thresholds": [
+        {
+          "type": "PERCENT",
+          "Value": 99
+        }
+      ],
+      "recipients": [
+        {
+          "type": "Email",
+          "identifier": "user1@email.com"
+        }
+      ]
+    },
+    "status": "ACTIVE",
+    "referenceId": "67c9779d-b9a8-4512-a746-5f41361c7270",
+    "contextType": "UNIT",
+    "contextId": "093f29ac-7a1b-4d6b-a79a-48f89cf73d14"
+  }
+  ```

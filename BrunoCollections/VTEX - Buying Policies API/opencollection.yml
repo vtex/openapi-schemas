@@ -1,0 +1,110 @@
+opencollection: 1.0.0
+
+info:
+  name: VTEX - Buying Policies API
+
+request:
+  auth:
+    type: apikey
+    key: X-VTEX-API-AppKey
+    value: "{{apiKey}}"
+    placement: header
+
+docs:
+  content: |-
+    The Buying Policies system supports dynamic rules that merchants can configure to suit their specific authorization processes. It provides a mechanism for users to register custom rule expressions, offering greater flexibility and extensibility.
+
+    The approval process is hierarchical and uses a priority-based evaluation system.
+
+    ## Organization unit evaluation (dimension priority)
+
+    - Each organization unit has one dimension containing its buying policies.
+
+    - Dimensions are evaluated in ascending priority order (lower numbers first).
+
+    - To enforce policies from lowest to highest hierarchy levels, assign descending priorities by hierarchy:
+
+        - Top-level unit = 9999 (evaluated last)
+        - Child units = 9998 (evaluated second)
+        - Grandchild units = 9997 (evaluated first)
+
+    - Sibling units share the same priority.
+
+    - System checks lower-level org units first, then moves up the hierarchy.
+
+    ## Policy type evaluation (rule priority)
+
+    Within each org unit's dimension, rules are evaluated in ascending priority order (lower numbers first). Rules must be organized in the following order, with sequential priority values:
+
+    1. **Bypass rules** (`effectType: 0`) — checked first, approve and stop evaluation.
+    2. **Deny rules** (`effectType: 1`) — checked after all bypass rules, deny and stop evaluation.
+    3. **Sequential workflow rules** (`effectType: 2`) — checked last, require manual approval.
+
+    Priority values are not fixed to specific numbers. They must be assigned sequentially across all rules, keeping the group order above. For example, with 2 bypass rules, 3 deny rules, and 2 approval rules, priorities would be: `1` and `2` for bypass, `3`, `4`, and `5` for deny, `6` and `7` for approval.
+
+    >❗ The dimension must have `requireAllRulesAcceptance: false` so the first matching rule executes and stops further evaluation, enabling bypass functionality.
+
+    ## Authorization dynamics and score fields
+
+    ### Rule evaluation flow
+
+    When an order is submitted, authorization rules are evaluated in two stages.
+
+    #### Stage 1: Rule triggering
+
+    - Rules are evaluated in priority order (bypass → deny → sequential workflow).
+    - The rule's expression is evaluated against the order data.
+    - If the expression is `true`, the rule is triggered and executes immediately, stopping further evaluation.
+    - The `effectType` determines what happens:
+      - `0` (bypass) → Automatic approval, order proceeds.
+      - `1` (deny) → Automatic denial, order is blocked.
+      - `2` (sequential workflow) → Pending, requires manual authorization.
+    - If no rules trigger, the system moves to the next org unit's dimension (if any).
+
+    #### Stage 2: Manual authorization for pending rules
+
+    Rules with `effectType: 2` require manual approval/denial via the [Accept or deny rule](https://developers.vtex.com/docs/api-reference/buying-policies-api#post-/commercial-authorizations/-orderAuthId-/callback) endpoint.
+
+    ### The score system
+
+    The `scoreInterval` object defines decision thresholds:
+
+    ```json
+    "scoreInterval": {
+        "accept": 10,
+        "deny": 5
+    }
+    ```
+
+    When calling the approval and denial endpoints, you provide a score value that determines the outcome:
+
+    | Score Value | Condition | Outcome |
+    | :--- | :--- | :--- |
+    | score ≥ `scoreInterval.accept` | score ≥ 10 | Accepted |
+    | score ≤ `scoreInterval.deny` | score ≤ 5 | Denied |
+    | Between thresholds | 5 < score < 10 | Bypassed |
+
+    >⚠️ The score is not the result of the rule's expression. It's a separate value you send when manually authorizing/denying a pending rule.
+
+    **Example:** With `accept: 10` and `deny: 5`:
+
+    - Sending `score: 100` → Rule accepted.
+    - Sending `score: 0` → Rule denied.
+    - Sending `score: 8` → Rule bypassed (doesn't affect authorization).
+
+    ## Common parameters
+
+    | **Parameter name** | **Description** | **Type** |
+    | :---: | :--- | :--- |
+    | `{{accountName}}` | Name of the VTEX account. Used as part of the URL. | Server variable. |
+    | `{{environment}}` | Environment to use. Used as part of the URL. The default value is `vtexcommercestable`. | Server variable. |
+    | `X-VTEX-API-AppKey` | Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys). | Authentication header. Must be used together with `X-VTEX-API-AppToken`. Not necessary when using `VtexIdclientAutCookie`. |
+    | `X-VTEX-API-AppToken` | Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys). | Authentication header. Must be used together with `X-VTEX-API-AppKey`. Not necessary when using `VtexIdclientAutCookie`. |
+    | `VtexIdclientAutCookie` | [User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours. | Authentication header. Not necessary when using `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken`. |
+  type: text/markdown
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

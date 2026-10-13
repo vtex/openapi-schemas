@@ -1,0 +1,97 @@
+info:
+  name: Register client
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/register"
+  headers:
+    - name: Content-Type
+      value: application/json; charset=utf-8
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "Store": "store-name"
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/register - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/register - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/register - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/register - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"Store":{"type":"string","description":"Echo of the store name from the request."},"ClientId":{"type":"string","description":"Generated client identifier. This will be sent in the `X-VTEX-Client-Id` header in subsequent requests."},"Secret":{"type":"string","description":"Generated shared secret (Base64-encoded). Used by VTEX to sign requests via HMAC-SHA256."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Registers VTEX as a client in your middleware and generates the shared credentials used for HMAC request signing. VTEX calls this endpoint before sending any authentication requests.
+
+  For more information, see the [B2B password migration guide](https://developers.vtex.com/docs/guides/b2b-password-migration).
+
+  Your middleware must:
+  1. Generate a unique `ClientId` for the store.
+  2. Generate a high-entropy `Secret` (recommended: 32+ random bytes / 256-bit, encoded as Base64).
+  3. Store the mapping between the store name, ClientId, and Secret.
+  4. Return the generated credentials to VTEX.
+
+  > ℹ️ This request is made from VTEX to your authentication middleware during the initial setup.
+
+  ## Security requirements
+
+  - The `Secret` should be a high-entropy value (recommended: 32+ random bytes / 256-bit, encoded as Base64).
+  - Store the `Secret` securely and treat it as a sensitive credential.
+  - Never log the `Secret` or expose it in error messages.
+  - Do not reuse secrets across different environments (staging vs. production).
+
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "Store": "store-name",
+    "ClientId": "<generated-client-identifier>",
+    "Secret": "<base64-key>"
+  }
+  ```

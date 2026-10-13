@@ -1,0 +1,143 @@
+info:
+  name: Get list of roles
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/license-manager/site/pvt/roles/list/paged"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: numItems
+      value: "10"
+      type: query
+      disabled: true
+    - name: pageNumber
+      value: "1"
+      type: query
+      disabled: true
+    - name: sort
+      value: id
+      type: query
+      disabled: true
+    - name: sortType
+      value: ASC
+      type: query
+      disabled: true
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/license-manager/site/pvt/roles/list/paged - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/license-manager/site/pvt/roles/list/paged - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/license-manager/site/pvt/roles/list/paged - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/license-manager/site/pvt/roles/list/paged - Schema is valid", function () {
+          const schema = {"description":"Response body for listing all roles.","type":"object","properties":{"items":{"description":"Array of role objects.","type":"array","items":{"description":"Object with information about a role.","type":"object","properties":{"id":{"description":"ID of the role.","type":"integer"},"isAdmin":{"description":"Defines if the role has administrative access (`true`) or not (`false`).","type":"boolean"},"roleType":{"description":"Returns `1` for custom roles, and `0` for predefined roles.","type":"integer"},"products":{"type":"array","description":"Array of License Manager product objects.","items":{"description":"Object representing License Manager products.","type":"object","properties":{"id":{"description":"License Manager product ID.","type":["string","null"]},"categoryId":{"description":"Category ID.","type":["string","null"]},"categoryName":{"type":["string","null"],"description":"Category name."},"description":{"type":["string","null"],"description":"Description."},"consoleUrlMask":{"type":["string","null"],"description":"Console URL mask."},"urlConfiguration":{"type":["string","null"],"description":"URL configuration."},"webApiUrlMask":{"type":["string","null"],"description":"Web API mask."},"url":{"type":["string","null"],"description":"URL."},"productResources":{"type":["string","null"],"description":"Product resources."},"name":{"description":"Name of the License Manager product.","type":"string"}}}},"resources":{"type":["string","null"],"description":"Resources."},"logins":{"type":["string","null"],"description":"Logins."},"name":{"description":"Name of the role.","type":"string"}}}},"paging":{"description":"Paging object.","required":["page","perPage","total","pages"],"type":"object","properties":{"page":{"description":"Current page number.","type":"integer"},"perPage":{"description":"Items per page.","type":"integer"},"total":{"description":"Total of items.","type":"integer"},"pages":{"description":"Total of pages.","type":"integer"}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns a list of License Manager [roles](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc). The response is divided in pages. The query parameter `numItems` defines the number of items in each page, and consequently the amount of pages for the whole list. 
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | License Manager | Services access control | **Get paged roles** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `numItems` | query | Number of items in the returned page. |
+  | `pageNumber` | query | Which page from the whole list will be returned. |
+  | `sort` | query | Chooses the field that the list will be sorted by. |
+  | `sortType` | query | Defines the sorting order. `ASC` is used for ascendant order. `DSC` is used for descendant order. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "items": [
+      {
+        "id": 957,
+        "isAdmin": false,
+        "roleType": 0,
+        "products": [
+          {
+            "id": null,
+            "categoryId": null,
+            "categoryName": null,
+            "description": null,
+            "consoleUrlMask": null,
+            "urlConfiguration": null,
+            "webApiUrlMask": null,
+            "url": null,
+            "productResources": null,
+            "name": "Catalog"
+          },
+          {
+            "id": null,
+            "categoryId": null,
+            "categoryName": null,
+            "description": null,
+            "consoleUrlMask": null,
+            "urlConfiguration": null,
+            "webApiUrlMask": null,
+            "url": null,
+            "productResources": null,
+            "name": "OMS"
+          }
+        ],
+        "resources": null,
+        "logins": null,
+        "name": "Call center operator"
+      }
+    ],
+    "paging": {
+      "page": 1,
+      "perPage": 1,
+      "total": 1,
+      "pages": 1
+    }
+  }
+  ```

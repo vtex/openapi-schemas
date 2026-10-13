@@ -1,0 +1,111 @@
+info:
+  name: Get paged SKU bindings by seller ID
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{baseUrl}}/sku-binding/pvt/skuseller/paged/sellerid/:sellerId?page=1&size=2"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: page
+      value: "1"
+      type: query
+    - name: size
+      value: "2"
+      type: query
+    - name: sellerId
+      value: fashionstore
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/sku-binding/pvt/skuseller/paged/sellerid/:sellerId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/sku-binding/pvt/skuseller/paged/sellerid/:sellerId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/sku-binding/pvt/skuseller/paged/sellerid/:sellerId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/sku-binding/pvt/skuseller/paged/sellerid/:sellerId - Schema is valid", function () {
+          const schema = {"type":"array","items":{"type":"object","description":"SKU binding information regarding a given seller ID.","properties":{"SellerId":{"type":"string","description":"ID that identifies the seller in the marketplace. It can be the same as the seller name or a unique number. Check the **Sellers management** section in the Admin to get the correct ID."},"StockKeepingUnitId":{"type":"integer","description":"SKU ID in the marketplace."},"SellerStockKeepingUnitId":{"type":"string","description":"SKU ID in the seller's store."},"IsActive":{"type":"boolean","description":"Defines if the SKU binding is active."},"FreightCommissionPercentage":{"type":["number","null"],"description":"The percentage that must be filled in as agreed between the marketplace and the seller."},"ProductCommissionPercentage":{"type":["number","null"],"description":"The percentage that must be filled in as agreed between the marketplace and the seller. If there is no such commission, please fill in the field with the value: `0.00`."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves a paged list of SKU bindings given a specific seller ID.
+
+   > ℹ This path is an updated version of `/api/catalog_system/pvt/skuseller/paged/sellerid/{sellerId}`.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Catalog API | General | **View Product** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `sellerId` | path | (Required) ID that identifies the seller in the marketplace. It can be the same as the seller name or a unique number. Check the **Sellers management** section in the VTEX Admin to get the correct ID. |
+  | `page` | query | (Required) Page number. |
+  | `size` | query | (Required) Amount of results per page. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "SellerId": "101",
+      "StockKeepingUnitId": 121,
+      "SellerStockKeepingUnitId": "24",
+      "IsActive": true,
+      "FreightCommissionPercentage": null,
+      "ProductCommissionPercentage": null
+    },
+    {
+      "SellerId": "fashionstore",
+      "StockKeepingUnitId": 14,
+      "SellerStockKeepingUnitId": "60",
+      "IsActive": true,
+      "FreightCommissionPercentage": null,
+      "ProductCommissionPercentage": null
+    }
+  ]
+  ```

@@ -1,0 +1,155 @@
+info:
+  name: Get matched offers' data by product ID
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{baseUrl}}/offer-manager/pvt/product/:productId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: productId
+      value: "123456"
+      type: path
+    - name: accountName
+      value: apiexamples
+      type: path
+    - name: environment
+      value: vtexcommercestable
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/offer-manager/pvt/product/:productId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/offer-manager/pvt/product/:productId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/offer-manager/pvt/product/:productId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/offer-manager/pvt/product/:productId - Schema is valid", function () {
+          const schema = {"type":"array","description":"Array of matched offers data by product ID.","items":{"type":"object","description":"Schema for individual offer data.","properties":{"productId":{"type":"string","description":"Unique identifier for the product."},"skuId":{"type":"string","description":"Unique identifier for the product SKU."},"nameComplete":{"type":"string","description":"Complete name of the product."},"mainImage":{"type":"object","description":"Schema for the main product image.","required":["imagePath"],"properties":{"imagePath":{"type":"string","description":"File path of the main product image."}}},"sellersOffers":{"type":"array","description":"Array of offers from different sellers.","items":{"type":"object","description":"Schema for individual seller offer data.","properties":{"sellerId":{"type":"string","description":"Unique identifier for the seller."},"sellerSkuId":{"type":"string","description":"Unique identifier for the seller's SKU."},"salesChannelOffer":{"type":"object","description":"Schema for the offer data on a specific sales channel (trade policy).","properties":{"salesChannelId":{"type":"string","description":"Unique identifier for the sales channel (trade policy)."},"salesChannelName":{"type":"string","description":"Name of the trade policy."},"price":{"type":"number","description":"Offer price."},"listPrice":{"type":"number","description":"List price of the product."},"priceWithoutDiscount":{"type":"number","description":"Offer price without any discount."},"availableQuantity":{"type":"integer","description":"Available quantity of the product."}}}}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Offers are seller products and SKUs that were sent to the marketplace, and already have their price and inventory level configured. 
+
+  This endpoint retrieves the available offers for a speciic Product ID in the marketplace's catalog. It differs from the Get Suggestions endpoints, since it retrieves products that were already matched by the marketplace operator, and are currently active in its catalog. 
+
+  The call returns a list of offers for that ID, that contain the following data: 
+
+  - Seller that sells the SKU 
+
+  - Correspondent SKU ID 
+
+  - SKU's price value 
+
+  - Inventory level 
+
+  - Sales channel (or [trade policy](https://help.vtex.com/en/tutorial/como-funciona-uma-politica-comercial--6Xef8PZiFm40kg2STrMkMV#master-data)) that it is available at.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Seller Register | Seller Administration | **View Seller** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Seller manager | View Seller |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `productId` | path | (Required) A string that identifies the seller's product. This is the ID that the marketplace will use for all references to this product, such as price and inventory notifications. |
+  | `accountName` | path | (Required) Name of the VTEX account that belongs to the marketplace. The notification will be posted into this account. |
+  | `environment` | path | (Required) Environment to use. Used as part of the URL. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "productId": "1561208",
+      "skuId": "1559161",
+      "nameComplete": "Long sleeve cardigan - Women - Grey - L",
+      "mainImage": {
+        "imagePath": "~/arquivos/ids/8567753-#width#-#height#/image-05b40d3167b5b7ed42285124f6862f12.jpg"
+      },
+      "sellersOffers": [
+        {
+          "sellerId": "1",
+          "sellerSkuId": "1559161",
+          "salesChannelOffer": {
+            "salesChannelId": "1",
+            "salesChannelName": "Principal",
+            "price": 0,
+            "listPrice": 0,
+            "priceWithoutDiscount": 0,
+            "availableQuantity": 0
+          }
+        }
+      ]
+    },
+    {
+      "productId": "1561208",
+      "skuId": "1559163",
+      "nameComplete": "Long sleeve cardigan - Women - Grey - XS",
+      "mainImage": {
+        "imagePath": "~/arquivos/ids/8567753-#width#-#height#/image-05b40d3167b5b7ed42285124f6862f12.jpg"
+      },
+      "sellersOffers": [
+        {
+          "sellerId": "1",
+          "sellerSkuId": "1559161",
+          "salesChannelOffer": {
+            "salesChannelId": "1",
+            "salesChannelName": "Principal",
+            "price": 0,
+            "listPrice": 0,
+            "priceWithoutDiscount": 0,
+            "availableQuantity": 0
+          }
+        }
+      ]
+    }
+  ]
+  ```

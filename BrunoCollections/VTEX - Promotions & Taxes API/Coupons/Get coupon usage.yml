@@ -1,0 +1,97 @@
+info:
+  name: Get coupon usage
+  type: http
+  seq: 8
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/rnb/pvt/coupon/usage/:couponCode"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: couponCode
+      value: test
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/rnb/pvt/coupon/usage/:couponCode - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/rnb/pvt/coupon/usage/:couponCode - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/rnb/pvt/coupon/usage/:couponCode - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/rnb/pvt/coupon/usage/:couponCode - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"hostName":{"type":"string","description":"Name of the store."},"couponCode":{"type":"string","description":"Coupon code."},"profileUsages":{"type":"object","description":"Object with information where and when the coupon was used.","properties":{"profileId":{"type":"object","description":"Profile ID.","properties":{"orderUsage":{"type":"array","description":"Array with all the orders that the coupon was used.","items":{"type":"object","description":"Object with information about the order that the coupon was used.","properties":{"orderId":{"type":"string","description":"Order ID."},"usageDateUtc":{"type":"string","description":"Date and time when the coupon was used in the order in UTC format."}}}}}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves information about the coupon usage.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Rates and Benefits | Promotions | **Manage benefits and rates** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `couponCode` | path | (Required) Coupon Code |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "hostName": "account",
+    "couponCode": "test",
+    "profileUsages": {
+      "23fa76cd-14e1-43ee-93af-0c04c9f6cfd7": {
+        "orderUsage": [
+          {
+            "orderId": "11636716780563-01",
+            "usageDateUtc": "2021-11-03T23:27:54.8305115Z"
+          }
+        ]
+      }
+    }
+  }
+  ```

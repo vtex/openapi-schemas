@@ -1,0 +1,109 @@
+info:
+  name: Update order's partial invoice (send tracking number)
+  type: http
+  seq: 2
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/api/oms/pvt/orders/:orderId/invoice/:invoiceNumber"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: orderId
+      value: 1172452900788-01
+      type: path
+    - name: invoiceNumber
+      value: "000030711"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "trackingNumber": "87658",
+        "trackingUrl": "https://www.tracking.com/url",
+        "courier": "carrierOne",
+        "dispatchedDate": "2022-02-08T13:16:13.4617653+00:00"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[PATCH]::/api/oms/pvt/orders/:orderId/invoice/:invoiceNumber - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PATCH]::/api/oms/pvt/orders/:orderId/invoice/:invoiceNumber - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[PATCH]::/api/oms/pvt/orders/:orderId/invoice/:invoiceNumber - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[PATCH]::/api/oms/pvt/orders/:orderId/invoice/:invoiceNumber - Schema is valid", function () {
+          const schema = {"title":"Updatepartialinvoice.SendTrackingNumber","required":["date","orderId","receipt"],"type":"object","properties":{"date":{"type":"string"},"orderId":{"type":"string"},"receipt":{"type":"string"}},"example":{"date":"2019-02-08T13:16:13.4617653+00:00","orderId":"00-v5195004lux-01","receipt":"527b1ae251264ef1b7a9b597cd8f16b9"}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Update a given order, adding its tracking number to its [Partial invoice](https://help.vtex.com/en/tracks/pedidos--2xkTisx4SXOWXQel8Jg8sa/q9GPspTb9cHlMeAZfdEUe).
+
+
+  After using this call to add a tracking number to an order, you can use the [Update order tracking status](https://developers.vtex.com/docs/api-reference/orders-api#put-/api/oms/pvt/orders/-orderId-/invoice/-invoiceNumber-/tracking) API request to add tracking events. 
+
+   ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | OMS | OMS access | **Notify invoice** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | OMS - Full access | Notify invoice |
+  | IntegrationProfile - Fulfillment Oms | Notify invoice |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `orderId` | path | (Required) Unique code that identifies the order whose invoice is being sent. |
+  | `invoiceNumber` | path | (Required) Number that identifies the invoice. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "date": "2019-02-08T13:16:13.4617653+00:00",
+    "orderId": "00-v5195004lux-01",
+    "receipt": "527b1ae251264ef1b7a9b597cd8f16b9"
+  }
+  ```

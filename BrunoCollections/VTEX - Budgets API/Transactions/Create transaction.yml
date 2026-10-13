@@ -1,0 +1,121 @@
+info:
+  name: Create transaction
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/budgets/:contextType/:contextId/:budgetId/allocations/:allocationId/transactions"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: contextType
+      value: UNIT
+      type: path
+    - name: contextId
+      value: 093f29ac-7a1b-4d6b-a79a-48f89cf73d14
+      type: path
+    - name: budgetId
+      value: 019833db-27ad-7264-b104-dfed7c0fcbac
+      type: path
+    - name: allocationId
+      value: 324b5750-c827-4a6b-a670-c9297c832f4e
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "origin": "ecommerce",
+        "reference": "093c891a-84a7-42cb-8a23-eb6dcf6607d4",
+        "amount": 50,
+        "requestedBy": "user1@email.com",
+        "type": "DEBIT"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/budgets/:contextType/:contextId/:budgetId/allocations/:allocationId/transactions - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/budgets/:contextType/:contextId/:budgetId/allocations/:allocationId/transactions - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/budgets/:contextType/:contextId/:budgetId/allocations/:allocationId/transactions - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/budgets/:contextType/:contextId/:budgetId/allocations/:allocationId/transactions - Schema is valid", function () {
+          const schema = {"type":"object","description":"Response containing transaction details.","properties":{"id":{"type":"string","description":"Identifier of the created transaction."},"budgetId":{"type":"string","description":"Identifier of the associated budget."},"allocationId":{"type":"string","description":"Identifier of the allocation within the budget."},"origin":{"type":"string","description":"Source system or origin of the transaction."},"reference":{"type":"string","description":"Reference identifier tied to the transaction."},"amount":{"type":"number","description":"Amount committed in the transaction."},"requestedBy":{"type":"string","format":"email","description":"Email of the user who created the transaction."},"date":{"type":"string","format":"date-time","description":"Date and time of the transaction (ISO format: YYYY-MM-DDThh:mm:ssZ)."},"type":{"type":"string","description":"Condition that defines how the transaction will impact the budget (e.g., `DEBIT` or `CREDIT`). If `type` is `DEBIT`, the amount will be subtracted from the budget. If `type` is `CREDIT`, the amount will be added to the budget.","enum":["DEBIT","CREDIT"]},"contextType":{"type":"string","description":"Defines the context type associated with the budget which must be `UNIT` in B2B context."},"contextId":{"type":"string","description":"Identifier for the context type."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates a new transaction which subtracts funds from the specified budget allocation.
+
+  >⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | B2B | Budget | **ManageBudgets** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `contextType` | path | (Required) Type of context for the budget (e.g., `UNIT`). This field can't be updated, it is used for validation. You must send the original value. |
+  | `contextId` | path | (Required) Identifier of the corresponding Unit. This field can't be updated, it is used for validation. You must send the original value. |
+  | `budgetId` | path | (Required) Identifier of the budget. |
+  | `allocationId` | path | (Required) Identifier of the allocation. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "880e8400-e29b-41d4-a716-446655440000",
+    "budgetId": "550e8400-e29b-41d4-a716-446655440000",
+    "allocationId": "660e8400-e29b-41d4-a716-446655440000",
+    "origin": "ecommerce",
+    "reference": "093c891a-84a7-42cb-8a23-eb6dcf6607d4",
+    "amount": 50,
+    "requestedBy": "user1@email.com",
+    "date": "2025-01-20T10:15:00Z",
+    "type": "DEBIT",
+    "contextType": "UNIT",
+    "contextId": "093f29ac-7a1b-4d6b-a79a-48f89cf73d14"
+  }
+  ```

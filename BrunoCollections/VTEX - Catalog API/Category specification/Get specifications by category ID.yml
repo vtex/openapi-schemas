@@ -1,0 +1,106 @@
+info:
+  name: Get specifications by category ID
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/catalog_system/pub/specification/field/listByCategoryId/:categoryId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: categoryId
+      value: "1"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/catalog_system/pub/specification/field/listByCategoryId/:categoryId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/catalog_system/pub/specification/field/listByCategoryId/:categoryId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/catalog_system/pub/specification/field/listByCategoryId/:categoryId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/catalog_system/pub/specification/field/listByCategoryId/:categoryId - Schema is valid", function () {
+          const schema = {"required":["Name","CategoryId","FieldId","IsActive","IsStockKeepingUnit"],"type":"array","description":"Array of objects.","items":{"type":"object","description":"Object containing specification information.","properties":{"Name":{"type":"string","description":"Specification name. Limited to 100 characters."},"CategoryId":{"type":"integer","description":"Category ID."},"FieldId":{"type":"integer","description":"Specification field ID."},"IsActive":{"type":"boolean","description":"Defines if the specification is active."},"IsStockKeepingUnit":{"type":"boolean","description":"Defines if it is an SKU specification."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves all specifications from a category by its ID.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Catalog | Content | **Groups** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `categoryId` | path | (Required) Category ID. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "Name": "Specification A",
+      "CategoryId": 1,
+      "FieldId": 33,
+      "IsActive": true,
+      "IsStockKeepingUnit": false
+    },
+    {
+      "Name": "Specification B",
+      "CategoryId": 1,
+      "FieldId": 34,
+      "IsActive": true,
+      "IsStockKeepingUnit": false
+    },
+    {
+      "Name": "Specification C",
+      "CategoryId": 1,
+      "FieldId": 35,
+      "IsActive": false,
+      "IsStockKeepingUnit": false
+    }
+  ]
+  ```

@@ -1,0 +1,107 @@
+info:
+  name: Update a pre-authorization
+  type: http
+  seq: 11
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/creditcontrol/accounts/:creditAccountId/transactions/:transactionId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: creditAccountId
+      value: 01bce461-9g03-12ds-8217-b3d39271e15b
+      type: path
+    - name: transactionId
+      value: B2E754DCD7304D22866CB6F221CF0FEB
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "value": 55,
+        "settle": true,
+        "installments": 1
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[PUT]::/api/creditcontrol/accounts/:creditAccountId/transactions/:transactionId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PUT]::/api/creditcontrol/accounts/:creditAccountId/transactions/:transactionId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[PUT]::/api/creditcontrol/accounts/:creditAccountId/transactions/:transactionId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[PUT]::/api/creditcontrol/accounts/:creditAccountId/transactions/:transactionId - Schema is valid", function () {
+          const schema = {"required":["id","value","installments"],"type":"object","properties":{"id":{"type":"string","description":"Pre-Authorization identification."},"value":{"type":"number","description":"Pre-Authorization value."},"installments":{"type":"number","description":"Number of installments."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Updates information for a specific pre-authorization request.
+
+  >⚠️ This call can only be used for pre-authorizations that have not yet been captured or canceled.
+
+  Also known as authorization hold, card authorization or pre-auth, pre-authorization is the practice of holding this balance as unavailable until either the merchant clears the transaction, also called settlement, or the hold *falls off*.
+
+  This operation does not appear in statements but the available balance will be updated.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Credit Control | Main | **Main Access** |
+  | Credit Control | Statements | **Create Statements** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `creditAccountId` | path | (Required) Credit account identification. |
+  | `transactionId` | path | (Required) Pre-authorization identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "d86454d23a624417b90af3876a31b981",
+    "value": 55,
+    "installments": 1
+  }
+  ```

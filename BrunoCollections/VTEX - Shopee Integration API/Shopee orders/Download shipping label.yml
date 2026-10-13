@@ -1,0 +1,116 @@
+info:
+  name: Download shipping label
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/shopeeintegration/order/shipping/label?an=store01&shopeeOrderId=240101ABC123"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: store01
+      type: query
+    - name: shopeeOrderId
+      value: 240101ABC123
+      type: query
+  auth:
+    type: apikey
+    key: VtexIdclientAutCookie
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/shopeeintegration/order/shipping/label - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/shopeeintegration/order/shipping/label - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/shopeeintegration/order/shipping/label - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/shopeeintegration/order/shipping/label - Schema is valid", function () {
+          const schema = {"type":"object","description":"Shipping label download payload returned by the API.","required":["message","details"],"properties":{"message":{"type":"string","description":"Summary message for the operation."},"details":{"type":"object","description":"Label metadata and encoded file returned for the Shopee order.","properties":{"statusMessage":{"type":"string","description":"Status message from the integration or Shopee flow."},"orderStatusInShopee":{"type":"array","description":"Shopee order status values applicable to the label request.","items":{"type":"string","description":"Shopee order status code or label."}},"file":{"type":"object","description":"Label file encoded in Base64 and HTTP content hints.","required":["base64Encoded","type","disposition"],"properties":{"base64Encoded":{"type":"string","description":"File content (for example a ZIP archive) encoded in Base64."},"type":{"type":"string","description":"Suggested media type for the file, often application/force-download."},"disposition":{"type":"string","description":"Suggested Content-Disposition header value for download."}}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns shipping label data for a Shopee order as JSON. On success the label file is included Base64-encoded (typically a ZIP archive). The credential must be valid for the account indicated by query parameter `an`.
+
+  ## Authentication
+
+  This endpoint requires a valid [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) in the `VtexIdclientAutCookie` header (for example from Admin VTEX login). [API keys](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) are not used for this operation.
+
+  ## Permissions
+
+  The authenticated store user must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | OMS | OMS access | **View order** |
+  | Checkout         | CheckoutResources | **Orders Full Access** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | OMS - Full access | View order |
+  | Checkout Admin | View order |
+  | IntegrationProfile - Fulfillment Oms | View order |
+  | OMS - Full access | Orders Full Access |
+  | Checkout Admin | Orders Full Access |
+  | IntegrationProfile - Fulfillment Oms | Orders Full Access |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `an` | query | (Required) VTEX account name for the Shopee integration. Must match the account for which the authentication credential is valid. |
+  | `shopeeOrderId` | query | (Required) Shopee order identifier. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "message": "Label retrieved successfully",
+    "details": {
+      "statusMessage": "success",
+      "orderStatusInShopee": [
+        "READY_TO_SHIP"
+      ],
+      "file": {
+        "base64Encoded": "UEsDBBQAAAAIA...",
+        "type": "application/force-download",
+        "disposition": "attachment; filename=\"OpenApi_Shipping_label_Zip.Entrega%20Padr%C3%A3o%2A1.zip\""
+      }
+    }
+  }
+  ```

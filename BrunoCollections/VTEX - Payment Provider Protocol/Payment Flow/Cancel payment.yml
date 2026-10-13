@@ -1,0 +1,133 @@
+info:
+  name: Cancel payment
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/payments/:paymentId/cancellations"
+  headers:
+    - name: X-PROVIDER-API-AppKey
+      value: "{{X-PROVIDER-API-AppKey}}"
+    - name: X-PROVIDER-API-AppToken
+      value: "{{X-PROVIDER-API-AppToken}}"
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: paymentId
+      value: F5C1A4E20D3B4E07B7E871F5B5BC9F91
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "paymentId": "F5C1A4E20D3B4E07B7E871F5B5BC9F91",
+        "requestId": "D12D9B80972C462980F5067A3A126837",
+        "authorizationId": "5784589",
+        "tid": "10022005181543584603",
+        "transactionId": "D3AA1FC8372E430E8236649DB5EBD08E",
+        "value": 2300,
+        "nsu": "NSU987432",
+        "sandboxMode": false,
+        "merchantSettings": [
+          {
+            "name": "Public Merchant ID Test.",
+            "value": "1"
+          },
+          {
+            "name": "Public Merchant ID Test.",
+            "value": "1"
+          }
+        ],
+        "connectorMetadata": [
+          {
+            "name": "MetadataName",
+            "value": "MetadataValue"
+          },
+          {
+            "name": "MetadataName",
+            "value": "MetadataValue"
+          }
+        ]
+      }
+  auth:
+    type: apikey
+    key: X-VTEX-API-AppKey
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/payments/:paymentId/cancellations - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/payments/:paymentId/cancellations - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/payments/:paymentId/cancellations - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/payments/:paymentId/cancellations - Schema is valid", function () {
+          const schema = {"required":["paymentId","cancellationId","code","message","requestId"],"type":"object","description":"Cancel payment response body information.","properties":{"paymentId":{"type":"string","description":"The same `paymentId` sent in the request."},"cancellationId":{"type":"string","description":"Provider's cancellation identifier. If the operation has failed you **MUST** return `null`."},"code":{"type":["string","null"],"description":"Provider's operation/error code to be logged. Return `cancel-manually` if you do not support this operation, so we can send a notification to the merchant."},"message":{"type":"string","description":"Provider's operation/error message to be logged."},"requestId":{"type":"string","description":"The same `requestId` sent in the request."},"connectorMetadata":{"type":"array","description":"Array containing metadata fields sent from the provider to the payment gateway.","items":{"type":"object","description":"Metadata fields information.","required":["name","value"],"properties":{"name":{"type":"string","description":"The name of the metadata to be stored in the gateway (limited to 20 characters)."},"value":{"type":"string","description":"The value of the metadata stored (limited to 200 characters)."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Cancels a payment that was not yet approved or settled.
+
+  > ℹ️ This request is made from VTEX to the payment provider.
+
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `paymentId` | path | (Required) VTEX payment identifier. |
+  | `X-PROVIDER-API-AppKey` | header | (Required) Unique identifier created by the provider and configured on the provider configuration page (Admin VTEX). To use this header as authorization, check that the `usesProviderHeadersName` field is set to `true` in the payment provider's `configuration.json`. To check the `configuration.json` file, access the route {{connector}}/paymentProvider/configuration.json. |
+  | `X-PROVIDER-API-AppToken` | header | (Required) Unique token created by the provider and configured on the provider configuration page (Admin VTEX). To use this header as authorization, check that the `usesProviderHeadersName` field is set to `true` in the payment provider's `configuration.json`. To check the `configuration.json` file, access the route {{connector}}/paymentProvider/configuration.json |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "paymentId": "F5C1A4E20D3B4E07B7E871F5B5BC9F91",
+    "cancellationId": "1231323234234",
+    "code": null,
+    "message": "Successfully cancelled",
+    "requestId": "D12D9B80972C462980F5067A3A126837",
+    "connectorMetadata": [
+      {
+        "name": "MetadataName",
+        "value": "MetadataValue"
+      }
+    ]
+  }
+  ```

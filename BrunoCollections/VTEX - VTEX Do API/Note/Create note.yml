@@ -1,0 +1,111 @@
+info:
+  name: Create note
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/notes"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "target": {
+          "id": "v964735bdev-01",
+          "type": "order",
+          "url": "https://basedevmkp.environment.com/admin/checkout/#/orders/v964741bdev-01"
+        },
+        "domain": "oms",
+        "description": "Order ID in the marketplace is 786-09.",
+        "createdBy": {
+          "id": "fb542e51-5488-4c34-8d17-ed8fcf597a94",
+          "name": "Mario Smith"
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/notes - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/notes - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/notes - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/notes - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"id":{"type":"string","description":"Note ID."},"domain":{"type":"string","description":"VTEX module `oms`."},"owner":{"type":"string","description":"Owner ID."},"target":{"type":"object","description":"Target object information.","properties":{"id":{"type":"string","description":"Order ID."},"type":{"type":"string","description":"Target type."},"url":{"type":"string","description":"Target URL."}}},"description":{"type":"string","description":"Note description."},"creationDate":{"type":"string","description":"Creation date in [UTC time format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"lastUpdate":{"type":"string","description":"Last update date in [UTC time format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"createdBy":{"type":["object","null"],"description":"Identification of the user who created the note.","properties":{"id":{"type":"string","description":"User ID."},"name":{"type":"string","description":"User name."},"email":{"type":"string","description":"User email."},"key":{"type":["string","null"],"description":"Authentication key used."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates a new note in [VTEX DO](https://help.vtex.com/en/tutorial/vtex-do--7KMbRL4OslN8DTX9oiuCiu). Be aware of the following limitations:
+
+
+  - The maximum number of notes for an order is 30.
+
+
+  - The maximum number of characters in a note's description is 2000.
+
+  ## Permissions
+
+  This endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "A08CDB2519AC4FA49EB6099CF72C3642",
+    "domain": "oms",
+    "owner": "c97ef6c8491a439f927cf9918644329f",
+    "target": {
+      "id": "v964735bdev-01",
+      "type": "order",
+      "url": "https://basedevmkp.environment.com.br/admin/checkout/#/orders/v964741bdev-01"
+    },
+    "description": "Order ID in the marketplace is 786-09.",
+    "creationDate": "2024-03-11T15:49:17.8785392Z",
+    "lastUpdate": "2024-05-11T15:49:17.8785392Z",
+    "createdBy": {
+      "id": "fb542e51-5488-4c34-8d17-ed8fcf597a94",
+      "name": "Mario Smith",
+      "email": "mario.smith@store.com",
+      "key": "appkey-appvtex"
+    }
+  }
+  ```

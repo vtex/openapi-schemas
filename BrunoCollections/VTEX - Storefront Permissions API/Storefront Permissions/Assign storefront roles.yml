@@ -1,0 +1,112 @@
+info:
+  name: Assign storefront roles
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/license-manager/storefront/user/roles"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "id": "f0a15a42-f7fc-4b09-a9ab-fabc76d9f332",
+        "roleIds": [
+          1,
+          4,
+          5
+        ]
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/license-manager/storefront/user/roles - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/license-manager/storefront/user/roles - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/license-manager/storefront/user/roles - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/license-manager/storefront/user/roles - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"id":{"type":"string","format":"uuid","description":"User GUID."},"roles":{"type":"array","description":"List of roles assigned to the user.","items":{"type":"object","description":"Role information.","properties":{"id":{"type":"integer","description":"Role ID."},"name":{"type":"string","description":"Role name."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Fully updates the user's role list based on the `roleIds` provided. This endpoint replaces all existing roles with the specified ones. If the user does not exist, this endpoint creates the user and assigns the indicated roles.
+
+  > ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).
+
+  >ℹ️ Learn more about the available storefront roles and resources at the [Storefront Permissions](https://developers.vtex.com/docs/guides/storefront-permissions) guide.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | License Manager | Services access control | **Edit Storefront User Permissions** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "f0a15a42-f7fc-4b09-a9ab-fabc76d9f332",
+    "roles": [
+      {
+        "id": 1,
+        "name": "Organizational Unit Admin"
+      },
+      {
+        "id": 4,
+        "name": "Buyer"
+      },
+      {
+        "id": 5,
+        "name": "Personal Cards User"
+      }
+    ]
+  }
+  ```
