@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Quotes API",
-        "description": "\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\nThe Quotes API manages commercial quotations, also known as requests for quotation (RFQ), between a store and its buyers. It supports the negotiation phase that precedes an order in B2B commerce: a buyer or a sales representative assembles a set of commercial terms, the counterpart reviews and revises them, and once both parties agree, the quote is converted into a [cart](https://developers.vtex.com/docs/api-reference/checkout-api) that can be checked out as a regular order.\n\nA quote holds the same commercial terms as a cart — items, quantities, prices, discounts, delivery method, and payment method — but has its own lifecycle, version history, and permission rules. The Quotes API does not replace the [Checkout API](https://developers.vtex.com/docs/api-reference/checkout-api): it delegates pricing simulation and order placement to Checkout, and it does not run the full set of transactional validations that Checkout applies at order placement time.\r\n\r\n>ℹ️ This API is in beta, which means that we are working to improve it. If you have any questions, please contact our [Support Center](https://support.vtex.com/hc/en-us/requests).\n\n## Quote lifecycle\n\nEvery quote moves through a state machine. The `status` field reflects the current stage, and each transition is triggered by a dedicated action endpoint.\n\n| **Status** | **Description** |\n| - | - |\n| `Draft` | The quote was created but not yet submitted. It is visible only to its creator, who is the only user allowed to edit it. Edits in this status do not create a version. |\n| `Requested` | The quote was submitted and is pending review by the counterpart. |\n| `InReview` | An admin acknowledged the quote and is working on it. Only the assigned reviewer can read or edit it, and edits do not create a version. |\n| `Reviewed` | The review is complete and the quote is back with the requesting party, who can approve it, convert it, decline it, or retract it to `Draft` to start a new round. |\n| `Approved` | Both parties agreed on the terms. This status is optional, since a `Reviewed` quote can be converted directly. The endpoint that sets this status is not implemented yet. |\n| `Declined` | One of the parties declined the quote. This is a terminal status. |\n| `Expired` | The `expiresAt` deadline passed. A background process applies this transition, and it is a terminal status. |\n| `ConvertedToCart` | A cart was created from the quote. The `cartId` field holds the resulting `orderFormId`. |\n| `ConvertedToOrder` | An order was placed from the converted cart. The `orderId` field is filled asynchronously when the order is placed. |\n\nEvery change made to a quote outside the `Draft` and `InReview` statuses seals a new version, which keeps a full audit trail of the negotiation. Versions are available through the quote versions endpoints.\n\nWhile a quote is in `Draft` status, only the user who created it can change it, and a buyer may only add items, remove items, and change item quantities. Any other field sent by a buyer causes the whole request to be rejected with a `403` error listing the rejected fields. Admins may change any editable field of the drafts they created.\n\n## Error codes\n\nErrors share a common payload with a machine-readable `code`, a `message`, and a `retry` flag that tells whether the same request can be sent again unchanged.\n\n| **Code** | **HTTP status** | **Description** |\n| - | - | - |\n| `MISSING_ACCOUNT_NAME` | 400 | The account could not be resolved from the request. |\n| `MISSING_ITEMS_FIELD` | 400 | The `negotiation.items` field is missing from the payload. |\n| `INVALID_SEARCH_QUERY` | 400 | One or more query parameters are invalid. The `details` field names each rejected parameter. |\n| `UNSUPPORTED_IMPORT_SOURCE` | 400 | The `source` field holds a value other than `orderForm`. |\n| `ORDERFORM_NOT_FOUND` | 400 | The cart informed in the `content` field does not exist. |\n| `INCOMPLETE_ORDERFORM` | 400 | The cart informed in the `content` field lacks data required to build a quote. |\n| `DECLINE_REASON_REQUIRED` | 400 | The `reason` field is missing or empty. |\n| `COMMENT_CONTENT_INVALID` | 400 | The comment content is empty or exceeds the allowed length. |\n| `INVALID_COMMENT_CURSOR` | 400 | The `cursor` query parameter is malformed or expired. |\n| `DRAFT_EDIT_FORBIDDEN` | 403 | The caller is not the creator of the draft, or their role could not be determined. |\n| `BUYER_WHITELIST_VIOLATION` | 403 | A buyer sent fields they are not allowed to change. The `rejectedFields` array names them. |\n| `INREVIEW_ACCESS_FORBIDDEN` | 403 | The quote is in `InReview` status and the caller is not the assigned reviewer. |\n| `RETRACT_FORBIDDEN` | 403 | The caller is not allowed to retract the quote to the requested status. |\n| `DECLINE_FORBIDDEN` | 403 | The caller is not allowed to decline the quote. |\n| `COMMENT_FORBIDDEN` | 403 | The caller is not allowed to read, write, or delete the comment. |\n| `COMMENT_VISIBILITY_FORBIDDEN` | 403 | Only Admins can create comments with `Internal` visibility. |\n| `QUOTE_NOT_FOUND` | 404 | No quote with the given ID exists in the account. |\n| `QUOTE_VERSION_NOT_FOUND` | 404 | The quote exists, but it has no version with the given ID. |\n| `COMMENT_NOT_FOUND` | 404 | The quote exists, but it has no comment with the given ID. |\n| `QUOTE_NOT_COMMENTABLE` | 409 | The quote is in a status that does not accept comments. |\n| `QUOTE_NOT_EDITABLE` | 422 | The quote is in a status that does not allow the requested change. |\n| `QUOTE_NOT_SUBMITTABLE` | 422 | The quote is not in `Draft` status and cannot be submitted. |\n| `SUBMIT_FORBIDDEN` | 422 | The caller is not the creator of the quote and cannot submit it. |\n| `ACKNOWLEDGE_FORBIDDEN` | 422 | The quote was not acknowledged before the requested action. |\n| `QUOTE_ITEMS_REQUIRED` | 422 | The quote has no items and the requested action requires at least one. |\n| `QUOTE_ALREADY_CONVERTED` | 422 | The quote was already converted into a cart. |\n| `QUOTE_CONVERSION_INVALID_DATA` | 422 | The negotiation terms are not sufficient to build a cart. |\n| `INVALID_PAYMENT_TOTAL` | 422 | The sum of the payment methods does not match the quote total. |\n| `CHECKOUT_UNAVAILABLE` | 502 | The Checkout API did not respond. The request can be retried. |\n| `SEARCH_UNAVAILABLE` | 503 | The search backend that serves the listing endpoint is unavailable. The request can be retried. |\n| `QUOTE_STORE_UNAVAILABLE` | 503 | The quote record store is unavailable. The request can be retried. |\n\nFields with no value are omitted from responses rather than returned as `null`.",
+        "description": ">⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\nThe Quotes API manages commercial quotations, also known as requests for quotation (RFQ), between a store and its buyers. It supports the negotiation phase that precedes an order in B2B commerce: a buyer or a sales representative assembles a set of commercial terms, the counterpart reviews and revises them, and once both parties agree, the quote is converted into a [cart](https://developers.vtex.com/docs/api-reference/checkout-api) that can be checked out as a regular order.\n\nA quote holds the same commercial terms as a cart — items, quantities, prices, discounts, delivery method, and payment method — but has its own lifecycle, version history, and permission rules. The Quotes API does not replace the [Checkout API](https://developers.vtex.com/docs/api-reference/checkout-api): it delegates pricing simulation and order placement to Checkout, and it does not run the full set of transactional validations that Checkout applies at order placement time.\r\n\r\n## Quote lifecycle\n\nEvery quote moves through a state machine. The `status` field reflects the current stage, and each transition is triggered by a dedicated action endpoint.\n\n| **Status** | **Description** |\n| - | - |\n| `Draft` | The quote was created but not yet submitted. Only its creator can change or submit it, but any authenticated user of the account can read it and see it in the quote list. Edits in this status do not create a version. |\n| `Requested` | The quote was submitted and is pending review by the counterpart. |\n| `InReview` | An admin acknowledged the quote and is working on it. Any admin can read it, but only the assigned reviewer can change it or complete the review. Edits in this status do not create a version. |\n| `Reviewed` | The review is complete and the quote is back with the requesting party, who can approve it, convert it, decline it, or retract it to `Draft` to start a new round. |\n| `Declined` | One of the parties declined the quote. This is a terminal status. |\n| `Expired` | The `expiresAt` deadline passed. A background process applies this transition, and it is a terminal status. |\n| `ConvertedToCart` | A cart was created from the quote. The `cartId` field holds the resulting `orderFormId`. |\n\nEvery change made to a quote outside the `Draft` and `InReview` statuses seals a new version, which keeps a full audit trail of the negotiation. Versions are available through the quote versions endpoints.\n\nWhile a quote is in `Draft` status, only the user who created it can change it. A buyer may change the quote's `label` and most of its negotiation terms, including items, `serviceLocation`, `shipping`, `payment`, and `customData`. The fields a buyer can never send are `owner`, `ownerRole`, `participants`, `linkedContract`, `negotiation.customer`, `negotiation.shopper`, and `negotiation.items[].charge.value.adjustments`. On items that are already in the quote, a buyer may only change `quantity`: sending `productId`, `name`, `seller`, `charge`, `parentItemIds`, or `options` is rejected. Any rejected field causes the whole request to fail with a `403` error whose `rejectedFields` array names the offending fields. Admins may change any editable field of the drafts they created.\n\n## Error codes\n\nErrors share a common payload with a machine-readable `code`, a `message`, and a `retry` flag that tells whether the same request can be sent again unchanged.\n\n| **Code** | **HTTP status** | **Description** |\n| - | - | - |\n| `MISSING_ACCOUNT_NAME` | 400 | The account could not be resolved from the request. |\n| `MISSING_ITEMS_FIELD` | 400 | The `negotiation.items` field is missing from the payload. |\n| `INVALID_SEARCH_QUERY` | 400 | One or more query parameters are invalid. The `details` field names each rejected parameter. |\n| `UNSUPPORTED_IMPORT_SOURCE` | 400 | The `source` field holds a value other than `orderForm`. |\n| `ORDERFORM_NOT_FOUND` | 400 | The cart informed in the `content` field does not exist. |\n| `INCOMPLETE_ORDERFORM` | 400 | The cart informed in the `content` field lacks data required to build a quote. |\n| `DECLINE_REASON_REQUIRED` | 400 | The `reason` field is missing or empty. |\n| `COMMENT_CONTENT_INVALID` | 400 | The comment content is empty or exceeds 4,000 characters. |\n| `INVALID_COMMENT_CURSOR` | 400 | The `cursor` query parameter is malformed or expired. |\n| `INVALID_COMMENT_PAGE_SIZE` | 400 | The `pageSize` query parameter is outside the allowed range. |\n| `DRAFT_EDIT_FORBIDDEN` | 403 | The caller is not the creator of the draft, their role could not be determined, or they tried to change the customer or shopper of a quote in `InReview` status. |\n| `BUYER_WHITELIST_VIOLATION` | 403 | A buyer sent fields they are not allowed to change. The `rejectedFields` array names them. |\n| `INREVIEW_ACCESS_FORBIDDEN` | 403 | The quote is in `InReview` status and the caller is not the assigned reviewer. |\n| `RETRACT_FORBIDDEN` | 403 | The caller is not allowed to retract the quote to the requested status. |\n| `DECLINE_FORBIDDEN` | 403 | The caller is not allowed to decline the quote. |\n| `COMMENT_FORBIDDEN` | 403 | The caller is not allowed to read, write, or delete the comment. |\n| `COMMENT_VISIBILITY_FORBIDDEN` | 403 | Only Admins can create comments with `Internal` visibility. |\n| `QUOTE_NOT_FOUND` | 404 | No quote with the given ID exists in the account. |\n| `QUOTE_VERSION_NOT_FOUND` | 404 | The quote exists, but it has no version with the given ID. |\n| `COMMENT_NOT_FOUND` | 404 | The quote exists, but it has no comment with the given ID. |\n| `QUOTE_NOT_COMMENTABLE` | 409 | The quote is in a status that does not accept comments. |\n| `QUOTE_NOT_EDITABLE` | 422 | The quote is in a status that does not allow the requested change. |\n| `QUOTE_NOT_SUBMITTABLE` | 422 | The quote is not in `Draft` status and cannot be submitted. |\n| `SUBMIT_FORBIDDEN` | 422 | The caller is not the creator of the quote and cannot submit it. |\n| `ACKNOWLEDGE_FORBIDDEN` | 422 | The caller is not the reviewer assigned to the quote. |\n| `QUOTE_ITEMS_REQUIRED` | 422 | The quote has no items and the requested action requires at least one. |\n| `QUOTE_ALREADY_CONVERTED` | 422 | The quote is in a status that cannot be converted: `ConvertedToCart`, `Declined`, or `Expired`. |\n| `QUOTE_CONVERSION_INVALID_DATA` | 422 | The negotiation terms are not sufficient to build a cart. |\n| `INVALID_PAYMENT_TOTAL` | 422 | The sum of the payment methods does not match the quote total. |\n| `CHECKOUT_UNAVAILABLE` | 502 | The Checkout API did not respond. The request can be retried. |\n| `SEARCH_UNAVAILABLE` | 503 | The search backend that serves the listing endpoint is unavailable. The request can be retried. |\n| `QUOTE_STORE_UNAVAILABLE` | 503 | The quote record store is unavailable. The request can be retried. |\n\nFields with no value are omitted from responses rather than returned as `null`.",
         "version": "1.0.0"
     },
     "servers": [
@@ -31,7 +31,7 @@
                     "Quotes"
                 ],
                 "summary": "Create quote",
-                "description": "Creates a new quote in `Draft` status, owned by the user identified by the token sent with the request. The quote starts private and it is visible only to its creator until it is submitted for review.\n\nOnly the minimum item data is accepted in `negotiation.items` — the SKU, the seller, and the quantity. Catalog and pricing data is filled in automatically from a Checkout simulation, so prices returned in the response may differ from the store's list prices once contract or promotion rules apply.\n\nTo create a quote from a cart the shopper has already assembled, use the [Import cart as quote](https://developers.vtex.com/docs/api-reference/quotes-api#post-/api/quoting/quotes/import) endpoint instead.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **Buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the Buyer role prevails.\n\nA Buyer may only send `negotiation.items` fields. If the payload carries any other field, the whole request is rejected with a `403` error whose `rejectedFields` array names the offending fields. An Admin may send every editable field, and must inform `negotiation.customer` explicitly, since an Admin token does not carry a customer.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Creates a new quote in `Draft` status, owned by the user identified by the token sent with the request. The quote starts private and it is visible only to its creator until it is submitted for review.\n\nOnly the minimum item data is accepted in `negotiation.items` — the SKU, the seller, and the quantity. Catalog and pricing data is filled in automatically from a Checkout simulation, so prices returned in the response may differ from the store's list prices once contract or promotion rules apply.\n\nTo create a quote from a cart the shopper has already assembled, use the [Import cart as quote](https://developers.vtex.com/docs/api-reference/quotes-api#post-/api/quoting/quotes/import) endpoint instead.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **Buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the Buyer role prevails.\n\nA buyer may send the quote's `label` and most negotiation terms, including `items`, `serviceLocation`, `shipping`, `payment`, and `customData`. A buyer may never send `owner`, `ownerRole`, `participants`, `linkedContract`, `negotiation.customer`, `negotiation.shopper`, or `negotiation.items[].charge.value.adjustments`: any of these rejects the whole request with a `403` error whose `rejectedFields` array names the offending fields. An Admin may send every editable field, and must inform `negotiation.customer` explicitly, since an Admin token does not carry a customer.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -92,7 +92,12 @@
                                                             "format": "int32",
                                                             "description": "Number of units of the SKU."
                                                         }
-                                                    }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "seller",
+                                                        "quantity"
+                                                    ]
                                                 }
                                             },
                                             "customer": {
@@ -583,7 +588,10 @@
                                                     }
                                                 }
                                             }
-                                        }
+                                        },
+                                        "required": [
+                                            "items"
+                                        ]
                                     },
                                     "linkedContract": {
                                         "type": "object",
@@ -985,7 +993,7 @@
                     "Quotes"
                 ],
                 "summary": "List quotes",
-                "description": "Retrieves a paginated list of the quotes in the account, with optional filters and ordering. Filters on different fields are combined with a logical `AND`, while multiple values of the `status` filter are combined with a logical `OR`.\n\nThe response returns a compact projection of each quote. To read the full negotiation terms, use the [Get quote by ID](https://developers.vtex.com/docs/api-reference/quotes-api#get-/api/quoting/quotes/-quoteId-) endpoint.\n\n>❗ This endpoint is served by a search index that is eventually consistent. A quote created or updated moments earlier may not be reflected in the results yet.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nAny authenticated user of the account can list the account's quotes.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Retrieves a paginated list of the quotes in the account, with optional filters and ordering. Filters on different fields are combined with a logical `AND`, while multiple values of the `status` filter are combined with a logical `OR`.\n\nThe response returns a compact projection of each quote. To read the full negotiation terms, use the [Get quote by ID](https://developers.vtex.com/docs/api-reference/quotes-api#get-/api/quoting/quotes/-quoteId-) endpoint.\n\n>❗ This endpoint is served by a search index that is eventually consistent. A quote created or updated moments earlier may not be reflected in the results yet.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nAny authenticated user of the account can list the account's quotes. There is no per-user filter on this endpoint: the results include every quote in the account, including quotes created by other users and quotes still in `Draft` status.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Accept"
@@ -1252,7 +1260,7 @@
                     "Quotes"
                 ],
                 "summary": "Import cart as quote",
-                "description": "Creates a quote from a cart the shopper has already assembled, copying its items, delivery terms, and payment terms into the quote's negotiation. This is the entry point used by the checkout, where the shopper turns the cart they are looking at into a draft quote or into a quotation request in a single step.\n\nSet `submit` to `false` to keep the quote in `Draft`, so the requester can revise it before sending it. Set it to `true` to create and submit the quote atomically, leaving it in `Requested` status and visible to the counterpart.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nBoth the buyer and the Admin roles can import a cart. The caller becomes the creator and the owner of the resulting quote.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Creates a quote from a cart the shopper has already assembled, copying its items, delivery terms, and payment terms into the quote's negotiation. This is the entry point used by the checkout, where the shopper turns the cart they are looking at into a draft quote or into a quotation request in a single step.\n\nThe `label` is limited to 200 characters.\n\nSet `submit` to `false` to keep the quote in `Draft`, so the requester can revise it before sending it. Set it to `true` to create and submit the quote atomically, leaving it in `Requested` status and visible to the counterpart.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nBoth the buyer and the Admin roles can import a cart. The caller becomes the creator and the owner of the resulting quote.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -1520,7 +1528,7 @@
                     "Quotes"
                 ],
                 "summary": "Get quote by ID",
-                "description": "Retrieves a single quote with its full negotiation terms, lifecycle timestamps, and any advisory warnings recorded by the last write operation.\n\nUse the `status` and `expiresAt` fields to decide whether a quote can still be acted upon. A quote whose `expiresAt` has passed is moved to `Expired` by a background process, which is a terminal status.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the  buyer role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, thebuyer role prevails.\n\nAny authenticated user of the account can read a quote, except while it is in `InReview` status, when only the assigned reviewer identified by `assignedReviewerId` can read it.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Retrieves a single quote with its full negotiation terms, lifecycle timestamps, and any advisory warnings recorded by the last write operation.\n\nUse the `status` and `expiresAt` fields to decide whether a quote can still be acted upon. A quote whose `expiresAt` has passed is moved to `Expired` by a background process, which is a terminal status.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nAny authenticated user of the account can read a quote, including quotes created by other users and quotes in `Draft` status. While a quote is in `InReview` status, reading it requires the Admin role — any admin can read it, not only the reviewer named in `assignedReviewerId`.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Accept"
@@ -1743,7 +1751,7 @@
                     "Quotes"
                 ],
                 "summary": "Update quote",
-                "description": "Changes the content of a quote that is in `Draft` or `InReview` status. Only the fields sent in the payload are evaluated, and the request is atomic: if any part of it is rejected, nothing is persisted.\n\nChanges applied while the quote is in `Draft` or `InReview` status do not seal a version. In every other status the quote is not editable, and this endpoint returns a `422` error.\n\nTo change item quantities, send the item `id` along with the new `quantity`. To add an item, send its `id`, `seller`, and `quantity`. Omitting an item that is currently in the quote removes it.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the  buyer role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nOnly the user who created the quote can change it while it is in `Draft` status, and only the assigned reviewer can change it while it is in `InReview` status. A buyer may only add items, remove items, and change item quantities: sending any other field — including `negotiation.items[].charge.value.adjustments` — rejects the whole request with a `403` error whose `rejectedFields` array names the offending fields. An Admin may change every editable field.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Changes the content of a quote that is in `Draft` or `InReview` status. Only the fields sent in the payload are evaluated, and the request is atomic: if any part of it is rejected, nothing is persisted.\n\nChanges applied while the quote is in `Draft` or `InReview` status do not seal a version. In every other status the quote is not editable, and this endpoint returns a `422` error.\n\nTo change item quantities, send the item `id` along with the new `quantity`. To add an item, send its `id`, `seller`, and `quantity`. Omitting an item that is currently in the quote removes it.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nOnly the user who created the quote can change it while it is in `Draft` status, and only the assigned reviewer can change it while it is in `InReview` status. A buyer may change the quote's `label` and most negotiation terms, including `items`, `serviceLocation`, `shipping`, `payment`, and `customData`. A buyer may never send `owner`, `ownerRole`, `participants`, `linkedContract`, `negotiation.customer`, `negotiation.shopper`, or `negotiation.items[].charge.value.adjustments`. On items already in the quote, a buyer may only change `quantity`: sending `productId`, `name`, `seller`, `charge`, `parentItemIds`, or `options` is rejected. Any rejected field fails the whole request with a `403` error whose `rejectedFields` array names the offending fields. An Admin may change every editable field.\n\nWhile the quote is in `InReview` status, `negotiation.customer` and `negotiation.shopper` are read-only for every role, and sending either returns a `403 DRAFT_EDIT_FORBIDDEN` error with the `inreview_identity_readonly` reason.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -1857,7 +1865,7 @@
                                                         },
                                                         "charge": {
                                                             "type": "object",
-                                                            "description": "Negotiated price of the item. Available to the Admin role only.",
+                                                            "description": "Negotiated price of the item. A buyer may only send this field when adding a new item, and never with `charge.value.adjustments` filled in. Sending it for an item already in the quote is rejected for buyers.",
                                                             "properties": {
                                                                 "value": {
                                                                     "type": "object",
@@ -2708,7 +2716,7 @@
                     "Quotes"
                 ],
                 "summary": "Submit quote",
-                "description": "Submits a draft quote for review, moving it from `Draft` to `Requested`. From this point the quote becomes visible to the counterpart, and the requester can no longer edit it until it comes back as `Reviewed`.\n\nThe quote must have at least one item to be submitted.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the  buyer role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nOnly the user who created the quote can submit it.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Submits a draft quote for review, moving it from `Draft` to `Requested`. From this point the quote becomes visible to the counterpart, and the requester can no longer edit it until it comes back as `Reviewed`.\n\nThe quote must have at least one item to be submitted.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nOnly the user who created the quote can submit it. If the quote is in `InReview` status, the caller must also have the Admin role, otherwise the request fails with a `403` error.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Accept"
@@ -2891,6 +2899,21 @@
                             }
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "code": "INREVIEW_ACCESS_FORBIDDEN",
+                                    "message": "The quote is in review and can only be accessed by an admin.",
+                                    "retry": false
+                                }
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "content": {
@@ -2946,7 +2969,7 @@
                     "Quotes"
                 ],
                 "summary": "Acknowledge quote",
-                "description": "Takes ownership of a submitted quote to start reviewing it, moving it from `Requested` to `InReview`. The caller becomes the assigned reviewer, and from this point the quote is readable and editable only by them, until the review is completed.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the  buyer role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nOnly the Admin role can acknowledge a quote.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Takes ownership of a submitted quote to start reviewing it, moving it from `Requested` to `InReview`. The caller becomes the assigned reviewer, and from this point the quote is readable and editable only by them, until the review is completed.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nOnly the Admin role can acknowledge a quote.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Accept"
@@ -3185,7 +3208,7 @@
                     "Quotes"
                 ],
                 "summary": "Review quote",
-                "description": "Completes the review and sends the quote back to the requesting party, moving it from `InReview` to `Reviewed`. This action seals a new version of the quote, preserving the terms as they stand at this moment.\n\nFrom `Reviewed`, the requesting party can convert the quote into a cart, decline it, or retract it to `Draft` to start another negotiation round. Completing the review also records an implicit approval for the reviewer.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the  buyer role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nOnly the assigned reviewer can complete the review.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Completes the review and sends the quote back to the requesting party, moving it from `InReview` to `Reviewed`. This action seals a new version of the quote, preserving the terms as they stand at this moment.\n\nFrom `Reviewed`, the requesting party can convert the quote into a cart, decline it, or retract it to `Draft` to start another negotiation round. Completing the review also records an implicit approval for the reviewer.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nOnly the assigned reviewer can complete the review.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Accept"
@@ -3419,246 +3442,13 @@
                 }
             }
         },
-        "/api/quoting/quotes/{quoteId}/actions/approve": {
-            "post": {
-                "tags": [
-                    "Quotes"
-                ],
-                "summary": "Approve quote",
-                "description": ">⚠️ This endpoint is declared in the API contract but is **not implemented yet**. Calling it currently fails with a `500` error. Approval is not required to close a deal: a quote in `Reviewed` status can be converted into a cart directly.\n\nRegisters the approval of a reviewed quote, moving it to `Approved`. Approving records the commercial agreement between the parties, and is an optional milestone in the lifecycle.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the  buyer role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nOnce implemented, both the buyer and the Admin roles will be able to approve a quote.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
-                "parameters": [
-                    {
-                        "$ref": "#/components/parameters/Accept"
-                    },
-                    {
-                        "name": "quoteId",
-                        "in": "path",
-                        "description": "Unique identifier of the quote.",
-                        "required": true,
-                        "style": "simple",
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid",
-                            "example": "3f8b6e2a-1c4d-4f7a-9b2e-5d6c8a1f0e33"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/QuoteResponse"
-                                },
-                                "example": {
-                                    "id": "3f8b6e2a-1c4d-4f7a-9b2e-5d6c8a1f0e33",
-                                    "status": "Approved",
-                                    "origin": "Checkout",
-                                    "label": "ACME quarterly restock",
-                                    "createdBy": "b1a2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-                                    "owner": "b1a2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-                                    "ownerRole": "Buyer",
-                                    "participants": [
-                                        {
-                                            "userId": "7c9e0d1b-2a3f-4b5c-8d6e-9f0a1b2c3d4e",
-                                            "role": "Admin"
-                                        }
-                                    ],
-                                    "approvals": [
-                                        {
-                                            "userId": "b1a2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-                                            "userRole": "Buyer",
-                                            "decision": "Approved",
-                                            "approvedAt": "2026-09-05T10:02:11.900Z"
-                                        }
-                                    ],
-                                    "createdAt": "2026-09-01T14:03:21.482Z",
-                                    "lastUpdate": "2026-09-04T09:15:02.117Z",
-                                    "expiresAt": "2026-10-01T14:03:21.482Z",
-                                    "requestedBy": "b1a2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-                                    "requestedAt": "2026-09-02T11:20:45.003Z",
-                                    "assignedReviewerId": "7c9e0d1b-2a3f-4b5c-8d6e-9f0a1b2c3d4e",
-                                    "reviewedAt": "2026-09-04T09:15:02.117Z",
-                                    "approvedBy": "b1a2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-                                    "requesterDescription": "Quarterly restock for the Sao Paulo warehouse.",
-                                    "negotiation": {
-                                        "items": [
-                                            {
-                                                "id": "310118453",
-                                                "uniqueId": "6E1E1A8AF5C24F8FA0A2FBBE0B0C3A11",
-                                                "productId": "23",
-                                                "name": "Industrial Safety Helmet - White",
-                                                "seller": "1",
-                                                "quantity": 120,
-                                                "parentItemIds": [],
-                                                "options": {},
-                                                "charge": {
-                                                    "value": {
-                                                        "amount": 4560.0,
-                                                        "currency": "BRL",
-                                                        "basis": {
-                                                            "type": "listPrice",
-                                                            "unitPrice": 45.0
-                                                        },
-                                                        "adjustments": [
-                                                            {
-                                                                "type": "Discount",
-                                                                "scope": "Total",
-                                                                "amount": -840.0,
-                                                                "origin": "Manual",
-                                                                "description": "Volume discount agreed for the quarterly restock"
-                                                            }
-                                                        ]
-                                                    },
-                                                    "isRequired": true
-                                                }
-                                            }
-                                        ],
-                                        "customer": {
-                                            "id": "acme-industrial-supplies"
-                                        },
-                                        "shopper": {
-                                            "id": "c4f9e8d7-6b5a-4c3d-2e1f-0a9b8c7d6e5f",
-                                            "name": "Alex Moreira"
-                                        },
-                                        "serviceLocation": {
-                                            "type": "Remote",
-                                            "coordinates": [
-                                                "-46.633308",
-                                                "-23.550520"
-                                            ],
-                                            "addresses": [
-                                                {
-                                                    "addressType": "Commercial",
-                                                    "addressId": "a7d3f1c9b2e4",
-                                                    "receiver": "Alex Moreira",
-                                                    "city": "Sao Paulo",
-                                                    "state": "SP",
-                                                    "country": "BRA",
-                                                    "street": "Avenida Paulista",
-                                                    "number": "1000",
-                                                    "complement": "Floor 12"
-                                                }
-                                            ],
-                                            "postalCode": "01310-100",
-                                            "zone": "SP-CAPITAL"
-                                        },
-                                        "shipping": {
-                                            "deliveryOptions": [
-                                                {
-                                                    "parentItems": [
-                                                        0
-                                                    ],
-                                                    "serviceLevel": "Scheduled Freight",
-                                                    "charge": {
-                                                        "value": {
-                                                            "amount": 320.0,
-                                                            "currency": "BRL",
-                                                            "basis": {
-                                                                "type": "carrierRate",
-                                                                "unitPrice": 320.0
-                                                            },
-                                                            "adjustments": []
-                                                        },
-                                                        "isRequired": true
-                                                    },
-                                                    "estimateDate": "2026-09-25",
-                                                    "carrier": "TotalExpress",
-                                                    "deliveryChannel": "Delivery"
-                                                }
-                                            ]
-                                        },
-                                        "payment": {
-                                            "paymentMethods": [
-                                                {
-                                                    "paymentSystem": 6,
-                                                    "paymentSystemName": "BankInvoice",
-                                                    "charge": {
-                                                        "value": {
-                                                            "amount": 4880.0,
-                                                            "currency": "BRL",
-                                                            "basis": {
-                                                                "type": "quoteTotal",
-                                                                "unitPrice": 4880.0
-                                                            },
-                                                            "adjustments": []
-                                                        },
-                                                        "isRequired": true
-                                                    },
-                                                    "installments": 3,
-                                                    "reference": "PO-2026-4471"
-                                                }
-                                            ]
-                                        },
-                                        "customData": {
-                                            "customFields": {
-                                                "costCenter": "OPS-SP-02"
-                                            }
-                                        },
-                                        "totalizers": [
-                                            {
-                                                "id": "Items",
-                                                "value": 5400.0
-                                            },
-                                            {
-                                                "id": "Discounts",
-                                                "value": -840.0
-                                            },
-                                            {
-                                                "id": "Shipping",
-                                                "value": 320.0
-                                            }
-                                        ],
-                                        "amount": 4880.0,
-                                        "totalQuantity": 120
-                                    },
-                                    "warnings": []
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
-                                },
-                                "example": {
-                                    "code": "QUOTE_NOT_FOUND",
-                                    "message": "Quote not found.",
-                                    "quoteId": "3f8b6e2a-1c4d-4f7a-9b2e-5d6c8a1f0e33",
-                                    "retry": false
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
-                                },
-                                "example": {
-                                    "code": "QUOTE_NOT_EDITABLE",
-                                    "message": "The quote cannot be approved in its current status.",
-                                    "retry": false
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/api/quoting/quotes/{quoteId}/actions/decline": {
             "post": {
                 "tags": [
                     "Quotes"
                 ],
                 "summary": "Decline quote",
-                "description": "Declines a reviewed quote, moving it to `Declined`. This is a terminal status: a declined quote cannot transition to any other status, and the negotiation has to start over with a new quote.\n\nThe `reason` field is required and is stored in the quote's `declineReason` field, alongside the user and the timestamp of the decision.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the  buyer role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nA buyer can only decline a quote they created, and only while it is in `Reviewed` status. An Admin can decline any quote in `Requested`, `InReview`, `Reviewed`, or `Approved` status.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Declines a reviewed quote, moving it to `Declined`. This is a terminal status: a declined quote cannot transition to any other status, and the negotiation has to start over with a new quote.\n\nThe `reason` field is required and is stored in the quote's `declineReason` field, alongside the user and the timestamp of the decision.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nA buyer can only decline a quote they created, and only while it is in `Reviewed` status. An Admin can decline any quote in `Requested`, `InReview`, or `Reviewed` status.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -3944,7 +3734,7 @@
                     "Quotes"
                 ],
                 "summary": "Convert quote to cart",
-                "description": "Converts an agreed quote into a cart, moving it to `ConvertedToCart` and returning the `orderFormId` of the new cart. The negotiated terms are carried over to the cart, which is locked so that the shopper cannot change them before placing the order.\n\nThe quote's `cartId` field is filled with the same identifier. Once an order is placed from that cart, the quote moves asynchronously to `ConvertedToOrder` and its `orderId` field is filled.\n\nA quote can be converted from any status except the terminal ones — `Declined`, `Expired`, and `ConvertedToCart` — which return a `422` error. The quote must also carry both `negotiation.shipping` and `negotiation.payment`, otherwise conversion fails with a `QUOTE_CONVERSION_INVALID_DATA` error.\n\n>❗ A quote can only be converted once.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the  buyer role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nConverting a quote that is in `InReview` status requires the Admin role, since a quote under review is exclusive to its reviewer. In every other status, both roles can convert.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Converts an agreed quote into a cart, moving it to `ConvertedToCart` and returning the `orderFormId` of the new cart. The negotiated terms are carried over to the cart. Before returning, the service stamps the quote's identifier onto the cart under the `quotes` custom data app, in the `quoteId` field, sets the cart to expire at the same moment as the quote, and then locks the cart so the shopper cannot change the negotiated terms before placing the order.\n\nThe quote's `cartId` field is filled with the same identifier.\n\nA quote can be converted from any status except `Declined`, `Expired`, and `ConvertedToCart`, which all return a `422 QUOTE_ALREADY_CONVERTED` error. The quote must also carry both `negotiation.shipping` and `negotiation.payment`, otherwise conversion fails with a `QUOTE_CONVERSION_INVALID_DATA` error.\n\n>❗ A quote can only be converted once.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nConverting a quote that is in `InReview` status requires the Admin role, and a caller without it receives a `403` error. In every other status, both roles can convert.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Accept"
@@ -3972,6 +3762,21 @@
                                 },
                                 "example": {
                                     "orderFormId": "00a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "code": "INREVIEW_ACCESS_FORBIDDEN",
+                                    "message": "The quote is in review and can only be accessed by an admin.",
+                                    "retry": false
                                 }
                             }
                         }
@@ -4031,7 +3836,7 @@
                     "Quotes"
                 ],
                 "summary": "Retract quote to review",
-                "description": "Sends a quote back to `InReview`, so the reviewer can adjust the terms again. Use this when the review was completed too early, or when the requesting party asked for a change that the reviewer has to apply.\n\nThe quote must be in `Reviewed` status. Retracting removes the approval that the review action recorded for the reviewer.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the  buyer role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nThis endpoint requires the Admin role, and the caller must be the reviewer assigned to the quote in `assignedReviewerId`. Callers without the Admin role are rejected with the `role_forbidden` reason, and other Admins with the `reviewer_mismatch` reason.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Sends a quote back to `InReview`, so the reviewer can adjust the terms again. Use this when the review was completed too early, or when the requesting party asked for a change that the reviewer has to apply.\n\nThe quote must be in `Reviewed` status. Retracting removes the approval that the review action recorded for the reviewer.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nThis endpoint requires the Admin role, and the caller must be the reviewer assigned to the quote in `assignedReviewerId`. Callers without the Admin role are rejected with the `role_forbidden` reason, and other Admins with the `reviewer_mismatch` reason.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Accept"
@@ -4271,7 +4076,7 @@
                     "Quotes"
                 ],
                 "summary": "Retract quote to draft",
-                "description": "Sends a quote in `Requested` or `Reviewed` status back to `Draft`, so the requesting party can revise it and submit a new request. This starts another negotiation round without losing the version history of the previous ones.\n\nRetracting clears every recorded approval, resets the submission and review metadata, and returns ownership of the quote to its creator.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the  buyer role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nOnly the current owner of the quote can retract it to draft, regardless of their role.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Sends a quote in `Requested` or `Reviewed` status back to `Draft`, so the requesting party can revise it and submit a new request. This starts another negotiation round without losing the version history of the previous ones.\n\nRetracting clears every recorded approval, resets the submission and review metadata, and returns ownership of the quote to its creator.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nOnly the current owner of the quote can retract it to draft, regardless of their role.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Accept"
@@ -4510,7 +4315,7 @@
                     "Quote versions"
                 ],
                 "summary": "List quote versions",
-                "description": "Retrieves the audit trail of a quote, newest version first. A version is sealed every time the quote changes outside the `Draft` and `InReview` statuses, which means each submit and each completed review adds one entry.\n\nEntries carry only the version header. To read the negotiation terms as they stood in a given version, use the [Get quote version](https://developers.vtex.com/docs/api-reference/quotes-api#get-/api/quoting/quotes/-quoteId-/versions/-versionId-) endpoint.\n\nResults are paginated with a cursor: when `nextCursor` is returned, send it back in the `cursor` parameter to fetch the next page. The absence of `nextCursor` means the last page was reached.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the  buyer role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nAny authenticated user of the account who can read the quote can list its versions.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Retrieves the audit trail of a quote, oldest version first. The first page starts at version `1` and `versionNumber` increases down the list. A version is sealed every time the quote changes outside the `Draft` and `InReview` statuses, which means each submit and each completed review adds one entry.\n\nEntries carry only the version header. To read the negotiation terms as they stood in a given version, use the [Get quote version](https://developers.vtex.com/docs/api-reference/quotes-api#get-/api/quoting/quotes/-quoteId-/versions/-versionId-) endpoint.\n\nResults are paginated with a cursor: when `nextCursor` is returned, send it back in the `cursor` parameter to fetch the next page. The absence of `nextCursor` means the last page was reached.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nAn admin can list the versions of any quote in the account. A buyer can only list the versions of a quote they currently own, which means a quote that has been acknowledged is no longer reachable by the buyer who created it, since acknowledging transfers ownership to the reviewing admin.\n\nThis endpoint never returns a `403` error. A buyer who is not the owner, and a caller whose role cannot be determined, both receive the same `404 QUOTE_NOT_FOUND` response as a quote that does not exist, so that the response does not reveal whether the quote exists.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Accept"
@@ -4653,7 +4458,7 @@
                     "Quote versions"
                 ],
                 "summary": "Get quote version",
-                "description": "Retrieves the immutable snapshot of a quote as it stood when a given version was sealed, including the full negotiation terms and the status the quote was in at that moment.\n\nUse this endpoint to show what changed between negotiation rounds, or to audit the terms a party agreed to.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the  buyer role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nAny authenticated user of the account who can read the quote can read its versions.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Retrieves the immutable snapshot of a quote as it stood when a given version was sealed, including the full negotiation terms and the status the quote was in at that moment.\n\nUse this endpoint to show what changed between negotiation rounds, or to audit the terms a party agreed to.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nAn admin can read any version of any quote in the account. A buyer can only read versions of a quote they currently own.\n\nThis endpoint never returns a `403` error. A buyer who is not the owner, and a caller whose role cannot be determined, both receive the same `404 QUOTE_NOT_FOUND` response as a quote that does not exist, so that the response does not reveal whether the quote exists.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Accept"
@@ -4873,7 +4678,7 @@
                     "Quote comments"
                 ],
                 "summary": "Create quote comment",
-                "description": "Posts a message to the quote's comment thread, so buyers and sales representatives can record the reasoning behind the terms they are negotiating.\n\nComments with `Public` visibility are readable by both parties. Comments with `Internal` visibility are readable by Admins only, and are meant for notes the store does not want to share with the buyer.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the  buyer role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nBoth the buyer and the Admin roles can comment on a quote they take part in. Only the Admin role can create comments with `Internal` visibility.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Posts a message to the quote's comment thread, so buyers and sales representatives can record the reasoning behind the terms they are negotiating.\n\nComments with `Public` visibility are readable by both parties. Comments with `Internal` visibility are readable by admins only, and are meant for notes the store does not want to share with the buyer.\n\nThe content is limited to 4,000 characters. Quotes in `Declined` and `ConvertedToCart` status no longer accept new comments and return a `409` error. An `Expired` quote still accepts comments.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nAn admin can comment on any quote in the account. A buyer can only comment on quotes they created, and otherwise receives a `403 COMMENT_FORBIDDEN` error with the `creator_mismatch` reason. Only an admin can create comments with `Internal` visibility.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Content-Type"
@@ -5018,7 +4823,7 @@
                     "Quote comments"
                 ],
                 "summary": "List quote comments",
-                "description": "Retrieves the comment thread of a quote, newest comment first.\n\nResults are paginated with a cursor: when `nextCursor` is returned, send it back in the `cursor` parameter to fetch the next page. The absence of `nextCursor` means the last page was reached.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the  buyer role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nBoth the buyer and the Admin roles can read the thread of a quote they take part in. Comments with `Internal` visibility are returned to the Admin role only.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Retrieves the comment thread of a quote, newest comment first.\n\nResults are paginated with a cursor: when `nextCursor` is returned, send it back in the `cursor` parameter to fetch the next page. The absence of `nextCursor` means the last page was reached.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nAn admin can read the thread of any quote in the account. A buyer can only read the thread of quotes they created, and otherwise receives a `403 COMMENT_FORBIDDEN` error with the `creator_mismatch` reason. Comments with `Internal` visibility are filtered out of a buyer's results.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Accept"
@@ -5085,7 +4890,7 @@
                                             "id": "8b7a6959-4837-4261-9504-3f2e1d0c9b8a",
                                             "quoteId": "3f8b6e2a-1c4d-4f7a-9b2e-5d6c8a1f0e33",
                                             "authorId": "b1a2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-                                            "authorType": "Buyer",
+                                            "authorType": "Customer",
                                             "content": "Please check whether the freight can be split into two deliveries.",
                                             "visibility": "Public",
                                             "createdAt": "2026-09-03T16:41:08.554Z"
@@ -5152,7 +4957,7 @@
                     "Quote comments"
                 ],
                 "summary": "Get quote comment by ID",
-                "description": "Retrieves a single comment of a quote's thread.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the  buyer role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nBoth the buyer and the Admin roles can read a comment of a quote they take part in. Comments with `Internal` visibility are returned to the Admin role only.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Retrieves a single comment of a quote's thread.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nAn admin can read any comment of any quote in the account. A buyer can only read comments of quotes they created. A comment with `Internal` visibility is not visible to a buyer, who receives a `404 COMMENT_NOT_FOUND` error instead.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Accept"
@@ -5242,7 +5047,7 @@
                     "Quote comments"
                 ],
                 "summary": "Delete quote comment",
-                "description": "Permanently removes a comment from a quote's thread. This action cannot be undone.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the  buyer role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nOnly the author of the comment can delete it.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
+                "description": "Permanently removes a comment from a quote's thread. This action cannot be undone.\r\n\r\n>⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.\n\n\n## Permissions\n\nThis API does not rely on [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). Authorization is role based: the Quotes API derives the caller's role from the [user token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens) sent with the request, pairing the cookie the token travels in with the token's audience. A token with the store audience sent in the `VtexIdclientAutCookie_{accountName}` cookie resolves to the **buyer** role, and a token with the VTEX Admin audience sent in the `VtexIdclientAutCookie` cookie resolves to the **Admin** role. A token sent in the other cookie is not accepted, and when both roles resolve in the same request, the buyer role prevails.\n\nOnly the author of the comment can delete it.\n\nRequests whose role cannot be determined are rejected with a `403` error.",
                 "parameters": [
                     {
                         "$ref": "#/components/parameters/Accept"
@@ -5385,11 +5190,9 @@
                             "Requested",
                             "InReview",
                             "Reviewed",
-                            "Approved",
                             "Declined",
                             "Expired",
-                            "ConvertedToCart",
-                            "ConvertedToOrder"
+                            "ConvertedToCart"
                         ]
                     },
                     "origin": {
@@ -5508,11 +5311,6 @@
                         "format": "date-time",
                         "description": "Date and time when the review was completed, in UTC."
                     },
-                    "approvedBy": {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Unique identifier of the user who approved the quote."
-                    },
                     "declinedBy": {
                         "type": "string",
                         "format": "uuid",
@@ -5558,10 +5356,6 @@
                     "cartId": {
                         "type": "string",
                         "description": "Identifier of the cart, also known as the `orderFormId`, created when the quote was converted. Omitted until the quote is converted."
-                    },
-                    "orderId": {
-                        "type": "string",
-                        "description": "Identifier of the order placed from the converted cart. Filled asynchronously when the order is placed, and omitted until then."
                     },
                     "requesterDescription": {
                         "type": "string",
@@ -6340,11 +6134,9 @@
                                         "Requested",
                                         "InReview",
                                         "Reviewed",
-                                        "Approved",
                                         "Declined",
                                         "Expired",
-                                        "ConvertedToCart",
-                                        "ConvertedToOrder"
+                                        "ConvertedToCart"
                                     ]
                                 },
                                 "origin": {
@@ -6512,11 +6304,9 @@
                             "Requested",
                             "InReview",
                             "Reviewed",
-                            "Approved",
                             "Declined",
                             "Expired",
-                            "ConvertedToCart",
-                            "ConvertedToOrder"
+                            "ConvertedToCart"
                         ]
                     },
                     "negotiation": {
@@ -7212,9 +7002,9 @@
                     },
                     "authorType": {
                         "type": "string",
-                        "description": "Role of the user who wrote the comment.",
+                        "description": "Role of the user who wrote the comment. Buyers are reported as `Customer`.",
                         "enum": [
-                            "Buyer",
+                            "Customer",
                             "Admin"
                         ]
                     },
@@ -7265,9 +7055,9 @@
                                 },
                                 "authorType": {
                                     "type": "string",
-                                    "description": "Role of the user who wrote the comment.",
+                                    "description": "Role of the user who wrote the comment. Buyers are reported as `Customer`.",
                                     "enum": [
-                                        "Buyer",
+                                        "Customer",
                                         "Admin"
                                     ]
                                 },
