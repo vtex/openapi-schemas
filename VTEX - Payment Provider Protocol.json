@@ -105,7 +105,8 @@
                                     "metadataFields": [
                                         "MetadataName1",
                                         "MetadataName2"
-                                    ]
+                                    ],
+                                    "hasNativeAntifraud": true
                                 }
                             }
                         }
@@ -120,7 +121,7 @@
                     "Payment Flow"
                 ],
                 "summary": "Create payment",
-                "description": "Creates a new payment and initiates the payment flow.\r\n\r\n> ℹ️ This request is made from VTEX to the payment provider.\r\n\r\nPayment providers must:\r\n\r\n- Execute authorization on payments made through credit/debit card or any synchronized payments;\r\n\r\n- Return the required information to the customer on payments made through bank-issued invoice, redirect, or any async payments.\r\n\r\n >ℹ️ This endpoint has to meet the principle of [idempotence](https://en.wikipedia.org/wiki/Idempotence). When calling this endpoint for the first time of a payment, without a `paymentId`, it should create a new payment. When calling this endpoint for an existing `paymentId`, it should not create another payment, but return the updated status of the existing payment instead.\r\n\r\n## Callbacks (asynchronous flow)\r\n\r\nCallbacks are used for asynchronous payments, which do not receive the final status immediately. At first, an `undefined` status is returned, and the final status will be received from a callback request in the future as `authorized` or `denied`. There are two types of callbacks:\r\n\r\n- **Notification:** If a payment returns with `undefined` status, you are expected to send us a callback/notification to update it later, sending a POST with an updated version of your response (same structure as above) to the `callbackUrl` we have provided.\r\n\r\n- **Retry:** If a payment returns with `undefined` status, you are expected to call the retry endpoint provided by the `callbackUrl` when the processing of the payment is completed, so we make another Create Payment request to update the status with the new value (`authorized` or `denied`).\r\n\r\nCallback requests should be authenticated using a Key and Token which you can [generate from your VTEX partner account License Manager](https://help.vtex.com/en/tutorial/api-keys--2iffYzlvvz4BDMr6WGUtet#generating-app-keys-in-your-account). To do so, `POST` your request passing the `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken` headers with your credentials. **Note:** do not mix up these credentials with the ones we send on behalf of the merchant when sending our requests.\r\n\r\n>\u26A0 For integrations not using VTEX IO, use the **Notification** callback. For integrations developed using VTEX IO infrastructure, use the **Retry** callback.\r\n\r\n### Callback URL\r\n\r\nThe `callbackUrl` field contains an URL that the payment provider uses to make a callback and inform our gateway of the final payment status: `approved` or `denied`. \r\n\r\nThis URL has some query parameters, including the `X-VTEX-signature`. This parameter is mandatory and contains a signature token to identify that the request has been generated from VTEX as a security measure. The signature token has at most 32 characters. You can check an example of callback URL with the signature token below:\r\n\r\n```\r\nhttps://gatewayqa.vtexpayments.com.br/api/pvt/payment-provider/transactions/8FB0F111111122222333344449984ACB/payments/A2A9A25B11111111222222333327883C/callback?accountName=teampaymentsintegrations&X-VTEX-signature=R******tk\r\n```\r\n\r\nIn the [Transactions page of the Admin](https://help.vtex.com/en/tutorial/how-to-view-the-orders-details--tutorials_452), the signature token appears masked for security reasons, as in this example: `X-VTEX-signature=Rj******tk`.\r\n\r\nWhen making the callback request, we recommend that payment providers use the callback URL exactly as received, which guarantees that all the parameters are included.\r\n\r\nSee below an example of a payload forwarded along with the callback URL:\r\n\r\n```json\r\n{\r\n    \"paymentId\": \"8B3BA2F4352545A8B1C5A215F356A01C\",\r\n    \"status\": \"approved\",\r\n    \"authorizationId\": \"184520\",\r\n    \"nsu\": \"21705348\",\r\n    \"tid\": \"21705348\",\r\n    \"acquirer\": \"pagmm\",\r\n    \"code\": \"0000\",\r\n    \"message\": \"Successfully approved transaction\",\r\n    \"delayToAutoSettle\": 1200,\r\n    \"delayToAutoSettleAfterAntifraud\": 1200,\r\n    \"delayToCancel\": 86400,\r\n    \"cardBrand\": \"Mastercard\",\r\n    \"firstDigits\": \"534696\",\r\n    \"lastDigits\": \"6921\",\r\n    \"maxValue\": 16.6\r\n}\r\n```\r\n\r\n>ℹ️ The parameter values sent in the callback payload replace the original values informed in the **Create Payment** request.\r\n\r\n>⚠️ If the waiting parameters (`delayToAutoSettle` and `delayToAutoSettleAfterAntifraud`) are not sent with the callback URL, the values for these parameters will be automatically set to 24 hours.\r\n\r\n## Beta features\r\n\r\nThe beta features available for payment providers are:\r\n\r\n- `inboundRequestsUrl`: Allows to forward external requests back to your payment provider implementation, including the configured credentials (`X-VTEX-API-*` headers), and settings.\r\n\r\n>\u2139 You can reach out to our team by [opening a ticket](https://help.vtex.com/en/tutorial/opening-tickets-to-vtex-support--16yOEqpO32UQYygSmMSSAM) to know more about any beta features.\r\n\r\n## Permissions\r\n\r\nCheck with your service provider to know what permissions are needed." ,
+                "description": "Creates a new payment and initiates the payment flow.\r\n\r\n> ℹ️ This request is made from VTEX to the payment provider.\r\n\r\nPayment providers must:\r\n\r\n- Execute authorization on payments made through credit/debit card or any synchronized payments;\r\n\r\n- Return the required information to the customer on payments made through bank-issued invoice, redirect, or any async payments.\r\n\r\n >ℹ️ This endpoint has to meet the principle of [idempotence](https://en.wikipedia.org/wiki/Idempotence). When calling this endpoint for the first time of a payment, without a `paymentId`, it should create a new payment. When calling this endpoint for an existing `paymentId`, it should not create another payment, but return the updated status of the existing payment instead.\r\n\r\n## Callbacks (asynchronous flow)\r\n\r\nCallbacks are used for asynchronous payments, which do not receive the final status immediately. At first, an `undefined` status is returned, and the final status will be received from a callback request in the future as `authorized` or `denied`. There are two types of callbacks:\r\n\r\n- **Notification:** If a payment returns with `undefined` status, you are expected to send us a callback/notification to update it later, sending a POST with an updated version of your response (same structure as above) to the `callbackUrl` we have provided.\r\n\r\n- **Retry:** If a payment returns with `undefined` status, you are expected to call the retry endpoint provided by the `callbackUrl` when the processing of the payment is completed, so we make another Create Payment request to update the status with the new value (`authorized` or `denied`).\r\n\r\nCallback requests should be authenticated using a Key and Token which you can [generate from your VTEX partner account License Manager](https://help.vtex.com/en/tutorial/api-keys--2iffYzlvvz4BDMr6WGUtet#generating-app-keys-in-your-account). To do so, `POST` your request passing the `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken` headers with your credentials. **Note:** do not mix up these credentials with the ones we send on behalf of the merchant when sending our requests.\r\n\r\n>\u26A0 For integrations not using VTEX IO, use the **Notification** callback. For integrations developed using VTEX IO infrastructure, use the **Retry** callback.\r\n\r\n### Callback URL\r\n\r\nThe `callbackUrl` field contains an URL that the payment provider uses to make a callback and inform our gateway of the final payment status: `approved` or `denied`. \r\n\r\nThis URL has some query parameters, including the `X-VTEX-signature`. This parameter is mandatory and contains a signature token to identify that the request has been generated from VTEX as a security measure. The signature token has at most 32 characters. You can check an example of callback URL with the signature token below:\r\n\r\n```\r\nhttps://gatewayqa.vtexpayments.com.br/api/pvt/payment-provider/transactions/8FB0F111111122222333344449984ACB/payments/A2A9A25B11111111222222333327883C/callback?accountName=teampaymentsintegrations&X-VTEX-signature=R******tk\r\n```\r\n\r\nIn the [Transactions page of the Admin](https://help.vtex.com/en/tutorial/how-to-view-the-orders-details--tutorials_452), the signature token appears masked for security reasons, as in this example: `X-VTEX-signature=Rj******tk`.\r\n\r\nWhen making the callback request, we recommend that payment providers use the callback URL exactly as received, which guarantees that all the parameters are included.\r\n\r\nSee below an example of a payload forwarded along with the callback URL:\r\n\r\n```json\r\n{\r\n    \"paymentId\": \"8B3BA2F4352545A8B1C5A215F356A01C\",\r\n    \"status\": \"approved\",\r\n    \"authorizationId\": \"184520\",\r\n    \"nsu\": \"21705348\",\r\n    \"tid\": \"21705348\",\r\n    \"acquirer\": \"pagmm\",\r\n    \"code\": \"0000\",\r\n    \"message\": \"Successfully approved transaction\",\r\n    \"delayToAutoSettle\": 1200,\r\n    \"delayToAutoSettleAfterAntifraud\": 1200,\r\n    \"delayToCancel\": 86400,\r\n    \"cardBrand\": \"Mastercard\",\r\n    \"firstDigits\": \"534696\",\r\n    \"lastDigits\": \"6921\",\r\n    \"maxValue\": 16.6\r\n}\r\n```\r\n\r\n>ℹ️ The parameter values sent in the callback payload replace the original values informed in the **Create Payment** request.\r\n\r\n>⚠️ If the waiting parameters (`delayToAutoSettle` and `delayToAutoSettleAfterAntifraud`) are not sent with the callback URL, the values for these parameters will be automatically set to 24 hours.\r\n\r\n## Native antifraud\r\n\r\nIf your connector runs its own native antifraud analysis as part of the authorization flow, you can report the result of each analysis to VTEX. To do this, follow these steps:\r\n\r\n1. In the [List Payment Provider Manifest](https://developers.vtex.com/docs/api-reference/payment-provider-protocol#get-/manifest) response, set `hasNativeAntifraud` to `true`.\r\n\r\n2. In the response or callback that carries the final status of the payment (`approved` or `denied`), send the `antifraud` object.\r\n\r\nSend the `antifraud` object only once, and don't send it while `status` is `undefined`. In the asynchronous flow described in **Callbacks (asynchronous flow)**, the initial `undefined` response never includes `antifraud`. Only the callback that resolves the payment to `approved` or `denied` can include it. Never send the object as `null`.\r\n\r\nThe `antifraud.status` field doesn't depend on the top-level `status` of the payment. Your connector sets each value according to its own risk policy, so a payment can be `approved` with an `inconclusive` or `denied` antifraud result.\r\n\r\nThe native antifraud analysis runs within the authorization flow of your connector. It doesn't trigger or interfere with calls to any dedicated Antifraud Provider Protocol integration configured in VTEX.\r\n\r\n>ℹ️ This feature is optional and backward compatible, so it doesn't affect connectors that don't declare `hasNativeAntifraud`.\r\n\r\n## Beta features\r\n\r\nThe beta features available for payment providers are:\r\n\r\n- `inboundRequestsUrl`: Allows to forward external requests back to your payment provider implementation, including the configured credentials (`X-VTEX-API-*` headers), and settings.\r\n\r\n>\u2139 You can reach out to our team by [opening a ticket](https://help.vtex.com/en/tutorial/opening-tickets-to-vtex-support--16yOEqpO32UQYygSmMSSAM) to know more about any beta features.\r\n\r\n## Permissions\r\n\r\nCheck with your service provider to know what permissions are needed." ,
                 "operationId": "CreatePayment",
                 "parameters": [
                     {
@@ -1860,6 +1861,25 @@
                                             "delayToAutoSettleAfterAntifraud": 1800,
                                             "delayToCancel": 21600
                                         }
+                                    },
+                                    "Success - Native antifraud": {
+                                        "value": {
+                                            "paymentId": "8B3BA2F4352545A8B1C5A215F356A01C",
+                                            "status": "approved",
+                                            "authorizationId": "184520",
+                                            "nsu": "21705348",
+                                            "tid": "21705348",
+                                            "acquirer": "pagmm",
+                                            "delayToAutoSettle": 1200,
+                                            "delayToAutoSettleAfterAntifraud": 1200,
+                                            "delayToCancel": 86400,
+                                            "antifraud": {
+                                                "status": "approved",
+                                                "provider": "MyAfEngine",
+                                                "id": "af-x92k1",
+                                                "score": 12
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -2593,6 +2613,10 @@
                             "type": "string",
                             "description": "Metadata fields information."
                         }
+                    },
+                    "hasNativeAntifraud": {
+                        "type": "boolean",
+                        "description": "Indicates whether the payment provider performs its own native antifraud analysis as part of the payment flow. When `true`, the [Create Payment](https://developers.vtex.com/docs/api-reference/payment-provider-protocol#post-/payments?endpoint=post-/payments) response may include an `antifraud` object describing the result of that analysis. When omitted, the provider is considered not to perform native antifraud analysis."
                     }
                 }
             },
@@ -2696,7 +2720,7 @@
                     },
                     "delayToAutoSettle": {
                         "type": "integer",
-                        "description": "Total time (in seconds) before we make an automatic call to `/settlements`, regardless of whether the payment was approved by the merchant's anti-fraud provider or not. The maximum time allowed to wait for an auto capture is 604800 seconds (7 days)."
+                        "description": "Total time (in seconds) before we make an automatic call to `/settlements`, regardless of whether the payment was approved by the merchant's antifraud provider or not. The maximum time allowed to wait for an auto capture is 604800 seconds (7 days)."
                     },
                     "delayToAutoSettleAfterAntifraud": {
                         "type": "integer",
@@ -2729,6 +2753,38 @@
                                     "type": "string",
                                     "description": "The value of the metadata stored (limited to 200 characters)."
                                 }
+                            }
+                        }
+                    },
+                    "antifraud": {
+                        "type": "object",
+                        "description": "Result of the provider's native antifraud analysis for this payment. Only present when the provider declares `hasNativeAntifraud: true` on its [manifest](https://developers.vtex.com/docs/api-reference/payment-provider-protocol#get-/manifest), actually performed a check for this specific payment, and this response carries the payment's final status (`approved` or `denied`). It is absent otherwise, including whenever this response's `status` is `undefined`, and it is never sent as `null`.",
+                        "required": [
+                            "status",
+                            "provider",
+                            "id"
+                        ],
+                        "properties": {
+                            "status": {
+                                "type": "string",
+                                "description": "The provider's antifraud verdict for this payment. This field is independent of the payment's top-level `status`, so a payment can be `approved` while carrying an `inconclusive` or even `denied` antifraud result, according to the connector's own risk policy. Must be one of three values:\r\n\r\n- `approved`: The antifraud check cleared the payment.\r\n- `denied`: The antifraud check blocked the payment.\r\n- `inconclusive`: The antifraud check ran but did not reach a clear verdict (for example, it was flagged for manual review).",
+                                "enum": [
+                                    "approved",
+                                    "denied",
+                                    "inconclusive"
+                                ]
+                            },
+                            "provider": {
+                                "type": "string",
+                                "description": "Name of the antifraud engine or service that produced this result, defined by the provider. For example, `ClearSale` or the payment provider's own risk engine name."
+                            },
+                            "id": {
+                                "type": "string",
+                                "description": "Payment provider's own identifier for this specific antifraud check."
+                            },
+                            "score": {
+                                "type": "number",
+                                "description": "Informational risk score from the provider's own risk engine. VTEX does not interpret or act upon this value and only stores it as-is for record-keeping. The scale and meaning of the score are entirely defined by the payment provider."
                             }
                         }
                     }
