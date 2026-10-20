@@ -1,0 +1,517 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Marketplace Protocol",
+    "description": "The _Marketplace Protocol_ is a set of API requests and definitions to help you integrate external sellers into a VTEX marketplace as well as external marketplaces into VTEX sellers.\r\n\r\n## External Seller\r\n\r\nHere you will find the endpoints involved in the integration between a VTEX marketplace and an external seller. Note that some of these requests are typically sent by the seller while others are received.\r\n\r\n| **Request** | **From** | **To** |\r\n|-|-|-|\r\n| [Fulfillment simulation](https://developers.vtex.com/docs/api-reference/marketplace-protocol-external-seller-fulfillment#post-/pvt/orderForms/simulation) | Marketplace | Seller |\r\n| [Order placement](https://developers.vtex.com/docs/api-reference/marketplace-protocol-external-seller-fulfillment#post-/pvt/orders) | Marketplace | Seller |\r\n| [Authorize fulfillment](https://developers.vtex.com/docs/api-reference/marketplace-protocol-external-seller-fulfillment#post-/pvt/orders/-sellerOrderId-/fulfill) | Marketplace | Seller |\r\n| [Marketplace order cancellation](https://developers.vtex.com/docs/api-reference/marketplace-protocol-external-seller-fulfillment#post-/pvt/orders/-orderId-/cancel) | Marketplace | Seller |\r\n| [Send invoice](https://developers.vtex.com/docs/api-reference/marketplace-protocol#post-/pvt/orders/-marketplaceOrderId-/invoice) | Seller | Marketplace |\r\n| [Send tracking information](https://developers.vtex.com/docs/api-reference/marketplace-protocol#post-/pvt/orders/-marketplaceOrderId-/invoice/-invoiceNumber-) | Seller      | Marketplace |\r\n| [Update tracking status](https://developers.vtex.com/docs/api-reference/marketplace-protocol#post-/pvt/orders/-marketplaceOrderId-/invoice/-invoiceNumber-/tracking) | Seller | Marketplace |\r\n| [Cancel order in marketplace](https://developers.vtex.com/docs/api-reference/marketplace-protocol#post-/pvt/orders/-marketplaceOrderId-/cancel) | Seller | Marketplace |\r\n| [Send agreement for order modifications](https://developers.vtex.com/docs/api-reference/marketplace-protocol#post-/pvt/orders/-participantOrderId-/changes/-changeRequestId-/send-agreement) | Seller | Marketplace |\r\n\r\nFor a detailed explanation of the steps required to develop a custom connector to sell products from an external seller in your storefront, check out our complete [External Seller Integration Guide](https://developers.vtex.com/docs/guides/external-seller-integration-guide).\r\n\r\n\r\n## External Marketplace\r\n\r\nIn this section, you will find the endpoints involved in the VTEX integration between an external marketplace and a VTEX seller.\r\n\r\n\r\n| **Request** | **From** | **To** |\r\n|-|-|-|\r\n| [VTEX Mapper Registration](https://developers.vtex.com/docs/api-reference/marketplace-protocol-external-marketplace-mapper#post-/api/mkp-category-mapper/connector/register) | External marketplace | VTEX system |\r\n| [Send Category Mapping to VTEX Mapper](https://developers.vtex.com/docs/api-reference/marketplace-protocol-external-marketplace-mapper#post-/api/mkp-category-mapper/categories/marketplace/-id-) |  External marketplace | VTEX system |\r\n| [New Order Integration](https://developers.vtex.com/docs/api-reference/marketplace-protocol-external-marketplace-orders#post-/api/order-integration/orders) | External marketplace | VTEX system |\r\n| [Update Order Status](https://developers.vtex.com/docs/api-reference/marketplace-protocol-external-marketplace-orders#put-/api/order-integration/orders/status) | External marketplace | VTEX system |\r\n| [Fulfillment simulation - External Marketplace](https://developers.vtex.com/docs/api-reference/marketplace-protocol-external-marketplace-orders#post-/api/checkout/pub/orderForms/simulation) | External marketplace | VTEX system |\r\n| [Place fulfillment order](https://developers.vtex.com/docs/api-reference/marketplace-protocol-external-marketplace-orders#post-/api/fulfillment/pvt/orders)   | External marketplace | VTEX Seller |\r\n| [Authorize dispatch for fulfillment order](https://developers.vtex.com/docs/api-reference/marketplace-protocol-external-marketplace-orders#post-/api/fulfillment/pvt/orders/-orderId-/fulfill) | External marketplace | VTEX Seller |\r\n\r\n\r\nFor a detailed explanation of the steps required to develop a custom connector to become an external marketplace for VTEX sellers, check out our complete [External Marketplace Integration Guide](https://developers.vtex.com/docs/guides/external-marketplace-integration-guide).",
+    "version": "1.0"
+  },
+  "servers": [
+    {
+      "url": "https://{marketplaceServicesEndpoint}",
+      "description": "Marketplace Service Endpoint",
+      "variables": {
+        "marketplaceServicesEndpoint": {
+          "description": "This is an endpoint sent from VTEX to the external seller in the [Order placement request](https://developers.vtex.com/vtex-rest-api/reference/external-seller#order-placement).",
+          "default": "{marketplaceServicesEndpoint}"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/pvt/orders/{marketplaceOrderId}/invoice": {
+      "post": {
+        "tags": [
+          "External seller"
+        ],
+        "summary": "Send invoice",
+        "description": "This request is sent by the external seller to the VTEX marketplace to send invoice information.\n\nThis can be necessary in a regular order or in the case of a return. The `type` field is used to indicate which of these is the case.\r\n\r\n## Permissions\r\n\r\nCheck with your service provider to know what permissions are needed.\n\n> Requests with a body must be sent with `Content-Type: application/json`.",
+        "operationId": "send-invoice",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/marketplaceOrderId"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/requestSendInvoice"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseFulfill"
+                },
+                "example": {
+                  "date": "2021-06-09T15:22:56.7612218-02:00",
+                  "orderId": "1138342255777-01",
+                  "receipt": "527b1ae251264ef1b7a9b597cd8f16b9"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/pvt/orders/{marketplaceOrderId}/invoice/{invoiceNumber}": {
+      "post": {
+        "tags": [
+          "External seller"
+        ],
+        "summary": "Send tracking information",
+        "description": "This request is sent by the external seller to the VTEX marketplace to add tracking information to a given order's invoice, in case it is necessary to do so after the invoice has been sent.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **Notify invoice** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| Allows you to report invoices (NF) and tracking data | Notify invoice |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\n\n> Requests with a body must be sent with `Content-Type: application/json`.",
+        "operationId": "send-tracking-information",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/marketplaceOrderId"
+          },
+          {
+            "$ref": "#/components/parameters/invoiceNumber"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/requestSendTracking"
+              },
+              "example": {
+                "courier": "courier-example",
+                "trackingNumber": "12345678abc",
+                "trackingUrl": "https://courier-example.com/tracking",
+                "dispatchedDate": "2021-06-09"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseFulfill"
+                },
+                "example": {
+                  "date": "2021-06-09T15:22:56.7612218-02:00",
+                  "orderId": "1138342255777-01",
+                  "receipt": "527b1ae251264ef1b7a9b597cd8f16b9"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/pvt/orders/{marketplaceOrderId}/invoice/{invoiceNumber}/tracking": {
+      "post": {
+        "tags": [
+          "External seller"
+        ],
+        "summary": "Update tracking status",
+        "description": "This request is sent by the external seller to the VTEX marketplace to update a given order's tracking status.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| OMS | OMS access | **Notify invoice** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| Allows you to report invoices (NF) and tracking data | Notify invoice |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\n\n> Requests with a body must be sent with `Content-Type: application/json`.",
+        "operationId": "update-tracking-status",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/marketplaceOrderId"
+          },
+          {
+            "$ref": "#/components/parameters/invoiceNumber"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/requestUpdateTrackingStatus"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseFulfill"
+                },
+                "example": {
+                  "date": "2021-06-09T15:22:56.7612218-02:00",
+                  "orderId": "1138342255777-01",
+                  "receipt": "527b1ae251264ef1b7a9b597cd8f16b9"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/pvt/orders/{marketplaceOrderId}/cancel": {
+      "post": {
+        "tags": [
+          "External seller"
+        ],
+        "summary": "Cancel order in marketplace",
+        "description": "This request is sent by the external seller to the VTEX marketplace to cancel an order.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Checkout | CheckoutResources | **Order Cancellation** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):\r\n\r\n| **Role** | **Resource** | \r\n| --------------- | ----------------- | \r\n| Cancel Orders | Order Cancellation |\r\n\r\n>❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).\n\n> Requests with a body must be sent with `Content-Type: application/json`.",
+        "operationId": "cancel-order-in-marketplace",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/marketplaceOrderId"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/requestCancelOrderMarketplace"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/responseFulfill"
+                },
+                "example": {
+                  "date": "2021-06-09T15:22:56.7612218-02:00",
+                  "orderId": "1138342255777-01",
+                  "receipt": "527b1ae251264ef1b7a9b597cd8f16b9"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/pvt/orders/{participantOrderId}/changes/{changeRequestId}/send-agreement": {
+      "post": {
+        "tags": [
+          "External seller"
+        ],
+        "summary": "Send agreement for order modifications",
+        "description": "This endpoint sends an agreement for an order modification to VTEX. It can be used by external sellers to acknowledge that a modification request was made and confirm that the modification has been applied to their order.\r\n\r\n After a shopper requests a modification, VTEX automatically calls the external seller through the new client, sending a request to the [Create order modifications](https://developers.vtex.com/docs/api-reference/orders-api#patch-/api/order-system/orders/-changeOrderId-/changes) endpoint while also sending the order modifications agreement with `agreementType: Acknowledgment`, indicating that it is waiting for a response from the seller.\r\n\r\n When the seller receives the modification request, they must use this same endpoint with `agreementType` also set to `Acknowledgment`, to register they acknowledge the request and are going to apply the modifications to the order.\r\n\r\n In the confirmation step, VTEX sends `agreementType: Confirmation`, and waits for a callback from the seller. Once the seller modifies the order, they must respond by calling this same endpoint with `agreementType` set to `Confirmation`. This allows the flow to proceed normally and the modification to be completed successfully.\r\n\r\n> ⚠️ The system only considers the modification as applied when it receives the status `Confirmation` from the external seller. \r\n\r\n The steps for the agreement flow are as follows: \r\n\r\n 1. Shopper requests modifications. \r\n\r\n 2. VTEX sends `Acknowledgment` to the External Seller. \r\n\r\n 3. External Seller sends `Acknowledgment` back to VTEX. \r\n\r\n    External Seller uses this endpoint to acknowledge the request for modifications and inform that they will apply them to the order. \r\n\r\n 4. VTEX sends `Confirmation` to the External Seller. \r\n\r\n 5. External Seller sends `Confirmation` back to VTEX. \r\n\r\n       External Seller uses this endpoint to confirm the modifications have been applied to the order. \r\n\r\n 6. The order flow continues. \r\n\r\n ## Permissions\r\n\r\nCheck with your service provider to know what permissions are needed.\n\n> Requests with a body must be sent with `Content-Type: application/json`.",
+        "operationId": "SendAgreement",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/accountName"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "agreementType": {
+                    "type": "string",
+                    "description": "Type of agreement sent for the order modification. Allowed values are: `Acknowledgment` (the seller recognizes the modification request) or `Confirmation` (the seller confirms the modification has been applied to the order).",
+                    "enum": [
+                      "Acknowledgment",
+                      "Confirmation"
+                    ]
+                  }
+                }
+              },
+              "example": {
+                "agreementType": "Acknowledgment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "orderId": {
+                      "type": "string",
+                      "description": "ID of the order refered in the agreement."
+                    },
+                    "changeRequestId": {
+                      "type": "string",
+                      "description": "ID of the order modification refered in the agreement."
+                    },
+                    "agreementType": {
+                      "type": "string",
+                      "description": "Type of agreement sent by the external seller.",
+                      "enum": [
+                        "Acknowledgment",
+                        "Confirmation"
+                      ]
+                    }
+                  }
+                },
+                "example": {
+                  "orderId": "v12772213qst-02",
+                  "changeRequestId": "e8532a32-7f7e-434a-88ec-29609f0ede46",
+                  "agreementType": "Acknowledgment"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "appKey": [],
+      "appToken": []
+    },
+    {
+      "VtexIdclientAutCookie": []
+    }
+  ],
+  "components": {
+    "parameters": {
+      "marketplaceOrderId": {
+        "name": "marketplaceOrderId",
+        "in": "path",
+        "description": "Identifies the order in the marketplace.",
+        "required": true,
+        "style": "simple",
+        "schema": {
+          "type": "string",
+          "example": "1138342255777-01"
+        }
+      },
+      "invoiceNumber": {
+        "name": "invoiceNumber",
+        "in": "path",
+        "description": "Invoice number.",
+        "required": true,
+        "style": "simple",
+        "schema": {
+          "type": "string",
+          "example": "NFe-00002"
+        }
+      },
+      "accountName": {
+        "name": "accountName",
+        "in": "query",
+        "description": "Name of the VTEX account that created the order.",
+        "required": true,
+        "style": "form",
+        "schema": {
+          "type": "string",
+          "example": "storeName"
+        }
+      }
+    },
+    "schemas": {
+      "requestSendInvoice": {
+        "type": "object",
+        "description": "Object used to send invoice information related to an order.",
+        "required": [
+          "type",
+          "invoiceNumber",
+          "items"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Indicates the type of the invoice. Use `\"Output\"` for regular orders and `\"Input\"` for returns.",
+            "example": "Output"
+          },
+          "invoiceNumber": {
+            "type": "string",
+            "description": "Invoice number.",
+            "example": "NFe-00002"
+          },
+          "courier": {
+            "type": "string",
+            "description": "Courier, if available on invoice.",
+            "example": "courier-example"
+          },
+          "trackingNumber": {
+            "type": "string",
+            "description": "Tracking number.",
+            "example": "12345678abc"
+          },
+          "trackingUrl": {
+            "type": "string",
+            "description": "Tracking URL.",
+            "example": "https://courier-example.com/tracking"
+          },
+          "items": {
+            "type": "array",
+            "description": "Array containing the order items.",
+            "items": {
+              "type": "object",
+              "description": "Specification data for each order item.",
+              "required": [
+                "id",
+                "quantity",
+                "price"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "SKU ID.",
+                  "example": "6"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "description": "Quantity of items of the SKU in the cart.",
+                  "example": 1
+                },
+                "price": {
+                  "type": "integer",
+                  "description": "Price of the item.",
+                  "example": 5500
+                }
+              }
+            }
+          },
+          "issuanceDate": {
+            "type": "string",
+            "description": "Issuance date.",
+            "example": "2021-05-21T10:00:00"
+          },
+          "invoiceValue": {
+            "type": "integer",
+            "description": "Invoice value.",
+            "example": 6000
+          }
+        }
+      },
+      "responseFulfill": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "Request processing date and time."
+          },
+          "orderId": {
+            "type": "string",
+            "description": "Order ID referring to the Invoice number sent."
+          },
+          "receipt": {
+            "type": "string",
+            "description": "Requisition receipt code."
+          }
+        },
+        "example": {
+          "date": "2021-06-09T15:22:56.7612218-02:00",
+          "orderId": "1138342255777-01",
+          "receipt": "527b1ae251264ef1b7a9b597cd8f16b9"
+        }
+      },
+      "requestSendTracking": {
+        "required": [
+          "courier",
+          "trackingNumber",
+          "trackingUrl",
+          "dispatchedDate"
+        ],
+        "properties": {
+          "courier": {
+            "type": "string",
+            "description": "Courier.",
+            "example": "courier-example"
+          },
+          "trackingNumber": {
+            "type": "string",
+            "description": "Tracking number.",
+            "example": "12345678abc"
+          },
+          "trackingUrl": {
+            "type": "string",
+            "description": "Tracking URL.",
+            "example": "https://courier-example.com/tracking"
+          },
+          "dispatchedDate": {
+            "type": "string",
+            "description": "Date of order dispatch.",
+            "example": "2021-06-09"
+          }
+        }
+      },
+      "requestUpdateTrackingStatus": {
+        "type": "object",
+        "description": "Request body object used to update the tracking status of an order.",
+        "required": [
+          "isDelivered"
+        ],
+        "properties": {
+          "isDelivered": {
+            "type": "boolean",
+            "description": "Indicates if order has been delivered. `false` if it is in transit.",
+            "example": true
+          },
+          "events": {
+            "type": "array",
+            "description": "Array containing information on each tracking event received.",
+            "items": {
+              "type": "object",
+              "description": "Description of tracking event fields.",
+              "properties": {
+                "city": {
+                  "type": "string",
+                  "description": "City where the event ocurred.",
+                  "example": "Rio de Janeiro"
+                },
+                "state": {
+                  "type": "string",
+                  "description": "State where the event ocurred.",
+                  "example": "Rio de Janeiro"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Description of the event.",
+                  "example": "Order delivered."
+                },
+                "date": {
+                  "type": "string",
+                  "description": "Date when event ocurred.",
+                  "example": "2021-03-16"
+                }
+              }
+            }
+          }
+        }
+      },
+      "requestCancelOrderMarketplace": {
+        "type": "object",
+        "description": "Object used to request the cancellation of an order on the marketplace.",
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Insert here the reason for the order's cancellation.",
+            "example": "Product is unavailable."
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "External seller"
+    }
+  ]
+}
