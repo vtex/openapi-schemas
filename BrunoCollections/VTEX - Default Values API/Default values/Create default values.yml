@@ -1,0 +1,125 @@
+info:
+  name: Create default values
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/dataentities/defaultValues/documents"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "id": "a6d958c2-25ba-4f4d-9a0a-6b56e458426c",
+        "defaultValues": [
+          {
+            "entity": "customFieldValues/{{customFieldId}}",
+            "entityValueId": "4498bd3d-7eaf-11f0-b37f-cc2298c87c12"
+          },
+          {
+            "entity": "customFieldValues/{{customFieldId}}",
+            "entityValueId": "7852aef0-7eb3-11f0-b37f-bfdc92dec2f6"
+          },
+          {
+            "entity": "customFieldValues/{{customFieldId}}",
+            "entityValueId": "9952aef0-7eb3-11f0-b37f-bfdc92dec2e6"
+          },
+          {
+            "entity": "creditCard",
+            "entityValueId": "EDE0B17747B24EFC9650B6C6B3E06C5F"
+          },
+          {
+            "entity": "address/billing",
+            "entityValueId": "747b9bed-d6f4-4cf5-b9d1-4944f9825470"
+          },
+          {
+            "entity": "address/shipping",
+            "entityValueId": "45c50497-b67f-40ee-85ec-eddaa23da72d"
+          },
+          {
+            "entity": "customFieldValues/{{customFieldId}}/{{auxId}}",
+            "entityValueId": "45c50497-b67f-40ee-85ec-eddaa23da723"
+          }
+        ]
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/dataentities/defaultValues/documents - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/dataentities/defaultValues/documents - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/dataentities/defaultValues/documents - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/dataentities/defaultValues/documents - Schema is valid", function () {
+          const schema = {"type":"object","description":"Response object containing document information.","properties":{"Id":{"type":"string","description":"Unique identifier of the created document."},"Href":{"type":"string","description":"Direct link to the created document."},"DocumentId":{"type":"string","description":"The document ID."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates a document with a set of default values for a specific organization unit.
+
+  >⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |
+  | Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |
+  | Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "Id": "c90354e8-08d6-11f0-b37f-daebda928cfa",
+    "Href": "http://store.myvtex.com/api/dataentities/defaultValues/documents/c90354e8-08d6-11f0-b37f-daebda928cfa",
+    "DocumentId": "c90354e8-08d6-11f0-b37f-daebda928cfa"
+  }
+  ```

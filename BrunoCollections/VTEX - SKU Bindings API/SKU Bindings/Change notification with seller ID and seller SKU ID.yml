@@ -1,0 +1,82 @@
+info:
+  name: Change notification with seller ID and seller SKU ID
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: "{{baseUrl}}/sku-binding/pvt/skuseller/changenotification/:sellerId/:sellerSkuId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: sellerId
+      value: fashionstore
+      type: path
+    - name: sellerSkuId
+      value: "1"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("[POST]::/sku-binding/pvt/skuseller/changenotification/:sellerId/:sellerSkuId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Sends a seller notification to the VTEX marketplace about a SKU suggestion, which can be either a new suggestion or an update. For example, a seller SKU previously approved by the marketplace may have had price or inventory changes.
+
+  The main information sent by the seller is its identification (`sellerId`) and the SKU binding code (`sellerSkuId`), both passed as path parameters. This request doesn't require a request body.
+
+   > ℹ This path is an updated version of `/api/catalog_system/pvt/skuseller/changenotification/{sellerId}/{sellerSkuId}`.
+
+  ## Example
+
+  Let's say your seller has the ID `123` in the marketplace, and you want to inform the marketplace that there has been a change to the SKU with ID `700`.
+
+  In this case, you would replace the `sellerId` parameter with the value `123`, and the `sellerSkuId` parameter with the value `700`. The URL would be the following:
+
+  ```
+  https://accountName.vtexcommercestable.com.br/api/sku-binding/pvt/skuseller/changenotification/123/700
+  ```
+
+  ## Response codes
+
+  The following response codes are possible:
+  * 200: The SKU whose ID was informed in the URL already exists in the marketplace and was found. The marketplace can now proceed with a fulfillment simulation in order to get updated information about this SKU's inventory and price.
+  * 403: Failure in the authentication.
+  * 404: The SKU was not found in the marketplace. The body of the response, in this case, should follow this format: "Seller StockKeepingUnit `{{skuId}}` not found for this seller id `{{sellerId}}`. This means that the seller can now proceed with sending an offer to the marketplace in order to suggest that this SKU is sold there.
+  * 429: Failure due to too many requests.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Catalog API | General | **Edit Product** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `sellerId` | path | (Required) ID that identifies the seller in the marketplace. It can be the same as the seller name or a unique number. Check the **Sellers management** section in the VTEX Admin to get the correct ID. |
+  | `sellerSkuId` | path | (Required) ID of the binding of the seller with the SKU. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |

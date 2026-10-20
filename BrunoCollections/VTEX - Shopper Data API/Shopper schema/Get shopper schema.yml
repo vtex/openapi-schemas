@@ -1,0 +1,166 @@
+info:
+  name: Get shopper schema
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/dataentities/shopper/schemas/v1"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  auth:
+    type: apikey
+    key: VtexIdclientAutCookie
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/dataentities/shopper/schemas/v1 - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/dataentities/shopper/schemas/v1 - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/dataentities/shopper/schemas/v1 - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/dataentities/shopper/schemas/v1 - Schema is valid", function () {
+          const schema = {"type":"array","items":{"type":"object","properties":{"name":{"type":"string","description":"Schema name."},"schema":{"type":"object","description":"Shopper schema definition containing properties, required fields, and indexed fields.","properties":{"title":{"type":"string","description":"Schema title."},"type":{"type":"string","description":"Schema type."},"properties":{"type":"object","description":"Object containing schema properties.","properties":{"userId":{"type":"string","format":"uuid","description":"Unique shopper identifier."},"email":{"type":"string","description":"Shopper's email."},"firstName":{"type":"string","description":"Shopper's first name."},"lastName":{"type":"string","description":"Shopper's last name."},"document":{"type":"string","description":"Shopper's document number (e.g., CPF)."},"documentType":{"type":"string","description":"Type of document (e.g., `cpf`)."},"phone":{"type":"string","description":"Shopper's phone number."},"unitId":{"type":"string","description":"Unique ID of the Organization Unit."},"cards":{"type":"array","description":"Array of saved credit cards.","items":{"type":"object","description":"Credit card information.","properties":{"cardId":{"type":"string","description":"Unique identifier of the saved card."},"paymentSystem":{"type":"string","description":"Code representing the payment system (e.g., `2` for Visa)."},"paymentSystemName":{"type":"string","description":"Name of the payment system (e.g., `Visa`)."},"cardNumber":{"type":"string","description":"Masked credit card number.","pattern":"^[\\*]{12}[0-9]{4}$"},"bin":{"type":"string","description":"Bank Identification Number – the first digits of the card."},"expirationDate":{"type":"string","description":"Expiry date of the card in `MM/YYYY` format."},"useCvvForAuthorization":{"type":"boolean","description":"Indicates if CVV is required for authorization."},"cardLabel":{"type":"string","description":"Label or nickname for the card."},"isCardToken":{"type":"boolean","description":"Indicates whether the card data is tokenized."},"availableAddresses":{"type":"array","description":"Array of address IDs the card is associated with.","items":{"type":"string","description":"Address identifier."}}}}}}},"additionalProperties":{"type":"boolean","description":"When `true`, allows clients to send and persist custom fields beyond the defined schema. This enables storing extra fields like `phone2`, `marketingOptIn`, or any shopper-specific data."},"required":{"type":"array","items":{"type":"string","description":"Name of a required property field."},"description":"Required properties fields."},"v-indexed":{"type":"array","items":{"type":"string","description":"Name of an indexed property field."},"description":"Indexed properties fields."}},"required":["title","type","properties"]}},"required":["name","schema"]}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint retrieves a shopper entity [schema](https://developers.vtex.com/docs/guides/master-data-schema-lifecycle) with shopper personal data.
+
+  > ℹ️ The shopper schema supports `additionalProperties: true`, allowing clients to send and persist additional properties beyond the defined schema properties (e.g., `phone2`, `marketingOptIn`, or any business-specific fields).
+
+  ## Permissions
+
+  This endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "name": "v1",
+      "schema": {
+        "title": "shopper",
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "document": {
+            "type": "string"
+          },
+          "documentType": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "cards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "cardId": {
+                  "type": "string"
+                },
+                "paymentSystem": {
+                  "type": "string"
+                },
+                "paymentSystemName": {
+                  "type": "string"
+                },
+                "cardNumber": {
+                  "type": "string",
+                  "pattern": "^[\\*]{12}[0-9]{4}$"
+                },
+                "bin": {
+                  "type": "string"
+                },
+                "expirationDate": {
+                  "type": "string"
+                },
+                "useCvvForAuthorization": {
+                  "type": "boolean"
+                },
+                "cardLabel": {
+                  "type": "string"
+                },
+                "isCardToken": {
+                  "type": "boolean"
+                },
+                "availableAddresses": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "userId",
+          "firstName",
+          "lastName"
+        ],
+        "v-indexed": [
+          "userId",
+          "unitId",
+          "firstName",
+          "lastName",
+          "document",
+          "phone"
+        ]
+      }
+    }
+  ]
+  ```

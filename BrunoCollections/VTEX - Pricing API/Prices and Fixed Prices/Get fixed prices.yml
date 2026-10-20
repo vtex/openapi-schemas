@@ -1,0 +1,111 @@
+info:
+  name: Get fixed prices
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{baseUrl}}/pricing/prices/:itemId/fixed"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: itemId
+      value: "1"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/pricing/prices/:itemId/fixed - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/pricing/prices/:itemId/fixed - Content-Type is application/json; charset=utf-8", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json; charset=utf-8");
+        });
+
+        test("[GET]::/pricing/prices/:itemId/fixed - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/pricing/prices/:itemId/fixed - Schema is valid", function () {
+          const schema = {"type":"array","items":{"required":["tradePolicyId","value","listPrice","minQuantity"],"type":"object","description":"Fixed price request body information.","properties":{"tradePolicyId":{"type":"string","description":"Trade Policy ID."},"value":{"type":"number","description":"Trade Policy Fixed Price Value."},"listPrice":{"type":["number","null"],"description":"Trade Policy List Price Value."},"minQuantity":{"type":"integer","format":"int32","description":"Trade Policy Fixed Price Minimum Item Quantity."},"dateRange":{"description":"Trade Policy Fixed Price Validity Period Object.","required":["from","to"],"type":"object","properties":{"from":{"type":"string","description":"Indicates the date and time when the fixed price will start to be valid."},"to":{"type":"string","description":"Indicates the date and time from which the fixed price will no longer be valid."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  The **fixed price** is an optional price of the SKU for a specific trade policy with a specific minimum quantity to be activated. This method retrieves an array of fixed prices for a SKU in a trade policy with minimum quantities.
+
+  The default value for a minimum quantity is `1`. This means a fixed price will be valid for a SKU in a trade policy for orders containing the specified number of minimum quantity or above, unless a higher minimum quantity is specified.
+
+  Fixed prices may, optionally, be scheduled. If so, these objects will contain the `dateRange` object with `from` and `to` properties, indicating the start and end time of the scheduled fixed price in the RFC3339 timestamp format (`YYYY-MM-DDThh:mm:ssZ`).
+
+   Note that the 'Z', at the end, represents the UTC time (GMT+00:00). If it was in GMT-03:00, for example, it would be (`YYYY-MM-DDT23:59:60-03:00`).
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Pricing | Price List | **Read prices** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `itemId` | path | (Required) SKU ID. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "tradePolicyId": "6",
+      "value": 20.9,
+      "listPrice": 22.9,
+      "minQuantity": 1,
+      "dateRange": {
+        "from": "2021-12-30T22:00:00-03:00",
+        "to": "2021-12-30T22:00:00-03:00"
+      }
+    },
+    {
+      "tradePolicyId": "1",
+      "value": 18.9,
+      "listPrice": null,
+      "minQuantity": 1,
+      "dateRange": {
+        "from": "2021-12-30T22:00:00-03:00",
+        "to": "2021-12-30T22:00:00-03:00"
+      }
+    }
+  ]
+  ```

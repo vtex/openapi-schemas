@@ -1,0 +1,85 @@
+info:
+  name: Create new session
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/sessions"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "public": {
+          "variable1": {
+            "value": "value1"
+          },
+          "variable2": {
+            "value": "value2"
+          }
+        }
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/sessions - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/sessions - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/sessions - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/sessions - Schema is valid", function () {
+          const schema = {"type":"object","description":"Object containing session token and segment token.","properties":{"sessionToken":{"type":"string","description":"Token that identifies the user's individual session."},"segmentToken":{"type":"string","description":"Token that identifies the user's segment, shared with other users with similar navigation parameters."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates a new session and returns a session token and a segment token. Also stores `vtex_session` and `vtex_segment` cookies, with the same values returned in the response.
+
+
+  All parameters in the body that are not within the public namespace will be ignored. Query string items will automatically be added to the public namespace.
+
+
+  >⚠️ The Session Manager API uses the `vtex_session` and `vtex_segment` cookies to store the data required to identify the user and the session. These cookies are stored in the user's browser when the session is created and sent automatically in every request to that domain. You will have to reproduce that by sending these cookies as headers in other requests to Session Manager API in order for it to work outside of a browser environment.
+
+  ## Permissions
+
+  This endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Example response (`201`)
+
+  ```json
+  {
+    "sessionToken": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjM5MEI4MTM1RDUzQ0MwMUY0RjA4N0YwMzA2RjhDODMzNzBDMjY4M0UiLCJ0eXAiOiJqd3QifQ.eyJhY2NvdW50LmlkIjoiYThiMjdmYjQtNjUxNi00Y2MwLTgyYjYtYTVmMmIwMTFlNmUyIiwiaWQiOiIyNmQyY2I2Yy0yMTNlLTQ5MzYtOWUyYS0xZDFlMjk5ZWMzM2IiLCJ2ZXJzaW9uIjoyLCJzdWIiOiJzZXNzaW9uIiwiYWNjb3VudCI6InNlc3Npb24iLCJleHAiOjE2OTM1Nzg5NzYsImlhdCI6MTY5Mjg4Nzc3NiwiaXNzIjoidG9rZW4tZW1pdHRlciIsImp0aSI6IjhiYWU2NzdmLWE0NTAtNGI0OC05YTBkLTViMzAwYjNiY2NkOCJ9.Ak1bn2xEA1A5dVN4qR6RI8vnZpSpLXyVxFCthMoVjmWn0HlP5BqMHEMYApDj8TPPhyxT0hGT0vkmvMQa2Mprrw",
+    "segmentToken": "eyJjYW1wYWlnbnMiOm51bGwsImNoYW5uZWwiOiIxIiwicHJpY2VUYWJsZXMiOm51bGwsInJlZ2lvbklkIjpudWxsLCJ1dG1fY2FtcGFpZ24iOm51bGwsInV0bV9zb3VyY2UiOm51bGwsInV0bWlfY2FtcGFpZ24iOm51bGwsImN1cnJlbmN5Q29kZSI6IkJSTCIsImN1cnJlbmN5U3ltYm9sIjoiUiQiLCJjb3VudHJ5Q29kZSI6IkJSQSIsImN1bHR1cmVJbmZvIjoiZW4tVVMiLCJjaGFubmVsUHJpdmFjeSI6InB1YmxpYyJ9"
+  }
+  ```

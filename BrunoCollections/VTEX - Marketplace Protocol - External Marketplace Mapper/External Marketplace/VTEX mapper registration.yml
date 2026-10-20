@@ -1,0 +1,72 @@
+info:
+  name: VTEX mapper registration
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/mkp-category-mapper/connector/register?an=accountName"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: accountName
+      type: query
+    - name: environment
+      value: "{{environment}}"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "displayName": "Marketplace A",
+        "categoryTreeEndPoint": "http://api.vtexinternal.com.br/api/{marketplaceName}/mapper/categories",
+        "mappingEndPoint": "http://api.vtexinternal.com.br/api/{marketplaceName}/mapper/mapping",
+        "properties": {
+          "allowsRemap": false
+        },
+        "CategoryTreeProcessingNotificationEndpoint": "https://CategoryTreeProcessingNotificationEndpoint.com/api"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("[POST]::/api/mkp-category-mapper/connector/register - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Mapped categories guarantees that the VTEX category tree has a correct association with the marketplace’s category tree.
+
+  To perform this association, VTEX made VTEX Mapper available. It is a tool integrated into the VTEX platform that allows the user to relate categories created in VTEX to categories from the marketplace. 
+
+  This endpoint allows connectors to register the external marketplace integration in VTEX Mapper. 
+
+  In case VTEX Mapper detects an error and the call fails, the connector should check if mandatory information was sent correctly. Ex. Are URLs correctly registered in the properties `categoryTreeEndPoint` and `mappingEndPoint`? 
+
+  For a detailed explanation of the steps required to develop a custom connector to become an external marketplace for VTEX sellers, check out our complete [External Marketplace Integration Guide](https://developers.vtex.com/vtex-rest-api/docs/external-marketplace-integration-guide).
+
+  ## Permissions
+
+  This endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `environment` | path | Environment to use. Used as part of the URL. (This can only be one of vtexcommercestable) |
+  | `an` | query | (Required) Name of the VTEX account. Used as part of the URL. |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |

@@ -1,0 +1,100 @@
+info:
+  name: Add an account holder
+  type: http
+  seq: 13
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/creditcontrol/accounts/:creditAccountId/holders"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: creditAccountId
+      value: 01bce461-9g03-12ds-8217-b3d39271e15b
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "claims": {
+          "email": "email@domain.com"
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/creditcontrol/accounts/:creditAccountId/holders - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/creditcontrol/accounts/:creditAccountId/holders - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/creditcontrol/accounts/:creditAccountId/holders - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/creditcontrol/accounts/:creditAccountId/holders - Schema is valid", function () {
+          const schema = {"required":["level","claims","id","createdAt"],"type":"object","properties":{"level":{"type":"number","description":"Holder hierarchy. The value `2` indicates that the holder is a dependent of the account's main holder."},"claims":{"required":["email"],"type":"object","description":"New holder information.","properties":{"email":{"type":"string","description":"Holder email."}}},"id":{"type":"string","description":"Holder identification."},"createdAt":{"type":"string","description":"Date of appointment of the holder."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Adds a new account holder to the [customer credit account](https://help.vtex.com/en/tracks/customer-credit-getting-started--1hCRg21lXYy2seOKgqQ2CC/7FHLd0cmxqqGeEUuc8uioU). This new user can share the account's credit limit with users already registered on the account.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Credit Control | Main | **Main Access** |
+  | Credit Control | Checking Accounts | **Create Checking Accounts** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `creditAccountId` | path | (Required) Credit account identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "level": 2,
+    "claims": {
+      "email": "holdertest@holder.com.br"
+    },
+    "id": "054a67b342164018a0f291636c1669f1",
+    "createdAt": "2023-11-10T18:33:58.402627Z"
+  }
+  ```

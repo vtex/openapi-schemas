@@ -1,0 +1,85 @@
+info:
+  name: Info for a specific pet
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{baseUrl}}/pets/:petId"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: petId
+      value: laboris do nulla nostrud
+      type: path
+    - name: accountName
+      value: "{{accountName}}"
+      type: path
+    - name: environment
+      value: "{{environment}}"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/pets/:petId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/pets/:petId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/pets/:petId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/pets/:petId - Schema is valid", function () {
+          const schema = {"type":"array","items":{"required":["id","name"],"properties":{"id":{"type":"integer","format":"int64"},"name":{"type":"string"},"tag":{"type":"string"}},"type":"object"}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `petId` | path | (Required) The id of the pet to retrieve |
+  | `accountName` | path | Your VTEX account name |
+  | `environment` | path | (This can only be one of vtexcommercestable,myvtex) |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "id": -86040679,
+      "name": "ad",
+      "tag": "consequat do veniam in sed"
+    },
+    {
+      "id": -84888534,
+      "name": "quis culpa reprehenderit",
+      "tag": "in"
+    }
+  ]
+  ```

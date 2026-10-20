@@ -1,0 +1,123 @@
+info:
+  name: Get Order modifications settings
+  type: http
+  seq: 9
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/order-system/orders/changes/settings?an=mystore"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: mystore
+      type: query
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/order-system/orders/changes/settings - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/order-system/orders/changes/settings - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/order-system/orders/changes/settings - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/order-system/orders/changes/settings - Schema is valid", function () {
+          const schema = {"type":"object","description":"Object with all VTEX account settings related to the **Order modifications** feature.","properties":{"paymentConfiguration":{"type":"object","description":"[Order modifications](https://help.vtex.com/en/tutorial/how-change-order-works-beta--56TO0bOFXsfmpc7YZ3wIUZ) payment configurations.","properties":{"customPaymentSystemsAllowed":{"type":"array","description":"List of custom payment system IDs configured for the VTEX account.","items":{"type":"string","description":"Payment system ID."}}}},"rolloutConfiguration":{"type":"object","description":"**Order modifications** settings regarding VTEX Admin, [Orders API](https://developers.vtex.com/docs/api-reference/orders-api#patch-/api/order-system/orders/-changeOrderId-/changes?endpoint=patch-/api/order-system/orders/-changeOrderId-/changes) and **My Account** feature.","properties":{"usingDefaultBehavior":{"type":"boolean","description":"Defines if the **Order modifications** configurations are the default behaviour (`true`) or if the account made customizations to it (`false`). Subaccounts will have the same configurations as the main account.","default":false},"enableApi":{"type":"boolean","description":"Defines if the account enabled the [Order modifications API](https://developers.vtex.com/docs/api-reference/orders-api#patch-/api/order-system/orders/-changeOrderId-/changes) (`true`) or not (`false`). The account can only use the [Order modifications via VTEX Admin](https://help.vtex.com/en/tutorial/how-to-change-orders-beta--7btlG91rb6sHpW1dkd2kBw) or [via API](https://developers.vtex.com/docs/api-reference/orders-api#patch-/api/order-system/orders/-changeOrderId-/changes) if this field is set to `true`.","default":false},"enableAdminOrders":{"type":"object","description":"Object about enabling the [Order modifications feature via VTEX Admin](https://help.vtex.com/en/tutorial/how-to-change-orders-beta--7btlG91rb6sHpW1dkd2kBw).","properties":{"enabledWorkspaces":{"type":"array","description":"List with the workspaces' names that have the **Order modifications** feature enabled via VTEX Admin.","items":{"type":"string","description":"Name of the workspace with **Order modifications** enabled via VTEX Admin. The asterisk `*` value includes all of the account's workspaces."}}}},"enableMyOrders":{"type":"object","description":"Object about enabling the **Order modifications** feature via [My Account](https://help.vtex.com/en/tutorial/how-my-account-works--2BQ3GiqhqGJTXsWVuio3Xh).","properties":{"enabledWorkspaces":{"type":"array","description":"List with the workspace names that have the **Order modifications** feature enabled via **My Account**.","items":{"type":"string","description":"Name of the workspace with **Order modifications** enabled via **My Account**. The asterisk `*` value includes all of the account's workspaces."}}}}}},"pipelineConfiguration":{"type":"object","description":"**Order modifications** settings related to taxes and shipping calculation.","properties":{"enableTaxHubRecalculation":{"type":"boolean","description":"Defines if the tax calculation is enabled for **Order modifications** (`true`) or not (`false`).","default":false},"compensateShippingChanges":{"type":"boolean","description":"Defines if orders changed will have zero shipping cost (`true`) or not (`false`). Merchants usually enable this configuration to change only items and prices, without impacting the orders original freight costs.","default":false},"enablePromotionRecalculation":{"type":"boolean","description":"Defines if the promotion recalculation is enabled for **Order modifications** (`true`) or not (`false`).","default":false},"enableNativeTaxRecalculation":{"type":"boolean","description":"Defines if the native tax recalculation is enabled for **Order modifications** (`true`) or not (`false`).","default":false}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves the [Order modifications settings](https://developers.vtex.com/docs/api-reference/orders-api#put-/api/order-system/orders/changes/settings) from a store.
+
+  >ℹ️ To know more about **Order modifications**, see [How Order modifications works](https://help.vtex.com/en/tutorial/how-change-order-works-beta--56TO0bOFXsfmpc7YZ3wIUZ).
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | OMS | OMS access | **View order** |
+  | Checkout         | CheckoutResources | **Orders Full Access** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | OMS - Full access | View order |
+  | Checkout Admin | View order |
+  | IntegrationProfile - Fulfillment Oms | View order |
+  | OMS - Full access | Orders Full Access |
+  | Checkout Admin | Orders Full Access |
+  | IntegrationProfile - Fulfillment Oms | Orders Full Access |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `an` | query | (Required) VTEX [account name](https://help.vtex.com/en/tutorial/what-is-an-account-name--i0mIGLcg3QyEy8OCicEoC). |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "paymentConfiguration": {
+      "customPaymentSystemsAllowed": [
+        "201",
+        "125"
+      ]
+    },
+    "rolloutConfiguration": {
+      "usingDefaultBehavior": false,
+      "enableApi": true,
+      "enableAdminOrders": {
+        "enabledWorkspaces": [
+          "*"
+        ]
+      },
+      "enableMyOrders": {
+        "enabledWorkspaces": [
+          "*"
+        ]
+      }
+    },
+    "pipelineConfiguration": {
+      "enableTaxHubRecalculation": false,
+      "compensateShippingChanges": true,
+      "enablePromotionRecalculation": false,
+      "enableNativeTaxRecalculation": false
+    }
+  }
+  ```

@@ -1,0 +1,76 @@
+info:
+  name: Update all account's websites internet communication protocol
+  type: http
+  seq: 1
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/catalog_system/pvt/virtualfolder/changeurischema/:protocol"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: protocol
+      value: https
+      type: path
+    - name: accountName
+      value: "{{accountName}}"
+      type: path
+    - name: environment
+      value: "{{environment}}"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[PUT]::/api/catalog_system/pvt/virtualfolder/changeurischema/:protocol - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PUT]::/api/catalog_system/pvt/virtualfolder/changeurischema/:protocol - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[PUT]::/api/catalog_system/pvt/virtualfolder/changeurischema/:protocol - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[PUT]::/api/catalog_system/pvt/virtualfolder/changeurischema/:protocol - Schema is valid", function () {
+          const schema = {"title":"Request Status","description":"Message indicating that the request was successful.","type":"string","example":"OK"};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Updates all account's websites protocols to `HTTP` or `HTTPS`.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `protocol` | path | (Required) Internet communication protocol, it can be `HTTP` or `HTTPS`. |
+  | `accountName` | path | Name of the VTEX account. Used as part of the URL. |
+  | `environment` | path | Environment to use. Used as part of the URL. |
+
+  ## Example response (`200`)
+
+  ```json
+  "OK"
+  ```

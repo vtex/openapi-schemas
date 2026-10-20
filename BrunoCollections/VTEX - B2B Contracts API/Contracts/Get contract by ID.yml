@@ -1,0 +1,184 @@
+info:
+  name: Get contract by ID
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/dataentities/CL/documents/:contractId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/vnd.vtex.ds.v10+json
+  params:
+    - name: _fields
+      value: _all
+      type: query
+      disabled: true
+    - name: contractId
+      value: 2da4e9ab-050b-11f0-b37f-f4b136dbcce1
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/dataentities/CL/documents/:contractId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/dataentities/CL/documents/:contractId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/dataentities/CL/documents/:contractId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/dataentities/CL/documents/:contractId - Schema is valid", function () {
+          const schema = {"type":"object","description":"Response body for a contract document.","properties":{"cluster":{"type":["string","null"],"description":"Internal or optional analytics or tags fields."},"priceTables":{"type":["string","null"],"description":"Comma-separated list of assigned price table codes."},"isCorporate":{"type":["boolean","null"],"description":"Whether it's a legal entity."},"tradeName":{"type":["string","null"],"description":"The trade name of the contract."},"homePhone":{"type":["string","null"],"description":"contract phone number."},"phone":{"type":["string","null"],"description":"contract phone number."},"businessPhone":{"type":["string","null"],"description":"contract business phone number."},"email":{"type":["string","null"],"description":"The email of the contract."},"firstName":{"type":["string","null"],"description":"The first name of the contract."},"lastName":{"type":["string","null"],"description":"The last name of the contract."},"document":{"type":["string","null"],"description":"The document number of the contract."},"documentType":{"type":["string","null"],"description":"The type of document (e.g., \"EIN\", \"State Business Registration Number\")."},"corporateDocument":{"type":["string","null"],"description":"Business document number if different from main document."},"corporateName":{"type":["string","null"],"description":"Company's registered corporate name."},"stateRegistration":{"type":["string","null"],"description":"State-level registration number."},"isNewsletterOptIn":{"type":["boolean","null"],"description":"Indicates newsletter opt-in status."},"createdIn":{"type":["string","null"],"description":"Timestamp of document creation."},"lastInteractionIn":{"type":["string","null"],"description":"Timestamp of last update."},"id":{"type":["string","null"],"description":"Unique contract ID."},"dataEntityId":{"type":["string","null"],"description":"Fixed entity ID (always \"CL\")."},"accountId":{"type":["string","null"],"description":"ID of the account related to this address."},"accountName":{"type":["string","null"],"description":"Name of the account related to this address."},"followers":{"type":["array","null"],"description":"List of users following this address record.","items":{"type":"string","description":"User ID."}},"tags":{"type":["array","null"],"description":"List of tags associated with this address.","items":{"type":"string","description":"Tag value."}},"restrictions":{"type":["object","null"],"description":"Object with restriction definitions for `vtex.catalog`, `vtex.checkout`, and `vtex.payments`.","properties":{"vtex.catalog":{"type":"object","description":"Contains catalog restrictions for the contract.","properties":{"assortmentIds":{"type":"array","description":"List of product assortment IDs authorized for this contract. Assortments define catalog visibility through included and excluded collections.","items":{"type":"string","description":"Product assortment ID."}}}},"vtex.checkout":{"type":"object","description":"Contains restrictions regarding checkout.","properties":{"creditCards":{"type":"array","description":"A list of credit card IDs that the customer is allowed to use during checkout. These IDs reference cards stored in the BK entity, managed by the VTEX Checkout system.","items":{"type":"string","description":"Credit card ID."}}}},"vtex.payments":{"type":"object","description":"Contains restrictions regarding payments.","properties":{"paymentSystemIds":{"type":"array","description":"A list of numeric IDs that represent the allowed payment systems for the customer.","items":{"type":"string","description":"Payment system ID."}}}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint retrieves information related to a given contract, by its unique identifier. Use the `_fields=_all` query parameter to return all fields.
+
+  >⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Dynamic Storage | Dynamic storage generic resources | **Read only documents** |
+  | Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |
+  | Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |
+  | Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `contractId` | path | (Required) ID of the contract to retrieve. |
+  | `_fields` | query | Specifies that all fields of the document should be included in the response. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "cluster": null,
+    "priceTables": "CL-4000060,CL3000007,NCC,NCNC",
+    "isCorporate": null,
+    "tradeName": null,
+    "rclastcart": null,
+    "rclastcartvalue": null,
+    "rclastsession": null,
+    "rclastsessiondate": null,
+    "homePhone": "1122223333",
+    "phone": null,
+    "brandPurchasedTag": null,
+    "brandVisitedTag": null,
+    "categoryPurchasedTag": null,
+    "categoryVisitedTag": null,
+    "departmentVisitedTag": null,
+    "productPurchasedTag": null,
+    "productVisitedTag": null,
+    "stateRegistration": "",
+    "email": "business-klub-spc@email.com",
+    "userId": "2da4e9ab-050b-11f0-b37f-f4b136dbcce1",
+    "firstName": "Business Klub",
+    "lastName": "SPC",
+    "document": "00000000000000",
+    "isNewsletterOptIn": false,
+    "localeDefault": null,
+    "attach": null,
+    "approved": null,
+    "birthDate": null,
+    "businessPhone": "1122223333",
+    "carttag": null,
+    "checkouttag": null,
+    "corporateDocument": null,
+    "corporateName": "Business Klub SPC",
+    "documentType": "CNPJ",
+    "gender": null,
+    "visitedProductWithStockOutSkusTag": null,
+    "customerClass": null,
+    "profilePicture": null,
+    "birthDateMonth": null,
+    "id": "2da4e9ab-050b-11f0-b37f-f4b136dbcce1",
+    "accountId": "5f1fe23b-9fd1-417d-a4aa-14df38e7746e",
+    "accountName": "qastore",
+    "dataEntityId": "CL",
+    "createdBy": "c83ea7ed-f875-4a10-b0a0-98d96aedab06",
+    "createdIn": "2025-03-19T21:43:29.7132146Z",
+    "updatedBy": null,
+    "updatedIn": null,
+    "lastInteractionBy": "c83ea7ed-f875-4a10-b0a0-98d96aedab06",
+    "lastInteractionIn": "2025-03-19T21:43:29.7132146Z",
+    "followers": [],
+    "tags": [],
+    "auto_filter": null,
+    "restrictions": {
+      "vtex.catalog": {
+        "assortmentIds": [
+          "1",
+          "2"
+        ]
+      },
+      "vtex.checkout": {
+        "creditCards": [
+          "da89bc50-994e-4e39-9974-4a9d081cc3f4",
+          "65ec3ec6-c504-4431-b17a-ea3800fb03d2"
+        ]
+      },
+      "vtex.payments": {
+        "paymentSystemIds": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "7",
+          "8",
+          "9",
+          "14",
+          "21",
+          "29",
+          "31",
+          "33",
+          "34",
+          "35",
+          "36",
+          "37",
+          "48",
+          "789"
+        ]
+      }
+    }
+  }
+  ```

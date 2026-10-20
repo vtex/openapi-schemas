@@ -1,0 +1,66 @@
+info:
+  name: Notify credit transfer status
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/webhook/marketplace/transfers/:publisher_id"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: publisher_id
+      value: 0d675bf6-03f6-4b81-9617-e79dffddc3ab
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "transaction_id": "TRANSACTION_ID",
+        "status": "success"
+      }
+  auth:
+    type: apikey
+    key: X-Api-Key
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("[POST]::/webhook/marketplace/transfers/:publisher_id - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/webhook/marketplace/transfers/:publisher_id - Response has empty Body", function () {
+          const data = res.getBody();
+          expect(data === undefined || data === null || data === "").to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Notifies VTEX Ads about the final status of a credit transfer that was previously requested by VTEX Ads to the marketplace's `POST /checking_account/transfer` endpoint. The marketplace must call this webhook with the resolved status of each transfer transaction.
+
+  >⚠️ In case of a webhook call failure, the marketplace must retry until a `204 No Content` response is received.
+
+  ## Permissions
+
+  This endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `publisher_id` | path | (Required) Publisher identifier provided by your account manager. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |

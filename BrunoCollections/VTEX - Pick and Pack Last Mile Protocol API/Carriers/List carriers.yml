@@ -1,0 +1,120 @@
+info:
+  name: List carriers
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: https://:store_endpoint/list-carriers
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+    - name: Authorization
+      value: "{token}"
+  params:
+    - name: your_endpoint
+      value: storeapi.com
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "settings": [
+          {
+            "label": "Api key",
+            "key": "aftership-api-key",
+            "value": "8f_XXXXXXXXX_db79"
+          },
+          {
+            "label": "Api key",
+            "key": "aftership-api-key",
+            "value": "8f_XXXXXXXXX_db79"
+          }
+        ]
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/list-carriers - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/list-carriers - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/list-carriers - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/list-carriers - Schema is valid", function () {
+          const schema = {"type":"object","required":["status","serviceId","shippingPrice","metaData","shippingEstimatedDate","labels"],"properties":{"status":{"type":"string","description":"Status of the service.","enum":["PENDING","ASSIGNED","PICKED","ON_ROUTE","INCIDENT","RETURNED","DELIVERED","CANCELED","ON_HOLD"]},"serviceId":{"type":"string","description":"Service ID."},"shippingPrice":{"type":"number","description":"Service shipping price."},"metaData":{"type":"object","properties":{"{keyValue}":{"description":"Carrier additional information.","type":"string"}}},"shippingEstimatedDate":{"type":"string","description":"Shipping estimated date in [UTC time format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"labels":{"type":"array","items":{"required":["id","name","url","type"],"type":"object","properties":{"id":{"type":"string","description":"Label ID."},"name":{"type":"string","description":"Name of the label."},"url":{"type":"string","description":"Label URL."},"type":{"type":"string","description":"Label's type of file."}}},"description":"Shipping labels, there may be more than one per order due to breakage in packages."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves all carriers from the broker.
+
+  This endpoint must be developed by the carriers or brokers to integrate into the protocol.
+
+  This endpoint only applies to multi-carrier integrations such as Shipstation or Shippo.
+
+  ## Permissions
+
+  This endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+  | `Authorization` | header | (Required) Authentication JWT. JSON Web Token (JWT) is an open standard (RFC 7519) that defines a compact and self-contained way for securely transmitting information as a JSON object between parties. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "status": "PENDING",
+    "serviceId": "ASDF23324KDSF2",
+    "shippingPrice": 20000.09,
+    "metaData": {
+      "anyKey": "anyValue"
+    },
+    "shippingEstimatedDate": "2024-05-29T22:36:37.589Z",
+    "labels": [
+      {
+        "id": "ut nulla",
+        "name": "qui",
+        "url": "dolor tempor",
+        "type": "ea nulla magna elit"
+      },
+      {
+        "id": "ipsum in",
+        "name": "eiusmod fugiat Excepteur",
+        "url": "dolore voluptate qui",
+        "type": "aut"
+      }
+    ]
+  }
+  ```
