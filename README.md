@@ -17,6 +17,7 @@ This documentation comprises VTEX's public APIs as OpenAPI 3.0 JSON schemas. Fil
 - [GitHub Actions](#github-actions)
   - [Spectral Linter](#spectral-linter)
   - [Postman Collection Converter](#postman-collection-converter)
+  - [OpenAPI Preview](#openapi-preview)
 
 ## External contributions
 
@@ -231,3 +232,16 @@ This repository uses GitHub Actions for automated workflows that help maintain c
 - `actions/setup-node@v2`: Sets up Node.js environment
 - `@apideck/portman`: NPM package for converting OpenAPI specs to Postman collections
 - `ad-m/github-push-action@v0.6.0`: Pushes generated files back to the repository
+
+### OpenAPI Preview
+
+**Source File:** `.github/workflows/openapi-preview.yml`
+
+**Summary:** This action automatically posts a preview comment on pull requests with direct links to visualize changed OpenAPI specs. The comment is created on PR open and updated on each new push.
+
+**Trigger Conditions:**
+- On pull request creation or update targeting any `*.json` file
+
+**Dependencies:**
+- `actions/checkout@v4`: Checks out the repository code
+- `actions/github-script@v7`: Posts and updates PR comments with preview links
