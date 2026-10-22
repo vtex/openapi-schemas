@@ -1,0 +1,372 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1.0",
+    "title": "Release Status Log API",
+    "description": "The Release Status Log API lets you query the history of your account's releases, step by step, so you can monitor release status from your own applications.\r\n\r\nEach entry in the log is one step event of a release, such as `created`, `publishing`, `published`, or `failed`. You choose a time window and get every event that happened in it."
+  },
+  "servers": [
+    {
+      "url": "https://releases.vtex.io",
+      "description": "VTEX Releases server URL."
+    }
+  ],
+  "paths": {
+    "/releases/history": {
+      "get": {
+        "tags": [
+          "Release status log"
+        ],
+        "summary": "Get release history",
+        "description": "Retrieves the step-by-step history of the account's releases within a time window. The window is `[startDate, endDate)`: `startDate` is inclusive and `endDate` is exclusive. Entries are sorted by `occurredAt` in ascending order.\r\n\r\nAll events of a release share the same `releaseId`. Group entries by it to read the release's sequence, for example: `created > publishing > enqueued > build_succeeded > published`. A step can happen more than once for the same release. Release names are not included in the log. To find a release's name, use the **List Releases** endpoint, whose `id` is the `releaseId` returned here.\r\n\r\n## Reading more than 1000 entries\r\n\r\nA response contains at most 1000 entries. When `truncated` is `true`, more entries exist in the window. To read them:\r\n\r\n1. Call the endpoint again with `startDate` set to the previous response's `lastOccurredAt` and the **same** `endDate`.\r\n2. Repeat until `truncated` is `false`.\r\n3. Several entries can share the same timestamp at the boundary, so **de-duplicate entries by `id`**.\r\n\r\n>ℹ️ To monitor releases continuously, keep the last `lastOccurredAt` you processed and use it as the next `startDate`, de-duplicating by `id`. This avoids re-reading old entries and keeps you within the rate limit.\r\n\r\n## Limits\r\n\r\n>ℹ️ The rate limit is 60 requests per minute per account, and each query times out after 5 seconds. If you receive a `429` status code, wait the number of seconds in the `Retry-After` header before retrying. If you receive a `503` status code, retry with a narrower date range. To cover a period longer than 15 days, split it into several windows of up to 15 days each.\r\n\r\n## Permissions\r\n\r\nAny user or [application key](https://developers.vtex.com/docs/guides/api-authentication-using-application-keys) must have at least one of the following [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to use this endpoint. Learn more about [Roles](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc).\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Release | Release | **get-release** |\r\n\r\nYou can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the predefined roles that include it.\r\n\r\n>ℹ️ The token must also have been issued for the same account as the `an` query parameter. A token issued for another account is refused with a `403` status code, even if its user has a role in that account. For an appKey and appToken pair, the account is the one the key belongs to.\r\n\r\n>❗ To prevent security vulnerabilities in your store, avoid assigning permissions to unrelated resources.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/an"
+          },
+          {
+            "$ref": "#/components/parameters/startDate"
+          },
+          {
+            "$ref": "#/components/parameters/endDate"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryResponse"
+                },
+                "example": {
+                  "history": [
+                    {
+                      "id": "6650f1a2c3d4e5f607182930",
+                      "releaseId": "a1b2c3d4",
+                      "accountName": "myaccount",
+                      "step": "created",
+                      "occurredAt": "2026-10-19T14:02:11.000Z",
+                      "actor": {
+                        "type": "user",
+                        "id": "7c1e0f52-0000-0000-0000-000000000000"
+                      }
+                    },
+                    {
+                      "id": "6650f1a2c3d4e5f607182931",
+                      "releaseId": "a1b2c3d4",
+                      "accountName": "myaccount",
+                      "step": "published",
+                      "occurredAt": "2026-10-19T14:05:47.000Z",
+                      "outcome": "success"
+                    }
+                  ],
+                  "truncated": false,
+                  "lastOccurredAt": "2026-10-19T14:05:47.000Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request \n\n The request has invalid parameters or no authorization token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "The range between startDate and endDate cannot exceed 15 days."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized \n\n The token is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Invalid token."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden \n\n The user lacks permission in the account or the token was issued for another account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Forbidden."
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests \n\n Wait the time in the Retry After header and then retry.",
+            "headers": {
+              "Retry-After": {
+                "description": "Number of seconds to wait before sending a new request.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Rate limit exceeded."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable \n\n The query took too long so retry with a narrower date range.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "The query took too long. Retry with a narrower date range."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "appKey": [],
+      "appToken": []
+    },
+    {
+      "VtexIdclientAutCookie": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "appKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-VTEX-API-AppKey",
+        "description": "Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+      },
+      "appToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-VTEX-API-AppToken",
+        "description": "Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+      },
+      "VtexIdclientAutCookie": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "VtexIdclientAutCookie",
+        "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
+      }
+    },
+    "parameters": {
+      "an": {
+        "name": "an",
+        "in": "query",
+        "description": "Name of the VTEX account. Case-insensitive: `Acme` and `acme` return the same entries.",
+        "required": true,
+        "style": "form",
+        "schema": {
+          "type": "string",
+          "example": "myaccount"
+        }
+      },
+      "startDate": {
+        "name": "startDate",
+        "in": "query",
+        "description": "Start of the window, **inclusive**, in RFC 3339 date-time format. Cannot be older than the history retention window (365 days). The range between `startDate` and `endDate` cannot exceed 15 days.",
+        "required": true,
+        "style": "form",
+        "schema": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2026-10-01T00:00:00Z"
+        }
+      },
+      "endDate": {
+        "name": "endDate",
+        "in": "query",
+        "description": "End of the window, **exclusive**, in RFC 3339 date-time format. Must be after `startDate`, and the range between both cannot exceed 15 days. A date in the future is accepted.",
+        "required": true,
+        "style": "form",
+        "schema": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2026-10-15T00:00:00Z"
+        }
+      }
+    },
+    "schemas": {
+      "HistoryResponse": {
+        "type": "object",
+        "description": "Release history response.",
+        "required": [
+          "history",
+          "truncated"
+        ],
+        "properties": {
+          "history": {
+            "type": "array",
+            "description": "Log entries, sorted by `occurredAt` in ascending order. Contains at most 1000 entries per response.",
+            "items": {
+              "type": "object",
+              "description": "One step event of a release. Optional fields are omitted when they have no value.",
+              "required": [
+                "id",
+                "releaseId",
+                "accountName",
+                "step",
+                "occurredAt"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique ID of the log entry."
+                },
+                "releaseId": {
+                  "type": "string",
+                  "description": "ID of the release this event belongs to. Matches the `id` returned by the List Releases endpoint."
+                },
+                "accountName": {
+                  "type": "string",
+                  "description": "Name of the account that owns the release."
+                },
+                "step": {
+                  "type": "string",
+                  "description": "What happened in the release.",
+                  "enum": [
+                    "created",
+                    "scheduled",
+                    "unscheduled",
+                    "scheduled_delay",
+                    "publishing_requested",
+                    "publishing",
+                    "published",
+                    "enqueued",
+                    "dequeued",
+                    "deployment_created",
+                    "deployment_enqueued",
+                    "starting",
+                    "started",
+                    "build_succeeded",
+                    "build_failed",
+                    "delivered",
+                    "failed",
+                    "canceled",
+                    "timeout_checked",
+                    "timed_out_inqueue",
+                    "timed_out_deployment",
+                    "reprocessed",
+                    "deleted"
+                  ]
+                },
+                "occurredAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Date and time when the event happened, in ISO 8601 format (UTC)."
+                },
+                "outcome": {
+                  "type": "string",
+                  "description": "Outcome of the step.",
+                  "enum": [
+                    "success",
+                    "failure",
+                    "canceled"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Free-text reason for the event."
+                },
+                "error": {
+                  "type": "object",
+                  "description": "Error information, present when the step failed.",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "Error code."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
+                    }
+                  }
+                },
+                "actor": {
+                  "type": "object",
+                  "description": "Who or what triggered the event.",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "description": "Type of actor that triggered the event."
+                    },
+                    "id": {
+                      "type": "string",
+                      "description": "ID of the actor."
+                    },
+                    "app": {
+                      "type": "string",
+                      "description": "Application that triggered the event."
+                    }
+                  }
+                },
+                "related": {
+                  "type": "object",
+                  "description": "Objects related to the event.",
+                  "properties": {
+                    "deploymentId": {
+                      "type": "string",
+                      "description": "ID of the related deployment."
+                    },
+                    "service": {
+                      "type": "string",
+                      "description": "Name of the related service."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "Indicates whether more entries exist in the window than were returned. When `true`, call the endpoint again using `lastOccurredAt` as the new `startDate`."
+          },
+          "lastOccurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the last returned entry. Omitted when `history` is empty."
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "Error response.",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Error message."
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Release status log"
+    }
+  ]
+}
