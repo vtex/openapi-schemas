@@ -1,0 +1,144 @@
+info:
+  name: Inbound request (BETA)
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{baseUrl}}/payments/:paymentId/inbound/:action"
+  headers:
+    - name: X-PROVIDER-API-AppKey
+      value: "{{X-PROVIDER-API-AppKey}}"
+    - name: X-PROVIDER-API-AppToken
+      value: "{{X-PROVIDER-API-AppToken}}"
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: paymentId
+      value: F5C1A4E20D3B4E07B7E871F5B5BC9F91
+      type: path
+    - name: action
+      value: hook
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "requestId": "LA4E20D3B4E07B7E871F5B5BC9F91",
+        "transactionId": "D3AA1FC8372E430E8236649DB5EBD08E",
+        "paymentId": "F5C1A4E20D3B4E07B7E871F5B5BC9F91",
+        "authorizationId": "AUT123567",
+        "tid": "10022005181543584603",
+        "nsu": "NSU987432",
+        "requestData": {
+          "body": "{{originalRequestBody}}"
+        },
+        "merchantSettings": [
+          {
+            "name": "Public Merchant ID Test.",
+            "value": "1"
+          },
+          {
+            "name": "Public Merchant ID Test.",
+            "value": "1"
+          }
+        ],
+        "connectorMetadata": [
+          {
+            "name": "MetadataName",
+            "value": "MetadataValue"
+          },
+          {
+            "name": "MetadataName",
+            "value": "MetadataValue"
+          }
+        ]
+      }
+  auth:
+    type: apikey
+    key: X-VTEX-API-AppKey
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/payments/:paymentId/inbound/:action - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/payments/:paymentId/inbound/:action - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/payments/:paymentId/inbound/:action - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/payments/:paymentId/inbound/:action - Schema is valid", function () {
+          const schema = {"required":["requestId","paymentId","responseData"],"type":"object","description":"Inbound Request response body information.","properties":{"requestId":{"type":"string","description":"The same `requestId` sent in the request."},"paymentId":{"type":"string","description":"The same `paymentId` sent in the request."},"code":{"type":"string","description":"Provider's operation/error code to be logged."},"message":{"type":"string","description":"Provider's operation/error message to be logged."},"responseData":{"required":["statusCode","contentType","content"],"type":"object","description":"Response data information.","properties":{"statusCode":{"type":"integer","description":"Your desired status code."},"contentType":{"type":"string","description":"Your desired content-type."},"content":{"type":"string","description":"Your desired content body."}}},"connectorMetadata":{"type":"array","description":"Array containing metadata fields sent from the provider to the payment gateway.","items":{"type":"object","description":"Metadata fields information.","required":["name","value"],"properties":{"name":{"type":"string","description":"The name of the metadata to be stored in the gateway (limited to 20 characters)."},"value":{"type":"string","description":"The value of the metadata stored (limited to 200 characters)."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  The Inbound request (BETA) implements an URL that facilitates a direct connection between VTEX Gateway service and the Payment Provider. This functionality allows the payment provider to create other types of specific routes, in addition to those described in the other PPP endpoints, according to their type of operation (e.g. hook or enrollment routes, among others). 
+
+  This endpoint forwards a request back to your endpoint using the `inboundRequestsUrl` provided in the [Create Payment](https://developers.vtex.com/docs/api-reference/payment-provider-protocol#post-/payments?endpoint=post-/payments) endpoint payload.
+
+  The `{action}` part of the path will be the same you have used to call the `inboundRequestsUrl` (e.g. hook, enrollment, among others).
+
+  > ℹ️ This request is made from VTEX to the payment provider.
+
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `paymentId` | path | (Required) VTEX payment identifier. |
+  | `action` | path | (Required) Describes the type of action that will be performed on the route (e.g. hook, enrollment, among others). It is the same `:action` information used in the `inboundRequestsUrl` provided in the [Create Payment](https://developers.vtex.com/docs/api-reference/payment-provider-protocol#post-/payments?endpoint=post-/payments) endpoint payload. |
+  | `X-PROVIDER-API-AppKey` | header | (Required) Unique identifier created by the provider and configured on the provider configuration page (Admin VTEX). To use this header as authorization, check that the `usesProviderHeadersName` field is set to `true` in the payment provider's `configuration.json`. To check the `configuration.json` file, access the route {{connector}}/paymentProvider/configuration.json. |
+  | `X-PROVIDER-API-AppToken` | header | (Required) Unique token created by the provider and configured on the provider configuration page (Admin VTEX). To use this header as authorization, check that the `usesProviderHeadersName` field is set to `true` in the payment provider's `configuration.json`. To check the `configuration.json` file, access the route {{connector}}/paymentProvider/configuration.json |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "requestId": "LA4E20D3B4E07B7E871F5B5BC9F91",
+    "paymentId": "F5C1A4E20D3B4E07B7E871F5B5BC9F91",
+    "responseData": {
+      "statusCode": 200,
+      "contentType": "application/json",
+      "content": "{\"myAttribute\":\"anyValue\"}"
+    },
+    "connectorMetadata": [
+      {
+        "name": "MetadataName",
+        "value": "MetadataValue"
+      }
+    ]
+  }
+  ```

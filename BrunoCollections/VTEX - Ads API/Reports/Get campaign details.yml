@@ -1,0 +1,207 @@
+info:
+  name: Get campaign details
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: "{{baseUrl}}/campaign/:campaign_id?start_date=2025-01-01&end_date=2025-01-31"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: start_date
+      value: 2025-01-01
+      type: query
+    - name: end_date
+      value: 2025-01-31
+      type: query
+    - name: campaign_id
+      value: ab90a43b-582e-4be9-b126-2067dd8f30a3
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/campaign/:campaign_id - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/campaign/:campaign_id - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/campaign/:campaign_id - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/campaign/:campaign_id - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"id":{"type":"string","description":"Unique campaign identifier."},"advertiser_id":{"type":"string","description":"Advertiser identifier."},"name":{"type":"string","description":"Campaign name."},"description":{"type":["string","null"],"description":"Campaign description."},"status":{"type":"string","description":"Campaign status."},"type":{"type":"string","description":"Campaign type."},"settings":{"type":"object","description":"Campaign settings object. The fields are dynamic and may vary depending on the campaign type.","properties":{"daily_budget":{"type":"number","description":"Daily budget amount.","format":"double"},"cpc":{"type":"number","description":"Cost per click value.","format":"double"},"cpm":{"type":"number","description":"Cost per mille value.","format":"double"},"budget_type":{"type":"string","description":"Budget distribution type."}}},"start_at":{"type":"string","description":"Campaign start date in ISO 8601 format."},"end_at":{"type":"string","description":"Campaign end date in ISO 8601 format."},"created_at":{"type":"string","description":"Campaign creation date in ISO 8601 format."},"updated_at":{"type":"string","description":"Campaign last update date in ISO 8601 format."},"deleted_at":{"type":["string","null"],"description":"Campaign deletion date in ISO 8601 format."},"ad_type":{"type":"string","description":"Advertisement type."},"targeting_type":{"type":"string","description":"Targeting type."},"strategy_type":{"type":"string","description":"Campaign strategy type."},"total_budget":{"type":"string","description":"Total campaign budget."},"active":{"type":"boolean","description":"Whether the campaign is active."},"publisher_id":{"type":"string","description":"Publisher identifier."},"seller_id":{"type":["string","null"],"description":"Seller identifier (when applicable)."},"target":{"type":"string","description":"Campaign target (when applicable)."},"network_id":{"type":["string","null"],"description":"Network identifier (when applicable)."},"audience_id":{"type":["string","null"],"description":"Audience identifier (when applicable)."},"advertiser_name":{"type":"string","description":"Advertiser name."},"advertiser_account_id":{"type":"string","description":"Advertiser account identifier."},"publisher_name":{"type":"string","description":"Publisher name."},"publisher_account_id":{"type":"string","description":"Publisher account identifier."},"conversions_quantity":{"type":"string","description":"Total quantity of conversions."},"consumed_budget":{"type":"string","description":"Amount of budget consumed."},"pending":{"type":"array","description":"Pending operations awaiting review for this campaign/ad. Empty when there is nothing pending.","items":{"type":"object","description":"Pending operation entry, grouping a `label` with its `quantity`.","properties":{"label":{"type":"string","description":"Type of pending operation. Currently, only `ads` is returned, indicating ads awaiting review.","enum":["ads"]},"quantity":{"type":"integer","description":"Number of pending items of the given `label`."}}}},"metrics":{"type":"object","description":"Performance metrics object. All metric values are returned as strings regardless of their numeric nature.","properties":{"clicks":{"type":"integer","description":"Total number of clicks."},"conversions":{"type":"integer","description":"Total number of conversions."},"impressions":{"type":"integer","description":"Total number of impressions."},"views":{"type":"integer","description":"Total number of views."},"conversions_click":{"type":"string","description":"Number of conversions attributed to clicks."},"conversions_view":{"type":"string","description":"Number of conversions attributed to views."},"conversion_rate":{"type":"string","description":"Consolidated conversion rate percentage, calculated as total conversions divided by the sum of clicks and views (`total_conversions / (total_clicks + total_views)`). This is the default conversion rate and considers both click- and view-attributed conversions."},"conversion_rate_click":{"type":"string","description":"Conversion rate percentage considering click-attributed conversions only, calculated as `conversions_click / total_clicks`."},"conversion_rate_view":{"type":"string","description":"Conversion rate percentage considering view-attributed conversions only, calculated as `conversions_view / total_views`."},"ctr":{"type":"string","description":"Click-through rate percentage."},"roas":{"type":"string","description":"Consolidated return on ad spend, combining click- and view-attributed revenue across all ad formats."},"roas_click":{"type":"string","description":"Return on ad spend calculated using click-attributed revenue only."},"roas_view":{"type":"string","description":"Return on ad spend calculated using view-attributed revenue only."},"roas_halo":{"type":"string","description":"Halo return on ad spend: incremental revenue from non-advertised products purchased in the same order as advertised products (the halo effect), divided by ad spend."},"roas_overall":{"type":"string","description":"Total return on ad spend, combining direct revenue from the advertised product with halo revenue from other products in the same order, divided by the ad investment. Measures the campaign's total impact on the whole order."},"adcost":{"type":"string","description":"Ad cost percentage."},"income":{"type":"string","description":"Total income generated."},"total_spent":{"type":"string","description":"Total amount spent."},"ecpm":{"type":"string","description":"Effective cost per mille (CPM)."},"cpa":{"type":"string","description":"Cost per acquisition."},"avg_cpc":{"type":"string","description":"Average cost per click."},"avg_cpm":{"type":"string","description":"Average cost per mille."},"halo_revenue":{"type":"string","description":"Incremental revenue from non-advertised products that were purchased in the same order as an advertised product, attributed to the ad's spillover (halo) effect."},"halo_orders":{"type":"string","description":"Number of orders with at least one halo item."},"halo_items":{"type":"string","description":"Quantity of halo items sold."}}},"ads":{"type":"array","description":"Array of ad objects associated with the campaign.","items":{"type":"object","description":"Ad object.","properties":{"id":{"type":"string","description":"Unique ad identifier."},"campaign_id":{"type":"string","description":"Associated campaign identifier."},"url":{"type":"string","description":"Ad destination URL."},"settings":{"type":"object","description":"Ad-specific settings object. The fields are dynamic and may vary depending on the ad type.","properties":{"ad_size":{"type":"string","description":"Ad dimensions/size specification."},"media_url":{"type":"string","description":"URL of the ad media asset."},"type":{"type":"string","description":"Ad type."}}},"disabled_at":{"type":["string","null"],"description":"Ad disabled date in ISO 8601 format."},"created_at":{"type":"string","description":"Ad creation date in ISO 8601 format."},"updated_at":{"type":"string","description":"Ad last update date in ISO 8601 format."},"deleted_at":{"type":["string","null"],"description":"Ad deletion date in ISO 8601 format."},"status":{"type":"string","description":"Ad status."},"aid":{"type":"integer","description":"Ad internal ID."},"asset_type":{"type":"string","description":"Asset type (for example, `image`, `video`)."},"active":{"type":"boolean","description":"Whether the ad is active."},"campaign_name":{"type":"string","description":"Associated campaign name."},"ad_type":{"type":"string","description":"Advertisement type."},"campaign_status":{"type":"string","description":"Associated campaign status."},"is_running":{"type":"boolean","description":"Whether the ad is currently running."},"campaign_settings":{"type":"object","description":"Associated campaign settings. The fields are dynamic and may vary depending on the campaign type.","properties":{"daily_budget":{"type":"number","description":"Daily budget amount.","format":"double"},"cpm":{"type":"number","description":"Cost per mille value.","format":"double"},"budget_type":{"type":"string","description":"Budget distribution type."}}},"metrics":{"type":"object","description":"Ad-specific performance metrics. All metric values are returned as strings regardless of their numeric nature."}}}},"products":{"type":"array","description":"Array of products associated with the campaign.","items":{"type":"object","description":"Product object.","properties":{"id":{"type":"string","description":"Unique product identifier."},"name":{"type":"string","description":"Product name."},"sku":{"type":"string","description":"Product SKU."},"image_url":{"type":"string","description":"Product image URL."}}}},"status_history":{"type":"array","description":"Array of status change history.","items":{"type":"object","description":"Status change object.","properties":{"id":{"type":"string","description":"Unique status change identifier."},"status":{"type":"string","description":"Status value."},"created_at":{"type":"string","description":"Status change date in ISO 8601 format."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves detailed information about a campaign, such as the products associated with the campaign, status history, ads, and metrics. The data is returned only in JSON format.
+
+  >⚠️ This endpoint is limited to 100 requests per minute per account. Exceeding the limit returns `429 Too Many Requests`.
+
+  ## Permissions
+
+  This endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `campaign_id` | path | (Required) Unique identifier of the campaign to fetch. |
+  | `start_date` | query | (Required) Start date for metrics in `YYYY-MM-DD` format. |
+  | `end_date` | query | (Required) End date for metrics in `YYYY-MM-DD` format. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "campaign-001",
+    "advertiser_id": "advertiser-xyz",
+    "name": "Sample Campaign Name",
+    "description": "Sample Campaign Description",
+    "status": "running",
+    "type": "on_site",
+    "settings": {
+      "daily_budget": 10000,
+      "cpm": 1000,
+      "budget_type": "evenly"
+    },
+    "start_at": "2025-01-01T00:00:00.000Z",
+    "end_at": "2025-01-31T00:00:00.000Z",
+    "created_at": "2025-07-14T17:14:56.513Z",
+    "updated_at": "2025-07-14T17:14:56.513Z",
+    "deleted_at": null,
+    "ad_type": "banner",
+    "targeting_type": "category",
+    "strategy_type": "standard",
+    "total_budget": "0.0000",
+    "active": true,
+    "publisher_id": "publisher-id",
+    "seller_id": null,
+    "target": "target-name",
+    "network_id": null,
+    "audience_id": null,
+    "advertiser_name": "advertiser-name",
+    "advertiser_account_id": "advertiser-account-id",
+    "publisher_name": "publisher-name",
+    "publisher_account_id": "publisher-account-id",
+    "conversions_quantity": "82",
+    "consumed_budget": "36070.0000",
+    "pending": [],
+    "metrics": {
+      "clicks": 39,
+      "conversions": 4,
+      "impressions": 7603,
+      "views": 51,
+      "conversions_click": "3",
+      "conversions_view": "1",
+      "conversion_rate": "4.44",
+      "conversion_rate_click": "7.69",
+      "conversion_rate_view": "1.96",
+      "ctr": ".51",
+      "roas": "2.64",
+      "roas_click": "1.80",
+      "roas_view": "0.84",
+      "roas_halo": "0.95",
+      "roas_overall": "3.59",
+      "adcost": "37.87",
+      "income": "25747.00",
+      "total_spent": "9750.00",
+      "ecpm": "3.3864",
+      "cpa": "2437.50",
+      "avg_cpc": "250.00",
+      "avg_cpm": "1282.39",
+      "halo_revenue": "9260.00",
+      "halo_orders": "2",
+      "halo_items": "5"
+    },
+    "ads": [
+      {
+        "id": "ad-001",
+        "campaign_id": "ab90a43b-582e-4be9-b126-2067dd8f30a3",
+        "url": "https://example.com",
+        "settings": {
+          "ad_size": "example-size",
+          "media_url": "https://cdn.example.com/ad-image.jpeg",
+          "type": "banner"
+        },
+        "disabled_at": null,
+        "created_at": "2025-07-14T17:14:56.513Z",
+        "updated_at": "2025-07-14T17:14:56.513Z",
+        "deleted_at": null,
+        "status": "enabled",
+        "aid": 255272,
+        "asset_type": "image",
+        "active": true,
+        "campaign_name": "Sample Campaign Name",
+        "ad_type": "banner",
+        "campaign_status": "pending_review",
+        "is_running": true,
+        "campaign_settings": {
+          "daily_budget": 10000,
+          "cpm": 1000,
+          "budget_type": "evenly"
+        },
+        "metrics": {
+          "clicks": 39,
+          "conversions": 4,
+          "impressions": 7603,
+          "views": 51,
+          "conversion_rate": "10.26",
+          "ctr": ".51",
+          "roas": "2.64",
+          "adcost": "37.87",
+          "income": "25747.00",
+          "total_spent": "9750.00",
+          "ecpm": "3.3864",
+          "cpa": "2437.50",
+          "avg_cpc": "250.00",
+          "avg_cpm": "1282.39"
+        }
+      }
+    ],
+    "products": [
+      {
+        "id": "product-001",
+        "name": "Example Product Name",
+        "sku": "123456",
+        "image_url": "https://example.com/product.jpg"
+      }
+    ],
+    "status_history": [
+      {
+        "id": "status-001",
+        "status": "running",
+        "created_at": "2025-07-03T22:53:57.272Z"
+      }
+    ]
+  }
+  ```

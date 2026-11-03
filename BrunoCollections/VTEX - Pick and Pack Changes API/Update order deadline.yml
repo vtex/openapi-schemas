@@ -1,0 +1,121 @@
+info:
+  name: Update order deadline
+  type: http
+  seq: 1
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/orders/:orderId/deadline"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: orderId
+      value: 1481050515517-01
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "UpdateDeadline": {
+          "description": "Extend deadline due to delayed shipment",
+          "max": "2024-12-24T23:03:02Z",
+          "min": "2024-12-23T23:03:02Z"
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[PUT]::/orders/:orderId/deadline - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PUT]::/orders/:orderId/deadline - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[PUT]::/orders/:orderId/deadline - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[PUT]::/orders/:orderId/deadline - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"order":{"description":"Object with current deadline information.","type":"object","properties":{"currentDeadline":{"description":"Current deadline information.","type":"object","properties":{"max":{"description":"Latest deadline date in ISO 8601 format.","type":"string"},"min":{"description":"Earliest deadline date in ISO 8601 format.","type":"string"}}},"deadlineChanges":{"description":"Object containg information of the deadline changes.","type":"array","items":{"description":"Deadline change.","type":"object","properties":{"current":{"description":"If the deadline changes were update.","type":"boolean"},"description":{"description":"Reason or purpose for the update.","type":"string"},"handled":{"description":"If the deadline changes were handled by the picker.","type":"boolean"},"max":{"description":"Latest deadline date in ISO 8601 format.","type":"string"},"min":{"description":"Earliest deadline date in ISO 8601 format.","type":"string"},"oldDates":{"description":"Object containg previous deadline information.","type":"object","properties":{"max":{"description":"Latest deadline date in ISO 8601 format.","type":"string"},"min":{"description":"Earliest deadline date in ISO 8601 format.","type":"string"}}},"updatedAt":{"description":"An explanation about the purpose of this instance.","type":"string"}}}},"orderId":{"description":"Unique identifier of the order.","type":"string"}}},"success":{"description":"Condition if the request was successful.","type":"boolean"}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Updates the deadline for an order. The `min` and `max` fields specify the deadline window, while the description provides additional information.
+
+  >ℹ️ This endpoint is currently in beta and subject to changes. Use with caution in production environments.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | OMS | OMS access | **View order** |
+  | OMS | OMS access | **Only show orders created by the user (via call center)** |
+  | Catalog | Telesales | **Assisted Sales** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `orderId` | path | (Required) Unique identifier of the order. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "order": {
+      "currentDeadline": {
+        "max": "2024-12-24T23:03:02Z",
+        "min": "2024-12-23T23:03:02Z"
+      },
+      "deadlineChanges": [
+        {
+          "current": true,
+          "description": "Extend deadline due to delayed shipment",
+          "handled": true,
+          "max": "2024-12-24T23:03:02.000Z",
+          "min": "2024-12-23T23:03:02.000Z",
+          "oldDates": {
+            "max": "2024-12-04T17:20:48.088Z",
+            "min": "2024-12-04T17:20:48.088Z"
+          },
+          "updatedAt": "2024-12-03T17:35:59.786Z"
+        }
+      ],
+      "orderId": "1481050515517-01"
+    },
+    "success": true
+  }
+  ```

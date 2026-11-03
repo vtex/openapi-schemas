@@ -1,0 +1,160 @@
+info:
+  name: Cart installments
+  type: http
+  seq: 13
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/checkout/pub/orderForm/:orderFormId/installments?paymentSystem=2"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: paymentSystem
+      value: "2"
+      type: query
+    - name: individualShippingEstimates
+      value: "true"
+      type: query
+      disabled: true
+    - name: orderFormId
+      value: ede846222cd44046ba6c638442c3505a
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/checkout/pub/orderForm/:orderFormId/installments - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/checkout/pub/orderForm/:orderFormId/installments - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/checkout/pub/orderForm/:orderFormId/installments - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/checkout/pub/orderForm/:orderFormId/installments - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"bin":{"type":["string","null"],"description":"Bin."},"installments":{"type":"array","description":"Array of installments.","items":{"description":"Object with installments information.","type":"object","properties":{"count":{"description":"An explanation about the purpose of this instance.","type":"integer"},"hasInterestRate":{"description":"An explanation about the purpose of this instance.","type":"boolean"},"interestRate":{"description":"An explanation about the purpose of this instance.","type":"integer"},"value":{"description":"An explanation about the purpose of this instance.","type":"integer"},"total":{"description":"An explanation about the purpose of this instance.","type":"integer"},"sellerMerchantInstallments":{"description":"An explanation about the purpose of this instance.","type":"array","items":{"description":"An explanation about the purpose of this instance.","type":"object","properties":{"id":{"description":"Installment ID.","type":"string"},"count":{"description":"Count.","type":"integer"},"hasInterestRate":{"description":"If the installment has an interest rate.","type":"boolean"},"interestRate":{"description":"Interest rate number.","type":"integer"},"value":{"description":"Installment value.","type":"integer"},"total":{"description":"Installment total.","type":"integer"}}}}}}},"paymentSystem":{"type":"integer","description":"Payment system."},"value":{"type":"integer","description":"Value including interest, in case it applies. Displayed in cents."},"paymentName":{"type":["string","null"],"description":"Payment name."},"paymentGroupName":{"type":["string","null"],"description":"Payment group name."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves possible amount of installments and respective values for a given cart with a given payment method.
+
+  The [orderForm](https://developers.vtex.com/docs/guides/orderform-fields) is the data structure which represents a shopping cart and contains all information pertaining to it. Hence, the `orderFormId` is the identification code of a given cart.
+
+
+  This endpoint can be used to get the installment options for only one payment method at a time.
+
+
+  This endpoint should be called only after the selected `orderForm` already has a `paymentData`.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Checkout | CheckoutResources | **Read Shopping Cart** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `orderFormId` | path | (Required) ID of the `orderForm` to be consulted for installments. |
+  | `paymentSystem` | query | (Required) ID of the payment method to be consulted for installments. |
+  | `individualShippingEstimates` | query | Shows the product's estimated shipping date in the `shippingEstimate` field from the `orderForm`. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "paymentSystem": 2,
+    "bin": null,
+    "paymentName": null,
+    "paymentGroupName": null,
+    "value": 32000,
+    "installments": [
+      {
+        "count": 1,
+        "hasInterestRate": false,
+        "interestRate": 0,
+        "value": 32000,
+        "total": 32000,
+        "sellerMerchantInstallments": [
+          {
+            "id": "MyStore",
+            "count": 1,
+            "hasInterestRate": false,
+            "interestRate": 0,
+            "value": 32000,
+            "total": 32000
+          }
+        ]
+      },
+      {
+        "count": 2,
+        "hasInterestRate": false,
+        "interestRate": 0,
+        "value": 1600,
+        "total": 32000,
+        "sellerMerchantInstallments": [
+          {
+            "id": "MyStore",
+            "count": 2,
+            "hasInterestRate": false,
+            "interestRate": 0,
+            "value": 1600,
+            "total": 32000
+          }
+        ]
+      },
+      {
+        "count": 3,
+        "hasInterestRate": false,
+        "interestRate": 0,
+        "value": 10666,
+        "total": 32000,
+        "sellerMerchantInstallments": [
+          {
+            "id": "MyStore",
+            "count": 3,
+            "hasInterestRate": false,
+            "interestRate": 0,
+            "value": 10666,
+            "total": 32000
+          }
+        ]
+      }
+    ]
+  }
+  ```

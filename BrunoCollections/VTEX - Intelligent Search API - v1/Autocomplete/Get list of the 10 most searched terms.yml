@@ -1,0 +1,121 @@
+info:
+  name: Get list of the 10 most searched terms
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/top-searches"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: locale
+      value: en-US
+      type: query
+      disabled: true
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/top-searches - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/top-searches - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/top-searches - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/top-searches - Schema is valid", function () {
+          const schema = {"type":"object","description":"Response body object.","properties":{"searches":{"type":"array","description":"List of the most searched terms in the past 14 days.","items":{"type":"object","description":"Term information.","properties":{"term":{"type":"string","description":"Search term."},"count":{"type":"number","description":"Number of times the term was searched."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Lists the 10 most searched terms in the past 14 days.
+
+  For more information, check the Intelligent Search [Autocomplete](https://help.vtex.com/docs/tutorials/autocomplete) guide.
+
+  >ℹ️ **Segment context:** Intelligent Search API (Legacy) previously read `locale` from `segment.cultureInfo` in the VTEX segment cookie. In v1, pass it directly as a query parameter.
+
+  >ℹ️ **Caching:** Responses are cached for public sales channels. Always read the `Cache-Control` response header at runtime to determine cacheability.
+
+  ## Permissions
+
+  This endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/docs/tutorials/license-manager-resources).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `locale` | query | Indicates the target language as a BCP 47 language code. The Intelligent Search must have indexed the account in the target language. Intelligent Search API (Legacy) previously read this from `segment.cultureInfo`. In v1, pass the value directly as a query parameter. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "searches": [
+      {
+        "term": "home",
+        "count": 14
+      },
+      {
+        "term": "shirt",
+        "count": 10
+      },
+      {
+        "term": "top",
+        "count": 9
+      },
+      {
+        "term": "tops",
+        "count": 6
+      },
+      {
+        "term": "camera",
+        "count": 5
+      },
+      {
+        "term": "kit",
+        "count": 5
+      },
+      {
+        "term": "work shirt",
+        "count": 2
+      },
+      {
+        "term": "shirts",
+        "count": 2
+      },
+      {
+        "term": "clothing",
+        "count": 2
+      },
+      {
+        "term": "classic shoes",
+        "count": 1
+      }
+    ]
+  }
+  ```

@@ -1,0 +1,69 @@
+info:
+  name: Start handling order
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/oms/pvt/orders/:orderId/start-handling"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: orderId
+      value: 1172452900788-01
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("[POST]::/api/oms/pvt/orders/:orderId/start-handling - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/oms/pvt/orders/:orderId/start-handling - Response has empty Body", function () {
+          const data = res.getBody();
+          expect(data === undefined || data === null || data === "").to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Changes the status of an order to indicate that it is in `handling`.
+
+
+  > Expect a `status 204` response with no content in case of a successful request. The store must validate this response to retry the call if the response differs from the `204` code, making this flow the store's responsibility. This endpoint can also respond with `status 500`. 
+
+   ## Permissions 
+
+   Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | OMS | OMS access | **Change order workflow status** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | OMS - Full access | Change order workflow status |
+  | IntegrationProfile - Fulfillment Oms | Change order workflow status |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `orderId` | path | (Required) Order ID is a unique code that identifies an order. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |

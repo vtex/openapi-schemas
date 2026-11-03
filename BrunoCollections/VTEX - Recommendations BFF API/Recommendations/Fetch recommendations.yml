@@ -1,0 +1,207 @@
+info:
+  name: Fetch recommendations
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/recommend-bff/v2/recommendations?an=apiexamples&campaignVrn=vrn:recommendations:apiexamples:rec-top-items-v2:123e4567-e89b-12d3-a456-426614174000"
+  headers:
+    - name: x-vtex-rec-origin
+      value: apiexamples/storefront/vtex.recommendation-shelf@2.x
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: apiexamples
+      type: query
+    - name: campaignVrn
+      value: vrn:recommendations:apiexamples:rec-top-items-v2:123e4567-e89b-12d3-a456-426614174000
+      type: query
+    - name: userId
+      value: 198e0f50-acf8-42f7-998a-5cd125464749
+      type: query
+      disabled: true
+    - name: products
+      value: product-id-1,product-id-2,product-id-3
+      type: query
+      disabled: true
+    - name: salesChannel
+      value: "1"
+      type: query
+      disabled: true
+    - name: locale
+      value: en-US
+      type: query
+      disabled: true
+    - name: zipCode
+      value: "90210"
+      type: query
+      disabled: true
+    - name: pickupPoint
+      value: pickup-1234
+      type: query
+      disabled: true
+    - name: regionId
+      value: southeast-1
+      type: query
+      disabled: true
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/recommend-bff/v2/recommendations - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/recommend-bff/v2/recommendations - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/recommend-bff/v2/recommendations - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/recommend-bff/v2/recommendations - Schema is valid", function () {
+          const schema = {"type":"object","description":"Response containing recommended products with full product details and campaign information.","properties":{"products":{"type":"array","description":"List of recommended products with full details including brand, name, images, and pricing.","items":{"type":"object","description":"Product object with full details.","properties":{"brand":{"type":"string","description":"Product brand name."},"productId":{"type":"string","description":"Product ID."},"productName":{"type":"string","description":"Product name."},"link":{"type":"string","description":"Product page URL path."},"tags":{"type":"array","description":"Product tags. When `advertisement` tag is present, the product is sponsored and should display a sponsored label.","items":{"type":"string","description":"Tag name."}},"items":{"type":"array","description":"List of SKUs for this product.","items":{"type":"object","description":"SKU object with variant details.","properties":{"itemId":{"type":"string","description":"SKU ID."},"nameComplete":{"type":"string","description":"Complete SKU name including variant information."},"images":{"type":"array","description":"SKU images.","items":{"type":"object","description":"Image object.","properties":{"imageUrl":{"type":"string","description":"Image URL."}}}},"sellers":{"type":"array","description":"List of sellers offering this SKU.","items":{"type":"object","description":"Seller object with pricing information.","properties":{"sellerId":{"type":"string","description":"Seller ID."},"commertialOffer":{"type":"object","description":"Commercial offer details.","properties":{"Price":{"type":"number","description":"Selling price."},"ListPrice":{"type":"number","description":"List price (before discount)."},"AvailableQuantity":{"type":"number","description":"Available stock quantity."}}}}}}}}}}}},"correlationId":{"type":"string","description":"Correlation ID for the recommendation request. Must be included when tracking recommendation view and click events."},"campaign":{"type":"object","description":"Campaign information.","properties":{"id":{"type":"string","description":"Campaign ID. Should be included when tracking recommendation view and click events."},"title":{"type":"string","description":"Campaign title."},"type":{"type":"string","description":"Campaign type. Supported types:\n\n- **TOP_ITEMS**: Most popular - products with the highest number of views.\n- **PERSONALIZED**: Recommended for you - custom recommendations based on user profile and behavior.\n- **SIMILAR_ITEMS**: Similar products - products similar to a specific one.\n- **CROSS_SELL**: Frequently bought together - complementary products commonly purchased together.\n- **CART_RECOMMENDATIONS**: Cart recommendations based on cart contents.\n- **LAST_SEEN**: Recently viewed - products recently viewed by the user.\n- **RECENT_INTERACTIONS**: Products the user recently interacted with.\n- **VISUAL_SIMILARITY**: Visually similar products - products visually similar to a specific one.\n- **SEARCH_BASED**: Manual collection - recommendations from a manually created collection.\n- **NEXT_INTERACTION**: Recent interactions - products most likely to engage the user in the future.","enum":["TOP_ITEMS","PERSONALIZED","SIMILAR_ITEMS","CROSS_SELL","CART_RECOMMENDATIONS","LAST_SEEN","RECENT_INTERACTIONS","VISUAL_SIMILARITY","SEARCH_BASED","NEXT_INTERACTION"]}},"required":["id","type"]}},"required":["products","correlationId","campaign"]};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves recommended products with full product details based on the provided campaign VRN (Virtual Resource Name).
+
+  The campaign VRN identifies a specific recommendation strategy and follows the format: `vrn:recommendations:{store-name}:{campaignType}:{campaignId}`
+
+  You can obtain the full VRN from:
+  - [VTEX Support](https://help.vtex.com/en/support).
+  - VTEX Admin at **Storefront > Recommendations** (click the three dots next to a shelf and select **Copy ID**).
+
+  ## Campaign types and requirements
+
+  **Non-contextual campaigns** (no `products` parameter needed):
+  - `rec-top-items-v2`: Most popular (products with the highest number of views).
+  - `rec-persona-v2`: Recommended for you (custom recommendations based on user profile and behavior).
+  - `rec-last-v2`: Recently viewed (products recently viewed by the user).
+  - `rec-search-v2`: Manual collection (recommendations from a manually created collection).
+
+  **Contextual campaigns** (require `products` parameter):
+  - `rec-similar-v2`: Similar products (products similar to a specific one).
+  - `rec-cross-v2`: Frequently bought together (complementary products commonly purchased together).
+  - `rec-visual-v2`: Visually similar products (products visually similar to a specific one).
+  - `rec-next-v2`: Recent interactions (products most likely to engage the user in the future).
+  - Cart recommendations (requires all product IDs currently in the cart).
+
+  ## Response details
+
+  - Returns full product objects with brand, name, link, items (SKUs), images, and pricing information.
+  - Products marked with the `advertisement` tag are sponsored and should display a sponsored label.
+  - The `correlationId` must be used when tracking recommendation view and click events.
+  - The `campaign.id` should be included in event tracking calls.
+
+  ## Permissions
+
+  This endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `an` | query | (Required) VTEX account name. Must match the account name in the `x-vtex-rec-origin` header. |
+  | `campaignVrn` | query | (Required) VRN identifier for an existing campaign, following the pattern: `vrn:recommendations:{store-name}:{campaignType}:{campaignId}`. Available campaign types: - `rec-top-items-v2`: Most popular (products with the highest number of views). - `rec-persona-v2`: Recommended for you (custom recommendations based on user profile and behavior). - `rec-similar-v2`: Similar products (products similar to a specific one). - `rec-cross-v2`: Frequently bought together (complementary products commonly purchased together). - `rec-cart-v2`: Cart-based recommendations. - `rec-last-v2`: Recently viewed (products recently viewed by the user). - `rec-visual-v2`: Visually similar products (products visually similar to a specific one). - `rec-search-v2`: Manual collection (recommendations from a manually created collection). - `rec-next-v2`: Recent interactions (products most likely to engage the user in the future). |
+  | `userId` | query | The `recommendationsUserId` returned by the `POST` [Start session](https://developers.vtex.com/docs/api-reference/recommendations-bff-api#post-/api/recommend-bff/v2/users/start-session) endpoint. Required for personalized recommendations based on user behavior. This value is also stored in the `vtex-rec-user-id` cookie. |
+  | `products` | query | Comma-separated list of product IDs for context-based recommendations. **Required** for: similar products (`rec-similar-v2`), buy together (`rec-cross-v2`), visually similar products (`rec-visual-v2`), next interaction (`rec-next-v2`), and cart recommendations. For similar items and cross-sell campaigns, send only **one product ID**. For cart recommendations, send **all product IDs** currently in the user's cart. |
+  | `salesChannel` | query | Trade policy ID. We also try to extract it from the segment cookie. If none is provided in the query, we will use the default trade policy. |
+  | `locale` | query | The user's locale information. If not provided, it is extracted from the segment cookie. This is important for multi-language stores. |
+  | `zipCode` | query | Zip code for location-based recommendations. If not provided, it is extracted from the segment cookie. |
+  | `pickupPoint` | query | Pickup point identifier for location-based recommendations. If not provided, it is extracted from the segment cookie. |
+  | `regionId` | query | Region identifier for location-based recommendations. If not provided, it is extracted from the segment cookie. |
+  | `x-vtex-rec-origin` | header | (Required) Required format: `{accountName}/{sourceType}/{appOrIntegrationId}`. Must match the `an` query parameter for account name. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "products": [
+      {
+        "brand": "Mizuno",
+        "productId": "14",
+        "productName": "Standard Sunglasses",
+        "link": "/standard-sunglasses/p",
+        "items": [
+          {
+            "itemId": "31",
+            "nameComplete": "Standard Sunglasses",
+            "images": [
+              {
+                "imageUrl": "https://biggy.vtexassets.com/arquivos/ids/155412/images.png?v=637528820142830000"
+              }
+            ],
+            "sellers": [
+              {
+                "sellerId": "1",
+                "commertialOffer": {
+                  "Price": 330,
+                  "ListPrice": 330,
+                  "AvailableQuantity": 10000
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "brand": "Google",
+        "productId": "12",
+        "productName": "Trail Backpack",
+        "link": "/trail-backpack/p",
+        "tags": [
+          "advertisement"
+        ],
+        "items": [
+          {
+            "itemId": "29",
+            "nameComplete": "Trail Backpack - variant 2",
+            "images": [
+              {
+                "imageUrl": "https://biggy.vtexassets.com/arquivos/ids/155410/mochila-para-trilha-thule-alltrail-25l-masc-01.jpg?v=637528813555100000"
+              }
+            ],
+            "sellers": [
+              {
+                "sellerId": "1",
+                "commertialOffer": {
+                  "Price": 121,
+                  "ListPrice": 121,
+                  "AvailableQuantity": 10000
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "correlationId": "d2e8c706-e67c-45d7-8de9-b80976960f89",
+    "campaign": {
+      "id": "ca2acae8-41a4-4bcd-9ffd-0ac40b7c0a57",
+      "title": "Complementary products",
+      "type": "CROSS_SELL"
+    }
+  }
+  ```

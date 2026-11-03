@@ -1,0 +1,216 @@
+info:
+  name: Get pickup point availability for Delivery Promise
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/pickup-point-availability/:facets"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: query
+      value: shirt
+      type: query
+      disabled: true
+    - name: locale
+      value: en-US
+      type: query
+      disabled: true
+    - name: deliveryZonesHash
+      value: 4bab2513d897914b0b33f25c8c74f571
+      type: query
+      disabled: true
+    - name: pickupPointsHash
+      value: d41d8cd98f00b204e9800998ecf8427e
+      type: query
+      disabled: true
+    - name: country
+      value: USA
+      type: query
+      disabled: true
+    - name: zip-code
+      value: "10001"
+      type: query
+      disabled: true
+    - name: coordinates
+      value: -43.19532775878906,-22.955032348632812
+      type: query
+      disabled: true
+    - name: pickupPoint
+      value: Ut exerci
+      type: query
+      disabled: true
+    - name: facets
+      value: category-1/clothing
+      type: path
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/pickup-point-availability/:facets - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/pickup-point-availability/:facets - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/pickup-point-availability/:facets - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/pickup-point-availability/:facets - Schema is valid", function () {
+          const schema = {"type":"object","description":"Pickup points availability response.","properties":{"pickupPointDistances":{"type":"array","description":"List of available pickup points sorted by distance ascending.","items":{"type":"object","description":"Pickup point information.","properties":{"pickupId":{"type":"string","description":"Unique identifier for the pickup point."},"pickupName":{"type":"string","description":"Name of the pickup point."},"distance":{"type":"number","description":"Distance from the provided coordinates to the pickup point, in kilometers."},"isActive":{"type":"boolean","description":"Indicates whether the pickup point is currently active (`true`) or not (`false`)."},"address":{"type":"object","description":"Address details of the pickup point.","properties":{"street":{"type":"string","description":"Street name."},"number":{"type":"string","description":"Street number."},"neighborhood":{"type":"string","description":"Neighborhood."},"city":{"type":"string","description":"City."},"state":{"type":"string","description":"State or province."},"postalCode":{"type":"string","description":"Postal code."}}},"businessHours":{"type":"array","description":"Operating hours for each day of the week.","items":{"type":"object","properties":{"dayOfWeek":{"type":"integer","description":"Day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday).","enum":[0,1,2,3,4,5,6]},"openingTime":{"type":"string","description":"Opening time in 24-hour format (HH:MM:SS)."},"closingTime":{"type":"string","description":"Closing time in 24-hour format (HH:MM:SS)."}}}}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves the list of available pickup points with their IDs, distances, addresses, and business hours. This endpoint returns pickup points sorted by distance from the provided coordinates.
+
+  >ℹ️ This endpoint is designed for use in [Delivery Promise for headless stores](https://developers.vtex.com/docs/guides/delivery-promise-for-headless-stores) implementations.
+
+  >ℹ️ **Caching:** Responses are cached for public sales channels. Private sales-channel responses are not cached. Always read the `Cache-Control` response header at runtime to determine cacheability.
+
+  You can call this endpoint in two ways:
+
+  - **With country and ZIP code:** Provide `country` and `zip-code` to retrieve pickup points based on location.
+  - **With delivery zones and pickup hashes:** Provide pre-computed `deliveryZonesHash` and `pickupPointsHash` for faster lookup.
+
+  >ℹ️ **Segment context:** Several parameters on this endpoint replace values previously read from the VTEX segment cookie. See [Migrating from segment](#migrating-from-segment) below.
+
+  ## Migrating from segment
+
+  Intelligent Search API (Legacy) reads the following values from the VTEX segment cookie. In v1, pass each one directly as a query parameter:
+
+  | v1 parameter | Segment source |
+  |:---|:---|
+  | `locale` | `segment.cultureInfo` |
+  | `sc` | `segment.channel` |
+  | `country` | `segment.countryCode` or `country` key in `segment.facets` |
+  | `zip-code` | `zip-code` key in `segment.facets` |
+  | `coordinates` | `coordinates` key in `segment.facets` |
+  | `pickupPoint` | `pickupPoint` key in `segment.facets` |
+  | `deliveryZonesHash` | `deliveryZonesHash` key in `segment.facets` |
+  | `pickupPointsHash` | `pickupPointsHash` key in `segment.facets` |
+
+  <details>
+  <summary>TypeScript reference implementation</summary>
+
+  The following TypeScript snippet shows the full translation:
+
+  ```typescript
+  type Segment = {
+    channel?: string | number
+    countryCode?: string
+    cultureInfo?: string
+    // Semicolon-separated "key=value" string, e.g. "zip-code=22250-040;country=BRA"
+    facets?: string
+  }
+
+  const SHIPPING_KEYS = new Set([
+    'zip-code', 'coordinates', 'country', 'pickupPoint',
+    'deliveryZonesHash', 'pickupPointsHash',
+  ])
+
+  function segmentToPickupPointAvailabilityV1(segment: Segment): string {
+    const shipping: Record<string, string> = {}
+
+    for (const pair of (segment.facets ?? '').split(';')) {
+      const eq = pair.indexOf('=')
+      if (eq < 0) continue
+      const key = pair.slice(0, eq)
+      const value = pair.slice(eq + 1)
+      if (!key || !value) continue
+      if (SHIPPING_KEYS.has(key)) shipping[key] = value
+    }
+
+    const params: Record<string, string> = {}
+    const set = (name: string, value?: string | number) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params[name] = String(value)
+      }
+    }
+
+    set('sc', segment.channel)
+    set('locale', segment.cultureInfo)
+    set('country', segment.countryCode ?? shipping.country)
+    set('zip-code', shipping['zip-code'])
+    set('coordinates', shipping.coordinates)
+    set('pickupPoint', shipping.pickupPoint)
+    set('deliveryZonesHash', shipping.deliveryZonesHash)
+    set('pickupPointsHash', shipping.pickupPointsHash)
+
+    const search = new URLSearchParams(params).toString()
+
+    return `https://{accountName}.vtexcommercestable.com.br/api/intelligent-search/v1/pickup-point-availability?${search}`
+  }
+  ```
+
+  </details>
+
+  ## Permissions
+
+  This endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/docs/tutorials/license-manager-resources).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `facets` | path | (Required) ## Format The `facets` parameter follows the format: `/${facetKey1}/${facetValue1}/${facetKey2}/${facetValue2}/.../${facetKeyN}/${facetValueN}`. The order in which the terms appear is not relevant to the search. You can also repeat the same `facetKey` several times for different values. For example: `category-1/shoes/color/blue/color/red`. ## Filter combinations - **Facets of the same type → OR (union):** When multiple values of the same facet are applied, the API returns the union of all products matching any of those values. - **Facets of different types → AND (intersection):** When different facet types are combined, the API returns only products that satisfy all conditions simultaneously. ## Negative filters (NOT operator) To exclude a facet value, prefix the value with **`not:`** in the path segment: `/{facetKey}/not:{facetValue}/`. For example, `color/blue/size/not:42` keeps color blue and excludes size 42. ## Available filters \| `facetKey` \| Description \| Example \| \| - \| - \| - \| \| `trade-policy` *(optional)* \| Sales channel filter. Supported for backward compatibility; prefer the `sc` query parameter instead. \| `trade-policy/2` \| \| `category-${n}` *(optional)* \| Filter by category level (1 = department, 2 = category, 3 = subcategory, etc.). \| `category-1/clothing/category-2/shirts` \| \| `brand` *(optional)* \| Filter by brand slug. \| `brand/acme` \| \| `{specificationName}` *(optional)* \| Filter by catalog specification. \| `color/blue` \| \| `productClusterIds` *(optional)* \| Filter by collection ID. \| `productClusterIds/262` \| \| `price` *(optional)* \| Filter by price range `${minPrice}:${maxPrice}`. \| `price/100:500` \| |
+  | `query` | query | Search term. It can contain any character. This parameter is named `query` in the API. The short form **`q`** is an alias for `query` and has the same semantics. You can search for products or SKUs using specific ID types by adding search parameters at the end of the store URL: - **Single item search:** `?query=[id type]:[id_1]`. Example: `?query=product:98765` - **Multiple items search:** `?query=[id type]:[id_1];[id_2];[id_3]`. Example: `?query=product:98765;98743` >⚠️ All searched IDs should be of the same type. ## Supported ID types \| ID Type \| Query format \| Example \| \| - \| - \| - \| \| Product ID \| `?query=product:<id>` or `?query=product.id:<id>` \| `?query=product:98765` \| \| SKU ID \| `?query=sku:<id>` or `?query=sku.id:<id>` \| `?query=sku.id:12345` \| \| Reference ID \| `?query=sku.reference:<id>` \| `?query=sku.reference:REF123` \| \| EAN \| `?query=sku.ean:<id>` \| `?query=sku.ean:7891234567890` \| \| Slug \| `?query=product.link:<link>` \| `?query=product.link:blue-shirt` \| |
+  | `locale` | query | Indicates the target language as a BCP 47 language code. The Intelligent Search must have indexed the account in the target language. Intelligent Search API (Legacy) previously read this from `segment.cultureInfo`. In v1, pass the value directly as a query parameter. |
+  | `deliveryZonesHash` | query | Pre-computed hash for delivery zones. Required when using the hashes approach (alternative to country and ZIP code). |
+  | `pickupPointsHash` | query | Pre-computed hash for pickup points. Required when using the hashes approach (alternative to country and ZIP code). |
+  | `country` | query | Three-letter country code in [ISO 3166 ALPHA-3](https://www.iban.com/country-codes) format. Required when using the country and ZIP code approach. |
+  | `zip-code` | query | ZIP code or postal code. Required when using the country and ZIP code approach. |
+  | `coordinates` | query | Geographic coordinates in the format `longitude,latitude`. Used to sort results by proximity. Optional: the server derives coordinates from `zip-code` and `country` when not provided. |
+  | `pickupPoint` | query | Pickup point ID to filter results to a specific pickup point. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "pickupPointDistances": [
+      {
+        "pickupId": "fulfillmentqa_vtexsp",
+        "distance": 4.99,
+        "pickupName": "VTEX SP",
+        "isActive": true,
+        "address": {
+          "city": "New York",
+          "neighborhood": "Manhattan",
+          "number": "350",
+          "postalCode": "10001",
+          "street": "5th Avenue",
+          "state": "NY"
+        },
+        "businessHours": [
+          {
+            "dayOfWeek": 1,
+            "openingTime": "09:00:00",
+            "closingTime": "18:00:00"
+          }
+        ]
+      }
+    ]
+  }
+  ```

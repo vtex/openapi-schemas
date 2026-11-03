@@ -1,0 +1,134 @@
+info:
+  name: Create Log
+  type: http
+  seq: 10
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/sent-offers/feeds/:feedId/skus/:skuId/interactions/:interactionId/logs?an={{accountName}}"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: "{{accountName}}"
+      type: query
+    - name: feedId
+      value: vtex.amazon
+      type: path
+    - name: skuId
+      value: "1234"
+      type: path
+    - name: interactionId
+      value: d3rdjjf094ma0do
+      type: path
+    - name: environment
+      value: vtexcommercestable
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "description": "Another log message with some information that is going to be relevant to our users",
+        "date": "2020-03-22",
+        "type": "information",
+        "agent": "broadcaster",
+        "evidence": {
+          "request": "Explanation 1",
+          "response": "Explanation 2"
+        },
+        "data": {
+          "externalOfferId": "123456",
+          "inventory": "33",
+          "salesPrice": "79.99",
+          "currency": "BRL",
+          "status": "disabled"
+        },
+        "errors": {
+          "code": "CTLG-001",
+          "externalCode": "284692",
+          "title": "Description includes HTML",
+          "description": "Netshoes does not allow HTML tags in an offer's description. Access the product in your Catalog to remove the HTML tag.",
+          "closableOrigins": [
+            "catalog",
+            "price"
+          ]
+        }
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/sent-offers/feeds/:feedId/skus/:skuId/interactions/:interactionId/logs - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/sent-offers/feeds/:feedId/skus/:skuId/interactions/:interactionId/logs - Content-Type is application/json; charset=utf-8", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json; charset=utf-8");
+        });
+
+        test("[POST]::/api/sent-offers/feeds/:feedId/skus/:skuId/interactions/:interactionId/logs - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/sent-offers/feeds/:feedId/skus/:skuId/interactions/:interactionId/logs - Schema is valid", function () {
+          const schema = {"title":"CreateLog","type":"object","example":{"id":"438B39EF43A24425B6BF35343095DE04","description":"Log description","date":"2022-05-16T09:16:00Z","agent":"MARKETPLACE","evidence":{},"type":"info"},"properties":{"id":{"type":"string","description":"Connectors must extend the Sent Offers' codes by adding their own code IDs for mapping specific scenarios that apply to their own system. They can send those codes through a suffix ID added in an existing code."},"description":{"type":"string","description":"Log's description."},"date":{"type":"string","description":"Date when the log was created."},"agent":{"type":"string","description":"Entity responsible for creating the entry."},"evidence":{"type":"object","description":"cURL with the call that the connector has made for a VTEX system.","properties":{"request":{"type":"string","description":"cURL with the request call that the connector has made for a VTEX system. It will provide the evidence needed to contextualize the entry, if the user needs to fully understand the process ocurred, or solve any errors."},"response":{"type":"string","description":"cURL with the response of the call that the connector has made for a VTEX system. It will provide the evidence needed to contextualize the entry, if the user needs to fully understand the process occurred, or solve any errors."}}},"type":{"type":"string","description":"Type of log."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  >❗The Offer Management module has been discontinued and is no longer supported. The module has been replaced by Offer Status.
+  To learn more, visit the [announcement](https://help.vtex.com/pt/announcements/modulo-status-dos-anuncios-para-integracoes-com-marketplaces-vtex--1EeGgit1Brq3mmm8qhv2m3).
+
+   In [Offer Management](https://developers.vtex.com/vtex-rest-api/docs/sent-offers-integration-guide-connectors), logs are the granular details of actions that happen within an [interaction](https://developers.vtex.com/docs/api-reference/marketplace-apis-offer-management#post-/api/sent-offers/feeds/-feedId-/skus/-skuId-/interactions), and they are organized in a timeline. All of the micro-steps of an interaction are represented through logs; they are how interactions become visible in Offer Management UI. 
+
+  This endpoint adds logs that take place within an interaction, which can be done after [creating an interaction](https://developers.vtex.com/docs/api-reference/marketplace-apis-offer-management#post-/api/sent-offers/feeds/-feedId-/skus/-skuId-/interactions) so that there will be an `interactionId`. 
+
+  `Errors`: When Offer Management, or the connectors, find an error that prevents sending or updating an offer to a channel, they should open a type failure log, and fill in its details through the `errors` attribute. The information provided should enable sellers to identify and fix errors on their offers. 
+
+  The connectors should go through every possible validation, identify all errors, and only after that create the failure log, with the information in a single request.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `feedId` | path | (Required) The `feedId` attribute that identifies a feed between a seller and a channel, follows a standardized pattern that will be used by connectors when establishing the connection between the two. It follows the pattern `vendor.channel`. |
+  | `skuId` | path | (Required) This attribute is the SKU ID in the seller's perspective, registered in their VTEX Catalog. |
+  | `interactionId` | path | (Required) This attribute is the code used to identify an existing interaction. |
+  | `environment` | path | (Required) Environment to use. Used as part of the URL. |
+  | `an` | query | (Required) Name of the VTEX account. Used as query param. |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`201`)
+
+  ```json
+  {
+    "id": "438B39EF43A24425B6BF35343095DE04",
+    "description": "Log description",
+    "date": "2022-05-16T09:16:00Z",
+    "agent": "MARKETPLACE",
+    "evidence": {},
+    "type": "info"
+  }
+  ```

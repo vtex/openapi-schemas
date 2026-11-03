@@ -1,0 +1,85 @@
+info:
+  name: Update inventory quantity by SKU and warehouse
+  type: http
+  seq: 4
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/api/logistics/pvt/inventory/skus/:skuId/warehouses/:warehouseId/quantity"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: skuId
+      value: "25"
+      type: path
+    - name: warehouseId
+      value: storeWarehouse
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "quantity": 201,
+        "unlimitedQuantity": false,
+        "dateUtcOnBalanceSystem": "2024-01-31T19:12:01.025662+00:00"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("[PATCH]::/api/logistics/pvt/inventory/skus/:skuId/warehouses/:warehouseId/quantity - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PATCH]::/api/logistics/pvt/inventory/skus/:skuId/warehouses/:warehouseId/quantity - Response has empty Body", function () {
+          const data = res.getBody();
+          expect(data === undefined || data === null || data === "").to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Updates [inventory](https://help.vtex.com/en/tutorial/inventory-management--tutorials_139) with a SKU count and availability for a given [warehouse](https://help.vtex.com/en/tutorial/warehouse--6oIxvsVDTtGpO7y6zwhGpb). You can do it in two ways: 
+
+  - **Define a quantity:** Indicate a specific number of items of a SKU from a warehouse, and it will decrease whenever an item is sold. When the last item is sold, the SKU will run out of stock. 
+
+  - **Set an unlimited inventory:** Always have items of a SKU from a warehouse considered available for sales. When this configuration is active, the SKU never runs out of stock. 
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Logistics | Logistics access | **Logistics full access** |
+  | Logistics | Logistics access | **Logistics inventory full access** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Logistics - Full access | Logistics full access |
+  | OMS - Full access | Logistics full access |
+  | Logistics - Full access | Logistics inventory full access |
+  | OMS - Full access | Logistics inventory full access |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `skuId` | path | (Required) Unique identifier of the SKU you wish to update. |
+  | `warehouseId` | path | (Required) Unique identifier of the [warehouse](https://help.vtex.com/en/tutorial/warehouse--6oIxvsVDTtGpO7y6zwhGpb) of the SKU you wish to update. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |

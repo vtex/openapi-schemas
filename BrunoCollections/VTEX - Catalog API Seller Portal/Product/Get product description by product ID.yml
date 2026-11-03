@@ -1,0 +1,91 @@
+info:
+  name: Get product description by product ID
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/catalog-seller-portal/products/:productId/description"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: productId
+      value: "189371"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/catalog-seller-portal/products/:productId/description - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/catalog-seller-portal/products/:productId/description - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/catalog-seller-portal/products/:productId/description - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/catalog-seller-portal/products/:productId/description - Schema is valid", function () {
+          const schema = {"type":"object","required":["productId","createdAt","updatedAt"],"properties":{"productId":{"type":"string","description":"Product's unique identifier number."},"createdAt":{"type":"string","description":"Date when the brand was created."},"updatedAt":{"type":"string","description":"Last date when the brand was updated."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  >📘 This API is part of the [Seller Portal Catalog](https://help.vtex.com/en/tutorial/how-the-seller-portal-catalog-works--7pMB6YOt6YQDQQbzFB4Pxp). This functionality is in the Beta stage and can be discontinued at any moment at VTEX's discretion. VTEX will not be responsible for any instabilities caused by its use or discontinuity. If you have any questions, please contact [our Support Center.](https://support.vtex.com/hc/en-us/requests) 
+
+   Retrieves the description of a product given a product ID.
+
+   ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | CatalogV2 | Management | **Product Read** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `productId` | path | (Required) Product unique identifier number. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "productId": "61",
+    "description": "Beautifully handmade laptop case/sleeve made in the Nepal Himalaya. It can be slipped inside your backpack or carried alone with space for all your work bits and pieces!",
+    "createdAt": "2022-10-10T19:18:45.612317Z",
+    "updatedAt": "2022-10-11T18:12:58.825544Z"
+  }
+  ```

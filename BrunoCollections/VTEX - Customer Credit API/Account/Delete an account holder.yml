@@ -1,0 +1,91 @@
+info:
+  name: Delete an account holder
+  type: http
+  seq: 14
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/api/creditcontrol/accounts/:creditAccountId/holders/:holderId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: creditAccountId
+      value: 01bce461-9g03-12ds-8217-b3d39271e15b
+      type: path
+    - name: holderId
+      value: 524bc947d2b37a1a759ba3d174b58f9b
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[DELETE]::/api/creditcontrol/accounts/:creditAccountId/holders/:holderId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[DELETE]::/api/creditcontrol/accounts/:creditAccountId/holders/:holderId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[DELETE]::/api/creditcontrol/accounts/:creditAccountId/holders/:holderId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[DELETE]::/api/creditcontrol/accounts/:creditAccountId/holders/:holderId - Schema is valid", function () {
+          const schema = {"required":["id"],"type":"object","properties":{"id":{"type":"string","description":"Identification of the holder deleted from the account."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Deletes an account holder from the [customer credit account](https://help.vtex.com/en/tracks/customer-credit-getting-started--1hCRg21lXYy2seOKgqQ2CC/7FHLd0cmxqqGeEUuc8uioU).
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Credit Control | Main | **Main Access** |
+  | Credit Control | Checking Accounts | **Create Checking Accounts** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `creditAccountId` | path | (Required) Credit account identification. |
+  | `holderId` | path | (Required) Holder identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "054a67b342164018a0f291636c1669f1"
+  }
+  ```

@@ -1,0 +1,222 @@
+info:
+  name: Get advertiser ads detailed report
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: "{{baseUrl}}/report/advertisers/ads-detailed?start_date=2025-01-01&end_date=2025-01-31"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: start_date
+      value: 2025-01-01
+      type: query
+    - name: end_date
+      value: 2025-01-31
+      type: query
+    - name: campaign_name
+      value: Holiday Sale
+      type: query
+      disabled: true
+    - name: campaign_id
+      value: campaign-id
+      type: query
+      disabled: true
+    - name: publisher_id
+      value: publisher-id
+      type: query
+      disabled: true
+    - name: advertiser_id
+      value: advertiser-id
+      type: query
+      disabled: true
+    - name: product_sku
+      value: SKU-123
+      type: query
+      disabled: true
+    - name: ad_status
+      value: enabled
+      type: query
+      disabled: true
+    - name: ad_type
+      value: product
+      type: query
+      disabled: true
+    - name: targeting_type
+      value: category
+      type: query
+      disabled: true
+    - name: tag_id
+      value: tag-id
+      type: query
+      disabled: true
+    - name: sub_publisher_id
+      value: subpublisher-id
+      type: query
+      disabled: true
+    - name: sub_publisher_name
+      value: Subpublisher Name
+      type: query
+      disabled: true
+    - name: show_inactive
+      value: "false"
+      type: query
+      disabled: true
+    - name: hide_pending_rejected
+      value: "false"
+      type: query
+      disabled: true
+    - name: page
+      value: "1"
+      type: query
+      disabled: true
+    - name: quantity
+      value: "100"
+      type: query
+      disabled: true
+    - name: count
+      value: "true"
+      type: query
+      disabled: true
+    - name: order_by
+      value: income
+      type: query
+      disabled: true
+    - name: order_direction
+      value: desc
+      type: query
+      disabled: true
+    - name: download
+      value: "false"
+      type: query
+      disabled: true
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/report/advertisers/ads-detailed - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/report/advertisers/ads-detailed - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/report/advertisers/ads-detailed - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/report/advertisers/ads-detailed - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"total":{"type":"integer","description":"Total number of ads."},"pages":{"type":"integer","description":"Total number of pages for pagination."},"currentPage":{"type":"integer","description":"Current page number."},"data":{"type":"array","description":"Array of detailed ad objects.","items":{"type":"object","description":"Detailed ad object.","properties":{"id":{"type":"string","description":"Unique ad identifier."},"campaign_id":{"type":"string","description":"Associated campaign identifier."},"url":{"type":"string","description":"Ad destination URL."},"status":{"type":"string","description":"Ad status."},"active":{"type":"boolean","description":"Whether the ad is active."},"product_sku":{"type":["string","null"],"description":"Associated product SKU (when applicable)."},"campaign_name":{"type":"string","description":"Associated campaign name."},"campaign_status":{"type":"string","description":"Associated campaign status."},"ad_type":{"type":"string","description":"Advertisement type."},"publisher_id":{"type":"string","description":"Publisher identifier."},"publisher_name":{"type":"string","description":"Publisher name."},"publisher_account_id":{"type":"string","description":"Publisher account identifier."},"advertiser_id":{"type":"string","description":"Advertiser identifier."},"advertiser_name":{"type":"string","description":"Advertiser name."},"advertiser_account_id":{"type":"string","description":"Advertiser account identifier."},"sub_publisher_id":{"type":["string","null"],"description":"Subpublisher identifier (only present for network campaigns)."},"sub_publisher_name":{"type":["string","null"],"description":"Subpublisher name (only present for network campaigns)."},"sub_publisher_account_id":{"type":["string","null"],"description":"Subpublisher account identifier (only present for network campaigns)."},"metrics":{"type":"object","description":"Ad performance metrics object. All metric values are returned as strings regardless of their numeric nature.","properties":{"clicks":{"type":"string","description":"Total number of clicks."},"conversions":{"type":"string","description":"Total number of conversions."},"total_conversions_items_quantity":{"type":"string","description":"Total quantity of items across all ad-driven conversions. Sums the quantities of every item in each conversion event (for example, if a shopper buys two units of a product after clicking an ad, this metric increases by 2)."},"impressions":{"type":"string","description":"Total number of impressions."},"views":{"type":"string","description":"Total number of views."},"conversion_rate":{"type":"string","description":"Conversion rate percentage."},"ctr":{"type":"string","description":"Click-through rate percentage."},"roas":{"type":"string","description":"Return on ad spend."},"adcost":{"type":"string","description":"Ad cost percentage."},"income":{"type":"string","description":"Total income generated."},"total_spent":{"type":"string","description":"Total amount spent."},"ecpm":{"type":"string","description":"Effective cost per mille (CPM)."},"cpa":{"type":"string","description":"Cost per acquisition."},"avg_cpc":{"type":"string","description":"Average cost per click."},"avg_cpm":{"type":"string","description":"Average cost per mille."}}}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Exports a detailed ad report for advertiser accounts, including subpublisher breakdown for network campaigns. The data is returned in JSON format by default, but can be exported as an XLSX file by setting `download=true`.
+
+  >ℹ️ This route is intended for advertiser accounts. Non-network campaigns return one row per ad, while network campaigns return one row per `ad + subpublisher`. For non white-label accounts, only non-private publisher rows are returned.
+
+  >⚠️ This endpoint is limited to 100 requests per minute per account. Exceeding the limit returns `429 Too Many Requests`.
+
+  ## Permissions
+
+  This endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `start_date` | query | (Required) Start date for metrics in `YYYY-MM-DD` format. |
+  | `end_date` | query | (Required) End date for metrics in `YYYY-MM-DD` format. |
+  | `campaign_name` | query | Filters ads by campaign name. |
+  | `campaign_id` | query | Filters ads by campaign ID. |
+  | `publisher_id` | query | Filters ads by publisher ID. |
+  | `advertiser_id` | query | Filters ads by advertiser ID. In the BFF flow, this value is derived from the authenticated advertiser context. |
+  | `product_sku` | query | Filters ads by product SKU. |
+  | `ad_status` | query | Filters ads by status. |
+  | `ad_type` | query | Filters by ad type. |
+  | `targeting_type` | query | Filters by targeting type. |
+  | `tag_id` | query | Filters by advertiser tag ID. |
+  | `sub_publisher_id` | query | Filters network rows by subpublisher ID. |
+  | `sub_publisher_name` | query | Filters network rows by subpublisher name. |
+  | `show_inactive` | query | If `true`, includes paused ads. |
+  | `hide_pending_rejected` | query | If `true`, excludes `pending_review` and `rejected` rows when `ad_status` is not provided. |
+  | `page` | query | Page number of the results. |
+  | `quantity` | query | Number of items per page. When `download=true`, the BFF requests up to `20000` rows for XLSX generation. |
+  | `count` | query | If `true`, returns pagination metadata. |
+  | `order_by` | query | Field used to sort results. |
+  | `order_direction` | query | Sort direction. |
+  | `download` | query | If `true`, returns an XLSX file buffer for download instead of JSON. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "total": 1,
+    "pages": 1,
+    "currentPage": 1,
+    "data": [
+      {
+        "id": "ad-id",
+        "campaign_id": "campaign-id",
+        "url": "https://example.com/product",
+        "status": "enabled",
+        "active": true,
+        "product_sku": "SKU-123",
+        "campaign_name": "Campaign Name",
+        "campaign_status": "running",
+        "ad_type": "product",
+        "publisher_id": "publisher-id",
+        "publisher_name": "Publisher Name",
+        "publisher_account_id": "publisher-account-id",
+        "advertiser_id": "advertiser-id",
+        "advertiser_name": "Advertiser Name",
+        "advertiser_account_id": "advertiser-account-id",
+        "sub_publisher_id": "subpublisher-id",
+        "sub_publisher_name": "Subpublisher Name",
+        "sub_publisher_account_id": "subpublisher-account-id",
+        "metrics": {
+          "clicks": "3",
+          "conversions": "1",
+          "total_conversions_items_quantity": "2",
+          "impressions": "10691",
+          "views": "0",
+          "conversion_rate": "33.33",
+          "ctr": "0.03",
+          "roas": "2.64",
+          "adcost": "37.87",
+          "income": "818.00",
+          "total_spent": "309.82000000",
+          "ecpm": "28.98",
+          "cpa": "309.82",
+          "avg_cpc": "103.27",
+          "avg_cpm": "28.98"
+        }
+      }
+    ]
+  }
+  ```

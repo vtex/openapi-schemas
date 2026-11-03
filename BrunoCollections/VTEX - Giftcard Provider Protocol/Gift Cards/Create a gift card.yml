@@ -1,0 +1,98 @@
+info:
+  name: Create a gift card
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/giftcards"
+  headers:
+    - name: Content-Type
+      value: application/vnd.vtex.giftcards.v1+json
+    - name: Accept
+      value: application/vnd.vtex.giftcards.v1+json
+  body:
+    type: json
+    data: |-
+      {
+        "relationName": "loyalty-program",
+        "caption": "Loyalty program",
+        "profileId": "92de2249-0e02-4ca9-a4aa-a09cc9d8f7ff",
+        "emissionDate": "2020-08-01T13:15:30Z",
+        "expiringDate": "2020-09-01T13:15:30Z",
+        "restrictedToOwner": true,
+        "multipleRedemptions": true,
+        "multipleCredits": true,
+        "currencyCode": "USD"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/giftcards - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/giftcards - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/giftcards - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/giftcards - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"id":{"type":"string","description":"Gift card identification."},"relationName":{"type":"string","description":"Field to be filled in when it is not necessary to use a loyalty program for the gift card. Note that a new `relationNamevalue` is required for each new gift card to be created."},"emissionDate":{"type":"string","description":"Gift card creation date."},"expiringDate":{"type":"string","description":"Gift card expiration date."},"caption":{"type":"string","description":"Field to be filled in if a loyalty program must be created for the Gift Card."},"restrictedToOwner":{"type":"boolean","description":"The gift card can only be used for a specified client's ID."},"multipleRedemptions":{"type":"boolean","description":"The gift card can be used to make new purchases until its value is completely used."},"multipleCredits":{"type":"boolean","description":"The gift card balance can be changed."},"profileId":{"type":"string","description":"Client ID. You can use the customer's registered email or the `userId` parameter which can be found in the [Master Data](https://help.vtex.com/en/tutorial/master-data--4otjBnR27u4WUIciQsmkAw)."},"currencyCode":{"type":"string","description":"Currency code in ISO 4217."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates a gift card for a specific user in a gift card provider.
+
+  > ℹ️ This request is made from VTEX to the gift card payment provider.
+
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "38",
+    "relationName": "loyalty-program",
+    "emissionDate": "2011-02-04T17:02:19.17",
+    "expiringDate": "2020-02-04T17:02:19.17",
+    "caption": "Loyalty Program",
+    "restrictedToOwner": true,
+    "multipleRedemptions": true,
+    "multipleCredits": true,
+    "profileId": "92de2449-0e02-4ca9-a4aa-a09cc9d8f7ff",
+    "currencyCode": "USD"
+  }
+  ```

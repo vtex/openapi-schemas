@@ -1,0 +1,159 @@
+info:
+  name: List report templates
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/rns/pvt/reports"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/rns/pvt/reports - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/rns/pvt/reports - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/rns/pvt/reports - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/rns/pvt/reports - Schema is valid", function () {
+          const schema = {"type":"array","items":{"type":"object","description":"Report template details.","properties":{"account":{"type":"string","description":"VTEX store account name."},"name":{"type":"string","description":"Template type, more information in the `description` field.","enum":["subscriptionsWithStatus","subscriptionsScheduledBetweenDate","subscriptionsUpdatedBetweenDate","subscriptionsCreatedBetweenDate","executionsBetweenDate"]},"description":{"type":"string","description":"Template description, which varies according to the template type:\r\n- `subscriptionsWithStatus`: Get subscriptions based on status.\r\n- `subscriptionsScheduledBetweenDate`: Get active subscriptions scheduled between dates.\r\n- `subscriptionsUpdatedBetweenDate`: Get subscriptions updated between dates.\r\n- `subscriptionsCreatedBetweenDates`: Get subscriptions created between date.\r\n- `executionsBetweenDate`: Get executions between dates."},"reason":{"type":["string","null"],"description":"Reason why the template was created."},"behalfOf":{"type":["string","null"],"description":"On behalf of which user the template was created."},"params":{"type":"array","description":"Information about the template params.","items":{"type":"object","description":"Param details.","properties":{"type":{"type":"string","description":"Template param type, which can be `string` for the `subscriptionsWithStatus` template type, or `date` for the other cases.","enum":["string","date"]},"format":{"type":"string","description":"Template param format, such as `yyyy-MM-dd` for `beginDate` or `endDate`. Not applicable to the `subscriptionsWithStatus` type."},"name":{"type":"string","description":"Template param name, which can relate to the template status (`status`) or dates (`beginDate`, `endDate`).","enum":["status","beginDate","endDate"]}}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  List all report templates available.
+
+  >ℹ️ After choosing the desired template, use the [Generate report](https://developers.vtex.com/docs/api-reference/subscriptions-api-v3#post-/api/rns/pvt/reports/-reportName-/documents) endpoint to create the report for your store.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "account": "fashionstore",
+      "name": "subscriptionsWithStatus",
+      "description": "Get subscriptions based on status",
+      "reason": null,
+      "behalfOf": null,
+      "params": [
+        {
+          "type": "string",
+          "name": "status"
+        }
+      ]
+    },
+    {
+      "account": "fashionstore",
+      "name": "subscriptionsScheduledBetweenDate",
+      "description": "Get active subscriptions scheduled between date",
+      "reason": null,
+      "behalfOf": null,
+      "params": [
+        {
+          "type": "date",
+          "format": "yyyy-MM-dd",
+          "name": "beginDate"
+        },
+        {
+          "type": "date",
+          "format": "yyyy-MM-dd",
+          "name": "endDate"
+        }
+      ]
+    },
+    {
+      "account": "fashionstore",
+      "name": "subscriptionsUpdatedBetweenDate",
+      "description": "Get subscriptions updated between date",
+      "reason": null,
+      "behalfOf": null,
+      "params": [
+        {
+          "type": "date",
+          "format": "yyyy-MM-dd",
+          "name": "beginDate"
+        },
+        {
+          "type": "date",
+          "format": "yyyy-MM-dd",
+          "name": "endDate"
+        }
+      ]
+    },
+    {
+      "account": "fashionstore",
+      "name": "subscriptionsCreatedBetweenDate",
+      "description": "Get subscriptions created between date",
+      "reason": null,
+      "behalfOf": null,
+      "params": [
+        {
+          "type": "date",
+          "format": "yyyy-MM-dd",
+          "name": "beginDate"
+        },
+        {
+          "type": "date",
+          "format": "yyyy-MM-dd",
+          "name": "endDate"
+        }
+      ]
+    },
+    {
+      "account": "fashionstore",
+      "name": "executionsBetweenDate",
+      "description": "Get executions between date",
+      "reason": null,
+      "behalfOf": null,
+      "params": [
+        {
+          "type": "date",
+          "format": "yyyy-MM-dd",
+          "name": "beginDate"
+        },
+        {
+          "type": "date",
+          "format": "yyyy-MM-dd",
+          "name": "endDate"
+        }
+      ]
+    }
+  ]
+  ```

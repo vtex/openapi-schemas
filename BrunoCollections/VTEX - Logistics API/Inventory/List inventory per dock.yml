@@ -1,0 +1,143 @@
+info:
+  name: List inventory per dock
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/logistics/pvt/inventory/items/:skuId/docks/:dockId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: skuId
+      value: "36"
+      type: path
+    - name: dockId
+      value: dock13a
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/logistics/pvt/inventory/items/:skuId/docks/:dockId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/logistics/pvt/inventory/items/:skuId/docks/:dockId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/logistics/pvt/inventory/items/:skuId/docks/:dockId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/logistics/pvt/inventory/items/:skuId/docks/:dockId - Schema is valid", function () {
+          const schema = {"type":"array","items":{"type":"object","description":"Loading dock inventory information.","properties":{"skuId":{"type":"string","description":"SKU ID."},"warehouseId":{"type":"string","description":"Warehouse ID."},"dockId":{"type":"string","description":"Dock ID."},"totalQuantity":{"type":"integer","description":"Total quantity of SKU."},"reservedQuantity":{"type":"integer","description":"Reserved quantity of the SKU."},"availableQuantity":{"type":"integer","description":"Amount of items available for sales. Difference between total quantity and reserved quantity."},"isUnlimited":{"type":"boolean","description":"Indicates whether the SKU's availability is unlimited (\"unlimited inventory\")."},"salesChannel":{"type":"array","description":"List of sales channels ([trade policies](https://help.vtex.com/en/tutorial/how-trade-policies-work--6Xef8PZiFm40kg2STrMkMV) associated.","items":{"type":"string","description":"Sales channel ID."}},"deliveryChannel":{"type":"array","description":"List of delivery channels available.","items":{"type":"string","description":"Delivery channel type available."}},"timeToRefill":{"type":"string","description":"Time to refill."},"dateOfSupplyUtc":{"type":"string","description":"Date of supply lot in UTC."},"keepSellingAfterExpiration":{"type":"boolean","description":"Indicates whether SKU can continue to be sold after the available quantity gets to 0."},"transfer":{"type":"string","description":"Transfer supply lot."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Lists inventory information, searching by [loading dock](https://help.vtex.com/en/tutorial/loading-dock--5DY8xHEjOLYDVL41Urd5qj) ID.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Logistics | Logistics access | **Logistics full access** |
+  | Logistics | Logistics access | **Logistics viewer** |
+  | Logistics | Logistics access | **Logistics inventory full access** |
+  | Logistics | Logistics access | **Logistics inventory read only** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Logistics - Full access | Logistics full access |
+  | OMS - Full access | Logistics full access |
+  | Logistics - Full access | Logistics viewer |
+  | Logistics - Read only | Logistics viewer |
+  | Logistics - Full access | Logistics inventory full access |
+  | OMS - Full access | Logistics inventory full access |
+  | Logistics - Full access | Logistics inventory read only |
+  | Logistics - Read only | Logistics inventory read only |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `skuId` | path | (Required) SKU unique identifier. |
+  | `dockId` | path | (Required) [Loading dock](https://help.vtex.com/en/tutorial/loading-dock--5DY8xHEjOLYDVL41Urd5qj) ID. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "skuId": "1",
+      "warehouseId": "1",
+      "dockId": "1",
+      "totalQuantity": 1000000,
+      "reservedQuantity": 0,
+      "availableQuantity": 1000000,
+      "isUnlimited": true,
+      "salesChannel": [
+        "1"
+      ],
+      "deliveryChannels": [
+        "delivery"
+      ],
+      "timeToRefill": "01:50:00",
+      "dateOfSupplyUtc": "2020-04-05T00:00:00+00:00",
+      "supplyLotId": null,
+      "keepSellingAfterExpiration": false,
+      "transfer": "transfer1"
+    },
+    {
+      "skuId": "1",
+      "warehouseId": "1_1",
+      "dockId": "1",
+      "totalQuantity": 1000117,
+      "reservedQuantity": 117,
+      "availableQuantity": 1000000,
+      "isUnlimited": true,
+      "salesChannel": [
+        "1"
+      ],
+      "deliveryChannels": [
+        "delivery"
+      ],
+      "timeToRefill": "01:50:00",
+      "dateOfSupplyUtc": "2020-04-05T00:00:00+00:00",
+      "supplyLotId": null,
+      "keepSellingAfterExpiration": false,
+      "transfer": "transfer2"
+    }
+  ]
+  ```

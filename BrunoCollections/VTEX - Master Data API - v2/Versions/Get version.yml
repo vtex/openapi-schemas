@@ -1,0 +1,112 @@
+info:
+  name: Get version
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/dataentities/:dataEntityName/documents/:id/versions/:versionId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: dataEntityName
+      value: Newsletter
+      type: path
+    - name: id
+      value: b818cbda-e489-11e6-94f4-0ac138d2d42e
+      type: path
+    - name: versionId
+      value: _8sZcvyj4nng7FgA2RgtVVZmkIxb4Pbfe_
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/dataentities/:dataEntityName/documents/:id/versions/:versionId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/dataentities/:dataEntityName/documents/:id/versions/:versionId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/dataentities/:dataEntityName/documents/:id/versions/:versionId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/dataentities/:dataEntityName/documents/:id/versions/:versionId - Schema is valid", function () {
+          const schema = {"title":"Getversion","required":["id","author","document"],"type":"object","description":"Request body object.","properties":{"id":{"type":"string","description":"Version ID."},"author":{"type":"string","description":"ID of the user who created the version."},"document":{"title":"Document","required":["id","dataEntityId","accountId","accountName","followers"],"type":"object","description":"Document information.","properties":{"id":{"type":"string","description":"ID of the document."},"dataEntityId":{"type":"string","description":"Data entity name."},"accountId":{"type":"string","description":"ID of the VTEX account."},"accountName":{"type":"string","description":"Name of the VTEX account."},"followers":{"type":"array","description":"Followers.","items":{"type":"string","description":"Follower."}},"schemas":{"type":"array","description":"Schemas which the document is compliant with.","items":{"type":"string","description":"Schema name."}},"email":{"type":"string","description":"User email."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns the version of a document. 
+
+  >ℹ Master Data documents are versioned. This means that, for each change, a new version is generated. 
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Dynamic Storage | Dynamic storage generic resources | **Read only documents** |
+  | Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |
+  | Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |
+  | Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `dataEntityName` | path | (Required) Name of the data entity. |
+  | `id` | path | (Required) ID of the Document. |
+  | `versionId` | path | (Required) ID of the version to update. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "cSIAceEelBEmSOqRkzJYLRQuGgi6.CqF",
+    "author": "1f936e42-79b3-4e5b-91d2-da9a8af0b215",
+    "document": {
+      "id": "cbfc4f67-6ea3-11ee-83ab-0a8d18f9f827",
+      "dataEntityId": "Newsletter",
+      "accountId": "a8b27fb4-6516-4cc0-82b6-a5f2b011e6e2",
+      "accountName": "apiexamples",
+      "followers": [],
+      "schemas": [
+        "testprofile",
+        "testprofile2"
+      ],
+      "email": "clark.kent@examplemail.com"
+    }
+  }
+  ```

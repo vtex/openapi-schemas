@@ -1,0 +1,107 @@
+info:
+  name: List all gift card transactions settlements
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: "{{baseUrl}}/giftcards/:giftCardId/transactions/:transactionId/settlements"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: giftCardId
+      value: "7"
+      type: path
+    - name: transactionId
+      value: b47690
+      type: path
+    - name: accountName
+      value: "{{accountName}}"
+      type: path
+    - name: environment
+      value: "{{environment}}"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/giftcards/:giftCardId/transactions/:transactionId/settlements - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/giftcards/:giftCardId/transactions/:transactionId/settlements - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/giftcards/:giftCardId/transactions/:transactionId/settlements - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/giftcards/:giftCardId/transactions/:transactionId/settlements - Schema is valid", function () {
+          const schema = {"type":"array","items":{"type":"object","description":"Transaction information.","required":["oid","value","date"],"properties":{"oid":{"type":"string","description":"Operation identification."},"value":{"type":"number","description":"Value information."},"date":{"type":"string","description":"Date of the transaction in [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html) format (`YYYY-MM-DDThh:mm:ss.fff`)."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns all transactions settlements for a specific gift card.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | GiftCard | GiftCard | **Gift card full access** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `giftCardId` | path | (Required) Gift card identification. |
+  | `transactionId` | path | (Required) Transaction identification. |
+  | `accountName` | path | Name of the VTEX account. Used as part of the URL. |
+  | `environment` | path | Environment to use. Used as part of the URL. (This can only be one of vtexcommercestable) |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "oid": "b8e0c606b2fe543e5b0e639575cd9723",
+      "value": 17.4,
+      "date": "2016-04-06T00:00:00"
+    },
+    {
+      "oid": "6cb6cd63c16e219b1eee61f2",
+      "value": 10.4,
+      "date": "2016-05-06T00:00:00"
+    }
+  ]
+  ```

@@ -1,0 +1,162 @@
+info:
+  name: Edit item from subscription
+  type: http
+  seq: 6
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/api/rns/pub/subscriptions/:id/items/:itemId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: id
+      value: 8700734451ED4FD4955697873BEC51C3
+      type: path
+    - name: itemId
+      value: 0A6C01CA4582458A9CF8F61A9F6E1A68
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "status": "ACTIVE",
+        "isSkipped": false,
+        "quantity": 5,
+        "manualPrice": 400.3
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[PATCH]::/api/rns/pub/subscriptions/:id/items/:itemId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PATCH]::/api/rns/pub/subscriptions/:id/items/:itemId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[PATCH]::/api/rns/pub/subscriptions/:id/items/:itemId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[PATCH]::/api/rns/pub/subscriptions/:id/items/:itemId - Schema is valid", function () {
+          const schema = {"type":"object","description":"Information about a given subscription.","required":["createdAt","customerEmail","customerId","cycleCount","id","isSkipped","items","lastUpdate","nextPurchaseDate","plan","purchaseSettings","shippingAddress","status"],"properties":{"id":{"type":"string","description":"[Subscription](https://help.vtex.com/en/tutorial/how-subscriptions-work--frequentlyAskedQuestions_4453) ID."},"customerId":{"type":"string","description":"Customer ID."},"customerEmail":{"type":"string","description":"Customer email."},"title":{"type":["string","null"],"description":"Subscription title."},"status":{"type":"string","description":"Subscription status.","enum":["ACTIVE","PAUSED","CANCELED","EXPIRED","MISSING"]},"isSkipped":{"type":"boolean","description":"Defines if the customer asked to skip the next subscription order (`true`), or not (`false`)."},"nextPurchaseDate":{"type":"string","description":"Next purchase date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"lastPurchaseDate":{"type":["string","null"],"description":"Last purchase date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"plan":{"type":"object","description":"[Subscription plan](https://help.vtex.com/en/tutorial/subscription-plans-beta--5kczKRqHEsrs1tYtRcY8wR) object.","required":["frequency","id","purchaseDay","validity"],"properties":{"id":{"type":["string","null"],"description":"Subscription plan ID."},"frequency":{"type":"object","description":"Subscription plan frequency.","required":["interval","periodicity"],"properties":{"periodicity":{"type":["string","null"],"description":"Plan repurchase frequency, defines the subscription recurrence.","enum":["DAILY","WEEKLY","MONTHLY","YEARLY"]},"interval":{"type":"integer","description":"Time interval configured between subscription orders, which depends on the periodicity. For a `DAILY` periodicity, the value will be days, for `MONTHLY` it will be months, and so on."}}},"validity":{"type":"object","description":"Information about the period during which the subscription plan will be valid.","required":["begin"],"properties":{"begin":{"type":"string","description":"Subscription plan beginning date and time in [UTC time format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"end":{"type":["string","null"],"description":"Subscription plan ending date and time in [UTC time format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."}}},"purchaseDay":{"type":"string","description":"Time reference in which subscription orders will be created. It will depend on the cycle periodicity, for `WEEKLY` subscriptions, for example, the purchase day could be `Sunday`. For `MONTHLY`, would be `7`, as in the 7th day of the month. When the subscription periodicity is `DAILY`, this field corresponds to `Not_Applicable`."}}},"shippingAddress":{"type":"object","description":"Information about the subscription shipping address.","required":["addressId","addressType"],"properties":{"addressId":{"type":"string","description":"Shipping address ID or [pickup point](https://help.vtex.com/en/tutorial/pickup-points--2fljn6wLjn8M4lJHA6HP3R) ID, according to the shipping address type."},"addressType":{"type":"string","description":"Type of the address. The possible values are `residential`, when the customer gives an address for delivery, or `pickup`, when the customer picks the order at a pickup point.","enum":["residential","pickup"]}}},"purchaseSettings":{"type":"object","description":"Object with purchase information.","required":["currencyCode","paymentMethod"],"properties":{"paymentMethod":{"type":"object","description":"[Payment method](https://help.vtex.com/en/tutorial/difference-between-payment-methods-and-payment-conditions--3azJenhGFyUy2gsocms42Q) information.","required":["paymentSystem"],"properties":{"paymentAccountId":{"type":["string","null"],"description":"Payment account ID."},"paymentSystem":{"type":"string","description":"Payment system ID."},"installments":{"type":"integer","description":"Number of installments."},"paymentSystemName":{"type":"string","description":"Payment system name."},"paymentSystemGroup":{"type":"string","description":"Payment system group."}}},"currencyCode":{"type":"string","description":"Currency code in [ISO 4217](https://www.iban.com/currency-codes) format."},"selectedSla":{"type":"string","description":"Selected Service Level Agreement (SLA)."},"salesChannel":{"type":"string","description":"Sales channel ([trade policy](https://help.vtex.com/en/tutorial/how-trade-policies-work--6Xef8PZiFm40kg2STrMkMV)) associated with the purchase."},"seller":{"type":"string","description":"Seller name. When the store acts both as marketplace and seller, this field corresponds to `1`, because every VTEX store is its own seller 1."}}},"cycleCount":{"type":"integer","description":"The cycle determines the position of an order counting from when the customer subscribed. The original order that creates the subscription corresponds to cycle count `0`, the first subscription order corresponds to `1`, the second corresponds to `2`, and so on."},"createdAt":{"type":"string","description":"Subscription creation date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"lastUpdate":{"type":["string","null"],"description":"Date and time of the last subscription update in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"items":{"type":"array","description":"Information about subscription items.","items":{"type":"object","description":"Information about a given subscription item.","required":["id","isSkipped","quantity","skuId","status"],"properties":{"id":{"type":"string","description":"Subscription item ID."},"skuId":{"type":"string","description":"SKU ID."},"quantity":{"type":"integer","description":"Quantity of units."},"isSkipped":{"type":"boolean","description":"Defines if the customer asked to skip the item in the next subscription order (`true`), or not (`false`)."},"status":{"type":"string","description":"Subscription status.","enum":["ACTIVE","PAUSED","CANCELED","EXPIRED","MISSING"]},"originalOrderId":{"type":"string","description":"Subscription original order ID."},"cycleCount":{"type":"integer","description":"The cycle determines the position of an order counting from when the customer subscribed. The original order that creates the subscription corresponds to cycle count `0`, the first subscription order corresponds to `1`, the second corresponds to `2`, and so on."},"priceAtSubscriptionDate":{"type":"number","description":"Price at subscription date."},"manualPrice":{"type":"number","description":"[Manual price](https://help.vtex.com/en/tutorial/change-the-price-of-an-item-in-the-shopping-cart--7Cd37aCAmtL1qmoZJJvjNf)."},"attachments":{"type":["array","null"],"description":"Information about subscription [attachments](https://help.vtex.com/en/tutorial/what-is-an-attachment--aGICk0RVbqKg6GYmQcWUm).","items":{"type":"object","description":"Information about a given attachment.","properties":{"name":{"type":["string","null"],"description":"Attachment name."},"content":{"type":["object","null"],"description":"Custom field for attachment content.","additionalProperties":{"type":"string","description":"Custom field information."}}}}}}}},"lastCycleId":{"type":["string","null"],"description":"Last subscription cycle ID."},"customData":{"type":["object","null"],"description":"Customizable fields created by the store for the shopping cart. This field is useful for storing data not included in other fields, for example, a message for a gift or a name to be printed in a shirt.","properties":{"customApps":{"type":["array","null"],"description":"Customizable apps created by the store.","items":{"type":["string","null"],"description":"Customizable apps details."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Edits an item from a given subscription.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Subscriptions | ApplicationAccess | **Subscription view only** |
+  | Subscriptions | ApplicationAccess | **Subscription view and edit** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `id` | path | (Required) [Subscription](https://help.vtex.com/en/tutorial/how-subscriptions-work--frequentlyAskedQuestions_4453) ID. |
+  | `itemId` | path | (Required) ID of the subscription item being edited. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "F35A8B497EA9E5A6D8F3778CBBA4C9E3",
+    "customerId": "5aff33ec-5302-4580-a4ed-be9aa32ba3db",
+    "customerEmail": "customer@email.com",
+    "title": null,
+    "status": "ACTIVE",
+    "isSkipped": false,
+    "nextPurchaseDate": "2024-08-21T12:00:00Z",
+    "lastPurchaseDate": "2024-08-19T00:00:00Z",
+    "plan": {
+      "id": "store.subscription.ana-plan",
+      "frequency": {
+        "periodicity": "DAILY",
+        "interval": 2
+      },
+      "validity": {
+        "begin": "2024-08-01T00:00:00Z",
+        "end": null
+      },
+      "purchaseDay": "Not_Applicable"
+    },
+    "shippingAddress": {
+      "addressId": "5028945524109",
+      "addressType": "residential"
+    },
+    "purchaseSettings": {
+      "paymentMethod": {
+        "paymentAccountId": "B2BBDD0F2E4B47FC9E48D2DA99C318EF",
+        "paymentSystem": "2",
+        "installments": 1,
+        "paymentSystemName": "creditCard",
+        "paymentSystemGroup": "creditCard"
+      },
+      "currencyCode": "BRL",
+      "selectedSla": "Normal",
+      "salesChannel": "1",
+      "seller": "1"
+    },
+    "cycleCount": 9,
+    "createdAt": "2024-08-01T12:31:55.7308301Z",
+    "lastUpdate": "2024-08-19T12:16:51.0237801Z",
+    "items": [
+      {
+        "id": "0213AB4188FE4007A865AD33D972FA37",
+        "skuId": "9",
+        "quantity": 1,
+        "isSkipped": false,
+        "status": "ACTIVE",
+        "originalOrderId": "1451256157912-01",
+        "cycleCount": 9,
+        "priceAtSubscriptionDate": 736,
+        "manualPrice": 736,
+        "attachments": [
+          {
+            "name": "printMessage",
+            "content": {
+              "printMessage": "Hello"
+            }
+          }
+        ]
+      }
+    ],
+    "lastCycleId": "F35A8B497EA9E5A6D8F3778CBBA4C9E3-20240819",
+    "customData": null
+  }
+  ```

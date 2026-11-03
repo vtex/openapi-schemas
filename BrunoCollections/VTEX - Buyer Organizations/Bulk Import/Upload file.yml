@@ -1,0 +1,99 @@
+info:
+  name: Upload file
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/b2b/import/buyer-orgs"
+  headers:
+    - name: Content-Type
+      value: multipart/form-data
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: exampleAccount
+      type: query
+      disabled: true
+  body:
+    type: multipart-form
+    data:
+      - name: file
+        type: file
+        value: []
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/b2b/import/buyer-orgs - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/b2b/import/buyer-orgs - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/b2b/import/buyer-orgs - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/b2b/import/buyer-orgs - Schema is valid", function () {
+          const schema = {"type":"object","description":"Object containing information about bulk import state.","required":["accountName","importId","importState","percentage","lastUpdateDate","fileName"],"properties":{"accountName":{"type":"string","description":"Name of your VTEX account."},"importId":{"type":"string","description":"Unique identifier of the import."},"importState":{"type":"string","description":"Current state of the import. The possible values are:\n- `Uploaded`: The file was successfully uploaded.\n- `InValidation`: File validation is in progress.\n- `ReadyToImport`: File validation completed, ready for import.\n- `Completed`: File successfully imported.\n- `ValidationFailed`: File validation failed.\n- `CompletedWithError`: File import failed."},"percentage":{"type":"string","description":"Completion percentage of the import."},"lastUpdateDate":{"type":"string","description":"Date and time of the last update of the import, in `yyyy-mm-ddTHH:MM:SS+00:00` format."},"fileName":{"type":"string","description":"Name of the file being imported."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  > ⚠️ This endpoint applies to B2B Suite only.
+
+  Uploads a file for bulk import of Buyer Organizations, Cost Centers and Members. The uploaded file should be in `XLSX` format and have less than 50MB. For more information on the file structure and how to fill it out, access the [Bulk Import Spreadsheet](https://developers.vtex.com/docs/guides/bulk-import-buyer-organizations-spreadsheet) guide.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | B2B | B2B General | **B2BBulkImport** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `an` | query | Name of your VTEX account. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "accountName": "accountName",
+    "importId": "3c3cba0a-8355-4812-ad4d-f4c0b32e2613",
+    "importState": "Uploaded",
+    "percentage": "0",
+    "lastUpdateDate": "2023-10-05T16:40:11+00:00",
+    "fileName": "file.xlsx"
+  }
+  ```

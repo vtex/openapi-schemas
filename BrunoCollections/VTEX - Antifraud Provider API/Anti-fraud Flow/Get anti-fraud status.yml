@@ -1,0 +1,99 @@
+info:
+  name: Get anti-fraud status
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: "{{baseUrl}}/transactions/:transactions.id"
+  headers:
+    - name: X-PROVIDER-API-AppKey
+      value: "{{X-PROVIDER-API-AppKey}}"
+    - name: X-PROVIDER-API-AppToken
+      value: "{{X-PROVIDER-API-AppToken}}"
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: transactions
+      value: ""
+      type: path
+    - name: transactions.Id
+      value: D3AA1FC8372E430E8236649DB5EBD08E
+      type: path
+  auth:
+    type: apikey
+    key: VtexIdclientAutCookie
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/transactions/:transactions.id - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/transactions/:transactions.id - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/transactions/:transactions.id - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/transactions/:transactions.id - Schema is valid", function () {
+          const schema = {"required":["id","tid","status","fraudRiskPercentage","analysisType","responses"],"type":"object","description":"Anti-fraud status information.","properties":{"id":{"type":"string","description":"VTEX transaction ID. The ID of this transaction must be in the response."},"tid":{"type":"string","description":"Provider transaction ID. The ID of this transaction must be in the response. The anti-fraud provider must generate a unique transaction ID."},"status":{"type":"string","description":"Transaction status from provider. Must be one of the values: `approved`, `denied` or `undefined`."},"fraudRiskPercentage":{"type":"number","description":"Fraud risk percentage."},"analysisType":{"type":"string","description":"Analysis type. Valid values are `automatic` or `manual`."},"responses":{"required":["foo","custom"],"type":"object","description":"Responses information.","properties":{"foo":{"type":"string","description":"Any foo information."},"custom":{"type":"string","description":"Any custom value."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves the anti-fraud analysis status. This request is performed every two hours up to 5 days. After 5 days in `undefined` status, the order will expire and be cancelled.
+
+  ## Permissions
+
+  This endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `transactions.Id` | path | (Required) VTEX transaction ID. This parameter is the same `id` sent in the request body of the [Send Anti-fraud Data endpoint](https://developers.vtex.com/docs/api-reference/antifraud-provider-protocol#post-/transactions). |
+  | `X-PROVIDER-API-AppKey` | header | (Required) Unique identifier created by the provider and configured on the provider configuration page (Admin VTEX). |
+  | `X-PROVIDER-API-AppToken` | header | (Required) Unique token created by the provider and configured on the provider configuration page (Admin VTEX). |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "BF900B7CB15147F98D91208989100A05",
+    "tid": "3146f46162f042f483cd3979ba4e8317",
+    "status": "approved",
+    "fraudRiskPercentage": 5.01,
+    "analysisType": "automatic",
+    "responses": {
+      "foo": "anyFoo",
+      "custom": "customAnyValue"
+    }
+  }
+  ```

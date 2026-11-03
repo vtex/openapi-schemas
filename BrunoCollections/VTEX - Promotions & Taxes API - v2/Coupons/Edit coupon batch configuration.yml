@@ -1,0 +1,108 @@
+info:
+  name: Edit coupon batch configuration
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/rnb/v2/pvt/coupon/group/:groupingKey"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: groupingKey
+      value: promo
+      type: path
+    - name: accountName
+      value: "{{accountName}}"
+      type: path
+    - name: environment
+      value: "{{environment}}"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "utmSource": "source",
+        "isArchived": false,
+        "maxItemsPerClient": 0,
+        "expirationIntervalPerUse": "00:00:00",
+        "maxUsage": 4
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[PUT]::/api/rnb/v2/pvt/coupon/group/:groupingKey - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PUT]::/api/rnb/v2/pvt/coupon/group/:groupingKey - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[PUT]::/api/rnb/v2/pvt/coupon/group/:groupingKey - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[PUT]::/api/rnb/v2/pvt/coupon/group/:groupingKey - Schema is valid", function () {
+          const schema = {"type":"array","description":"Array with the coupon batch codes.","items":{"type":"string","description":"Coupon code."}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Changes information from a specific coupon batch configuration based on its `groupingKey`.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Rates and Benefits | Promotions | **Manage benefits and rates** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `groupingKey` | path | (Required) Coupon grouping key, which is the prefix for the coupon batch's generated codes. |
+  | `accountName` | path | Name of the VTEX account. Used as part of the URL. |
+  | `environment` | path | Environment to use. Used as part of the URL. (This can only be one of vtexcommercestable) |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    "12130984756-bbbsqz5lxivwvx7",
+    "12130984756-31xj4idmfbmh9am",
+    "12130984756-pxpdsou99n3bmsn",
+    "12130984756-juzl9asvq8z4sjn",
+    "12130984756-gyo7a2v0s9v7s07"
+  ]
+  ```

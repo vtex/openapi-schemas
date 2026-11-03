@@ -1,0 +1,114 @@
+info:
+  name: Install or renew SSL certificate
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/edge/certificates"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "hosts": [
+          "mystore.com",
+          "mystore.com"
+        ],
+        "certificate": "LS0tLS1CRUd...S0tLS0K",
+        "privateKey": "LS0tLS1CRUd...LS0NCg=="
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[PUT]::/api/edge/certificates - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PUT]::/api/edge/certificates - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[PUT]::/api/edge/certificates - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[PUT]::/api/edge/certificates - Schema is valid", function () {
+          const schema = {"type":"array","description":"List of SSL certificates.","items":{"type":"object","description":"Information about each SSL certificate.","properties":{"id":{"type":"string","description":"Unique identifier of the certificate.","nullable":false},"account":{"type":"string","description":"Account name associated with the certificate.","nullable":false},"host":{"type":"string","description":"Primary host/domain of the certificate.","nullable":false},"serialNumber":{"type":"string","description":"Certificate serial number.","nullable":false},"subjectDistinguishedName":{"type":"string","description":"Full distinguished name of the subject.","nullable":false},"subjectCommonName":{"type":"string","description":"Common name (CN) of the certificate subject.","nullable":false},"subjectOrganization":{"type":["string","null"],"description":"Organization (O) of the certificate subject."},"issuerDistinguishedName":{"type":"string","description":"Full distinguished name of the issuing certificate authority.","nullable":false},"issuerCommonName":{"type":"string","description":"Common name (CN) of the certificate issuer.","nullable":false},"issuerOrganization":{"type":"string","description":"Organization (O) of the certificate issuer.","nullable":false},"installDate":{"type":"string","description":"Timestamp when the certificate was installed in ISO 8601 format.","nullable":false},"startDate":{"type":"string","description":"Certificate validity start date in ISO 8601 format.","nullable":false},"expiryDate":{"type":"string","description":"Certificate expiry date in ISO 8601 format.","nullable":false},"signatureAlgorithm":{"type":"string","description":"Algorithm used to sign the certificate.","nullable":false},"x509Version":{"type":"string","description":"X.509 version of the certificate.","nullable":false},"installedBy":{"type":"string","description":"ID of the user that installed the certificate.","nullable":false},"createdAt":{"type":"string","description":"Creation timestamp of the certificate entry in ISO 8601 format.","nullable":false},"updatedAt":{"type":"string","description":"Timestamp of the last certificate update in ISO 8601 format.","nullable":false},"status":{"type":"string","description":"Current status of the certificate, which can be one of the following:\n\n- **Active**: Valid and active for the host.\n- **Overwritten**: The certificate for this host has been replaced by another through an external method, such as an API call on the CDN.\n- **Installing**: Certificate installation in progress.\n- **Unknown**: The certificate status couldn't be determined due to internal technical problems with communication, configuration, or monitoring.\n- **Expires soon**: The certificate is close to its expiration date (30 days before or less).\n- **Installation failed**: After the status Installing, the installation can fail, and the user will need to try again later.\n- **Expired**: The expiration date passed.","nullable":false,"enum":["Active","Overwritten","Installing","Unknown","Expires soon","Installation failed","Expired"]}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Installs or renews an SSL certificate using `application/json` or `multipart/form-data` content types.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | CDN API | Certificate management | **Update certificate** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "id": "8c66122e-85cd-4bff-885d-aa9846e97541",
+      "account": "myaccountname",
+      "host": "mystore.com",
+      "serialNumber": "05C51F848EDBAC18E91D9AE43D8F6728D4F8",
+      "subjectDistinguishedName": "CN=mystore.com",
+      "subjectCommonName": "mystore.com",
+      "subjectOrganization": null,
+      "issuerDistinguishedName": "CN=R10, O=Let's Encrypt, C=US",
+      "issuerCommonName": "R10",
+      "issuerOrganization": "Let's Encrypt",
+      "installDate": "2025-04-22T16:24:58.768939Z",
+      "startDate": "2024-08-29T01:43:25Z",
+      "expiryDate": "2024-11-27T01:43:24Z",
+      "signatureAlgorithm": "sha256RSA",
+      "x509Version": "3",
+      "installedBy": "22b312e1-f863-43t7-8c59-5n2f9ll0d09x",
+      "createdAt": "2024-10-25T17:51:51.222052Z",
+      "updatedAt": "2025-04-22T16:24:58.768939Z",
+      "status": "Installing"
+    }
+  ]
+  ```

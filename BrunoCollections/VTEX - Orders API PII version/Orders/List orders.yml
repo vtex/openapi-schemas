@@ -1,0 +1,129 @@
+info:
+  name: List orders
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/orders/extendsearch/orders"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "f_status": "ready-for-handling",
+        "f_creationDate": "creationDate:[2024-07-01T00:00:00.000Z TO 2024-08-01T00:00:00.000Z]",
+        "incompleteOrders": true,
+        "filterError": "all",
+        "per_page": 30,
+        "page": 1,
+        "orderBy": "creationDate,asc",
+        "q": "customer@email.com",
+        "sku_Ids": "6178691,6099191",
+        "listId": "3098",
+        "f_authorizedDate": "authorizedDate:[2024-01-01T00:00:00.000Z TO 2024-03-01T00:00:00.000Z]",
+        "f_paymentNames": "Visa",
+        "paymentId": "CE7751558D574E3093989B5BB5248A5D",
+        "pci_tid": "Z424WMJ37ZN9SKF4",
+        "nsu": "027946189",
+        "f_hasInputInvoice": true,
+        "f_hasOutputInvoice": true,
+        "f_invoicedDate": "invoicedDate:[2024-01-01T00:00:00.000Z TO 2024-03-01T00:00:00.000Z]",
+        "f_shippingEstimate": "4.days",
+        "f_sellerNames": "Fashion SellerName",
+        "f_affiliateId": "CBS",
+        "f_callCenterOperatorName": "Operator%20Name",
+        "f_isInstore": true,
+        "f_RnB": "Free+Shipping",
+        "salesChannelId": "2",
+        "f_salesChannel": "Main"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/orders/extendsearch/orders - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/orders/extendsearch/orders - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/orders/extendsearch/orders - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/orders/extendsearch/orders - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"list":{"type":"array","description":"List with orders' information.","items":{"type":"object","description":"Information about an order.","properties":{"paymentNames":{"type":"string","description":"Payment system name."},"orderId":{"type":"string","description":"Order ID."},"orderGroup":{"type":"string","description":"Order group ID."},"sequence":{"type":"string","description":"Sequence number part of the order ID. For example, in order `v71041992str-01`, the sequence is `71041992`."},"clientEmail":{"description":"Customer email.","type":"string"},"clientDocument":{"type":"string","description":"Customer document number."},"clientCorporateDocument":{"type":["string","null"],"description":"Corporate document, if the customer is a legal entity."},"clientCorporateName":{"type":["string","null"],"description":"Corporate name, if the customer is a legal entity."},"clientName":{"type":"string","description":"Customer name."},"totalValue":{"type":"integer","description":"Order total value in cents."},"origin":{"type":"string","description":"Order's origin in the [order flow](https://help.vtex.com/en/tutorial/order-flow-and-status--tutorials_196).","enum":["Marketplace","Fulfillment","Chain"]},"status":{"type":"string","description":"[Order status](https://help.vtex.com/en/tutorial/order-flow-and-status--tutorials_196) in the workflow."},"currencyCode":{"type":"string","description":"Currency code in [ISO 4217](https://www.iban.com/currency-codes) format."},"sellerNames":{"type":"array","description":"Names of the sellers responsible for order fuflillment.","items":{"type":"string","description":"Seller name."}},"sellerIds":{"type":"array","description":"IDs of the sellers responsible for order fuflillment.","items":{"type":"string","description":"Seller ID."}},"sellerOrderId":{"type":"string","description":"Seller order ID."},"totalItems":{"type":"integer","description":"Order total quantity of items."},"pciTransactionId":{"type":"array","description":"List with the PCI transaction ID.","items":{"type":"string","description":"PCI transaction ID."}},"paymentNSU":{"type":"array","description":"Unique sequence number that identifies a sales transaction using cards.","items":{"type":"string","description":"NSU sequence number."}},"ratesAndBenefitsNames":{"type":"array","description":"List of the promotions and taxes names valid for the purchase.","items":{"type":"string","description":"Promotion or tax name."}},"ratesAndBenefitsIds":{"type":"array","description":"List of the promotions and taxes IDs valid for the purchase.","items":{"type":"string","description":"Promotion or tax ID."}},"shippingEstimatedDateMax":{"type":"string","description":"Maximum shipping estimated date in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"shippingEstimatedDateMin":{"type":"string","description":"Minimum shipping estimated date in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"transactionIds":{"type":"array","description":"Array with payment transaction IDs information.","items":{"type":"string","description":"Payment transaction ID."}},"paymentIds":{"type":"array","description":"Array with payment IDs information.","items":{"type":"string","description":"Payment unique identifier."}},"isInstore":{"type":"boolean","description":"Defines if the order was placed via [VTEX Sales App](https://help.vtex.com/en/tracks/instore-getting-started-and-setting-up--zav76TFEZlAjnyBVL5tRc) (`true`) or not (`false`)."},"deliveryChannel":{"type":"array","description":"List of delivery channels, which can be delivery or [pickup point](https://help.vtex.com/en/tutorial/pickup-points--2fljn6wLjn8M4lJHA6HP3R).","items":{"type":"string","description":"Delivery channel.","enum":["delivery","pickup-in-point"]}},"productIds":{"type":"array","description":"List of product IDs related to the orders items.","items":{"type":"string","description":"Product ID."}},"hostname":{"type":"string","description":"Main [account name](https://help.vtex.com/en/tutorial/what-is-an-account-name--i0mIGLcg3QyEy8OCicEoC)."},"creationDate":{"type":"string","description":"Order creation date in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"invoicedDate":{"type":["string","null"],"description":"Order invoice date in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"authorizedDate":{"type":"string","description":"Order authorization date in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"orderIsComplete":{"type":"boolean","description":"Defines if the order is complete (`true`) or [incomplete](https://help.vtex.com/en/tutorial/how-incomplete-orders-work--tutorials_294) (`false`)."},"marketingTags":{"type":"array","description":"List of marketing tags valid for the order.","items":{"type":"string","description":"Marketing tag name."}},"invoicesOutput":{"type":["array","null"],"description":"Information about order invoice `Output` operation, when the store sells an item to the customer.","items":{"type":["string","null"],"description":"The `Output` invoice number."}},"invoicesInput":{"type":["array","null"],"description":"Information about order invoice `Input` operation, when the customer returnes an item to the store.","items":{"type":["string","null"],"description":"The `Input` invoice number."}},"workflowInErrorState":{"type":"boolean","description":"Defines if the order processing in the workflow is in error (`true`) or not (`false`)."},"workflowInRetry":{"type":"boolean","description":"Defines if the order is in automatic processing retry in the workflow (`true`) or not (`false`)."},"userProfileId":{"type":"string","description":"User profile ID."},"lastChange":{"type":"string","description":"Order last change date in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"isAllDelivered":{"type":"boolean","description":"Defines if all order items have being delivered (`true`) or not (`false`)."},"isAnyDelivered":{"type":"boolean","description":"Defines if any order item has being delivered (`true`) or not (`false`)."},"giftCardProviders":{"type":["array","null"],"description":"Order [gift card](https://developers.vtex.com/docs/guides/gift-card-integration-guide) information, when applicable.","items":{"type":"string","description":"Gift card name."}},"orderFormId":{"type":"string","description":"ID of the shopping cart from which the order was created."},"paymentApprovedDate":{"type":"string","description":"Payment approval date in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"readyForHandlingDate":{"type":["string","null"],"description":"Order ready for handling date in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"deliveryDates":{"type":["array","null"],"description":"Array with delivery date information.","items":{"type":"string","description":"Order delivey date in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."}},"ingestPipelineMetadata":{"type":"array","description":"Array with order processing metadata.","items":{"type":"string","description":"Metadata information."}},"marketplaceWorkflowInstanceId":{"type":["string","null"],"description":"Marketplace workflow instance ID."},"fulfillmentWorkflowInstanceId":{"type":["string","null"],"description":"Seller workflow instance ID."},"callCenterOperatorEmail":{"type":["string","null"],"description":"Email of the call center operator responsible for the order, when applicable."},"callCenterOperatorName":{"type":["string","null"],"description":"Name of the call center operator responsible for the order, when applicable."},"productNames":{"type":"array","description":"List of the order product names.","items":{"type":"string","description":"Product name."}}}}},"facets":{"type":["array","null"],"description":"Array of facets.","items":{"type":["string","null"],"description":"Facets details."}},"paging":{"type":"object","description":"Pagination information.","required":["total","pages","currentPage","perPage"],"properties":{"total":{"type":"integer","description":"Total number of objects that exist for the `list` field, each corresponding to an order."},"pages":{"type":"integer","description":"Total number of pages."},"currentPage":{"type":"integer","description":"Number of the current page."},"perPage":{"type":"integer","description":"Number of objects per page that can be returned for the `list` field. The default value is `15` and the maximum value is `100`."}}},"stats":{"type":["object","null"],"description":"Information about stats.","required":["stats"],"properties":{"stats":{"type":"object","description":"Stats object.","required":["totalValue","totalItems"],"properties":{"totalValue":{"type":"object","description":"Stats total value.","required":["Count","Max","Mean","Min","Missing","StdDev","Sum","SumOfSquares","Facets"],"properties":{"Count":{"type":"integer","description":"Value count."},"Max":{"type":"integer","description":"Maximum value."},"Mean":{"type":"number","description":"Value mean."},"Min":{"type":"integer","description":"Minimum value."},"Missing":{"type":"integer","description":"Missing values."},"StdDev":{"type":"number","description":"Standard deviation."},"Sum":{"type":"integer","description":"Sum of values."},"SumOfSquares":{"type":"integer","format":"int64","description":"Value sum of squares."},"Facets":{"type":"object","description":"Facets related to total values.","required":["origin","currencyCode"],"properties":{"origin":{"type":"object","description":"Value facets origin.","required":["Fulfillment","Marketplace"],"properties":{"Fulfillment":{"type":"object","description":"Seller (fulfillment) facets information.","required":["Count","Max","Mean","Min","Missing","StdDev","Sum","SumOfSquares","Facets"],"properties":{"Count":{"type":"integer","description":"Value count related to fulfillment."},"Max":{"type":"integer","description":"Maximum value related to fulfillment."},"Mean":{"type":"number","description":"Value mean related to fulfillment."},"Min":{"type":"integer","description":"Minimum related to fulfillment."},"Missing":{"type":"integer","description":"Missing values related to fulfillment."},"StdDev":{"type":"number","description":"Standard deviation related to fulfillment."},"Sum":{"type":"integer","description":"Value sum related to fulfillment."},"SumOfSquares":{"type":"integer","description":"Sum of squares related to fulfillment."},"Facets":{"type":["string","null"],"description":"Facets related to fulfillment."}}},"Marketplace":{"type":"object","description":"Marketplace facets information.","required":["Count","Max","Mean","Min","Missing","StdDev","Sum","SumOfSquares","Facets"],"properties":{"Count":{"type":"integer","description":"Value count related to the marketplace."},"Max":{"type":"integer","description":"Maximum value related to the marketplace."},"Mean":{"type":"number","description":"Value mean related to the marketplace."},"Min":{"type":"integer","description":"Minimum value related to the marketplace."},"Missing":{"type":"integer","description":"Missing values related to the marketplace."},"StdDev":{"type":"number","description":"Standard deviation related to the marketplace."},"Sum":{"type":"integer","description":"Values sum related to the marketplace."},"SumOfSquares":{"type":"integer","format":"int64","description":"Sum of squares related to the marketplace."},"Facets":{"type":["string","null"],"description":"Facets related to the marketplace."}}}}},"currencyCode":{"type":"object","description":"Total value currency code in [ISO 4217](https://www.iban.com/currency-codes) format.","required":["BRL"],"properties":{"BRL":{"type":"object","description":"Currency code facets information.","required":["Count","Max","Mean","Min","Missing","StdDev","Sum","SumOfSquares","Facets"],"properties":{"Count":{"type":"integer","description":"Value count related to the currency code."},"Max":{"type":"integer","description":"Maximum value related to the currency code."},"Mean":{"type":"number","description":"Value mean related to the currency code."},"Min":{"type":"integer","description":"Minimum value related to the currency code."},"Missing":{"type":"integer","description":"Missing values related to the currency code."},"StdDev":{"type":"number","description":"Standard deviation related to the currency code."},"Sum":{"type":"integer","description":"Sum of values related to the currency code."},"SumOfSquares":{"type":"integer","format":"int64","description":"Sum of squares related to the currency code."},"Facets":{"type":["string","null"],"description":"Facets related to the currency code."}}}}}}}}},"totalItems":{"type":"object","description":"Stats total items.","required":["Count","Max","Mean","Min","Missing","StdDev","Sum","SumOfSquares","Facets"],"properties":{"Count":{"type":"integer","description":"Items count."},"Max":{"type":"integer","description":"Maximum items."},"Mean":{"type":"number","description":"Total items mean."},"Min":{"type":"integer","description":"Minimum items."},"Missing":{"type":"integer","description":"Missing items."},"StdDev":{"type":"number","description":"Standard deviation."},"Sum":{"type":"integer","description":"Sum of items."},"SumOfSquares":{"type":"integer","format":"int64","description":"Items sum of squares."},"Facets":{"type":["object","null"],"description":"Facets related to total items.","required":["origin","currencyCode"],"properties":{"origin":{"type":"object","description":"Items facets origin.","required":["Fulfillment","Marketplace"],"properties":{"Fulfillment":{"type":"object","description":"Seller (fulfillment) facets information related to total items.","required":["Count","Max","Mean","Min","Missing","StdDev","Sum","SumOfSquares","Facets"],"properties":{"Count":{"type":"integer","description":"Items count related to fulfillment."},"Max":{"type":"integer","description":"Maximum of items related to fulfillment."},"Mean":{"type":"number","description":"Items mean related to fulfillment."},"Min":{"type":"integer","description":"Minimum of items related to fulfillment."},"Missing":{"type":"integer","description":"Missing items related to fulfillment."},"StdDev":{"type":"number","description":"Standard deviation related to fulfillment."},"Sum":{"type":"integer","description":"Sum of items related to fulfillment."},"SumOfSquares":{"type":"integer","description":"Items sum of squares related to fulfillment."},"Facets":{"type":["string","null"],"description":"Facets related to fulfillment."}}},"Marketplace":{"type":"object","description":"Marketplace facets information related to total items.","required":["Count","Max","Mean","Min","Missing","StdDev","Sum","SumOfSquares","Facets"],"properties":{"Count":{"type":"integer","description":"Items count related to the marketplace."},"Max":{"type":"integer","description":"Maximum of items related to the marketplace."},"Mean":{"type":"number","description":"Items mean related to the marketplace."},"Min":{"type":"integer","description":"Minimum of items related to the marketplace."},"Missing":{"type":"integer","description":"Missing items related to the marketplace."},"StdDev":{"type":"number","description":"Standard deviation related to the marketplace."},"Sum":{"type":"integer","description":"Sum of items related to the marketplace."},"SumOfSquares":{"type":"integer","format":"int64","description":"Sum of squares related to the marketplace."},"Facets":{"type":["string","null"],"description":"Facets related to the marketplace."}}}}},"currencyCode":{"type":"object","description":"Total items currency code in [ISO 4217](https://www.iban.com/currency-codes) format.","required":["BRL"],"properties":{"BRL":{"type":"object","description":"Currency code facets information.","required":["Count","Max","Mean","Min","Missing","StdDev","Sum","SumOfSquares","Facets"],"properties":{"Count":{"type":"integer","description":"Items count related to the currency code."},"Max":{"type":"integer","description":"Maximum of items related to the currency code."},"Mean":{"type":"number","description":"Items mean related to the currency code."},"Min":{"type":"integer","description":"Minimum of items related to the currency code."},"Missing":{"type":"integer","description":"Missing items related to the currency code."},"StdDev":{"type":"number","description":"Standard deviation related to the currency code."},"Sum":{"type":"integer","description":"Sum of items related to the currency code."},"SumOfSquares":{"type":"integer","format":"int64","description":"Sum of squares related to the currency code."},"Facets":{"type":["string","null"],"description":"Facets related to the currency code."}}}}}}}}}}}}},"reportRecordsLimit":{"type":"integer","description":"Records limit."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves a list of orders according to the query parameters used. The response returns masked order data.
+
+  >⚠️ Throttling: Each account can make up to 6000 requests per minute.
+
+  ## Endpoint not meant for integrations
+  This request only retrieves orders that have been indexed, which takes aproximately four minutes. The information returned also may present inconsistencies or become unavailable in periods of peak order volume.
+
+  Therefore, you must not use the List orders endpoint for integrations.
+
+  >⚠️ To get up to date information and [build order integrations](https://developers.vtex.com/vtex-rest-api/docs/erp-integration-set-up-order-integration) use the [orders Feed or Hook](https://developers.vtex.com/vtex-rest-api/docs/feed-v3-1).
+
+  > Check the [Orders onboarding guide](https://developers.vtex.com/vtex-rest-api/docs/orders-overview). We created this guide to improve the onboarding experience for developers at VTEX. It assembles all documentation on our Developer Portal about Orders and is organized by focusing on the developer's journey.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | OMS | OMS access | **List Orders** |
+  | Checkout         | CheckoutResources | **Orders Full Access** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | OMS - Full access | List Orders |
+  | Checkout Admin | List Orders |
+  | IntegrationProfile - Fulfillment Oms | List Orders |
+  | OMS - Full access | Orders Full Access |
+  | Checkout Admin | Orders Full Access |
+  | IntegrationProfile - Fulfillment Oms | Orders Full Access |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  _Omitted here: 7 KB. See `OK` in PostmanCollections._

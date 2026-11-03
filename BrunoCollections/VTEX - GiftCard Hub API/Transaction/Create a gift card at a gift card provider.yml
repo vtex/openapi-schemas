@@ -1,0 +1,109 @@
+info:
+  name: Create a gift card at a gift card provider
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/giftcardproviders/:giftCardProviderId/giftcards"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: giftCardProviderId
+      value: GiftCardExample
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "relationName": "loyalty-program",
+        "emissionDate": "2020-09-01T13:15:30Z",
+        "expiringDate": "2020-09-10T13:15:30Z",
+        "caption": "Loyalty Program",
+        "restrictedToOwner": false,
+        "multipleRedemptions": false,
+        "multipleCredits": false,
+        "profileId": "92de2449-0e02-4ca9-a4aa-a09cc9d8f7ff",
+        "currencyCode": "USD"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/giftcardproviders/:giftCardProviderId/giftcards - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/giftcardproviders/:giftCardProviderId/giftcards - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/giftcardproviders/:giftCardProviderId/giftcards - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/giftcardproviders/:giftCardProviderId/giftcards - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"id":{"type":"string","description":"Gift card identification."},"emissionDate":{"type":"string","description":"Gift card emission date."},"expiringDate":{"type":"string","description":"Gift card expiration date."},"caption":{"type":"string","description":"Field to be filled in if a loyalty program must be created for the gift card."},"provider":{"type":"string","description":"Provider name."},"discount":{"type":"boolean","description":"Deprecated field."},"currencyCode":{"type":"string","description":"Currency code in ISO 4217."},"transaction":{"type":"object","description":"Transaction information.","properties":{"href":{"type":"string","description":"Gift card resource URL. The number described in the URL refers to the gift card identification."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates a gift card in a gift card provider.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | GiftCard | GiftCard | **Edit Gift Card providers** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `giftCardProviderId` | path | (Required) Gift card provider identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "38",
+    "emissionDate": "2023-06-27T17:02:19.17",
+    "expiringDate": "2023-09-27T17:02:19.17",
+    "caption": "Loyalty Program",
+    "provider": "GiftCardExample",
+    "discount": false,
+    "currencyCode": "USD",
+    "transactions": {
+      "href": "cosmetics2/giftcardproviders/GiftCardExample/giftcards/38/transactions"
+    }
+  }
+  ```

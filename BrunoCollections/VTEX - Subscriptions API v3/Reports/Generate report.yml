@@ -1,0 +1,143 @@
+info:
+  name: Generate report
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/rns/pvt/reports/:reportName/documents"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: email
+      value: receiver@email.com
+      type: query
+      disabled: true
+    - name: status
+      value: SUCCESS
+      type: query
+      disabled: true
+    - name: beginDate
+      value: 2024-07-01
+      type: query
+      disabled: true
+    - name: endDate
+      value: 2024-08-01
+      type: query
+      disabled: true
+    - name: reportName
+      value: subscriptionsWithStatus
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/rns/pvt/reports/:reportName/documents - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/rns/pvt/reports/:reportName/documents - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/rns/pvt/reports/:reportName/documents - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/rns/pvt/reports/:reportName/documents - Schema is valid", function () {
+          const schema = {"type":"object","description":"Subscription report information.","properties":{"id":{"type":"string","description":"Report document ID."},"finished":{"type":"boolean","description":"Defines if the report is finished (`true`) or not (`false`)."},"recordsProcessed":{"type":"integer","description":"Number of records processed at the moment."},"recordsSum":{"type":["integer","null"],"description":"Total number of records to be processed."},"startDate":{"type":["string","null"],"description":"Report starting date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"lastUpdateTime":{"type":["string","null"],"description":"Report last update date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"completedDate":{"type":["string","null"],"description":"Report completion date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"errorCount":{"type":["integer","null"],"description":"Error counting numbers, when applicable."},"percentageProcessed":{"type":"number","description":"Report processing percentage."},"enqueueDate":{"type":["string","null"],"description":"Request enqueue date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"email":{"type":"string","description":"Email of the user that receives the report."},"canceled":{"type":"boolean","description":"Defines if the report is canceled (`true`) or not (`false`)."},"outputType":{"type":["string","null"],"description":"Report file extension."},"zipped":{"type":"boolean","description":"Defines if the report file is zipped (`true`) or not (`false`)."},"linkToDownload":{"type":["string","null"],"description":"Link do download the report."},"lastErrorMessage":{"type":["string","null"],"description":"Error last message, when applicable."},"statusMessage":{"type":"string","description":"Report status message."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates a subscriptions report in the format of a `csv` file and sends it via email to a given user.
+
+  >ℹ️ In the response body of the current endpoint, you get the document ID required for the [Get report document details](https://developers.vtex.com/docs/api-reference/subscriptions-api-v3#get-/api/rns/pvt/reports/-reportName-/documents/-documentId-) endpoint.
+
+  You can generate the following types of report:
+
+  - `subscriptionsWithStatus`: Get subscriptions based on subscription cycle execution status.
+    - **Required query param:** `status`.
+
+  - `subscriptionsScheduledBetweenDate`: Get active subscriptions scheduled between dates.
+    - **Required query params:** `beginDate` and `endDate`.
+
+  - `subscriptionsUpdatedBetweenDate`: Get subscriptions updated between dates.
+    - **Required query params:** `beginDate` and `endDate`.
+
+  - `subscriptionsCreatedBetweenDate`: Get subscriptions created between dates.
+    - **Required query params:** `beginDate` and `endDate`.
+
+  - `executionsBetweenDate`: Get executions between dates.
+    - **Required query params:** `beginDate` and `endDate`.
+
+  >ℹ️ You can also use the [List report templates](https://developers.vtex.com/docs/api-reference/subscriptions-api-v3#get-/api/rns/pvt/reports) endpoint to discover the types of reports you can generate.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Subscriptions | ApplicationAccess | **Subscription metrics and reports** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `reportName` | path | (Required) Name of the type of report you wish to generate. The following values are accepted: - `subscriptionsWithStatus` - `subscriptionsScheduledBetweenDate` - `subscriptionsUpdatedBetweenDate` - `subscriptionsCreatedBetweenDate` - `executionsBetweenDate` |
+  | `email` | query | The report will be sent to the email in this field. When no email is provided, the report is sent to the email of the user making the request. |
+  | `status` | query | Subscription cycle execution status. This field is required only for the `subscriptionsWithStatus` report type, and the possible values are: - `TRIGGERED`: Execution has been triggered. - `IN_PROCESS`: Execution is being processed by the system. - `FAILURE`: An internal error occurred during the subscription execution. - `SUCCESS`: Successful cycle processing. - `EXPIRED`: The subscription was not renewed, and the period for which it was valid has ended. - `ORDER_ERROR`: Cycle was not executed due to an error in order placement. - `PAYMENT_ERROR`: Cycle was not executed due to an error in the payment. - `SKIPED`: A subscription cycle execution was skipped, and the subscription will be executed in the next cycle. - `SUCCESS_WITH_NO_ORDER`: Cycle was executed successfully, and the linked order has no items. - `SUCCESS_WITH_PARTIAL_ORDER`: Cycle was executed successfully, and has a linked partial order. - `RE_TRIGGERED`: Execution retry was triggered manually. - `SCHEDULE_UPDATED`: The next subscription cycle execution date has been updated. |
+  | `beginDate` | query | Beginning date in the format `YYYY-MM-DD`. This field is required for all report types, except for the `subscriptionsWithStatus` type. |
+  | `endDate` | query | Ending date in the format `YYYY-MM-DD`. This field is required for all report types, except for the `subscriptionsWithStatus` type. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "7849df9f-00d4-11ef-8452-1254acca1d85",
+    "finished": false,
+    "recordsProcessed": 0,
+    "recordsSum": null,
+    "startDate": null,
+    "lastUpdateTime": null,
+    "completedDate": null,
+    "errorCount": null,
+    "percentageProcessed": 0,
+    "enqueueDate": "2024-04-22T18:16:50.7487312Z",
+    "email": "receiver@email.com",
+    "canceled": false,
+    "outputType": "CSV",
+    "zipped": false,
+    "linkToDownload": null,
+    "lastErrorMessage": null,
+    "statusMessage": "Report 7849df9f-00d4-11ef-8452-1254acca1d85 is being processed (0.00% completed). The file will be sent to receiver@email.com."
+  }
+  ```

@@ -1,0 +1,126 @@
+info:
+  name: Send agreement for order modifications
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/pvt/orders/:participantOrderId/changes/:changeRequestId/send-agreement?accountName=storeName"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: accountName
+      value: storeName
+      type: query
+    - name: participantOrderId
+      value: ""
+      type: path
+    - name: changeRequestId
+      value: ""
+      type: path
+    - name: orderId
+      value: v12772213qst-02
+      type: path
+    - name: changeId
+      value: e8532a32-7f7e-434a-88ec-29609f0ede46
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "agreementType": "Acknowledgment"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/pvt/orders/:participantOrderId/changes/:changeRequestId/send-agreement - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/pvt/orders/:participantOrderId/changes/:changeRequestId/send-agreement - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/pvt/orders/:participantOrderId/changes/:changeRequestId/send-agreement - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/pvt/orders/:participantOrderId/changes/:changeRequestId/send-agreement - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"orderId":{"type":"string","description":"ID of the order refered in the agreement."},"changeRequestId":{"type":"string","description":"ID of the order modification refered in the agreement."},"agreementType":{"type":"string","description":"Type of agreement sent by the external seller.","enum":["Acknowledgment","Confirmation"]}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint sends an agreement for an order modification to VTEX. It can be used by external sellers to acknowledge that a modification request was made and confirm that the modification has been applied to their order.
+
+   After a shopper requests a modification, VTEX automatically calls the external seller through the new client, sending a request to the [Create order modifications](https://developers.vtex.com/docs/api-reference/orders-api#patch-/api/order-system/orders/-changeOrderId-/changes) endpoint while also sending the order modifications agreement with `agreementType: Acknowledgment`, indicating that it is waiting for a response from the seller.
+
+   When the seller receives the modification request, they must use this same endpoint with `agreementType` also set to `Acknowledgment`, to register they acknowledge the request and are going to apply the modifications to the order.
+
+   In the confirmation step, VTEX sends `agreementType: Confirmation`, and waits for a callback from the seller. Once the seller modifies the order, they must respond by calling this same endpoint with `agreementType` set to `Confirmation`. This allows the flow to proceed normally and the modification to be completed successfully.
+
+  > ⚠️ The system only considers the modification as applied when it receives the status `Confirmation` from the external seller. 
+
+   The steps for the agreement flow are as follows: 
+
+   1. Shopper requests modifications. 
+
+   2. VTEX sends `Acknowledgment` to the External Seller. 
+
+   3. External Seller sends `Acknowledgment` back to VTEX. 
+
+      External Seller acknowledges the request for modifications and will apply them to the order. 
+
+   4. VTEX sends `Confirmation` to the External Seller. 
+
+   5. External Seller sends `Confirmation` back to VTEX. 
+
+         External Seller confirms the modifications have been applied to the order. 
+
+   6. The order flow continues. 
+
+   ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `orderId` | path | (Required) Order ID of the order for wish you want to send the agreement. |
+  | `changeId` | path | (Required) Once you make an order modification, you generate a `changeId` code that identifies the modifications made to that order. This field should be filled with that code. |
+  | `accountName` | query | (Required) Name of the VTEX account that created the order. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "orderId": "v12772213qst-02",
+    "changeRequestId": "e8532a32-7f7e-434a-88ec-29609f0ede46",
+    "agreementType": "Acknowledgment"
+  }
+  ```

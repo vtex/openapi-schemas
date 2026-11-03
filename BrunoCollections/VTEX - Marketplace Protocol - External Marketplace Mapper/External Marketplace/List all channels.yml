@@ -1,0 +1,88 @@
+info:
+  name: List all channels
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/channel-manager/channel/all?an=accountName"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-type
+      value: application/json
+  params:
+    - name: an
+      value: accountName
+      type: query
+    - name: enviroment
+      value: portal.vtexcommercestable.com.br
+      type: path
+    - name: environment
+      value: "{{environment}}"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/channel-manager/channel/all - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/channel-manager/channel/all - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/channel-manager/channel/all - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/channel-manager/channel/all - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"id":{"title":"Id ","description":"The channel id.","type":"integer"},"name":{"title":"Name","description":"The channel name.","type":"string"}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This request returns a list of channels available channels with their respective IDs for partners external to VTEX.
+
+
+  ## Permissions
+
+  This endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `enviroment` | path | (Required) Environment used as part of the URL. |
+  | `environment` | path | Environment to use. Used as part of the URL. (This can only be one of vtexcommercestable) |
+  | `an` | query | (Required) VTEX's account name owned by the connector/partner. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+  | `Content-type` | header | (Required) Describes the type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": 1,
+    "name": "Mercado Livre"
+  }
+  ```

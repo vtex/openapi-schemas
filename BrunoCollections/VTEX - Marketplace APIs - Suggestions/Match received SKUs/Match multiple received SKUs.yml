@@ -1,0 +1,162 @@
+info:
+  name: Match multiple received SKUs
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/suggestions/matches/action/:actionName"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: actionName
+      value: newproduct
+      type: path
+    - name: accountName
+      value: apiexamples
+      type: path
+  body:
+    type: json
+    data: |-
+      [
+        [
+          {
+            "itemId": "1234567",
+            "versionId": "v.2",
+            "matchId": "vtex-matcher",
+            "matcherId": "vtex-matcher",
+            "categoryId": 12,
+            "sellerId": "seller123",
+            "brandId": 1234567,
+            "skuRef": "123 sku ref",
+            "productRef": "123 product ref"
+          },
+          {
+            "itemId": "1234567",
+            "versionId": "v.2",
+            "matchId": "vtex-matcher",
+            "matcherId": "vtex-matcher",
+            "categoryId": 12,
+            "sellerId": "seller123",
+            "brandId": 1234567,
+            "skuRef": "123 sku ref",
+            "productRef": "123 product ref"
+          }
+        ],
+        [
+          {
+            "itemId": "1234567",
+            "versionId": "v.2",
+            "matchId": "vtex-matcher",
+            "matcherId": "vtex-matcher",
+            "categoryId": 12,
+            "sellerId": "seller123",
+            "brandId": 1234567,
+            "skuRef": "123 sku ref",
+            "productRef": "123 product ref"
+          },
+          {
+            "itemId": "1234567",
+            "versionId": "v.2",
+            "matchId": "vtex-matcher",
+            "matcherId": "vtex-matcher",
+            "categoryId": 12,
+            "sellerId": "seller123",
+            "brandId": 1234567,
+            "skuRef": "123 sku ref",
+            "productRef": "123 product ref"
+          }
+        ]
+      ]
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[PUT]::/suggestions/matches/action/:actionName - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PUT]::/suggestions/matches/action/:actionName - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[PUT]::/suggestions/matches/action/:actionName - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[PUT]::/suggestions/matches/action/:actionName - Schema is valid", function () {
+          const schema = {"type":"array","description":"An array containing the results of multiple match operations. Each object in the array represents the outcome of a single match attempt.","items":{"type":"object","description":"Represents the result of a single match operation, including details such as match ID, matcher ID, seller ID, item ID, and whether the operation was successful.","properties":{"matchId":{"type":"string","description":"Unique identifier for the match operation, which can be used for tracking and auditing purposes."},"matcherId":{"type":"string","description":"Identifier for the matcher entity that performed the match. It can represent VTEX's internal matcher or an external matcher service."},"sellerId":{"type":"string","description":"Unique identifier of the seller who owns the SKU being matched."},"itemId":{"type":"string","description":"Unique identifier of the item (SKU) that was processed during the match operation."},"isSuccess":{"type":"boolean","description":"Indicates whether the match operation was successful. A value of `true` means the operation succeeded, while `false` indicates a failure."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Allows a marketplace to bulk approve, deny, or associate up to 25 received SKUs from sellers.
+
+  Through the `actionName` attribute, you can select the operation you want to apply to the received SKU. Actions include: 
+
+  * `newproduct`: Match the SKU as a new product. 
+
+  * `skuassociation`: Associate the received SKU to an existing SKU. 
+
+  * `productassociation`: Associate the received SKU to an existing product. 
+
+  * `deny`: Deny the received SKU.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | ---------- | ------------ | ------------ |
+  | Channels | UI resources | **Save suggestion rules** |
+  | Suggestion | Suggestion resources | **Main** |
+
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `actionName` | path | (Required) Operation to apply to received SKUs. Possible values include: * `newproduct`: match the SKU as a new product. * `skuassociation`: associate the received SKU to an existing SKU. * `productassociation`: associate the received SKU to an existing product. * `deny`: deny the received SKU. |
+  | `accountName` | path | (Required) Name of the VTEX account. Used as part of the URL |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "matchId": "06272023010821403",
+      "matcherId": "vtex-matcher",
+      "sellerId": "test858",
+      "itemID": "81",
+      "isSuccess": false
+    }
+  ]
+  ```

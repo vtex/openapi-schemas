@@ -1,0 +1,109 @@
+info:
+  name: Authorize dispatch for fulfillment order
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/fulfillment/pvt/orders/:orderId/fulfill?affiliateId=MKP"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: sc
+      value: "1"
+      type: query
+      disabled: true
+    - name: affiliateId
+      value: MKP
+      type: query
+    - name: orderId
+      value: MKP-123
+      type: path
+    - name: accountName
+      value: apiexamples
+      type: path
+    - name: environment
+      value: vtexcommercestable
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "marketplaceOrderId": "123"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/fulfillment/pvt/orders/:orderId/fulfill - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/fulfillment/pvt/orders/:orderId/fulfill - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/fulfillment/pvt/orders/:orderId/fulfill - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/fulfillment/pvt/orders/:orderId/fulfill - Schema is valid", function () {
+          const schema = {"type":"object","description":"Response schema for a successful order creation.","properties":{"status":{"type":"string","description":"Indicates the success status of the response."},"message":{"type":"string","description":"A message providing additional information about the response."},"orderId":{"type":"string","description":"The unique identifier of the created order."},"details":{"type":"object","description":"Detailed information about the created order.","properties":{"createdAt":{"type":"string","description":"The timestamp when the order was created. Format: `YYYY/MM/DD HH:MM:SSZ`."},"marketplaceOrderId":{"type":"string","description":"The marketplace-specific order identifier."},"status":{"type":"string","description":"The current status of the order."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates fulfillment order, meaning that it is an order for the seller's side in a sale made through a marketplace. This order assumes the transaction itself has already happened on the marketplace's side and, therfore, cares only about the fulfillment side. 
+
+  For a detailed explanation of the steps required to develop a custom connector to become an external marketplace for VTEX sellers, check out our complete [External Marketplace Integration Guide](https://developers.vtex.com/vtex-rest-api/docs/external-marketplace-integration-guide).
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `orderId` | path | (Required) ID of the order that is to be authorized. It is composed of the `afilliateId` and the `marketplaceOrderId` joined with a `-`. For instance, an order with an ID `"123"` coming from the marketplace `"MKP"` has an `orderId` of `"MKP-123"`. |
+  | `accountName` | path | (Required) Name of the VTEX account. Used as part of the URL. |
+  | `environment` | path | (Required) Environment to be used. It is passed as part of the URL. |
+  | `sc` | query | Sales channel. |
+  | `affiliateId` | query | (Required) ID identifying the marketplace where the order originates. This ID is configured in the seller's VTEX account, and should be informed to the marketplace. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`201`)
+
+  ```json
+  {
+    "status": "success",
+    "message": "Order created successfully",
+    "orderId": "123",
+    "details": {
+      "createdAt": "2024-07-04T12:34:56Z",
+      "marketplaceOrderId": "123",
+      "status": "pending"
+    }
+  }
+  ```

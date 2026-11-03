@@ -1,0 +1,82 @@
+info:
+  name: Retrieve order conversation
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/oms/pvt/orders/:orderId/conversation-message"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: orderId
+      value: 1172452900788-01
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/oms/pvt/orders/:orderId/conversation-message - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/oms/pvt/orders/:orderId/conversation-message - Content-Type is application/json; charset=utf-8", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json; charset=utf-8");
+        });
+
+        test("[GET]::/api/oms/pvt/orders/:orderId/conversation-message - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/oms/pvt/orders/:orderId/conversation-message - Schema is valid", function () {
+          const schema = {"type":"array","items":{"title":"GetConversation","required":["id","from","to","subject","firstWords","body","hasAttachment","attachmentNames","date"],"type":"object","properties":{"id":{"type":"string","description":"Conversation ID."},"from":{"title":"From","description":"Conversation sender.","required":["conversationRelatedTo","conversationSubject","emailAlias","aliasMaskType","email","name","role"],"type":"object","properties":{"conversationRelatedTo":{"type":"string","description":"Related order ID."},"conversationSubject":{"type":"string","description":"Conversation subject."},"emailAlias":{"type":"string","description":"Sender transactional tracker email."},"aliasMaskType":{"type":"integer","description":"Conversation tracker mask type."},"email":{"type":"string","description":"Sender's email."},"name":{"type":"string","description":"Sender's name."},"role":{"type":["string","null"],"description":"If it is a client or null, for transactional emails."}}},"to":{"type":"array","items":{"title":"To","description":"Conversation receiver.","required":["conversationRelatedTo","conversationSubject","emailAlias","aliasMaskType","email","name","role"],"type":"object","properties":{"conversationRelatedTo":{"type":"string","description":"Related order ID."},"conversationSubject":{"type":"string","description":"Conversation subject."},"emailAlias":{"type":"string","description":"Sender transactional tracker email."},"aliasMaskType":{"type":"integer","description":"Conversation tracker mask type."},"email":{"type":"string","description":"Receiver's email."},"name":{"type":"string","description":"Receiver's name."},"role":{"type":"string","description":"If it is a customer or null, for transactional emails."}}},"description":"Conversation receiver."},"subject":{"type":"string","description":"Conversation content subject."},"firstWords":{"type":"string","description":"First words of Conversation content."},"body":{"type":"string","description":"Conversation content body."},"hasAttachment":{"type":"boolean","description":"When set as `true`, it means there are attachments, when set as `false`, there are not."},"attachmentNames":{"type":"array","items":{"type":"string","description":"Name of the attachment."},"description":"List with attachments' names, if there are any."},"date":{"type":"string","description":"Conversation date."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  List all order conversations of an order by its order ID. 
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Checkout | CheckoutResources | **Orders Full Access** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `orderId` | path | (Required) Order ID is a unique code that identifies an order. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+
+  ## Example response (`200`)
+
+  _Omitted here: 6 KB. See `OK` in PostmanCollections._

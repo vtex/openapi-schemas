@@ -1,0 +1,122 @@
+info:
+  name: Update order tracking status
+  type: http
+  seq: 1
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/oms/pvt/orders/:orderId/invoice/:invoiceNumber/tracking"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: orderId
+      value: 1172452900788-01
+      type: path
+    - name: invoiceNumber
+      value: "000030711"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "isDelivered": false,
+        "deliveredDate": null,
+        "events": [
+          {
+            "city": "Rio de Janeiro",
+            "state": "RJ",
+            "description": "Coletado pela transportadora",
+            "date": "2015-06-23"
+          },
+          {
+            "city": "Sao Paulo",
+            "state": "SP",
+            "description": "A caminho de Curitiba",
+            "date": "2015-06-24"
+          }
+        ]
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[PUT]::/api/oms/pvt/orders/:orderId/invoice/:invoiceNumber/tracking - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PUT]::/api/oms/pvt/orders/:orderId/invoice/:invoiceNumber/tracking - Content-Type is application/json; charset=utf-8", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json; charset=utf-8");
+        });
+
+        test("[PUT]::/api/oms/pvt/orders/:orderId/invoice/:invoiceNumber/tracking - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[PUT]::/api/oms/pvt/orders/:orderId/invoice/:invoiceNumber/tracking - Schema is valid", function () {
+          const schema = {"title":"UpdateTrackingStatus","required":["date","orderId","receipt"],"type":"object","properties":{"date":{"type":"string"},"orderId":{"type":"string"},"receipt":{"type":"string"}},"example":{"date":"2017-03-29T18:04:31.0521233+00:00","orderId":"v501245lspt-01","receipt":"f67d33a8029c42ce9a8f07fc17f54449"}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint sends a tracking event to an order that already has a tracking number registered to its invoice.
+
+  This request is not meant to send a tracking number and URL to the invoice. If you wish to send a tracking number and URL to an order, use the [Update order's partial invoice](https://developers.vtex.com/docs/api-reference/orders-api#patch-/api/oms/pvt/orders/-orderId-/invoice/-invoiceNumber-) endpoint. For more information, see [Partial invoice](https://help.vtex.com/en/tracks/partial-invoices--2xkTisx4SXOWXQel8Jg8sa/q9GPspTb9cHlMeAZfdEUe) scenarios.
+
+  This endpoint applies to orders with any shipping type, whether delivery or [pickup](https://help.vtex.com/en/tutorial/pickup-points--2fljn6wLjn8M4lJHA6HP3R). 
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | OMS | OMS access | **Notify invoice** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | OMS - Full access | Notify invoice |
+  | IntegrationProfile - Fulfillment Oms | Notify invoice |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `orderId` | path | (Required) Order ID is a unique code that identifies an order. |
+  | `invoiceNumber` | path | (Required) Number that identifies the invoice. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "date": "2017-03-29T18:04:31.0521233+00:00",
+    "orderId": "v501245lspt-01",
+    "receipt": "f67d33a8029c42ce9a8f07fc17f54449"
+  }
+  ```

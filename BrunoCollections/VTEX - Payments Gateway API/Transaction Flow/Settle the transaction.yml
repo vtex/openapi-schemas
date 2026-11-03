@@ -1,0 +1,108 @@
+info:
+  name: Settle the transaction
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/pvt/transactions/:transactionId/settlement-request"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: transactionId
+      value: A3BDE325F76B4B758B398D900DF06150
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "value": 10050
+      }
+  auth:
+    type: apikey
+    key: X-VTEX-API-AppKey
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/pvt/transactions/:transactionId/settlement-request - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/pvt/transactions/:transactionId/settlement-request - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/pvt/transactions/:transactionId/settlement-request - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/pvt/transactions/:transactionId/settlement-request - Schema is valid", function () {
+          const schema = {"required":["id","token","status","statusDetail","processingDate","refundedValue","refundedToken","message","code","connectorRefundedValue","cancelledValue"],"type":"object","description":" Transaction response body information.","properties":{"id":{"type":["string","null"],"description":"Settle request identification."},"token":{"type":"string","description":"Token identification."},"status":{"type":"number","description":"Status code."},"statusDetail":{"type":"string","description":"Status detail information."},"processingDate":{"type":"string","description":"Settlement processing date."},"refundedValue":{"type":"integer","description":"Refunded value."},"refundedToken":{"type":["string","null"],"description":"Refund operation token."},"message":{"type":["string","null"],"description":"Custom message."},"code":{"type":["string","null"],"description":"Custom code."},"connectorRefundedValue":{"type":"number","description":"Refunded value by connector (provider)."},"cancelledValue":{"type":"integer","description":"Cancelled value."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Settles the transaction amount. A payment settled means that the seller will receive the value of the purchase value after bank conciliation.
+
+  >ℹ️ This call is mandatory to complete a transaction and its payments.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | PCI Gateway | Payment-Make Payments | **Process payments** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `transactionId` | path | (Required) Transaction identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": null,
+    "token": "2BCA48B4FBCB42D0B8A19EE965712AD8",
+    "status": 11,
+    "statusDetail": "Settling",
+    "processingDate": "2023-12-14T22:45:50.9977213Z",
+    "refundedValue": 0,
+    "refundedToken": null,
+    "message": null,
+    "code": null,
+    "connectorRefundedValue": 0,
+    "cancelledValue": 0
+  }
+  ```

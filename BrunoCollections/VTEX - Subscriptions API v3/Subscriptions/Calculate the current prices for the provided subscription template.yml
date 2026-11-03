@@ -1,0 +1,283 @@
+info:
+  name: Calculate the current prices for the provided subscription template
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/rns/pub/subscriptions/simulate"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "customerEmail": "customer@email.com",
+        "items": [
+          {
+            "skuId": "12",
+            "quantity": 5,
+            "manualPrice": 400,
+            "attachments": [
+              {
+                "name": "Engraving",
+                "content": {
+                  "laborum_bb": "Happy Birthday!",
+                  "dolor_d": "Happy Birthday!"
+                }
+              },
+              {
+                "name": "Engraving",
+                "content": {
+                  "minima5": "Happy Birthday!",
+                  "officia_b": "Happy Birthday!",
+                  "dolore16e": "Happy Birthday!",
+                  "aute785": "Happy Birthday!"
+                }
+              }
+            ]
+          },
+          {
+            "skuId": "12",
+            "quantity": 5,
+            "manualPrice": 400,
+            "attachments": [
+              {
+                "name": "Engraving",
+                "content": {
+                  "exercitation41": "Happy Birthday!"
+                }
+              },
+              {
+                "name": "Engraving",
+                "content": {
+                  "ex_64f": "Happy Birthday!"
+                }
+              }
+            ]
+          }
+        ],
+        "plan": {
+          "id": "subscription.clothes",
+          "frequency": {
+            "interval": 3,
+            "periodicity": "MONTHLY"
+          },
+          "validity": {
+            "begin": "2024-08-21T00:00:00Z",
+            "end": "2025-08-21T00:00:00Z"
+          },
+          "purchaseDay": "3"
+        },
+        "purchaseSettings": {
+          "paymentMethod": {
+            "paymentSystem": "4",
+            "paymentAccountId": "6559E125DB084A46994E045547DE504B",
+            "installments": 3,
+            "paymentSystemName": "creditCard",
+            "paymentSystemGroup": "creditCard"
+          },
+          "salesChannel": "1",
+          "currencyCode": "BRL",
+          "selectedSla": "Normal",
+          "seller": "1"
+        },
+        "shippingAddress": {
+          "addressId": "5028945524109",
+          "addressType": "residential"
+        },
+        "title": "fashionBasic",
+        "status": "ACTIVE",
+        "nextPurchaseDate": "2024-09-21T00:00:00Z",
+        "catalogAttachment": "vtex.subscription.tshirt-collection"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/rns/pub/subscriptions/simulate - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/rns/pub/subscriptions/simulate - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/rns/pub/subscriptions/simulate - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/rns/pub/subscriptions/simulate - Schema is valid", function () {
+          const schema = {"type":"object","description":"Subscription order simulation response.","properties":{"simulation":{"type":"object","description":"Object with subscription order simulation details.","properties":{"items":{"type":"array","description":"Simulation items information.","items":{"type":"object","description":"Simulation information about a given item.","properties":{"id":{"type":["string","null"],"description":"SKU ID."},"seller":{"type":["string","null"],"description":"Seller name. When the store acts both as marketplace and seller, this field corresponds to `1`, because every VTEX store is its own seller 1."},"quantity":{"type":"integer","description":"Quantity of units."},"price":{"type":["integer","null"],"format":"int64","description":"Price in cents."},"sellingPrice":{"type":["integer","null"],"format":"int64","description":"Selling price in cents."},"manualPrice":{"type":["number","null"],"description":"[Manual price](https://help.vtex.com/en/tutorial/change-the-price-of-an-item-in-the-shopping-cart--7Cd37aCAmtL1qmoZJJvjNf)."},"unitMultiplier":{"type":"number","description":"Item unit multiplier."},"measurementUnit":{"type":"string","description":"Item measurement unit."},"attachments":{"type":["array","null"],"description":"Information about subscription [attachments](https://help.vtex.com/en/tutorial/what-is-an-attachment--aGICk0RVbqKg6GYmQcWUm).","items":{"type":"object","description":"Information about a given attachment.","properties":{"name":{"type":["string","null"],"description":"Attachment name."},"content":{"type":["object","null"],"description":"Custom field for attachment content.","additionalProperties":{"type":"string","description":"Custom field information."}}}}},"name":{"type":["string","null"],"description":"Item name."},"isGift":{"type":"boolean","description":"Defines it the item is a gift (`true`), or not (`false`)."},"priceTags":{"type":["array","null"],"description":"List of price tags, which are price modifiers.","items":{"type":"object","description":"Information about a given price tag.","properties":{"name":{"type":["string","null"],"description":"Price tag name."},"valueAsInt":{"type":"integer","format":"int64","description":"Price tag value."},"rawValue":{"type":"number","format":"double","description":"Price tag raw value."},"isPercentual":{"type":"boolean","description":"Defines if the price tag is applied as a percentage (`true`), or not (`false`)."},"identifier":{"type":["string","null"],"description":"Price tag identifier."}}}}}}},"logisticsInfo":{"type":"array","description":"Simulation logistics information.","items":{"type":"object","description":"Logistics details.","properties":{"itemIndex":{"type":"integer","description":"Each item in the subscription order is identified by an index. The position starts at `0`, followed by `1`, `2`, and so on."},"quantity":{"type":"integer","description":"Quantity of units."},"selectedSla":{"type":["string","null"],"description":"Selected Service Level Agreement (SLA)."},"selectedDeliveryChannel":{"type":["string","null"],"description":"Shipping type (shipping method) selected by the customer, like delivery or [pickup point](https://help.vtex.com/en/tutorial/pickup-points--2fljn6wLjn8M4lJHA6HP3R).","enum":["delivery","pickup-in-point"]},"lockTTL":{"type":["string","null"],"description":"Logistics [reservation](https://help.vtex.com/en/tutorial/how-does-reservation-work--tutorials_92) waiting time of the SLA in days. One business day corresponds to `1bd`, for example."},"shippingEstimate":{"type":["string","null"],"description":"Shipping estimate time in days. Three business days correspond to `3bd`, for example."},"addressId":{"type":["string","null"],"description":"Shipping address ID."},"pickupId":{"type":["string","null"],"description":"[Pickup point](https://help.vtex.com/en/tutorial/pickup-points--2fljn6wLjn8M4lJHA6HP3R) ID, when shipping type is pickup."},"price":{"type":["integer","null"],"description":"Shipping cost."},"deliveryWindow":{"type":["string","null"],"description":"[Scheduled delivery window](https://help.vtex.com/tutorial/scheduled-delivery--22g3HAVCGLFiU7xugShOBi) period."},"slas":{"type":"array","description":"Service Level Agreement (SLA) of the [shipping policy](https://help.vtex.com/en/tutorial/shipping-policy--tutorials_140) considered for the simulation.","items":{"type":"object","description":"Subscription order SLA details.","properties":{"id":{"type":["string","null"],"description":"ID of the shipping type (shipping method) of the shipping policy."},"pickupPointId":{"type":["string","null"],"description":"[Pickup point](https://help.vtex.com/en/tutorial/pickup-points--2fljn6wLjn8M4lJHA6HP3R) ID related to the SLA."},"deliveryChannel":{"type":["string","null"],"description":"Defines if the delivery channel is `delivery` or `pickup-in-point`.","enum":["delivery","pickup-in-point"]},"price":{"type":"integer","description":"Item shipping price in cents. This value does not account for the order total shipping price."},"shippingEstimate":{"type":["string","null"],"description":"Total shipping estimate time in days. For instance, three business days is represented as `3bd`."},"lockTTL":{"type":["string","null"],"description":"Logistics [reservation](https://help.vtex.com/en/tutorial/how-does-reservation-work--tutorials_92) waiting time of the SLA. One business day is represented as `1bd`, for example."},"deliveryWindows":{"type":["array","null"],"description":"[Delivery windows](https://help.vtex.com/en/tutorial/scheduled-delivery--22g3HAVCGLFiU7xugShOBi#delivery-window) information.","items":{"type":"object","description":"Information about a given delivery window.","properties":{"startDateUtc":{"type":["string","null"],"description":"Delivery window starting date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"endDateUtc":{"type":["string","null"],"description":"Delivery window ending date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"price":{"type":["integer","null"],"format":"int64","description":"Delivery window shipping price."}}}},"availableDeliveryWindows":{"type":["array","null"],"description":"Available [delivery windows](https://help.vtex.com/en/tutorial/scheduled-delivery--22g3HAVCGLFiU7xugShOBi#delivery-window) information.","items":{"type":"object","description":"Information about an available delivery window.","properties":{"startDateUtc":{"type":["string","null"],"description":"Available delivery window starting date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"endDateUtc":{"type":["string","null"],"description":"Available delivery window ending date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"price":{"type":["integer","null"],"format":"int64","description":"Delivery window shipping price."}}}}}}}}}},"paymentData":{"type":["object","null"],"description":"Simulation payment information.","properties":{"payments":{"type":["array","null"],"description":"Payment information.","items":{"type":["object","null"],"description":"Payment details.","properties":{"id":{"type":["string","null"],"description":"Payment ID unique identifier in VTEX."},"paymentSystem":{"type":["string","null"],"description":"Payment system ID."},"group":{"type":["string","null"],"description":"Payment system group."},"bin":{"type":["string","null"],"description":"Abbreviation for _Bank Identification Number_, which is a code that identifies the institution responsible for issuing the credit card."},"accountId":{"type":["string","null"],"description":"Store account ID."},"parentAccountId":{"type":["string","null"],"description":"Retrieves the main account ID if the payment was made in a subaccount."},"referenceValue":{"type":["integer","null"],"format":"int64","description":"Payment reference value in cents."},"value":{"type":["integer","null"],"format":"int64","description":"Payment value in cents."},"installments":{"type":["integer","null"],"description":"Number of installments."},"url":{"type":["string","null"],"description":"Payment URL."},"cardNumber":{"type":["string","null"],"description":"Card number information."},"fields":{"type":["array","null"],"description":"Payment parameters names and values.","items":{"type":"object","description":"Information about a given payment parameter.","properties":{"name":{"type":["string","null"],"description":"Payment parameter name."},"value":{"type":["string","null"],"description":"Payment parameter value."}}}},"paymentSystemName":{"type":["string","null"],"description":"Payment system name."}}}},"transactions":{"type":["array","null"],"description":"Financial transactions information. This array returns empty in the simulation.","items":{"type":["object","null"],"description":"Financial transactions details.","properties":{"isActive":{"type":["boolean","null"],"description":"Defines if the subscription order payment is active (`true`) or inactive (`false`)."}}}}}},"country":{"type":["string","null"],"description":"Subscription order simulation three-digit country code in [ISO 3166 ALPHA-3](https://www.iban.com/country-codes) format."},"postalCode":{"type":["string","null"],"description":"Subscription order simulation postal code."},"messages":{"type":["array","null"],"description":"Simulation messages information.","items":{"type":["object","null"],"description":"Simulation message details.","properties":{"code":{"type":["string","null"],"description":"Message code."},"status":{"type":["string","null"],"description":"Message status."},"text":{"type":["string","null"],"description":"Message text."}}}},"selectableGifts":{"type":["array","null"],"description":"Information about subscription selectable gifts. For example, when the customer gains a gift from the store based on a promotion.","items":{"type":"object","description":"Selectable gift information.","properties":{"id":{"type":["string","null"],"description":"Selectable gift ID."},"availableQuantity":{"type":["integer","null"],"description":"Available quantity of selectable gifts."},"availableGifts":{"type":["array","null"],"description":"Details about available gifts.","items":{"type":["object","null"],"description":"Information about a given available gift.","properties":{"id":{"type":["string","null"],"description":"Gift ID."},"seller":{"type":["string","null"],"description":"Seller name."},"quantity":{"type":["integer","null"],"description":"Quantity of units."},"price":{"type":["integer","null"],"format":"int64","description":"Price in cents."},"sellingPrice":{"type":["integer","null"],"format":"int64","description":"Selling price in cents."},"unitMultiplier":{"type":["number","null"],"description":"Unit multiplier."},"attachments":{"type":["array","null"],"description":"Available gift attachments information, when applicable.","items":{"type":["object","null"],"description":"Information about a given attachment.","properties":{"name":{"type":["string","null"],"description":"Gift attachment name."},"content":{"type":["object","null"],"description":"Custom field for the gift attachment content.","additionalProperties":{"type":["string","null"],"description":"Custom field information."}}}}},"name":{"type":["string","null"],"description":"Gift name."},"isGift":{"type":["boolean","null"],"description":"Defines it the item is from a gift list (`true`), or not (`false`)."},"priceTags":{"type":["array","null"],"description":"List of price tags, which are price modifiers.","items":{"type":"object","description":"Information about a given price tag.","properties":{"name":{"type":["string","null"],"description":"Price tag name."},"valueAsInt":{"type":"integer","format":"int64","description":"Price tag value."},"rawValue":{"type":"number","format":"double","description":"Price tag raw value."},"isPercentual":{"type":"boolean","description":"Defines if the price tag is applied as a percentage (`true`), or not (`false`)."},"identifier":{"type":["string","null"],"description":"Price tag identifier."}}}},"isSelected":{"type":["boolean","null"],"description":"Defines if the item can be selected (`true`), or not (`false`)."}}}}}}},"totals":{"type":"array","description":"Information about simulation total counts.","items":{"type":"object","description":"Details about a given total count.","properties":{"id":{"type":"string","description":"Code that identifies if the information is about items, discounts, shipping or taxes.","enum":["Items","Discounts","Shipping","Tax"]},"name":{"type":"string","description":"Total count name."},"valueAsInt":{"type":"integer","format":"int64","description":"Total count value in cents."}}}},"totalsBySimulationItems":{"type":"array","description":"Information about simulation totals regarding items.","items":{"type":"object","description":"Simulation information about an item.","properties":{"id":{"type":["string","null"],"description":"SKU ID."},"quantity":{"type":"integer","description":"Quantity of units for the given SKU."},"unitPrice":{"type":["integer","null"],"format":"int64","description":"Unit price in cents."},"status":{"type":"string","description":"Subscription cycle status in the simulation."},"price":{"type":["integer","null"],"description":"Price in cents."},"sellingPrice":{"type":"integer","description":"Selling price in cents."},"manualPrice":{"type":["number","null"],"description":"[Manual price](https://help.vtex.com/en/tutorial/change-the-price-of-an-item-in-the-shopping-cart--7Cd37aCAmtL1qmoZJJvjNf)."}}}}}},"shippingEstimate":{"type":"object","description":"Subscription order shipping estimate information.","properties":{"name":{"type":"string","description":"ID of the shipping type (shipping method) of the [shipping policy](https://help.vtex.com/en/tutorial/shipping-policy--tutorials_140)."},"estimate":{"type":"string","description":"Total shipping estimate time in days. Three business days is represented as `3bd`, for example."},"estimateDeliveryDate":{"type":"string","description":"Estimate delivery date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"nextPurchaseDate":{"type":"string","description":"Next purchase date and time in [ISO 8601 time zone offset format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"matched":{"type":"boolean","description":"Defines if the shipping estimate is matched (`true`), or not (`false`)."}}},"totalsBySimulationItems":{"type":"array","description":"Information about simulation totals regarding items.","items":{"type":"object","description":"Simulation information about an item.","properties":{"id":{"type":["string","null"],"description":"SKU ID."},"quantity":{"type":"integer","description":"Quantity of units for the given SKU."},"unitPrice":{"type":["integer","null"],"format":"int64","description":"Unit price in cents."},"status":{"type":"string","description":"Subscription cycle status in the simulation."},"price":{"type":["integer","null"],"description":"Price in cents."},"sellingPrice":{"type":"integer","description":"Selling price in cents."},"manualPrice":{"type":["number","null"],"description":"[Manual price](https://help.vtex.com/en/tutorial/change-the-price-of-an-item-in-the-shopping-cart--7Cd37aCAmtL1qmoZJJvjNf)."}}}},"totals":{"type":"array","description":"Information about total counts.","items":{"type":"object","description":"Total cost per shipping or items.","properties":{"id":{"type":"string","description":"Code that identifies if the information is about items, discounts, shipping or taxes.","enum":["Items","Discounts","Shipping","Tax"]},"value":{"type":"number","description":"Total count value."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Simulates an order made by subscriptions on checkout and retrieves the current price for items and shipping.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Subscriptions | ApplicationAccess | **Subscription view only** |
+  | Subscriptions | ApplicationAccess | **Subscription view and edit** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "simulation": {
+      "items": [
+        {
+          "id": "9",
+          "seller": "1",
+          "quantity": 1,
+          "price": 12960,
+          "sellingPrice": 12960,
+          "manualPrice": null,
+          "unitMultiplier": 1,
+          "measurementUnit": "un",
+          "attachments": null,
+          "name": null,
+          "isGift": false,
+          "priceTags": []
+        }
+      ],
+      "logisticsInfo": [
+        {
+          "itemIndex": 0,
+          "quantity": 1,
+          "selectedSla": "Normal",
+          "selectedDeliveryChannel": "delivery",
+          "lockTTL": "1bd",
+          "shippingEstimate": null,
+          "addressId": "5028945524109",
+          "pickupId": null,
+          "price": 0,
+          "deliveryWindow": null,
+          "slas": [
+            {
+              "id": "Normal",
+              "pickupPointId": null,
+              "deliveryChannel": "delivery",
+              "price": 500,
+              "shippingEstimate": "3bd",
+              "lockTTL": "1bd",
+              "deliveryWindows": [],
+              "availableDeliveryWindows": []
+            }
+          ]
+        }
+      ],
+      "paymentData": {
+        "payments": [
+          {
+            "id": null,
+            "paymentSystem": "6",
+            "group": null,
+            "bin": null,
+            "accountId": null,
+            "parentAccountId": null,
+            "referenceValue": 13460,
+            "value": 13460,
+            "installments": 1,
+            "url": null,
+            "cardNumber": null,
+            "fields": null,
+            "paymentSystemName": null
+          }
+        ],
+        "transactions": []
+      },
+      "country": null,
+      "postalCode": null,
+      "messages": [],
+      "selectableGifts": [],
+      "totals": [
+        {
+          "id": "Items",
+          "name": "Items total",
+          "value": 12960
+        },
+        {
+          "id": "Shipping",
+          "name": "Shipping total",
+          "value": 500
+        }
+      ],
+      "totalsBySimulationItems": [
+        {
+          "id": "9",
+          "quantity": 1,
+          "unitPrice": 12960,
+          "status": "OK",
+          "price": null,
+          "sellingPrice": 12960,
+          "manualPrice": null
+        }
+      ]
+    },
+    "shippingEstimate": {
+      "name": "Normal",
+      "estimate": "3bd",
+      "estimatedDeliveryDate": "2024-08-26T00:00:00Z",
+      "nextPurchaseDate": "2024-09-26T00:00:00Z",
+      "matched": true
+    },
+    "totalsBySimulationItems": [
+      {
+        "id": "9",
+        "quantity": 1,
+        "unitPrice": 12960,
+        "status": "OK",
+        "price": 12960,
+        "sellingPrice": 12960,
+        "manualPrice": null
+      }
+    ],
+    "totals": [
+      {
+        "id": "Items",
+        "value": 12960
+      },
+      {
+        "id": "Shipping",
+        "value": 500
+      }
+    ]
+  }
+  ```

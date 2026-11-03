@@ -1,0 +1,111 @@
+info:
+  name: List location capacities
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/fulfillment-locations/locations/:locationId/capacities"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: daysRequested
+      value: "3"
+      type: query
+      disabled: true
+    - name: locationId
+      value: "71"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/fulfillment-locations/locations/:locationId/capacities - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/fulfillment-locations/locations/:locationId/capacities - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/fulfillment-locations/locations/:locationId/capacities - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/fulfillment-locations/locations/:locationId/capacities - Schema is valid", function () {
+          const schema = {"type":"array","description":"List of capacity details for the specified location.","items":{"type":"object","description":"Details for a specific day's capacity including usage percentage, limit, usage amount, and the active time window.","properties":{"amountPercentage":{"type":"number","description":"Percentage of capacity used."},"capacityLimitAmount":{"type":"integer","description":"Maximum capacity amount for the day."},"capacityUsageAmount":{"type":"integer","description":"Capacity amount used for the day."},"startAt":{"type":"string","format":"date-time","description":"Start time for the capacity period."},"endAt":{"type":"string","format":"date-time","description":"End time for the capacity period."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Lists the capacity details for the next `daysRequested` days for the specified location. If `daysRequested` is not provided, it defaults to `3` days.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Logistics | Logistics access | **Logistics viewer** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `locationId` | path | (Required) Unique identifier of the location. |
+  | `daysRequested` | query | Number of days to be displayed. Defaults to `3` if not provided. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "amountPercentage": 92.10526315789474,
+      "capacityLimitAmount": 38,
+      "capacityUsageAmount": 35,
+      "startAt": "2025-02-07T03:00:00+00:00",
+      "endAt": "2025-02-08T02:59:59+00:00"
+    },
+    {
+      "amountPercentage": 92.10526315789474,
+      "capacityLimitAmount": 38,
+      "capacityUsageAmount": 35,
+      "startAt": "2025-02-08T03:00:00+00:00",
+      "endAt": "2025-02-09T02:59:59+00:00"
+    },
+    {
+      "amountPercentage": 92.10526315789474,
+      "capacityLimitAmount": 38,
+      "capacityUsageAmount": 35,
+      "startAt": "2025-02-09T03:00:00+00:00",
+      "endAt": "2025-02-10T02:59:59+00:00"
+    }
+  ]
+  ```

@@ -1,0 +1,91 @@
+info:
+  name: 1. Retrieve token
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/authorization/token"
+  headers:
+    - name: X-PROVIDER-API-AppKey
+      value: "{{X-PROVIDER-API-AppKey}}"
+    - name: X-PROVIDER-API-AppToken
+      value: "{{X-PROVIDER-API-AppToken}}"
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "applicationId": "vtex",
+        "returnUrl": "https://storevtex.vtexpayments.com/?authorizationCode="
+      }
+  auth:
+    type: apikey
+    key: VtexIdclientAutCookie
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/authorization/token - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/authorization/token - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/authorization/token - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/authorization/token - Schema is valid", function () {
+          const schema = {"required":["applicationId","token"],"type":"object","description":"Token information.","properties":{"applicationId":{"type":"string","description":"This value is always identified as `vtex`."},"token":{"type":"string","description":"Payment Provider Token. Used to identify the context after you receive the redirected user to your site."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint is used to retrieve a payment provider token.
+
+  ## Permissions
+
+  This endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `X-PROVIDER-API-AppKey` | header | (Required) Unique identifier created by the provider and configured on the provider configuration page (Admin VTEX). |
+  | `X-PROVIDER-API-AppToken` | header | (Required) Unique token created by the provider and configured on the provider configuration page (Admin VTEX). |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "applicationId": "vtex",
+    "token": "358a5bea-07d0-4122-888a-54ab70b5f02f"
+  }
+  ```

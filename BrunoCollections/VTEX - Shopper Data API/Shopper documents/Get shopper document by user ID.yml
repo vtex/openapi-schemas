@@ -1,0 +1,105 @@
+info:
+  name: Get shopper document by user ID
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/dataentities/shopper/documents/:userId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: userId
+      value: 8abea412-4702-46fb-b835-3edb29d8a261
+      type: path
+  auth:
+    type: apikey
+    key: VtexIdclientAutCookie
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/dataentities/shopper/documents/:userId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/dataentities/shopper/documents/:userId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/dataentities/shopper/documents/:userId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/dataentities/shopper/documents/:userId - Schema is valid", function () {
+          const schema = {"type":"object","description":"Shopper document. May include additional properties beyond the standard schema if they were previously stored.","properties":{"userId":{"type":"string","format":"uuid","description":"Unique identifier for the shopper."},"email":{"type":"string","description":"Shopper's email."},"firstName":{"type":"string","description":"Shopper's first name."},"lastName":{"type":"string","description":"Shopper's last name."},"document":{"type":"string","description":"Shopper's document number (e.g., CPF number)."},"documentType":{"type":"string","description":"Type of the document provided (e.g., `cpf`)."},"phone":{"type":"string","description":"Shopper's phone number."},"unitId":{"type":"string","description":"Unique ID of the Organization Unit."},"cards":{"type":"array","description":"List of cards associated with the shopper.","items":{"type":"object","description":"Credit card information.","properties":{"cardId":{"type":"string","description":"Unique identifier of the saved card."},"paymentSystem":{"type":"string","description":"Code representing the payment system (e.g., `2` for Visa)."},"paymentSystemName":{"type":"string","description":"Name of the payment system (e.g., `Visa`)."},"cardNumber":{"type":"string","description":"Masked credit card number."},"bin":{"type":"string","description":"Bank Identification Number – the first digits of the card."},"expirationDate":{"type":"string","description":"Expiry date of the card in `MM/YYYY` format."},"useCvvForAuthorization":{"type":"boolean","description":"Indicates if CVV is required for authorization."},"cardLabel":{"type":"string","description":"Label or nickname for the card."},"isCardToken":{"type":"boolean","description":"Indicates whether the card data is tokenized."},"availableAddresses":{"type":"array","description":"Array of address IDs the card is associated with.","items":{"type":"string","description":"Address identifier."}}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint retrieves a shopper entity document by User ID.
+
+  > ℹ️ The response may include additional properties beyond the standard schema if they were previously stored (e.g., `phone2`, `marketingOptIn`).## Permissions
+
+  This endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `userId` | path | (Required) Unique identifier for the shopper. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "userId": "8abea412-4702-46fb-b835-3edb29d8a261",
+    "email": "john@vtex.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "document": "514.427.690-33",
+    "documentType": "cpf",
+    "phone": "11917118990",
+    "phone2": "11987654321",
+    "marketingOptIn": true,
+    "cards": [
+      {
+        "cardId": "D05881AD4F424A6C93D8536C9F7F992E",
+        "paymentSystem": "2",
+        "paymentSystemName": "Visa",
+        "cardNumber": "************3232",
+        "bin": "22343333",
+        "availableAddresses": [
+          "12345"
+        ],
+        "expirationDate": "02/2029",
+        "useCvvForAuthorization": true,
+        "isCardToken": false
+      }
+    ]
+  }
+  ```

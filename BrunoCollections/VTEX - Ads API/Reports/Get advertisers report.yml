@@ -1,0 +1,153 @@
+info:
+  name: Get advertisers report
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/report/v2/advertisers?start_date=2025-01-01&end_date=2025-01-31"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: start_date
+      value: 2025-01-01
+      type: query
+    - name: end_date
+      value: 2025-01-31
+      type: query
+    - name: account_info
+      value: "false"
+      type: query
+      disabled: true
+    - name: page
+      value: "1"
+      type: query
+      disabled: true
+    - name: quantity
+      value: "100"
+      type: query
+      disabled: true
+    - name: count
+      value: "false"
+      type: query
+      disabled: true
+    - name: download
+      value: "false"
+      type: query
+      disabled: true
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/report/v2/advertisers - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/report/v2/advertisers - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/report/v2/advertisers - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/report/v2/advertisers - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"total":{"type":"integer","description":"Total number of advertisers available."},"pages":{"type":"integer","description":"Total number of pages for pagination."},"currentPage":{"type":"integer","description":"Current page number."},"data":{"type":"array","description":"Array of advertiser objects.","items":{"type":"object","description":"Advertiser object.","properties":{"id":{"type":"string","description":"Unique advertiser identifier."},"name":{"type":"string","description":"Advertiser name."},"account_id":{"type":"string","description":"Account identifier."},"checking_account_id":{"type":"string","description":"Checking account identifier."},"seller_id":{"type":["string","null"],"description":"Seller identifier (when applicable)."},"advertiser_tags":{"type":["array","null"],"description":"Tags associated with the advertiser.","items":{"type":"string","description":"Advertiser tag."}},"metrics":{"type":"object","description":"Performance metrics object. All metric values are returned as strings regardless of their numeric nature.","properties":{"total_campaigns":{"type":"string","description":"Total number of campaigns."},"total_daily_budget":{"type":"string","description":"Total daily budget amount."},"balance":{"type":"string","description":"Account balance."},"advertiser_id":{"type":"string","description":"Advertiser identifier."},"impressions":{"type":"string","description":"Total number of ad impressions."},"views":{"type":"string","description":"Total number of ad views."},"clicks":{"type":"string","description":"Total number of ad clicks."},"conversions":{"type":"string","description":"Total number of conversions."},"conversion_rate":{"type":"string","description":"Conversion rate percentage."},"total_conversions_items_quantity":{"type":"string","description":"Total quantity of items across all ad-driven conversions. Sums the quantities of every item in each conversion event (for example, if a shopper buys two units of a product after clicking an ad, this metric increases by 2)."},"ctr":{"type":"string","description":"Click-through rate percentage."},"income":{"type":"string","description":"Total income generated."},"ecpm":{"type":"string","description":"Effective cost per mille (CPM)."},"total_spent":{"type":"string","description":"Total amount spent."},"cpa":{"type":"string","description":"Cost per acquisition."},"avg_cpc":{"type":"string","description":"Average cost per click."},"avg_cpm":{"type":"string","description":"Average cost per mille."},"conversions_quantity":{"type":"string","description":"Total number of ad-driven conversions (sales attributed to an ad). Counts each conversion event as 1, regardless of how many items were purchased (for example, if a shopper buys two units of a product after clicking an ad, this metric increases by 1)."},"roas":{"type":"string","description":"Return on ad spend."},"adcost":{"type":"string","description":"Ad cost."},"consumed_daily_budget":{"type":"string","description":"Amount of daily budget consumed."}}},"account_logo":{"type":"string","description":"URL of the advertiser's logo."},"account_theme":{"type":"object","description":"Theme configuration object.","properties":{"primary_color":{"type":"string","description":"Primary color code (hex format)."},"header_color":{"type":"string","description":"Header color code (hex format)."},"second_color":{"type":"string","description":"Secondary color code (hex format)."},"dark_color":{"type":"string","description":"Dark color code (hex format)."}}}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves information from all advertisers associated with a publisher account. The data is returned in JSON format by default, but can be exported as an XLSX file by setting `download=true`.
+
+  >ℹ️ Only available in the publisher view (publisher account).
+
+  >⚠️ This endpoint is limited to 100 requests per minute per account. Exceeding the limit returns `429 Too Many Requests`.
+
+  ## Permissions
+
+  This endpoint does not require [License Manager resources](https://help.vtex.com/docs/tutorials/license-manager-resources).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `start_date` | query | (Required) Start date for metrics in `YYYY-MM-DD` format. |
+  | `end_date` | query | (Required) End date for metrics in `YYYY-MM-DD` format. |
+  | `account_info` | query | If `true`, includes detailed account information in the result. |
+  | `page` | query | Page number of the results. |
+  | `quantity` | query | Number of items per page. When `download=true`, the BFF requests up to `20000` rows for XLSX generation. |
+  | `count` | query | If `true`, returns the total number of available records. |
+  | `download` | query | If `true`, returns an XLSX file buffer for download instead of JSON. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "total": 1,
+    "pages": 1,
+    "currentPage": 1,
+    "data": [
+      {
+        "id": "id",
+        "name": "name",
+        "account_id": "account-id",
+        "checking_account_id": "checking-account-id",
+        "seller_id": null,
+        "advertiser_tags": null,
+        "metrics": {
+          "total_campaigns": "100",
+          "total_daily_budget": "50000.00",
+          "balance": "6756756.40",
+          "advertiser_id": "advertiser-id",
+          "impressions": "395696",
+          "views": "323720",
+          "clicks": "1237",
+          "conversions": "0",
+          "conversion_rate": "0.00",
+          "total_conversions_items_quantity": "0",
+          "ctr": "0.31",
+          "income": "0.0000",
+          "ecpm": "0.00",
+          "total_spent": "213122.6000",
+          "cpa": "0",
+          "avg_cpc": "31.99",
+          "avg_cpm": "100.00",
+          "conversions_quantity": "0",
+          "roas": "0.00",
+          "adcost": "0.0",
+          "consumed_daily_budget": "4407.70"
+        },
+        "account_logo": "https://cdn.newtail.com.br/accounts/4852asd4q-3b0a-11ef-b7a2-014ea2680b7e/assets/advertiser-logo.png",
+        "account_theme": {
+          "primary_color": "#00B941",
+          "header_color": "#00B941",
+          "second_color": "#00B941",
+          "dark_color": "#00B941"
+        }
+      }
+    ]
+  }
+  ```

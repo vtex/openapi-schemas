@@ -1,0 +1,106 @@
+info:
+  name: List Feeds
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/sent-offers/feeds?an={{accountName}}"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: "{{accountName}}"
+      type: query
+    - name: environment
+      value: vtexcommercestable
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/sent-offers/feeds - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/sent-offers/feeds - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/sent-offers/feeds - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/sent-offers/feeds - Schema is valid", function () {
+          const schema = {"type":"array","items":{"type":"object","example":{"account":"grocery1","id":"digibee.shopee","affiliateId":"SHP","salesChannel":"1","channelName":"shopee","channelLogo":"https://s3.amazonaws.com/Marketplace-Integration/Bridge/logos/shopee.png"},"properties":{"account":{"type":"string","description":"Seller's account name."},"id":{"type":"string","description":"The `feedId` attribute that identifies a feed between a seller and a channel, follows a standardized pattern that will be used by connectors when calling this endpoint. It follows the pattern `vendor.channel`."},"affiliateId":{"type":"string","description":"Corresponds to the 3-digit [affiliate](https://help.vtex.com/en/tutorial/configuring-affiliates--tutorials_187) identification code created by the seller."},"salesChannel":{"type":"string","description":"Sales channel (or [trade policy](https://help.vtex.com/en/tutorial/how-trade-policies-work--6Xef8PZiFm40kg2STrMkMVa)) used in the integration."},"channelName":{"type":"string","description":"Name of the marketplace, or channel, present in the feed."},"channelLogo":{"type":"string","description":"URL redirecting to the image file of the graphic symbol that identifies the marketplace."}}},"example":[{"account":"grocery1","id":"digibee.shopee","affiliateId":"SHP","salesChannel":"1","channelName":"shopee","channelLogo":"https://s3.amazonaws.com/Marketplace-Integration/Bridge/logos/shopee.png"},{"account":"grocery1","id":"v2v.saggin","affiliateId":"SGN","salesChannel":"1","channelName":"Saggin","channelLogo":"https://saggin.myvtex.com/api/license-manager/site/pub/accounts/a44ab387-ab95-439e-81aa-7c1a56b45374/logos/show"},{"account":"grocery1","id":"vtex.amazon","affiliateId":"MSM","salesChannel":"1","channelName":"Amazon","channelLogo":"https://s3.amazonaws.com/Marketplace-Integration/Bridge/logos/amazon.png"}]};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  >❗The Offer Management module has been discontinued and is no longer supported. The module has been replaced by Offer Status.
+  To learn more, visit the [announcement](https://help.vtex.com/pt/announcements/modulo-status-dos-anuncios-para-integracoes-com-marketplaces-vtex--1EeGgit1Brq3mmm8qhv2m3).
+
+   In [Offer Management](https://developers.vtex.com/vtex-rest-api/docs/sent-offers-integration-guide-connectors), a feed is a list of information about seller's offers sent to a marketplace, and it is updated in real-time with content provided by the marketplace and VTEX modules. 
+
+  Since a seller can have integrations with multiple marketplaces, numerous feeds can be associated with an account. This endpoint retrieves a list with all the feeds related to an account.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `environment` | path | (Required) Environment to use. Used as part of the URL. |
+  | `an` | query | (Required) Name of the Seller's VTEX account. Used as query param. |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "account": "grocery1",
+      "id": "digibee.shopee",
+      "affiliateId": "SHP",
+      "salesChannel": "1",
+      "channelName": "shopee",
+      "channelLogo": "https://s3.amazonaws.com/Marketplace-Integration/Bridge/logos/shopee.png"
+    },
+    {
+      "account": "grocery1",
+      "id": "v2v.saggin",
+      "affiliateId": "SGN",
+      "salesChannel": "1",
+      "channelName": "Saggin",
+      "channelLogo": "https://saggin.myvtex.com/api/license-manager/site/pub/accounts/a44ab387-ab95-439e-81aa-7c1a56b45374/logos/show"
+    },
+    {
+      "account": "grocery1",
+      "id": "vtex.amazon",
+      "affiliateId": "MSM",
+      "salesChannel": "1",
+      "channelName": "Amazon",
+      "channelLogo": "https://s3.amazonaws.com/Marketplace-Integration/Bridge/logos/amazon.png"
+    }
+  ]
+  ```

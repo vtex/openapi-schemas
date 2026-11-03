@@ -1,0 +1,68 @@
+info:
+  name: Tracking events with app
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/:app_name/v{{app_version}}/:account/:workspace/tracking"
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: app_name
+      value: "{{app name}}"
+      type: path
+    - name: account
+      value: VTEX Store example
+      type: path
+    - name: workspace
+      value: master
+      type: path
+  body:
+    type: json
+    data: |-
+      [
+        {
+          "trackingNumber": "BR000000000"
+        }
+      ]
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("[POST]::/:app_name/v{{app_version}}/:account/:workspace/tracking - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint is called by the hub to  obtain the tracking events of a series of tracking numbers. This call's request updates the events of a list of tracking codes, for packages that are still pending delivery. The expected response is an object contaning the tracking information and the package's notification ID for every `packageID`. 
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Logistics | Logistics access | **Transportation read only** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `app_name` | path | (Required) Name of the app developed by the carrier's integration. |
+  | `account` | path | (Required) VTEX account dispatching the package. |
+  | `workspace` | path | (Required) Workspace used in VTEX IO. |

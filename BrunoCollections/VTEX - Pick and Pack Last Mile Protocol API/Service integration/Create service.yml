@@ -1,0 +1,209 @@
+info:
+  name: Create service
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: https://:store_endpoint/create-service
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+    - name: Authorization
+      value: "{token}"
+  params:
+    - name: your_endpoint
+      value: storeapi.com
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "orderId": "SLR-29384924-01",
+        "carrierId": "servientrega-50461c9f3335",
+        "seller": "qaolimpica",
+        "sender": {
+          "name": "Tabitha Sears",
+          "phone": "+57 2305781612",
+          "email": "tabitha_sears@fortean.brother",
+          "city": "Jenkinsville",
+          "state": "Northern Mariana Islands",
+          "country": "US",
+          "address": "77 Sullivan Place, Jenkinsville, Northern Mariana Islands",
+          "addressComplement": "Flat 45",
+          "number": "1029",
+          "reference": "3",
+          "location": {
+            "latitude": -75.269008,
+            "longitude": 137.499833
+          },
+          "pickupDate": "2024-04-25T18:06:41.202Z"
+        },
+        "receiver": {
+          "name": "Pansy Graves",
+          "phone": "+57 4240807147",
+          "email": "pansy_graves@zentime.moda",
+          "city": "Valle",
+          "state": "Marshall Islands",
+          "country": "Iceland",
+          "neighborhood": "Billings",
+          "number": "9840",
+          "reference": "63 Billings Place, Valle, Marshall Islands",
+          "addressComplement": "Flat 45",
+          "location": {
+            "latitude": -33.249891,
+            "longitude": -135.052901
+          },
+          "identification": "9541933267",
+          "deliveryDate": "2024-04-16T20:49:36.117Z",
+          "contactName": "Savannah Porter",
+          "deliveryWindow": {
+            "name": "consectetur",
+            "initialDate": "2024-04-25T22:50:41.209Z",
+            "finalDate": "2024-05-05T21:50:41.210Z"
+          }
+        },
+        "packages": [
+          {
+            "id": "6266df719ac55224b793ad36",
+            "orderId": "SLR-1221800709659-01",
+            "envelope": "Large",
+            "description": "Delicate package",
+            "categories": [
+              "Cellphone",
+              "Technology"
+            ],
+            "dimensions": {
+              "width": "68",
+              "height": "43",
+              "length": "13"
+            },
+            "weight": "19",
+            "totalValue": 5616.01,
+            "items": [
+              {
+                "id": "6266df71a19ebe35637e1f42",
+                "name": "Tomatos",
+                "ean": "473390795673",
+                "refId": "6266",
+                "image": "https://static9.depositphotos.com/1628352/1107/i/600/depositphotos_11071361-stock-photo-tomato.jpg",
+                "type": "Food",
+                "price": 774230.01,
+                "weight": "4 kg",
+                "quantity": 4
+              },
+              {
+                "id": "6266df71803601c3bc4e2d99",
+                "name": "Tomatos",
+                "ean": "329949764612",
+                "refId": "6266",
+                "image": "https://static9.depositphotos.com/1628352/1107/i/600/depositphotos_11071361-stock-photo-cellphone.jpg",
+                "type": "Foods",
+                "price": 23162,
+                "weight": "14 kg",
+                "quantity": 9
+              }
+            ]
+          }
+        ],
+        "type": "PICKUP_DELIVERY",
+        "carrierServiceType": "OTHERS",
+        "comments": "Delivery comments.",
+        "paymentMethod": "CASH_ON_DELIVERY",
+        "orderValue": 8000,
+        "settings": [
+          {
+            "label": "Key secret",
+            "value": "keysecret-0122",
+            "key": "secrekey"
+          }
+        ],
+        "timezone": {
+          "offset": 300,
+          "value": "America/Bogota"
+        }
+      }
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/create-service - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/create-service - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/create-service - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/create-service - Schema is valid", function () {
+          const schema = {"type":"object","required":["status","serviceId","shippingPrice","metaData","shippingEstimatedDate","labels"],"properties":{"status":{"type":"string","description":"Status of the service.","enum":["PENDING","ASSIGNED","PICKED","ON_ROUTE","INCIDENT","RETURNED","DELIVERED","CANCELED","ON_HOLD"]},"serviceId":{"type":"string","description":"Service ID."},"shippingPrice":{"type":"number","description":"Service shipping price."},"metaData":{"type":"object","properties":{"{keyValue}":{"description":"Carrier additional information.","type":"string"}}},"shippingEstimatedDate":{"type":"string","description":"Shipping estimated date in [UTC time format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"labels":{"type":"array","items":{"required":["id","name","url","type"],"type":"object","properties":{"id":{"type":"string","description":"Label ID."},"name":{"type":"string","description":"Name of the label."},"url":{"type":"string","description":"Label URL."},"type":{"type":"string","description":"Label's type of file."}}},"description":"Shipping labels, there may be more than one per order due to breakage in packages."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates a service with the information that VTEX will send to the carrier. To understand how to integrate with a carrier, check the [VTEX Pick and Pack Carriers Integration Protocol](https://developers.vtex.com/docs/guides/vtex-pick-and-pack) guide.
+
+  This endpoint must be developed by the carriers or brokers to integrate into the protocol.
+
+  ## Permissions
+
+  This endpoint does not require [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+  | `Authorization` | header | (Required) Authentication JWT. JSON Web Token (JWT) is an open standard (RFC 7519) that defines a compact and self-contained way for securely transmitting information as a JSON object between parties. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "status": "PENDING",
+    "serviceId": "ASDF23324KDSF2",
+    "shippingPrice": 20000.09,
+    "metaData": {
+      "anyKey": "anyValue"
+    },
+    "shippingEstimatedDate": "2024-05-29T22:36:37.589Z",
+    "labels": [
+      {
+        "id": "ut nulla",
+        "name": "qui",
+        "url": "dolor tempor",
+        "type": "ea nulla magna elit"
+      },
+      {
+        "id": "ipsum in",
+        "name": "eiusmod fugiat Excepteur",
+        "url": "dolore voluptate qui",
+        "type": "aut"
+      }
+    ]
+  }
+  ```

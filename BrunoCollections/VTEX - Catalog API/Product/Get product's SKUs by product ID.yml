@@ -1,0 +1,192 @@
+info:
+  name: Get product's SKUs by product ID
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/catalog_system/pub/products/variations/:productId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: productId
+      value: "1"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/catalog_system/pub/products/variations/:productId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/catalog_system/pub/products/variations/:productId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/catalog_system/pub/products/variations/:productId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/catalog_system/pub/products/variations/:productId - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"productId":{"type":"integer","description":"Product's unique numerical identifier."},"name":{"type":"string","description":"Product name."},"salesChannel":{"type":"string","description":"Sales channel ID."},"available":{"type":"boolean","description":"Defines if the product is available (`true`) or not (`false`)."},"displayMode":{"type":"string","description":"Defines the mannner SKUs are displayed."},"dimensions":{"type":"array","description":"Lists SKU specifications.","items":{"type":"string","description":"Name of the SKU specification."}},"dimensionsInputType":{"type":"object","description":"Lists SKU specifications and their Field type, in the following format: `\"{specificationName}\":\"{fieldType}\"`."},"dimensionsMap":{"type":"object","description":"Lists SKU specifications and their possible values inside arrays."},"skus":{"type":"array","description":"Array containing information about the product's SKUs.","items":{"type":"object","description":"Object containing information about a specific SKU.","properties":{"sku":{"type":"integer","description":"SKU ID."},"skuname":{"type":"string","description":"SKU Name."},"dimensions":{"type":"object","description":"Lists SKU specifications and their respective values."},"available":{"type":"boolean","description":"Defines if the SKU is available (`true`) or not (`false`)."},"availablequantity":{"type":"integer","description":"Available quantity of the SKU in stock."},"cacheVersionUsedToCallCheckout":{"type":["string","null"],"description":"Cache version used to call Checkout."},"listPriceFormated":{"type":"string","description":"List price formatted according to the valid currency."},"listPrice":{"type":"integer","description":"List price."},"taxFormated":{"type":"string","description":"Tax value formatted according to the valid currency."},"taxAsInt":{"type":"integer","description":"Tax value."},"bestPriceFormated":{"type":"string","description":"Best price formatted according to the valid currency."},"bestPrice":{"type":"integer","description":"Best price."},"spotPrice":{"type":"integer","description":"Spot price."},"installments":{"type":"integer","description":"Number of installments."},"installmentsValue":{"type":"integer","description":"Value of installments."},"installmentsInsterestRate":{"type":["integer","null"],"description":"Interest rate of installments."},"image":{"type":"string","description":"SKU image URL."},"sellerId":{"type":"string","description":"Seller ID."},"measures":{"type":"object","description":"SKU measures.","properties":{"cubicweight":{"type":"number","description":"Cubic weight."},"height":{"type":"number","description":"Height."},"length":{"type":"number","description":"Length."},"weight":{"type":"number","description":"Weight."},"width":{"type":"number","description":"Width."}}},"unitMultiplier":{"type":"number","description":"SKU Unit Multiplier."},"rewardValue":{"type":"integer","description":"Credit that the customer receives when finalizing an order that includes the SKU. By filling this field out with `1`, the customer receives credit on the site in the selected currency, e.g. U$ 1."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves data about a product and its SKUs, given the product ID. A SKU (Stock Keeping Unit) is the physical unit of the product, also called a product variation.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Catalog | Content | **Product management** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `productId` | path | (Required) Product's unique numerical identifier. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "productId": 9,
+    "name": "Tshirt",
+    "salesChannel": "2",
+    "available": true,
+    "displayMode": "list",
+    "dimensions": [
+      "Color",
+      "Size",
+      "Origin country",
+      "Gender"
+    ],
+    "dimensionsInputType": {
+      "Color": "Combo",
+      "Size": "Combo",
+      "Origin country": "Combo",
+      "Gender": "Combo"
+    },
+    "dimensionsMap": {
+      "Color": [
+        "Yellow",
+        "Blue",
+        "Red"
+      ],
+      "Size": [
+        "S",
+        "M",
+        "L"
+      ],
+      "Origin country": [
+        "Brazil"
+      ],
+      "Gender": [
+        "Male"
+      ]
+    },
+    "skus": [
+      {
+        "sku": 310118454,
+        "skuname": "Yellow - L",
+        "dimensions": {
+          "Color": "Yellow",
+          "Size": "L",
+          "Origin country": "Brazil",
+          "Gender": "Male"
+        },
+        "available": false,
+        "availablequantity": 0,
+        "cacheVersionUsedToCallCheckout": null,
+        "listPriceFormated": "R$ 0,00",
+        "listPrice": 0,
+        "taxFormated": "R$ 0,00",
+        "taxAsInt": 0,
+        "bestPriceFormated": "R$ 9.999.876,00",
+        "bestPrice": 999987600,
+        "spotPrice": 999987600,
+        "installments": 0,
+        "installmentsValue": 0,
+        "installmentsInsterestRate": null,
+        "image": "https://lojadobreno.vteximg.com.br/arquivos/ids/155467-292-292/image-5d7ad76ad1954c53adecab4138319034.jpg?v=637321899584500000",
+        "sellerId": "1",
+        "seller": "lojadobreno",
+        "measures": {
+          "cubicweight": 1,
+          "height": 5,
+          "length": 20,
+          "weight": 200,
+          "width": 20
+        },
+        "unitMultiplier": 1,
+        "rewardValue": 0
+      },
+      {
+        "sku": 310118455,
+        "skuname": "Red - M",
+        "dimensions": {
+          "Color": "Red",
+          "Size": "M",
+          "Origin country": "Brazil",
+          "Gender": "Male"
+        },
+        "available": true,
+        "availablequantity": 99999,
+        "cacheVersionUsedToCallCheckout": "38395F1AEF59DF5CEAEDE472328145CD_",
+        "listPriceFormated": "R$ 0,00",
+        "listPrice": 0,
+        "taxFormated": "R$ 0,00",
+        "taxAsInt": 0,
+        "bestPriceFormated": "R$ 20,00",
+        "bestPrice": 2000,
+        "spotPrice": 2000,
+        "installments": 1,
+        "installmentsValue": 2000,
+        "installmentsInsterestRate": 0,
+        "image": "https://lojadobreno.vteximg.com.br/arquivos/ids/155468-292-292/image-601a6099aace48b89d26fc9f22e8e611.jpg?v=637321906602470000",
+        "sellerId": "pedrostore",
+        "seller": "pedrostore",
+        "measures": {
+          "cubicweight": 0.4167,
+          "height": 5,
+          "length": 20,
+          "weight": 200,
+          "width": 20
+        },
+        "unitMultiplier": 1,
+        "rewardValue": 0
+      }
+    ]
+  }
+  ```
