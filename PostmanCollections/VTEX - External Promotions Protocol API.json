@@ -1,10 +1,10 @@
 {
   "_": {
-    "postman_id": "953b79ae-963b-4e2f-b4bb-3e34d2b58729"
+    "postman_id": "c0bb2654-133a-4eef-9187-e9674761dde9"
   },
   "item": [
     {
-      "id": "3cf81080-1c7b-4b37-ac74-04b73a816594",
+      "id": "419f0207-5f0c-435d-8d6c-184a53f95648",
       "name": "External promotions",
       "description": {
         "content": "",
@@ -12,12 +12,12 @@
       },
       "item": [
         {
-          "id": "959bcbeb-58a1-4d28-a6ff-8fb33ef72b8a",
+          "id": "f211a770-cf40-4afa-bd41-029080bd3a01",
           "name": "Calculate promotions",
           "request": {
             "name": "Calculate promotions",
             "description": {
-              "content": "Calculates the promotions and discounts applicable to a given shopping cart. VTEX calls this endpoint during the cart calculation process, sending the shopping cart data including items, coupon codes, UTM parameters, and sales channel information. The external promotions provider must return the calculated discounts for each item, along with a summary of all promotions considered.\r\n\r\nThis endpoint supports **hybrid** orchestration (protocol v1.1). When an account combines native VTEX promotions with an external provider, VTEX sends the cart **after** native evaluation: see `items[].price` (post-native per-unit price) and the optional per-line `items[].nativePromotionLayer`. The provider may also return `allPromotions[].qualificationProgress` describing promotions the shopper has **not yet unlocked**.\r\n\r\nIn hybrid mode, the provider can optionally return `nativePromotionRemovals` to ask VTEX to drop specific applied native promotions (by the ids exposed in `items[].nativePromotionLayer.appliedPromotions[].id`) from the merged result — either cart-wide or for selected lines — instead of only stacking discounts on top of them. Absent or empty `nativePromotionRemovals` is a no-op.\r\n\r\n## Supported promotion types\r\n\r\nThis protocol currently supports **Nominal** external promotions only: a fixed monetary amount off the item price, returned as `items[].promotions[].discount` with `type` set to `Nominal`. **Percentual** discounts, **Shipping** promotions, and other promotion types are not supported. Do not return those types; they are outside this contract and will not be applied.\r\n\r\n## How VTEX derives the discount\r\n\r\nThis is the single most important rule of the response contract:\r\n\r\n- The money VTEX applies comes **only** from `items[].promotions[].discount`, multiplied by `items[].quantity`. That `discount` is a **Nominal** (fixed) monetary amount per unit; percentual and shipping discounts are not applied.\r\n- A promotion produces a discount **only** if its `id` is also listed in `allPromotions`. VTEX builds the result by iterating `allPromotions` and matching each entry against `items[].promotions`.\r\n- `originalPrice`, `discountedPrice` and `externalPromotionLayer` are **informational**. They are used for tracing and diagnostics and never produce a discount on their own. Returning `externalPromotionLayer` without the matching `items[].promotions` entries results in **no discount being applied at all**.\r\n\r\n## Response requirements\r\n\r\nVTEX validates the body before merging it and discards the **entire** response when it is malformed. Specifically:\r\n\r\n- `items` must be present and must not contain `null` entries.\r\n- If any `items[].promotions` is present and non-empty, then `allPromotions` must also be present and non-empty. Item-level promotions without a catalog are rejected.\r\n- Every `allPromotions[].id` and every `items[].promotions[].id` must be a non-empty string.\r\n- Every `items[].id` must match an item id sent in the request.\r\n- Quantity fields under `qualificationProgress` must be whole numbers. A fractional value fails deserialization and discards the response.\r\n\r\nAn applied promotion id that is not listed in `allPromotions` is tolerated and does not fail the response, but no discount is produced for it.\r\n\r\n## Authentication\r\n\r\nVTEX authenticates with an API key sent in a header whose name is configured per account and defaults to `Authorization`, optionally with a prefix such as `Bearer `. VTEX does not send HTTP Basic credentials, and it does not send an `Accept` header. The provider should reject unauthenticated requests with `401 Unauthorized`.\r\n\r\n## Timeout\r\n\r\nThe call times out after 5000 ms by default (configurable per account) and is **not** retried.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
+              "content": "Calculates the promotions and discounts applicable to a given shopping cart. VTEX calls this endpoint during the cart calculation process, sending the shopping cart data including items, coupon codes, UTM parameters, and sales channel information. The external promotions provider must return the calculated discounts for each item, along with a summary of all promotions considered.\r\n\r\nThis endpoint supports **hybrid** orchestration (protocol v1.1). When an account combines native VTEX promotions with an external provider, VTEX sends the cart **after** native evaluation: see `items[].price` (post-native per-unit price) and the optional per-line `items[].nativePromotionLayer`. The provider may also return `allPromotions[].qualificationProgress` describing promotions the shopper has **not yet unlocked**.\r\n\r\nIn hybrid mode, the provider can optionally return `nativePromotionRemovals` to ask VTEX to drop specific applied native promotions (by the ids exposed in `items[].nativePromotionLayer.appliedPromotions[].id`) from the merged result — either cart-wide or for selected lines — instead of only stacking discounts on top of them. Absent or empty `nativePromotionRemovals` is a no-op.\r\n\r\nFrom protocol v1.2, this request may include `evaluationContext` and `orderId`. `evaluationContext` says whether the evaluation is the pre-order cart (`initial`) or a post-order change (`change_order`). When it is absent, the request is the same one the partner received before v1.2.0 and is calculated the same way as `initial`. `orderId` is the VTEX order id sent with `evaluationContext: change_order`, so the external engine can compare this cart with the promotion application it stored for that order. It is absent on an initial cart. The partner decides whether the id changes the calculation.\r\n\r\n## Supported promotion types\r\n\r\nThis protocol currently supports **Nominal** external promotions only: a fixed monetary amount off the item price, returned as `items[].promotions[].discount` with `type` set to `Nominal`. **Percentual** discounts, **Shipping** promotions, and other promotion types are not supported. Do not return those types; they are outside this contract and will not be applied.\r\n\r\n## How VTEX derives the discount\r\n\r\nThis is the single most important rule of the response contract:\r\n\r\n- The money VTEX applies comes **only** from `items[].promotions[].discount`, multiplied by `items[].quantity`. That `discount` is a **Nominal** (fixed) monetary amount per unit; percentual and shipping discounts are not applied.\r\n- A promotion produces a discount **only** if its `id` is also listed in `allPromotions`. VTEX builds the result by iterating `allPromotions` and matching each entry against `items[].promotions`.\r\n- `originalPrice`, `discountedPrice` and `externalPromotionLayer` are **informational**. They are used for tracing and diagnostics and never produce a discount on their own. Returning `externalPromotionLayer` without the matching `items[].promotions` entries results in **no discount being applied at all**.\r\n\r\n## Response requirements\r\n\r\nVTEX validates the body before merging it and discards the **entire** response when it is malformed. Specifically:\r\n\r\n- `items` must be present and must not contain `null` entries.\r\n- If any `items[].promotions` is present and non-empty, then `allPromotions` must also be present and non-empty. Item-level promotions without a catalog are rejected.\r\n- Every `allPromotions[].id` and every `items[].promotions[].id` must be a non-empty string.\r\n- Every `items[].id` must match an item id sent in the request.\r\n- Quantity fields under `qualificationProgress` must be whole numbers. A fractional value fails deserialization and discards the response.\r\n\r\nAn applied promotion id that is not listed in `allPromotions` is tolerated and does not fail the response, but no discount is produced for it.\r\n\r\n## Authentication\r\n\r\nVTEX authenticates with an API key sent in a header whose name is configured per account and defaults to `Authorization`, optionally with a prefix such as `Bearer `. VTEX does not send HTTP Basic credentials, and it does not send an `Accept` header. The provider should reject unauthenticated requests with `401 Unauthorized`.\r\n\r\n## Timeout\r\n\r\nThe call times out after 5000 ms by default (configurable per account) and is **not** retried.\r\n\r\n## Permissions\r\n\r\nThis endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).",
               "type": "text/plain"
             },
             "url": {
@@ -52,7 +52,7 @@
             "method": "POST",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"correlationId\": \"7f3e2b10-2c5a-4a9e-bf6a-9b9d0c2f1a23\",\n  \"customFields\": {\n    \"myAppId\": {\n      \"giftMessage\": \"Happy birthday\"\n    }\n  },\n  \"origin\": \"Marketplace\",\n  \"shopperProfileId\": \"da1220f6-88ce-46a2-b466-7f311c5a1bf0\",\n  \"salesChannelId\": \"3\",\n  \"couponCodes\": [\n    \"coupon-code-1\",\n    \"coupon-code-2\"\n  ],\n  \"utms\": null,\n  \"items\": [\n    {\n      \"id\": \"792\",\n      \"sellerId\": \"1\",\n      \"quantity\": 3,\n      \"price\": 2,\n      \"catalogInfo\": {\n        \"brandId\": \"23\",\n        \"categoryId\": \"43\",\n        \"productId\": \"55\",\n        \"collectionIds\": [\n          \"98\",\n          \"11\"\n        ],\n        \"ean\": \"7891234567890\",\n        \"refId\": \"SKU-ABC-001\"\n      },\n      \"paymentInfo\": [\n        {\n          \"id\": \"34\",\n          \"value\": 6\n        }\n      ],\n      \"nativePromotionLayer\": {\n        \"priceBeforeLayer\": 2.5,\n        \"priceAfterLayer\": 2,\n        \"appliedPromotions\": [\n          {\n            \"id\": \"native-promo-1\",\n            \"discount\": 0.5,\n            \"type\": \"Nominal\"\n          }\n        ]\n      }\n    }\n  ]\n}",
+              "raw": "{\n  \"correlationId\": \"7f3e2b10-2c5a-4a9e-bf6a-9b9d0c2f1a23\",\n  \"evaluationContext\": \"change_order\",\n  \"orderId\": \"v1234567890abc-01\",\n  \"customFields\": {\n    \"myAppId\": {\n      \"giftMessage\": \"Happy birthday\"\n    }\n  },\n  \"origin\": \"Marketplace\",\n  \"shopperProfileId\": \"da1220f6-88ce-46a2-b466-7f311c5a1bf0\",\n  \"salesChannelId\": \"3\",\n  \"couponCodes\": [\n    \"coupon-code-1\",\n    \"coupon-code-2\"\n  ],\n  \"utms\": null,\n  \"items\": [\n    {\n      \"id\": \"792\",\n      \"sellerId\": \"1\",\n      \"quantity\": 3,\n      \"price\": 2,\n      \"catalogInfo\": {\n        \"brandId\": \"23\",\n        \"categoryId\": \"43\",\n        \"productId\": \"55\",\n        \"collectionIds\": [\n          \"98\",\n          \"11\"\n        ],\n        \"ean\": \"7891234567890\",\n        \"refId\": \"SKU-ABC-001\"\n      },\n      \"paymentInfo\": [\n        {\n          \"id\": \"34\",\n          \"value\": 6\n        }\n      ],\n      \"nativePromotionLayer\": {\n        \"priceBeforeLayer\": 2.5,\n        \"priceAfterLayer\": 2,\n        \"appliedPromotions\": [\n          {\n            \"id\": \"native-promo-1\",\n            \"discount\": 0.5,\n            \"type\": \"Nominal\"\n          }\n        ]\n      }\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "headerFamily": "json",
@@ -66,7 +66,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "13cacdc7-1bd1-4e73-8156-5f454065c2cb",
+              "id": "1d25bce9-2885-4cc9-bd54-d82ddddc179c",
               "name": "Hybrid — external discount stacked on top of the native one",
               "originalRequest": {
                 "url": {
@@ -109,7 +109,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"correlationId\": \"7f3e2b10-2c5a-4a9e-bf6a-9b9d0c2f1a23\",\n  \"customFields\": {\n    \"myAppId\": {\n      \"giftMessage\": \"Happy birthday\"\n    }\n  },\n  \"origin\": \"Marketplace\",\n  \"shopperProfileId\": \"da1220f6-88ce-46a2-b466-7f311c5a1bf0\",\n  \"salesChannelId\": \"3\",\n  \"couponCodes\": [\n    \"coupon-code-1\",\n    \"coupon-code-2\"\n  ],\n  \"utms\": null,\n  \"items\": [\n    {\n      \"id\": \"792\",\n      \"sellerId\": \"1\",\n      \"quantity\": 3,\n      \"price\": 2,\n      \"catalogInfo\": {\n        \"brandId\": \"23\",\n        \"categoryId\": \"43\",\n        \"productId\": \"55\",\n        \"collectionIds\": [\n          \"98\",\n          \"11\"\n        ],\n        \"ean\": \"7891234567890\",\n        \"refId\": \"SKU-ABC-001\"\n      },\n      \"paymentInfo\": [\n        {\n          \"id\": \"34\",\n          \"value\": 6\n        }\n      ],\n      \"nativePromotionLayer\": {\n        \"priceBeforeLayer\": 2.5,\n        \"priceAfterLayer\": 2,\n        \"appliedPromotions\": [\n          {\n            \"id\": \"native-promo-1\",\n            \"discount\": 0.5,\n            \"type\": \"Nominal\"\n          }\n        ]\n      }\n    }\n  ]\n}",
+                  "raw": "{\n  \"correlationId\": \"7f3e2b10-2c5a-4a9e-bf6a-9b9d0c2f1a23\",\n  \"evaluationContext\": \"change_order\",\n  \"orderId\": \"v1234567890abc-01\",\n  \"customFields\": {\n    \"myAppId\": {\n      \"giftMessage\": \"Happy birthday\"\n    }\n  },\n  \"origin\": \"Marketplace\",\n  \"shopperProfileId\": \"da1220f6-88ce-46a2-b466-7f311c5a1bf0\",\n  \"salesChannelId\": \"3\",\n  \"couponCodes\": [\n    \"coupon-code-1\",\n    \"coupon-code-2\"\n  ],\n  \"utms\": null,\n  \"items\": [\n    {\n      \"id\": \"792\",\n      \"sellerId\": \"1\",\n      \"quantity\": 3,\n      \"price\": 2,\n      \"catalogInfo\": {\n        \"brandId\": \"23\",\n        \"categoryId\": \"43\",\n        \"productId\": \"55\",\n        \"collectionIds\": [\n          \"98\",\n          \"11\"\n        ],\n        \"ean\": \"7891234567890\",\n        \"refId\": \"SKU-ABC-001\"\n      },\n      \"paymentInfo\": [\n        {\n          \"id\": \"34\",\n          \"value\": 6\n        }\n      ],\n      \"nativePromotionLayer\": {\n        \"priceBeforeLayer\": 2.5,\n        \"priceAfterLayer\": 2,\n        \"appliedPromotions\": [\n          {\n            \"id\": \"native-promo-1\",\n            \"discount\": 0.5,\n            \"type\": \"Nominal\"\n          }\n        ]\n      }\n    }\n  ]\n}",
                   "options": {
                     "raw": {
                       "headerFamily": "json",
@@ -133,7 +133,7 @@
               "_": {
                 "postman_previewlanguage": "json"
               },
-              "id": "16a4aa91-6600-4372-8755-4e059b900566",
+              "id": "73efd944-1940-4e00-81b6-134b786d79ad",
               "name": "Hybrid — external promotion replaces the native one",
               "originalRequest": {
                 "url": {
@@ -176,7 +176,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"correlationId\": \"7f3e2b10-2c5a-4a9e-bf6a-9b9d0c2f1a23\",\n  \"customFields\": {\n    \"myAppId\": {\n      \"giftMessage\": \"Happy birthday\"\n    }\n  },\n  \"origin\": \"Marketplace\",\n  \"shopperProfileId\": \"da1220f6-88ce-46a2-b466-7f311c5a1bf0\",\n  \"salesChannelId\": \"3\",\n  \"couponCodes\": [\n    \"coupon-code-1\",\n    \"coupon-code-2\"\n  ],\n  \"utms\": null,\n  \"items\": [\n    {\n      \"id\": \"792\",\n      \"sellerId\": \"1\",\n      \"quantity\": 3,\n      \"price\": 2,\n      \"catalogInfo\": {\n        \"brandId\": \"23\",\n        \"categoryId\": \"43\",\n        \"productId\": \"55\",\n        \"collectionIds\": [\n          \"98\",\n          \"11\"\n        ],\n        \"ean\": \"7891234567890\",\n        \"refId\": \"SKU-ABC-001\"\n      },\n      \"paymentInfo\": [\n        {\n          \"id\": \"34\",\n          \"value\": 6\n        }\n      ],\n      \"nativePromotionLayer\": {\n        \"priceBeforeLayer\": 2.5,\n        \"priceAfterLayer\": 2,\n        \"appliedPromotions\": [\n          {\n            \"id\": \"native-promo-1\",\n            \"discount\": 0.5,\n            \"type\": \"Nominal\"\n          }\n        ]\n      }\n    }\n  ]\n}",
+                  "raw": "{\n  \"correlationId\": \"7f3e2b10-2c5a-4a9e-bf6a-9b9d0c2f1a23\",\n  \"evaluationContext\": \"change_order\",\n  \"orderId\": \"v1234567890abc-01\",\n  \"customFields\": {\n    \"myAppId\": {\n      \"giftMessage\": \"Happy birthday\"\n    }\n  },\n  \"origin\": \"Marketplace\",\n  \"shopperProfileId\": \"da1220f6-88ce-46a2-b466-7f311c5a1bf0\",\n  \"salesChannelId\": \"3\",\n  \"couponCodes\": [\n    \"coupon-code-1\",\n    \"coupon-code-2\"\n  ],\n  \"utms\": null,\n  \"items\": [\n    {\n      \"id\": \"792\",\n      \"sellerId\": \"1\",\n      \"quantity\": 3,\n      \"price\": 2,\n      \"catalogInfo\": {\n        \"brandId\": \"23\",\n        \"categoryId\": \"43\",\n        \"productId\": \"55\",\n        \"collectionIds\": [\n          \"98\",\n          \"11\"\n        ],\n        \"ean\": \"7891234567890\",\n        \"refId\": \"SKU-ABC-001\"\n      },\n      \"paymentInfo\": [\n        {\n          \"id\": \"34\",\n          \"value\": 6\n        }\n      ],\n      \"nativePromotionLayer\": {\n        \"priceBeforeLayer\": 2.5,\n        \"priceAfterLayer\": 2,\n        \"appliedPromotions\": [\n          {\n            \"id\": \"native-promo-1\",\n            \"discount\": 0.5,\n            \"type\": \"Nominal\"\n          }\n        ]\n      }\n    }\n  ]\n}",
                   "options": {
                     "raw": {
                       "headerFamily": "json",
@@ -200,7 +200,7 @@
               "_": {
                 "postman_previewlanguage": "text"
               },
-              "id": "2638715b-c344-4d92-82cb-e0634014eab9",
+              "id": "d1453189-33ae-48ac-9bbe-1ed06ce197c1",
               "name": "Bad Request",
               "originalRequest": {
                 "url": {
@@ -239,7 +239,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"correlationId\": \"7f3e2b10-2c5a-4a9e-bf6a-9b9d0c2f1a23\",\n  \"customFields\": {\n    \"myAppId\": {\n      \"giftMessage\": \"Happy birthday\"\n    }\n  },\n  \"origin\": \"Marketplace\",\n  \"shopperProfileId\": \"da1220f6-88ce-46a2-b466-7f311c5a1bf0\",\n  \"salesChannelId\": \"3\",\n  \"couponCodes\": [\n    \"coupon-code-1\",\n    \"coupon-code-2\"\n  ],\n  \"utms\": null,\n  \"items\": [\n    {\n      \"id\": \"792\",\n      \"sellerId\": \"1\",\n      \"quantity\": 3,\n      \"price\": 2,\n      \"catalogInfo\": {\n        \"brandId\": \"23\",\n        \"categoryId\": \"43\",\n        \"productId\": \"55\",\n        \"collectionIds\": [\n          \"98\",\n          \"11\"\n        ],\n        \"ean\": \"7891234567890\",\n        \"refId\": \"SKU-ABC-001\"\n      },\n      \"paymentInfo\": [\n        {\n          \"id\": \"34\",\n          \"value\": 6\n        }\n      ],\n      \"nativePromotionLayer\": {\n        \"priceBeforeLayer\": 2.5,\n        \"priceAfterLayer\": 2,\n        \"appliedPromotions\": [\n          {\n            \"id\": \"native-promo-1\",\n            \"discount\": 0.5,\n            \"type\": \"Nominal\"\n          }\n        ]\n      }\n    }\n  ]\n}",
+                  "raw": "{\n  \"correlationId\": \"7f3e2b10-2c5a-4a9e-bf6a-9b9d0c2f1a23\",\n  \"evaluationContext\": \"change_order\",\n  \"orderId\": \"v1234567890abc-01\",\n  \"customFields\": {\n    \"myAppId\": {\n      \"giftMessage\": \"Happy birthday\"\n    }\n  },\n  \"origin\": \"Marketplace\",\n  \"shopperProfileId\": \"da1220f6-88ce-46a2-b466-7f311c5a1bf0\",\n  \"salesChannelId\": \"3\",\n  \"couponCodes\": [\n    \"coupon-code-1\",\n    \"coupon-code-2\"\n  ],\n  \"utms\": null,\n  \"items\": [\n    {\n      \"id\": \"792\",\n      \"sellerId\": \"1\",\n      \"quantity\": 3,\n      \"price\": 2,\n      \"catalogInfo\": {\n        \"brandId\": \"23\",\n        \"categoryId\": \"43\",\n        \"productId\": \"55\",\n        \"collectionIds\": [\n          \"98\",\n          \"11\"\n        ],\n        \"ean\": \"7891234567890\",\n        \"refId\": \"SKU-ABC-001\"\n      },\n      \"paymentInfo\": [\n        {\n          \"id\": \"34\",\n          \"value\": 6\n        }\n      ],\n      \"nativePromotionLayer\": {\n        \"priceBeforeLayer\": 2.5,\n        \"priceAfterLayer\": 2,\n        \"appliedPromotions\": [\n          {\n            \"id\": \"native-promo-1\",\n            \"discount\": 0.5,\n            \"type\": \"Nominal\"\n          }\n        ]\n      }\n    }\n  ]\n}",
                   "options": {
                     "raw": {
                       "headerFamily": "json",
@@ -257,7 +257,7 @@
               "_": {
                 "postman_previewlanguage": "text"
               },
-              "id": "d8e12a0d-14c1-43a8-9164-7b70a1faa8e7",
+              "id": "14137bc2-8227-4e3d-88ce-34b7740dcc05",
               "name": "Unauthorized",
               "originalRequest": {
                 "url": {
@@ -296,7 +296,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"correlationId\": \"7f3e2b10-2c5a-4a9e-bf6a-9b9d0c2f1a23\",\n  \"customFields\": {\n    \"myAppId\": {\n      \"giftMessage\": \"Happy birthday\"\n    }\n  },\n  \"origin\": \"Marketplace\",\n  \"shopperProfileId\": \"da1220f6-88ce-46a2-b466-7f311c5a1bf0\",\n  \"salesChannelId\": \"3\",\n  \"couponCodes\": [\n    \"coupon-code-1\",\n    \"coupon-code-2\"\n  ],\n  \"utms\": null,\n  \"items\": [\n    {\n      \"id\": \"792\",\n      \"sellerId\": \"1\",\n      \"quantity\": 3,\n      \"price\": 2,\n      \"catalogInfo\": {\n        \"brandId\": \"23\",\n        \"categoryId\": \"43\",\n        \"productId\": \"55\",\n        \"collectionIds\": [\n          \"98\",\n          \"11\"\n        ],\n        \"ean\": \"7891234567890\",\n        \"refId\": \"SKU-ABC-001\"\n      },\n      \"paymentInfo\": [\n        {\n          \"id\": \"34\",\n          \"value\": 6\n        }\n      ],\n      \"nativePromotionLayer\": {\n        \"priceBeforeLayer\": 2.5,\n        \"priceAfterLayer\": 2,\n        \"appliedPromotions\": [\n          {\n            \"id\": \"native-promo-1\",\n            \"discount\": 0.5,\n            \"type\": \"Nominal\"\n          }\n        ]\n      }\n    }\n  ]\n}",
+                  "raw": "{\n  \"correlationId\": \"7f3e2b10-2c5a-4a9e-bf6a-9b9d0c2f1a23\",\n  \"evaluationContext\": \"change_order\",\n  \"orderId\": \"v1234567890abc-01\",\n  \"customFields\": {\n    \"myAppId\": {\n      \"giftMessage\": \"Happy birthday\"\n    }\n  },\n  \"origin\": \"Marketplace\",\n  \"shopperProfileId\": \"da1220f6-88ce-46a2-b466-7f311c5a1bf0\",\n  \"salesChannelId\": \"3\",\n  \"couponCodes\": [\n    \"coupon-code-1\",\n    \"coupon-code-2\"\n  ],\n  \"utms\": null,\n  \"items\": [\n    {\n      \"id\": \"792\",\n      \"sellerId\": \"1\",\n      \"quantity\": 3,\n      \"price\": 2,\n      \"catalogInfo\": {\n        \"brandId\": \"23\",\n        \"categoryId\": \"43\",\n        \"productId\": \"55\",\n        \"collectionIds\": [\n          \"98\",\n          \"11\"\n        ],\n        \"ean\": \"7891234567890\",\n        \"refId\": \"SKU-ABC-001\"\n      },\n      \"paymentInfo\": [\n        {\n          \"id\": \"34\",\n          \"value\": 6\n        }\n      ],\n      \"nativePromotionLayer\": {\n        \"priceBeforeLayer\": 2.5,\n        \"priceAfterLayer\": 2,\n        \"appliedPromotions\": [\n          {\n            \"id\": \"native-promo-1\",\n            \"discount\": 0.5,\n            \"type\": \"Nominal\"\n          }\n        ]\n      }\n    }\n  ]\n}",
                   "options": {
                     "raw": {
                       "headerFamily": "json",
@@ -315,7 +315,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "3e4803d7-ac06-4cbe-9b1e-1359182f7c0a",
+                "id": "f2224109-c1df-43f5-8c90-d4dcef910350",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[POST]::/calculatePromotion - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n",
@@ -331,7 +331,7 @@
           }
         },
         {
-          "id": "7a54599a-6b05-4766-b842-333a4b665ab0",
+          "id": "271b43d8-d5db-46a5-8d65-d634116c5714",
           "name": "Notify promotion usage",
           "request": {
             "name": "Notify promotion usage",
@@ -381,7 +381,7 @@
               "_": {
                 "postman_previewlanguage": "text"
               },
-              "id": "9dbb8c42-e979-4bea-bcb1-027fa979f41b",
+              "id": "dac6d5d7-36c3-468d-bcbb-0b1576bfd706",
               "name": "OK",
               "originalRequest": {
                 "url": {
@@ -438,7 +438,7 @@
               "_": {
                 "postman_previewlanguage": "text"
               },
-              "id": "5944fa1a-f511-4367-a8a2-8c8fab76d4bd",
+              "id": "8fe31cf7-c1ba-46a8-b18f-bff1299de52a",
               "name": "Bad Request",
               "originalRequest": {
                 "url": {
@@ -495,7 +495,7 @@
               "_": {
                 "postman_previewlanguage": "text"
               },
-              "id": "8caf495a-1079-4f23-8280-fa3d406b8696",
+              "id": "3ad6487a-5910-4b9a-b870-6e570e55f6b2",
               "name": "Unauthorized",
               "originalRequest": {
                 "url": {
@@ -553,7 +553,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "e3d07ea3-fddb-4b99-be4b-a6dd88c3ea6b",
+                "id": "ae688185-3bc8-4eff-a015-f276d806aef1",
                 "type": "text/javascript",
                 "exec": [
                   "// Validate status 2xx \npm.test(\"[POST]::/notifyUsage - Status code is 2xx\", function () {\n   pm.response.to.be.success;\n});\n"
@@ -603,16 +603,16 @@
     }
   ],
   "info": {
-    "_postman_id": "953b79ae-963b-4e2f-b4bb-3e34d2b58729",
+    "_postman_id": "c0bb2654-133a-4eef-9187-e9674761dde9",
     "name": "External Promotions Protocol API",
     "version": {
-      "raw": "1.1.0",
+      "raw": "1.2.0",
       "major": 1,
-      "minor": 1,
+      "minor": 2,
       "patch": 0,
       "prerelease": [],
       "build": [],
-      "string": "1.1.0"
+      "string": "1.2.0"
     },
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "description": {
