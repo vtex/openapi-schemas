@@ -1,0 +1,476 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Release Status Log API",
+        "description": "Query the history of your account's releases, step by step, so you can monitor release status from your own applications.\r\n\r\nEach entry in the log is one step event of a release (for example, `created`, `publishing`, `published`, or `failed`). You choose a time window and get every event that happened in it.\r\n\r\n>ℹ️ To learn how to query the log, read more than 1000 entries, and monitor releases continuously, see the [Monitoring release status with the Release Status Log API](https://developers.vtex.com/docs/guides/monitoring-release-status-with-the-release-status-log-api) guide.\r\n\r\n## Common parameters\r\n\r\n| **Parameter name** | **Description** | **Type** |\r\n| --------------- | ----------------- | ----------------- |\r\n| {{an}} | Name of the VTEX account. Case-insensitive. | Query variable. |\r\n| {{startDate}} | Start of the time window, inclusive. RFC 3339 date-time. | Query variable. |\r\n| {{endDate}} | End of the time window, exclusive. RFC 3339 date-time. | Query variable. |\r\n\r\n## Limits\r\n\r\n| **Limit** | **Value** |\r\n| --------------- | ----------------- |\r\n| Maximum range between `startDate` and `endDate` | 15 days. |\r\n| Oldest allowed `startDate` | 365 days back (history retention window). |\r\n| Maximum entries per response | 1000. |\r\n| Rate limit | 60 requests per minute per account. |\r\n| Query timeout | 5 seconds. |\r\n\r\nTo cover a period longer than 15 days, split it into several windows of up to 15 days each.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "https://releases.vtex.io"
+        }
+    ],
+    "paths": {
+        "/releases/history": {
+            "get": {
+                "summary": "Get release history",
+                "tags": [
+                    "Release history"
+                ],
+                "description": "Retrieves the log of release step events that happened in a time window, sorted by `occurredAt` in ascending order. The window is `[startDate, endDate)`.\r\n\r\nAll events of a release share the same `releaseId`. Group entries by it to read the release's sequence, for example: `created > publishing > enqueued > build_succeeded > published`. A step can happen more than once for the same release.\r\n\r\nRelease names are not included in the log. To find a release's name, use the List Releases endpoint. Its `id` is the `releaseId` returned here.\r\n\r\nA response holds at most 1000 entries. When `truncated` is `true`, more entries exist in the window. To learn how to read them, handle the `429` and `503` status codes, and poll the endpoint continuously, see the [Monitoring release status with the Release Status Log API](https://developers.vtex.com/docs/guides/monitoring-release-status-with-the-release-status-log-api) guide.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --------------- | ----------------- | ----------------- |\r\n| Releases | Releases | **Visualize Releases** |\r\n\r\nThe token must also have been issued for the same account informed in the `an` query parameter. A token issued for another account is refused with a `403` status code, even if its user has a role in that account. For an API key, the account is the one the key belongs to.\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).\r\n\r\n>❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Accept"
+                    },
+                    {
+                        "name": "an",
+                        "in": "query",
+                        "description": "Name of the VTEX account. Case-insensitive, so `Acme` and `acme` return the same entries.",
+                        "required": true,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "example": "myaccount"
+                        }
+                    },
+                    {
+                        "name": "startDate",
+                        "in": "query",
+                        "description": "Start of the time window, **inclusive**. RFC 3339 date-time. It cannot be older than the history retention window (365 days).",
+                        "required": true,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2026-10-19T12:00:00Z"
+                        }
+                    },
+                    {
+                        "name": "endDate",
+                        "in": "query",
+                        "description": "End of the time window, **exclusive**. RFC 3339 date-time. It must be after `startDate`, and the range between both dates cannot exceed 15 days. A date in the future is accepted.",
+                        "required": true,
+                        "style": "form",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2026-10-20T12:00:00Z"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "200 OK\n\nSuccess.",
+                        "headers": {},
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "description": "Response body object.",
+                                    "type": "object",
+                                    "properties": {
+                                        "history": {
+                                            "description": "Log entries sorted by `occurredAt` in ascending order. Contains at most 1000 entries per response.",
+                                            "type": "array",
+                                            "items": {
+                                                "description": "Object with data of a release step event.",
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "description": "Unique identifier of the log entry.",
+                                                        "type": "string"
+                                                    },
+                                                    "releaseId": {
+                                                        "description": "Identifier of the release this event belongs to.",
+                                                        "type": "string"
+                                                    },
+                                                    "accountName": {
+                                                        "description": "Name of the account that owns the release.",
+                                                        "type": "string"
+                                                    },
+                                                    "step": {
+                                                        "description": "Step of the release that this event represents.",
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "created",
+                                                            "scheduled",
+                                                            "unscheduled",
+                                                            "scheduled_delay",
+                                                            "publishing_requested",
+                                                            "publishing",
+                                                            "published",
+                                                            "enqueued",
+                                                            "dequeued",
+                                                            "deployment_created",
+                                                            "deployment_enqueued",
+                                                            "starting",
+                                                            "started",
+                                                            "build_succeeded",
+                                                            "build_failed",
+                                                            "delivered",
+                                                            "failed",
+                                                            "canceled",
+                                                            "timeout_checked",
+                                                            "timed_out_inqueue",
+                                                            "timed_out_deployment",
+                                                            "reprocessed",
+                                                            "deleted"
+                                                        ]
+                                                    },
+                                                    "occurredAt": {
+                                                        "description": "Date and time when the event happened, in ISO 8601 format and UTC.",
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "outcome": {
+                                                        "description": "Outcome of the step. Omitted when it has no value.",
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "success",
+                                                            "failure",
+                                                            "canceled"
+                                                        ]
+                                                    },
+                                                    "reason": {
+                                                        "description": "Free-text reason for the event. Omitted when it has no value.",
+                                                        "type": "string"
+                                                    },
+                                                    "error": {
+                                                        "description": "Error details when the step failed. Omitted when it has no value.",
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "code": {
+                                                                "description": "Error code.",
+                                                                "type": "string"
+                                                            },
+                                                            "message": {
+                                                                "description": "Error message.",
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    },
+                                                    "actor": {
+                                                        "description": "Who or what triggered the event. Omitted when it has no value.",
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "type": {
+                                                                "description": "Type of the actor that triggered the event, for example, `user`.",
+                                                                "type": "string"
+                                                            },
+                                                            "id": {
+                                                                "description": "Identifier of the actor.",
+                                                                "type": "string"
+                                                            },
+                                                            "app": {
+                                                                "description": "Name of the app that triggered the event.",
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    },
+                                                    "related": {
+                                                        "description": "Objects related to the event. Omitted when it has no value.",
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "deploymentId": {
+                                                                "description": "Identifier of the related deployment.",
+                                                                "type": "string"
+                                                            },
+                                                            "service": {
+                                                                "description": "Name of the related service.",
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "truncated": {
+                                            "description": "Indicates whether more entries exist in the time window than the ones returned. When `true`, repeat the request using `lastOccurredAt` as the new `startDate`.",
+                                            "type": "boolean"
+                                        },
+                                        "lastOccurredAt": {
+                                            "description": "Timestamp of the last returned entry. Omitted when `history` is empty.",
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "history": [
+                                        {
+                                            "id": "6650f1a2c3d4e5f607182930",
+                                            "releaseId": "a1b2c3d4",
+                                            "accountName": "myaccount",
+                                            "step": "created",
+                                            "occurredAt": "2026-10-19T14:02:11.000Z",
+                                            "actor": {
+                                                "type": "user",
+                                                "id": "7c1e0f52-0000-0000-0000-000000000000"
+                                            }
+                                        },
+                                        {
+                                            "id": "6650f1a2c3d4e5f607182931",
+                                            "releaseId": "a1b2c3d4",
+                                            "accountName": "myaccount",
+                                            "step": "published",
+                                            "occurredAt": "2026-10-19T14:05:47.000Z",
+                                            "outcome": "success"
+                                        }
+                                    ],
+                                    "truncated": false,
+                                    "lastOccurredAt": "2026-10-19T14:05:47.000Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "400 Bad Request\n\nThe request is invalid.",
+                        "headers": {},
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "description": "Response body object.",
+                                    "type": "object",
+                                    "properties": {
+                                        "statusCode": {
+                                            "description": "HTTP status code of the error.",
+                                            "type": "integer",
+                                            "format": "int32"
+                                        },
+                                        "error": {
+                                            "description": "Short name of the error.",
+                                            "type": "string"
+                                        },
+                                        "message": {
+                                            "description": "Message describing the cause of the error.",
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "examples": {
+                                    "missingToken": {
+                                        "summary": "Missing authorization token",
+                                        "value": {
+                                            "statusCode": 400,
+                                            "error": "Bad Request",
+                                            "message": "Missing authorization token"
+                                        }
+                                    },
+                                    "invalidDate": {
+                                        "summary": "Missing or invalid date",
+                                        "value": {
+                                            "statusCode": 400,
+                                            "error": "Bad Request",
+                                            "message": "startDate must be a valid RFC 3339 date-time"
+                                        }
+                                    },
+                                    "invalidRange": {
+                                        "summary": "Invalid date range",
+                                        "value": {
+                                            "statusCode": 400,
+                                            "error": "Bad Request",
+                                            "message": "Date range cannot exceed 15 days"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "401 Unauthorized\n\nThe token is invalid.",
+                        "headers": {},
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "description": "Response body object.",
+                                    "type": "object",
+                                    "properties": {
+                                        "statusCode": {
+                                            "description": "HTTP status code of the error.",
+                                            "type": "integer",
+                                            "format": "int32"
+                                        },
+                                        "error": {
+                                            "description": "Short name of the error.",
+                                            "type": "string"
+                                        },
+                                        "message": {
+                                            "description": "Message describing the cause of the error.",
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "statusCode": 401,
+                                    "error": "Unauthorized",
+                                    "message": "Invalid token"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "403 Forbidden\n\nThe user or API key does not have the required permission, or the token was not issued for the account informed in `an`.",
+                        "headers": {},
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "description": "Response body object.",
+                                    "type": "object",
+                                    "properties": {
+                                        "statusCode": {
+                                            "description": "HTTP status code of the error.",
+                                            "type": "integer",
+                                            "format": "int32"
+                                        },
+                                        "error": {
+                                            "description": "Short name of the error.",
+                                            "type": "string"
+                                        },
+                                        "message": {
+                                            "description": "Message describing the cause of the error.",
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "statusCode": 403,
+                                    "error": "Forbidden",
+                                    "message": "Forbidden"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "429 Too Many Requests\n\nThe rate limit was exceeded. Wait the number of seconds in the `Retry-After` header before retrying.",
+                        "headers": {
+                            "Retry-After": {
+                                "description": "Number of seconds to wait before retrying the request.",
+                                "schema": {
+                                    "type": "integer"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "description": "Response body object.",
+                                    "type": "object",
+                                    "properties": {
+                                        "statusCode": {
+                                            "description": "HTTP status code of the error.",
+                                            "type": "integer",
+                                            "format": "int32"
+                                        },
+                                        "error": {
+                                            "description": "Short name of the error.",
+                                            "type": "string"
+                                        },
+                                        "message": {
+                                            "description": "Message describing the cause of the error.",
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "statusCode": 429,
+                                    "error": "Too Many Requests",
+                                    "message": "Rate limit exceeded"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "503 Service Unavailable\n\nThe query took too long. Retry with a narrower date range.",
+                        "headers": {},
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "description": "Response body object.",
+                                    "type": "object",
+                                    "properties": {
+                                        "statusCode": {
+                                            "description": "HTTP status code of the error.",
+                                            "type": "integer",
+                                            "format": "int32"
+                                        },
+                                        "error": {
+                                            "description": "Short name of the error.",
+                                            "type": "string"
+                                        },
+                                        "message": {
+                                            "description": "Message describing the cause of the error.",
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "statusCode": 503,
+                                    "error": "Service Unavailable",
+                                    "message": "Query timeout"
+                                }
+                            }
+                        }
+                    }
+                },
+                "deprecated": false
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "VtexIdclientAutCookie": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "VtexIdclientAutCookie",
+                "description": "[User token](https://developers.vtex.com/docs/guides/api-authentication-using-user-tokens), valid for 24 hours."
+            },
+            "Authorization": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "Authorization",
+                "description": "Token of the user or application, sent in the `Authorization` header."
+            }
+        },
+        "parameters": {
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": {
+                    "type": "string",
+                    "example": "application/json"
+                }
+            }
+        }
+    },
+    "security": [
+        {
+            "appKey": [],
+            "appToken": []
+        },
+        {
+            "VtexIdclientAutCookie": []
+        },
+        {
+            "Authorization": []
+        }
+    ],
+    "tags": [
+        {
+            "name": "Release history"
+        }
+    ]
+}
