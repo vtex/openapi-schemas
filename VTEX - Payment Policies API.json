@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Payment Policies API",
-        "description": "The Payment Policies API allows VTEX merchants to configure rules that include or exclude payment systems for specific cart items. The Payment Configuration Service (PCS) stores policy rules, while the Payment Information Service (PIS) evaluates those rules during checkout and returns the payment systems available for each item.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\n## Rule engine\r\n\r\n> ℹ️ Currently the Payment policies feature supports `and`, `or`, `==`, and `in` operators, with a limit of 500 operators per expression. Available context variables are `collectionIds`, containing the collection IDs associated with the item, and `shippingState`, containing the delivery state code.",
+        "description": "The Payment Policies API allows VTEX merchants to configure rules that include or exclude payment systems for specific cart items. The Payment Configuration Service (PCS) stores policy rules, while the Payment Information Service (PIS) evaluates those rules during checkout and returns the payment systems available for each item.\r\n\r\n> ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).\r\n\r\n## Rule engine\r\n\r\nPolicy rule expressions use [JSONLogic](https://jsonlogic.com/) and are evaluated for each cart item separately. All active rules that match an item are applied. Rules are applied in ascending `priority` order, and the result is the same in any order: `Exclude` removes the listed payment systems, and `Include` keeps only the listed payment systems, but never restores a payment system removed by `Exclude`.\r\n\r\n### Context variables\r\n\r\n| Variable | Type | Description |\r\n| --- | --- | --- |\r\n| `collectionIds` | Array of integers | Collections that the item belongs to. An empty, null, or missing list produces the same result. |\r\n| `seller` | String | Seller that fulfills the item. An empty or whitespace-only value is treated as not sent. |\r\n| `shippingData.state` | String | Delivery state code, such as `NY`. An empty or whitespace-only value is treated as not sent. |\r\n\r\n> ⚠️ Variable names aren't validated when a rule is saved. Any other name is treated as a missing field: comparisons using `==` and `in` with that field return `false`, while comparisons using `!=` return `true`. Logical operators combine these results normally.\r\n\r\n### Operators\r\n\r\n| Operator | Usage rules |\r\n| --- | --- |\r\n| `and`, `or` | Every operand must be a condition (object). Literal values are rejected. |\r\n| `in` | Requires two operands. Each operand is a value, a list, or `{\"var\": \"path\"}`. When the second operand is a list, the type and value must match: `\"139\"` isn't in `[139]`. |\r\n| `==` | Requires two operands. Each operand is `{\"var\": \"path\"}`, a non-empty string other than `\"null\"`, or an integer. Booleans, decimals, and lists are rejected. A number is equal to the string of the same number: `\"1\" == 1` is `true`. |\r\n| `!=` | Same rules as `==`. Returns the opposite result. |\r\n| `!` | Negates exactly one condition: `{\"!\": {...}}` or `{\"!\": [{...}]}`. Literal values and a standalone `var` are rejected. |\r\n| `var` | Field path as a string. Use a dot to access nested fields, such as `shippingData.state`. Default values aren't supported. |\r\n\r\nAny other operator is rejected with status `422`. There's no `not in` operator; use `{\"!\": {\"in\": [...]}}` instead.\r\n\r\nEach expression can have up to 500 operators. The `and`, `or`, `!`, `in`, `==`, and `!=` operators count toward this limit, and `var` doesn't.\r\n\r\nWhen an item doesn't have a field used by a comparison, `in` and `==` return `false`, and `!=` returns `true`. `!` negates the result of its child condition, so negating a missing-field `==` or `in` comparison returns `true`, while negating a missing-field `!=` comparison returns `false`. To prevent a negation from matching items without the field, require the field with `and`, as in `{\"and\": [{\"var\": \"seller\"}, {\"!\": {...}}]}`.\r\n\r\n## Error messages\r\n\r\nPolicy rule endpoints return errors in the [Problem Details](https://www.rfc-editor.org/rfc/rfc7807) format, with the `type`, `title`, `status`, `detail`, and `instance` fields. The following tables list the `detail` values. Errors returned by the expression validator may include additional parameter information at the end of the message.\r\n\r\n### 400 Bad Request\r\n\r\n| When | `detail` |\r\n| --- | --- |\r\n| The request body is missing `expression`, `enabled`, `priority`, or `action`. Messages for all missing fields are returned together. | `Expression is required. enabled is required. priority is required. action is required.` |\r\n| `action` has a value other than `Include` or `Exclude`, including a different capitalization. | `action must be Include or Exclude.` |\r\n\r\n### 422 Unprocessable Content\r\n\r\n| When | `detail` |\r\n| --- | --- |\r\n| The expression uses an unsupported operator. | `Unsupported expression: JSONLogic operator \"!==\" is not supported.` |\r\n| An operator object has more than one key. | `Unsupported expression: operator object must contain exactly one property, found \"!=\", \"foo\".` |\r\n| `==`, `!=`, or `in` doesn't have exactly two operands. | `Unsupported expression: \"!=\" must have exactly two operands.` |\r\n| `!` negates a literal value or a standalone `var`. | `Unsupported expression: \"!\" must negate exactly one condition, not a literal or a bare var.` |\r\n| `and` or `or` has a literal value as an operand. | `Unsupported expression: every operand of \"and\" must be a condition, not a literal.` |\r\n| `==` or `!=` has a boolean or decimal operand. | `Unsupported expression: inside \"==\", each operand must be {\"var\":\"path\"}, a non-empty string other than \"null\", or an integer.` |\r\n| `==`, `!=`, or `in` has `null` or `\"null\"` as an operand. | `Unsupported expression: null is not allowed as a literal inside \"==\", \"!=\" or \"in\", neither as JSON null nor as the string \"null\".` |\r\n| `==`, `!=`, or `in` has an empty or whitespace-only string as an operand. | `Unsupported expression: an empty or whitespace string is not allowed as a literal inside \"==\", \"!=\" or \"in\".` |\r\n| `var` has a default value. | `Unsupported expression: inside \"in\", {\"var\": ...} must be a single string path (default values are not supported).` |\r\n| The expression has more than 500 operators. | `Expression exceeds maximum conditionals (500). Found: 501.` |\r\n| `priority` is outside the `0` to `999` range. A blank `name` or an empty `paymentSystems` list also returns `422`. | `Priority must be between 0 and 999.` |\r\n\r\nThe search endpoint returns `400`, `403`, and `408` errors as plain text, not in the Problem Details format.\r\n\r\nFor more information and examples, see [Using payment policies](https://developers.vtex.com/docs/guides/using-payment-policies).",
         "contact": {},
         "version": "1.0"
     },
@@ -64,7 +64,7 @@
                                         {
                                             "==": [
                                                 {
-                                                    "var": "shippingState"
+                                                    "var": "shippingData.state"
                                                 },
                                                 "NY"
                                             ]
@@ -105,7 +105,7 @@
                                             {
                                                 "==": [
                                                     {
-                                                        "var": "shippingState"
+                                                        "var": "shippingData.state"
                                                     },
                                                     "NY"
                                                 ]
@@ -182,7 +182,7 @@
                                                 {
                                                     "==": [
                                                         {
-                                                            "var": "shippingState"
+                                                            "var": "shippingData.state"
                                                         },
                                                         "NY"
                                                     ]
@@ -260,7 +260,7 @@
                                             {
                                                 "==": [
                                                     {
-                                                        "var": "shippingState"
+                                                        "var": "shippingData.state"
                                                     },
                                                     "NY"
                                                 ]
@@ -333,7 +333,7 @@
                                         {
                                             "==": [
                                                 {
-                                                    "var": "shippingState"
+                                                    "var": "shippingData.state"
                                                 },
                                                 "NY"
                                             ]
@@ -374,7 +374,7 @@
                                             {
                                                 "==": [
                                                     {
-                                                        "var": "shippingState"
+                                                        "var": "shippingData.state"
                                                     },
                                                     "NY"
                                                 ]
@@ -484,6 +484,7 @@
                                             139,
                                             45
                                         ],
+                                        "seller": "1",
                                         "shippingData": {
                                             "state": "NY"
                                         }
@@ -537,13 +538,29 @@
                         }
                     },
                     "400": {
-                        "$ref": "#/components/responses/BadRequest"
+                        "description": "Bad Request\r\n\r\nReturned as plain text instead of the Problem Details format.",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "example": "Bad Request"
+                            }
+                        }
                     },
                     "401": {
                         "$ref": "#/components/responses/Unauthorized"
                     },
                     "403": {
-                        "$ref": "#/components/responses/Forbidden"
+                        "description": "Forbidden\r\n\r\nReturned as plain text instead of the Problem Details format.",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "example": "Forbidden"
+                            }
+                        }
                     },
                     "408": {
                         "description": "Request Timeout",
@@ -618,13 +635,13 @@
                     "priority": {
                         "type": "integer",
                         "format": "int32",
-                        "description": "Rule priority, from `0` to `999`. Lower values have higher precedence when conflicting rules match the same item.",
+                        "description": "Rule priority, from `0` to `999`. Rules are applied in ascending priority order, and the result is the same in any order.",
                         "minimum": 0,
                         "maximum": 999
                     },
                     "action": {
                         "type": "string",
-                        "description": "Action applied to the payment systems when the rule expression matches. Accepts `Include` or `Exclude`; value matching is case-insensitive.",
+                        "description": "Action applied to the payment systems when the rule expression matches. Accepts only `Include` or `Exclude`, with this exact capitalization. `Exclude` removes the listed payment systems from matching items, and `Include` restricts matching items to the listed payment systems.",
                         "enum": [
                             "Include",
                             "Exclude"
@@ -677,13 +694,13 @@
                     "priority": {
                         "type": "integer",
                         "format": "int32",
-                        "description": "Rule priority, from `0` to `999`. Lower values have higher precedence when conflicting rules match the same item.",
+                        "description": "Rule priority, from `0` to `999`. Rules are applied in ascending priority order, and the result is the same in any order.",
                         "minimum": 0,
                         "maximum": 999
                     },
                     "action": {
                         "type": "string",
-                        "description": "Action applied to the payment systems when the rule expression matches. Accepts `Include` or `Exclude`; value matching is case-insensitive.",
+                        "description": "Action applied to the payment systems when the rule expression matches. Accepts only `Include` or `Exclude`, with this exact capitalization. `Exclude` removes the listed payment systems from matching items, and `Include` restricts matching items to the listed payment systems.",
                         "enum": [
                             "Include",
                             "Exclude"
@@ -713,7 +730,7 @@
             },
             "JsonLogicExpression": {
                 "type": "object",
-                "description": "JSONLogic expression evaluated against item context. Currently supports `and`, `or`, `==`, and `in`, with `collectionIds` and `shippingState` as available variables.",
+                "description": "JSONLogic expression evaluated against item context. Supports the `and`, `or`, `in`, `==`, `!=`, `!`, and `var` operators, with up to 500 operators per expression (`var` doesn't count toward the limit). Available variables are `collectionIds`, `seller`, and `shippingData.state`. Variable names aren't validated when the rule is saved, and any other name is treated as a missing field.",
                 "additionalProperties": true
             },
             "PaymentPolicySearchRequest": {
@@ -754,27 +771,29 @@
                 "properties": {
                     "id": {
                         "type": "string",
-                        "description": "Item identifier used to map available payment systems back to the cart item."
+                        "description": "Item (SKU) identifier used to map available payment systems back to the cart item. Items without `id` are ignored. Send one entry per SKU: if the same SKU is sent more than once, the response returns a single entry for it."
                     },
                     "collectionIds": {
                         "type": "array",
-                        "description": "Collection IDs associated with the item in the VTEX catalog.",
+                        "nullable": true,
+                        "description": "Collection IDs associated with the item in the VTEX catalog. An empty, null, or missing list produces the same result.",
                         "items": {
                             "type": "integer",
                             "format": "int32",
                             "description": "Collection ID."
                         }
                     },
+                    "seller": {
+                        "type": "string",
+                        "description": "Seller that fulfills the item. An empty or whitespace-only value is treated as not sent."
+                    },
                     "shippingData": {
                         "type": "object",
                         "description": "Shipping context used by the payment policy engine.",
-                        "required": [
-                            "state"
-                        ],
                         "properties": {
                             "state": {
                                 "type": "string",
-                                "description": "State code of the main delivery address."
+                                "description": "State code of the main delivery address. An empty or whitespace-only value is treated as not sent."
                             }
                         }
                     }
@@ -790,12 +809,14 @@
                 "properties": {
                     "paymentSystemAssignments": {
                         "type": "object",
-                        "description": "Map of item IDs to the payment system IDs allowed for each item.",
+                        "description": "Map of item IDs to the payment system IDs allowed for each item, sorted in ascending order. Items without any allowed payment system don't appear in this object.",
                         "additionalProperties": {
                             "type": "array",
+                            "description": "Payment system IDs allowed for the item. The object key is the item ID.",
                             "items": {
                                 "type": "integer",
-                                "format": "int32"
+                                "format": "int32",
+                                "description": "Payment system ID."
                             }
                         },
                         "example": {
@@ -805,7 +826,7 @@
                     },
                     "paymentSystemDefinitions": {
                         "type": "array",
-                        "description": "Payment system metadata for the payment systems returned in the assignments.",
+                        "description": "Payment system metadata for the payment systems returned in the assignments. Only payment systems that appear in `paymentSystemAssignments` are listed.",
                         "items": {
                             "$ref": "#/components/schemas/PaymentSystemDefinition"
                         },
@@ -1634,7 +1655,7 @@
         },
         "responses": {
             "BadRequest": {
-                "description": "Bad Request",
+                "description": "Bad Request\r\n\r\nReturned when required fields are missing or the action value is invalid.",
                 "content": {
                     "application/problem+json": {
                         "schema": {
@@ -1644,7 +1665,7 @@
                             "type": "https://httpstatuses.com/400",
                             "title": "Bad Request",
                             "status": 400,
-                            "detail": "The request body is malformed.",
+                            "detail": "action must be Include or Exclude.",
                             "instance": "/api/payment-configuration-service/policy-rules"
                         }
                     }
@@ -1695,7 +1716,7 @@
                             "type": "https://httpstatuses.com/404",
                             "title": "Not Found",
                             "status": 404,
-                            "detail": "Policy rule not found for the account.",
+                            "detail": "Policy rule with ID 'a1b2c3d4e5f6478990abcdef12345678' was not found.",
                             "instance": "/api/payment-configuration-service/policy-rules"
                         }
                     }
@@ -1712,14 +1733,14 @@
                             "type": "https://httpstatuses.com/409",
                             "title": "Conflict",
                             "status": 409,
-                            "detail": "The policy rule was updated by another request. Retry with the latest data.",
+                            "detail": "Version mismatch; re-read the rule and retry.",
                             "instance": "/api/payment-configuration-service/policy-rules"
                         }
                     }
                 }
             },
             "UnprocessableContent": {
-                "description": "Unprocessable Content",
+                "description": "Unprocessable Content\r\n\r\nReturned when the expression is invalid or a field value is out of range.",
                 "content": {
                     "application/problem+json": {
                         "schema": {
@@ -1729,7 +1750,7 @@
                             "type": "https://httpstatuses.com/422",
                             "title": "Unprocessable Content",
                             "status": 422,
-                            "detail": "Validation failed, the JSONLogic expression is invalid, or a domain invariant was violated.",
+                            "detail": "Unsupported expression: JSONLogic operator \"!==\" is not supported.",
                             "instance": "/api/payment-configuration-service/policy-rules"
                         }
                     }
