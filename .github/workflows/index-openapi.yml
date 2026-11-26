@@ -17,95 +17,96 @@ on:
         default: false
         type: boolean
 
+# One run at a time, in push order, so a delete can never overtake a later re-add.
+concurrency:
+  group: index-openapi
+  cancel-in-progress: false
+
 jobs:
   index-endpoints:
+    # This file is a template kept in vtexdocs-mcp-app; only run it from the content repo.
+    if: github.repository != 'vtexdocs/vtexdocs-mcp-app'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 2
 
       - name: Compute changed files
-        id: changed
+        env:
+          BEFORE: ${{ github.event.before }}
+          FULL_REINDEX: ${{ inputs.full_reindex }}
         run: |
-          if [ "${{ github.event.inputs.full_reindex }}" = "true" ] || [ "${{ github.event_name }}" = "workflow_dispatch" -a "${{ github.event.inputs.full_reindex }}" = "true" ]; then
-            FILES=$(ls VTEX\ -\ *.json 2>/dev/null | jq -R -s -c 'split("\n") | map(select(length > 0))')
-          else
-            FILES=$(git diff --name-only --diff-filter=ACMR HEAD~1 HEAD -- '*.json' | jq -R -s -c 'split("\n") | map(select(length > 0))')
-          fi
-          echo "files=$FILES" >> $GITHUB_OUTPUT
-          echo "count=$(echo $FILES | jq length)" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          to_json() { jq -R -s -c 'split("\n") | map(select(length > 0))'; }
 
-      - name: Exit early if no files
-        run: |
-          if [ "${{ steps.changed.outputs.count }}" = "0" ]; then
-            echo "No changed files"
+          if [ "$FULL_REINDEX" = "true" ]; then
+            find . -maxdepth 1 -type f -name 'VTEX - *.json' | sed 's|^\./||' | sort | to_json > .index-files.json
+            echo '[]' > .index-deleted.json
             exit 0
           fi
 
-      - name: POST to indexing endpoint
+          # Diff the whole push, not only its last commit. Fall back to the parent commit
+          # when the pre-push commit is unavailable (new branch, force push).
+          BASE=HEAD~1
+          if [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ] \
+            && git fetch --no-tags --depth=1 origin "$BEFORE"; then
+            BASE=$BEFORE
+          fi
+          echo "Diffing $BASE..HEAD"
+
+          # Root-level specs only: PostmanCollections/*.json are not OpenAPI specs.
+          # --no-renames reports a rename as delete(old) + add(new), so the old file's
+          # endpoints are removed.
+          changed() { git -c core.quotepath=false diff --no-renames --name-only --diff-filter="$1" "$BASE" HEAD -- ':(glob)*.json'; }
+          changed d | to_json > .index-files.json
+          changed D | to_json > .index-deleted.json
+          echo "To index: $(jq length .index-files.json), to delete: $(jq length .index-deleted.json)"
+
+      - name: Update index
         env:
-          FILES_JSON: ${{ steps.changed.outputs.files }}
+          INDEXING_URL: ${{ secrets.INDEXING_URL }}
+          INTERNAL_ACCESS_KEY: ${{ secrets.INTERNAL_ACCESS_KEY }}
         run: |
-          BATCH_SIZE=10
-          TOTAL=$(echo "$FILES_JSON" | jq length)
-          echo "Indexing $TOTAL files in batches of $BATCH_SIZE"
-
-          PROCESSED=0
+          set -uo pipefail
           FAILED=0
-          ENDPOINTS=0
 
-          for OFFSET in $(seq 0 $BATCH_SIZE $((TOTAL - 1))); do
-            BATCH=$(echo "$FILES_JSON" | jq -c ".[$OFFSET:$OFFSET+$BATCH_SIZE]")
-            BATCH_LEN=$(echo "$BATCH" | jq length)
-            echo ""
-            echo "==> Batch $((OFFSET / BATCH_SIZE + 1)): $BATCH_LEN file(s) starting at index $OFFSET"
+          # $1 = body key (files|deleted), $2 = JSON array file, $3 = batch size
+          run_batches() {
+            local key=$1 list=$2 size=$3 total off batch payload resp code body batch_failed
+            total=$(jq length "$list")
+            [ "$total" = "0" ] && return
+            echo "==> $key: $total file(s) in batches of $size"
+            for ((off = 0; off < total; off += size)); do
+              batch=$(jq -c ".[$off:$off + $size]" "$list")
+              payload=$(jq -nc --argjson b "$batch" --arg key "$key" '{($key): $b}')
+              resp=$(curl -sS -w '\n%{http_code}' --max-time 300 -X POST "$INDEXING_URL/api/index-openapi" \
+                -H "Content-Type: application/json" \
+                -H "X-Internal-Access-Key: $INTERNAL_ACCESS_KEY" \
+                -d "$payload") || true
+              code=$(echo "$resp" | tail -1)
+              body=$(echo "$resp" | sed '$d')
+              if [ "$code" != "200" ]; then
+                echo "::error::$key batch at $off failed with HTTP $code: $body"
+                FAILED=$((FAILED + $(echo "$batch" | jq length)))
+                continue
+              fi
+              echo "$key batch at $off: $(echo "$body" | jq -c '{processed, failed, endpoints_indexed, endpoints_skipped, endpoints_deleted, duration_ms}')"
+              batch_failed=$(echo "$body" | jq '.failed // 0')
+              if [ "$batch_failed" != "0" ]; then
+                echo "$body" | jq -r '.errors[] | "::error::\(.file): \(.error[0:500])"'
+                FAILED=$((FAILED + batch_failed))
+              fi
+            done
+          }
 
-            echo "{\"files\": ${BATCH}}" > /tmp/payload.json
-
-            RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${{ secrets.INDEXING_URL }}/api/index-openapi" \
-              -H "Content-Type: application/json" \
-              -H "X-Internal-Access-Key: ${{ secrets.INTERNAL_ACCESS_KEY }}" \
-              --max-time 300 \
-              -d @/tmp/payload.json)
-
-            HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-            BODY=$(echo "$RESPONSE" | sed '$d')
-
-            echo "HTTP Status: $HTTP_CODE"
-
-            if [ "$HTTP_CODE" != "200" ]; then
-              echo "::error::Batch failed with HTTP $HTTP_CODE: $BODY"
-              FAILED=$((FAILED + BATCH_LEN))
-              continue
-            fi
-
-            B_PROC=$(echo "$BODY" | jq -r '.processed // 0')
-            B_FAIL=$(echo "$BODY" | jq -r '.failed // 0')
-            B_ENDP=$(echo "$BODY" | jq -r '.endpoints_indexed // 0')
-            B_DUR=$(echo "$BODY" | jq -r '.duration_ms // 0')
-
-            PROCESSED=$((PROCESSED + B_PROC))
-            FAILED=$((FAILED + B_FAIL))
-            ENDPOINTS=$((ENDPOINTS + B_ENDP))
-
-            echo "Batch result: ${B_PROC} processed, ${B_FAIL} failed, ${B_ENDP} endpoints in ${B_DUR}ms"
-
-            if [ "$B_FAIL" != "0" ]; then
-              echo "::warning::${B_FAIL} file(s) failed in this batch"
-              echo "$BODY" | jq '.errors'
-            fi
-          done
-
-          echo ""
-          echo "=== TOTAL ==="
-          echo "Processed: $PROCESSED"
-          echo "Failed: $FAILED"
-          echo "Endpoints indexed: $ENDPOINTS"
+          run_batches deleted .index-deleted.json 100
+          run_batches files .index-files.json 10
 
           if [ "$FAILED" != "0" ]; then
-            echo "::warning::$FAILED total file(s) failed to index"
+            echo "::error::$FAILED file(s) failed"
+            exit 1
           fi
