@@ -1,0 +1,2246 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "version": "1.0.0",
+        "title": "VTEX IO Observability API",
+        "description": "> ⚠️ VTEX IO Observability is currently in beta, which means that we are working to improve it. If you have any questions, contact [our Support](https://supporticket.vtex.com/support).\r\n\r\nThe VTEX IO Observability API allows VTEX account integrators and developers to query logs and metrics from [VTEX IO apps](https://developers.vtex.com/docs/guides/vtex-io-documentation-what-is-a-vtex-app) in a Grafana-compatible format. Use it to build dashboards, run ad-hoc queries, and list available fields and apps.\r\n\r\n## Endpoint requirements\r\n\r\nAll endpoints under `/api/extensions/observability` require authentication via API key (`X-VTEX-API-AppKey` and `X-VTEX-API-AppToken`).\r\n\r\n## Index\r\n\r\n### Logs\r\n\r\n- ``POST`` [Query logs](https://developers.vtex.com/docs/api-reference/observability-api#post-/api/extensions/observability/logs/-tenant-/query)\r\n- ``GET`` [Get logs fields](https://developers.vtex.com/docs/api-reference/observability-api#get-/api/extensions/observability/logs/-tenant-/fields)\r\n\r\n### Metrics\r\n\r\n- ``POST`` [Query metrics](https://developers.vtex.com/docs/api-reference/observability-api#post-/api/extensions/observability/metrics/-tenant-/query)\r\n- ``GET`` [Get metrics fields](https://developers.vtex.com/docs/api-reference/observability-api#get-/api/extensions/observability/metrics/-tenant-/fields)\r\n- ``GET`` [Get metric names](https://developers.vtex.com/docs/api-reference/observability-api#get-/api/extensions/observability/metrics/-tenant-/-app-/names)\r\n\r\n### Apps\r\n\r\n- ``GET`` [Get apps](https://developers.vtex.com/docs/api-reference/observability-api#get-/api/extensions/observability/-tenant-/apps)\r\n\r\n### Capabilities\r\n\r\n- ``GET`` [Get capabilities](https://developers.vtex.com/docs/api-reference/observability-api#get-/api/extensions/observability/capabilities)"
+    },
+    "servers": [
+        {
+            "url": "https://{accountName}.{environment}.com.br",
+            "description": "VTEX server URL.",
+            "variables": {
+                "accountName": {
+                    "description": "Name of the VTEX account. Used as part of the URL.",
+                    "default": "apiexamples"
+                },
+                "environment": {
+                    "description": "Environment to use. Used as part of the URL.",
+                    "enum": ["vtexcommercebeta"],
+                    "default": "vtexcommercebeta"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/api/extensions/observability/logs/{tenant}/query": {
+            "post": {
+                "tags": ["Logs"],
+                "summary": "Query logs",
+                "description": "> ⚠️ VTEX IO Observability is currently in beta, which means that we are working to improve it. If you have any questions, contact [our Support](https://supporticket.vtex.com/support).\r\n\r\nExecutes a logs query for the given tenant with filters, and pagination. Returns data in [Grafana DataFrame format](https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/).\r\n\r\n## Rate Limits & Quotas\r\n\r\nThe API enforces rate limits and quotas per tenant:\r\n\r\n| Resource | Limit |\r\n| :---- | :---- |\r\n| Query timeout | 30 seconds |\r\n| Maximum page size | 1000 rows |\r\n| Default page size | 50 rows |\r\n\r\n## Best Practices\r\n\r\n### Query performance\r\n\r\n1. **Always filter by time**: Include `TimestampTime` filters to limit data scanned.\r\n2. **Use specific filters**: Filter by `app` when possible.\r\n3. **Limit columns**: Request only the columns you need.\r\n4. **Use pagination**: Fetch data in smaller pages for large result sets.\r\n\r\n### Time range recommendations\r\n\r\n| Query Type | Recommended Range |\r\n| :---- | :---- |\r\n| Real-time monitoring | Last 5-15 minutes |\r\n| Hourly analysis | Last 1-6 hours |\r\n| Daily reports | Last 24 hours |\r\n| Historical analysis | Up to retention limit |\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --- | ----- | ----- |\r\n| VTEX IO | Infrastructure | **Log Access - Read-only** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).",
+                "parameters": [
+                    { "$ref": "#/components/parameters/Content-Type" },
+                    { "$ref": "#/components/parameters/Accept" },
+                    {
+                        "name": "tenant",
+                        "in": "path",
+                        "description": "Tenant identifier (VTEX account name).",
+                        "required": true,
+                        "style": "simple",
+                        "schema": { "type": "string", "example": "myaccount" }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LogsQueryRequest"
+                            },
+                            "examples": {
+                                "Filtered logs": {
+                                    "value": {
+                                        "columns": [
+                                            "TimestampTime",
+                                            "level",
+                                            "app",
+                                            "data"
+                                        ],
+                                        "page": 1,
+                                        "pageSize": 3,
+                                        "filters": [
+                                            {
+                                                "column": "TimestampTime",
+                                                "operator": ">=",
+                                                "type": "timestamp",
+                                                "value": "2026-04-27T10:00:00Z"
+                                            },
+                                            {
+                                                "column": "TimestampTime",
+                                                "operator": "<=",
+                                                "type": "timestamp",
+                                                "value": "2026-04-27T10:01:00Z"
+                                            },
+                                            {
+                                                "column": "app",
+                                                "operator": "=",
+                                                "type": "string",
+                                                "value": "myvendor.myapp@1.0.0"
+                                            }
+                                        ],
+                                        "orders": [
+                                            {
+                                                "column": "TimestampTime",
+                                                "dir": "asc"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "Error logs": {
+                                    "value": {
+                                        "columns": [
+                                            "TimestampTime",
+                                            "level",
+                                            "app",
+                                            "data",
+                                            "requestId"
+                                        ],
+                                        "page": 1,
+                                        "pageSize": 10,
+                                        "filters": [
+                                            {
+                                                "column": "TimestampTime",
+                                                "operator": ">=",
+                                                "type": "timestamp",
+                                                "value": "2026-04-27T10:00:00Z"
+                                            },
+                                            {
+                                                "column": "TimestampTime",
+                                                "operator": "<=",
+                                                "type": "timestamp",
+                                                "value": "2026-04-27T10:01:00Z"
+                                            },
+                                            {
+                                                "column": "level",
+                                                "operator": "=",
+                                                "type": "string",
+                                                "value": "error"
+                                            }
+                                        ],
+                                        "orders": [
+                                            {
+                                                "column": "TimestampTime",
+                                                "dir": "desc"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "Logs with specific message": {
+                                    "value": {
+                                        "columns": [
+                                            "TimestampTime",
+                                            "level",
+                                            "app",
+                                            "data"
+                                        ],
+                                        "page": 1,
+                                        "pageSize": 10,
+                                        "filters": [
+                                            {
+                                                "column": "TimestampTime",
+                                                "operator": ">=",
+                                                "type": "timestamp",
+                                                "value": "2026-04-27T10:00:00Z"
+                                            },
+                                            {
+                                                "column": "data",
+                                                "operator": "LIKE",
+                                                "type": "string",
+                                                "value": "Unable to communicate"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GrafanaDataFrameResponse"
+                                },
+                                "examples": {
+                                    "Filtered logs": {
+                                        "value": {
+                                            "refId": "A",
+                                            "name": "Logs",
+                                            "fields": [
+                                                {
+                                                    "name": "TimestampTime",
+                                                    "type": "time",
+                                                    "values": [
+                                                        "2026-04-27T10:00:00Z",
+                                                        "2026-04-27T10:00:00Z",
+                                                        "2026-04-27T10:00:00Z"
+                                                    ]
+                                                },
+                                                {
+                                                    "name": "level",
+                                                    "type": "string",
+                                                    "values": [
+                                                        "error",
+                                                        "warn",
+                                                        "warn"
+                                                    ]
+                                                },
+                                                {
+                                                    "name": "app",
+                                                    "type": "string",
+                                                    "values": [
+                                                        "myvendor.myapp@1.0.0",
+                                                        "myvendor.myapp@1.0.0",
+                                                        "myvendor.myapp@1.0.0"
+                                                    ]
+                                                },
+                                                {
+                                                    "name": "data",
+                                                    "type": "string",
+                                                    "values": [
+                                                        "{\"message\":\"Unhandled exception in order processing\"}",
+                                                        "{\"message\":\"Slow query detected: 2800ms\"}",
+                                                        "{\"message\":\"Deprecated API method called: getProductV1\"}"
+                                                    ]
+                                                }
+                                            ],
+                                            "meta": {
+                                                "executedQueryString": "logs query",
+                                                "pagination": {
+                                                    "hasMore": true,
+                                                    "page": 1,
+                                                    "pageSize": 3,
+                                                    "total": 42
+                                                },
+                                                "truncated": true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "error": {
+                                        "code": "400",
+                                        "message": "invalid request body: json: cannot unmarshal string into Go struct field LogsQueryRequest.LogsQueryParams.QueryParams.page of type int"
+                                    },
+                                    "timestamp": "2026-10-09T20:00:15Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Invalid token"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Forbidden"
+                                }
+                            }
+                        }
+                    },
+                    "408": {
+                        "description": "Request Timeout",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Query timeout"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Quota exceeded"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "appKey": [], "appToken": [] }]
+            }
+        },
+        "/api/extensions/observability/logs/{tenant}/fields": {
+            "get": {
+                "tags": ["Logs"],
+                "summary": "Get logs fields",
+                "description": "> ⚠️ VTEX IO Observability is currently in beta, which means that we are working to improve it. If you have any questions, contact [our Support](https://supporticket.vtex.com/support).\r\n\r\nReturns the list of available fields (columns) for logs queries for the given tenant.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --- | ----- | ----- |\r\n| VTEX IO | Infrastructure | **Log Access - Read-only** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).",
+                "parameters": [
+                    { "$ref": "#/components/parameters/Accept" },
+                    {
+                        "name": "tenant",
+                        "in": "path",
+                        "description": "Tenant identifier (VTEX account name).",
+                        "required": true,
+                        "style": "simple",
+                        "schema": { "type": "string", "example": "myaccount" }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Map of field names to field metadata (aggregatable, filterable, type).",
+                                    "additionalProperties": {
+                                        "type": "object",
+                                        "description": "Field metadata.",
+                                        "required": [
+                                            "aggregatable",
+                                            "filterable",
+                                            "type"
+                                        ],
+                                        "properties": {
+                                            "aggregatable": {
+                                                "type": "boolean",
+                                                "description": "Whether the field can be used in aggregations."
+                                            },
+                                            "filterable": {
+                                                "type": "boolean",
+                                                "description": "Whether the field can be used in query filters."
+                                            },
+                                            "type": {
+                                                "type": "string",
+                                                "description": "Field data type (e.g., `DateTime`, `String`)."
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "ServiceName": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "LowCardinality(String)"
+                                    },
+                                    "Timestamp": {
+                                        "aggregatable": false,
+                                        "filterable": false,
+                                        "type": "DateTime64(9)"
+                                    },
+                                    "TimestampTime": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "DateTime"
+                                    },
+                                    "TraceId": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "String"
+                                    },
+                                    "account": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "String"
+                                    },
+                                    "app": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "String"
+                                    },
+                                    "data": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "String"
+                                    },
+                                    "level": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "LowCardinality(String)"
+                                    },
+                                    "operationId": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "String"
+                                    },
+                                    "production": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "LowCardinality(String)"
+                                    },
+                                    "requestId": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "String"
+                                    },
+                                    "tenant": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "String"
+                                    },
+                                    "tenant_level": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "LowCardinality(String)"
+                                    },
+                                    "workspace": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "String"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Invalid token"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Forbidden"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Quota exceeded"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "appKey": [], "appToken": [] }]
+            }
+        },
+        "/api/extensions/observability/metrics/{tenant}/query": {
+            "post": {
+                "tags": ["Metrics"],
+                "summary": "Query metrics",
+                "description": "> ⚠️ VTEX IO Observability is currently in beta, which means that we are working to improve it. If you have any questions, contact [our Support](https://supporticket.vtex.com/support).\r\n\r\nExecutes a metrics query for the given tenant with filters, pagination, and optional aggregations. Returns data in [Grafana DataFrame format](https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/).\r\n\r\n## Rate Limits & Quotas\r\n\r\nThe API enforces rate limits and quotas per tenant:\r\n\r\n| Resource | Limit |\r\n| :---- | :---- |\r\n| Query timeout | 30 seconds |\r\n| Maximum page size | 1000 rows |\r\n| Default page size | 50 rows |\r\n\r\n## Metric Types\r\n\r\nThe platform supports three metric types from OpenTelemetry:\r\n\r\n| Type | Description | Use Cases | Aggregation |\r\n| :---- | :---- | :---- | :---- |\r\n| `gauge` | Point-in-time value | CPU usage, memory, temperature | `avg` |\r\n| `sum` | Cumulative counter | Request count, bytes transferred | `sum` |\r\n| `histogram` | Distribution of values | Response time, request size | `sum`, `count` |\r\n\r\n### Metric Type Detection\r\n\r\nThe API automatically stores and handles different metric types. Filter by `MetricType` to query specific types:\r\n\r\n```json\r\n{\r\n  \"filters\": [\r\n    {\r\n      \"column\": \"MetricType\",\r\n      \"operator\": \"=\",\r\n      \"type\": \"string\",\r\n      \"value\": \"histogram\"\r\n    }\r\n  ]\r\n}\r\n```\r\n\r\n## Best Practices\r\n\r\n### Query performance\r\n\r\n1. **Always filter by time**: Include `TimestampTime` filters to limit data scanned.\r\n2. **Use specific filters**: Filter by `app` and `MetricName` when possible.\r\n3. **Limit columns**: Request only the columns you need.\r\n4. **Use pagination**: Fetch data in smaller pages for large result sets.\r\n\r\n### Time range recommendations\r\n\r\n| Query Type | Recommended Range |\r\n| :---- | :---- |\r\n| Real-time monitoring | Last 5-15 minutes |\r\n| Hourly analysis | Last 1-6 hours |\r\n| Daily reports | Last 24 hours |\r\n| Historical analysis | Up to retention limit |\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --- | ----- | ----- |\r\n| VTEX IO | Infrastructure | **Log Access - Read-only** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).",
+                "parameters": [
+                    { "$ref": "#/components/parameters/Content-Type" },
+                    { "$ref": "#/components/parameters/Accept" },
+                    {
+                        "name": "tenant",
+                        "in": "path",
+                        "description": "Tenant identifier (VTEX account name).",
+                        "required": true,
+                        "style": "simple",
+                        "schema": { "type": "string", "example": "myaccount" }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MetricsQueryRequest"
+                            },
+                            "examples": {
+                                "Specific metric name": {
+                                    "value": {
+                                        "columns": [
+                                            "TimestampTime",
+                                            "MetricName",
+                                            "sumMerge(Sum) as Sum"
+                                        ],
+                                        "page": 1,
+                                        "pageSize": 10,
+                                        "filters": [
+                                            {
+                                                "column": "TimestampTime",
+                                                "operator": ">=",
+                                                "type": "timestamp",
+                                                "value": "2026-04-27T10:00:00Z"
+                                            },
+                                            {
+                                                "column": "TimestampTime",
+                                                "operator": "<=",
+                                                "type": "timestamp",
+                                                "value": "2026-04-27T11:00:00Z"
+                                            },
+                                            {
+                                                "column": "app",
+                                                "operator": "=",
+                                                "type": "string",
+                                                "value": "myvendor.myapp@1.0.0"
+                                            },
+                                            {
+                                                "column": "MetricName",
+                                                "operator": "=",
+                                                "type": "string",
+                                                "value": "http_client_requests_total"
+                                            }
+                                        ],
+                                        "orders": [
+                                            {
+                                                "column": "TimestampTime",
+                                                "dir": "desc"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "Filters and group by status code": {
+                                    "value": {
+                                        "columns": [
+                                            "TimestampTime",
+                                            "MetricName",
+                                            "MetricType",
+                                            "app",
+                                            "Attributes['status_code']",
+                                            "sumMerge(Sum) as Sum"
+                                        ],
+                                        "page": 1,
+                                        "pageSize": 10,
+                                        "filters": [
+                                            {
+                                                "column": "app",
+                                                "operator": "=",
+                                                "type": "string",
+                                                "value": "myvendor.myapp@1.0.0"
+                                            },
+                                            {
+                                                "column": "MetricName",
+                                                "operator": "=",
+                                                "type": "string",
+                                                "value": "http_client_requests_total"
+                                            }
+                                        ],
+                                        "orders": [
+                                            {
+                                                "column": "TimestampTime",
+                                                "dir": "desc"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GrafanaDataFrameResponse"
+                                },
+                                "examples": {
+                                    "Specific metric name": {
+                                        "value": {
+                                            "refId": "A",
+                                            "name": "Metrics",
+                                            "fields": [
+                                                {
+                                                    "name": "TimestampTime",
+                                                    "type": "time",
+                                                    "values": [
+                                                        "2026-04-27T11:00:00Z",
+                                                        "2026-04-27T10:59:00Z",
+                                                        "2026-04-27T10:58:00Z",
+                                                        "2026-04-27T10:57:00Z",
+                                                        "2026-04-27T10:56:00Z",
+                                                        "2026-04-27T10:55:00Z",
+                                                        "2026-04-27T10:54:00Z",
+                                                        "2026-04-27T10:53:00Z",
+                                                        "2026-04-27T10:52:00Z",
+                                                        "2026-04-27T10:51:00Z"
+                                                    ]
+                                                },
+                                                {
+                                                    "name": "MetricName",
+                                                    "type": "string",
+                                                    "values": [
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total"
+                                                    ]
+                                                },
+                                                {
+                                                    "name": "Sum",
+                                                    "type": "number",
+                                                    "values": [
+                                                        149658,
+                                                        265406,
+                                                        323904,
+                                                        395545,
+                                                        353835,
+                                                        301187,
+                                                        243967,
+                                                        202327,
+                                                        368612,
+                                                        565415
+                                                    ]
+                                                }
+                                            ],
+                                            "meta": {
+                                                "executedQueryString": "metrics query",
+                                                "pagination": {
+                                                    "hasMore": true,
+                                                    "page": 1,
+                                                    "pageSize": 10,
+                                                    "total": 60
+                                                },
+                                                "truncated": true
+                                            }
+                                        }
+                                    },
+                                    "Filters and direct merge": {
+                                        "value": {
+                                            "refId": "A",
+                                            "name": "Metrics",
+                                            "fields": [
+                                                {
+                                                    "name": "TimestampTime",
+                                                    "type": "time",
+                                                    "values": [
+                                                        "2026-04-28T00:20:00Z",
+                                                        "2026-04-28T00:20:00Z",
+                                                        "2026-04-28T00:20:00Z",
+                                                        "2026-04-28T00:20:00Z",
+                                                        "2026-04-28T00:20:00Z",
+                                                        "2026-04-28T00:20:00Z",
+                                                        "2026-04-28T00:20:00Z",
+                                                        "2026-04-28T00:20:00Z",
+                                                        "2026-04-28T00:20:00Z",
+                                                        "2026-04-28T00:20:00Z"
+                                                    ]
+                                                },
+                                                {
+                                                    "name": "MetricName",
+                                                    "type": "string",
+                                                    "values": [
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total",
+                                                        "http_client_requests_total"
+                                                    ]
+                                                },
+                                                {
+                                                    "name": "MetricType",
+                                                    "type": "string",
+                                                    "values": [
+                                                        "sum",
+                                                        "sum",
+                                                        "sum",
+                                                        "sum",
+                                                        "sum",
+                                                        "sum",
+                                                        "sum",
+                                                        "sum",
+                                                        "sum",
+                                                        "sum"
+                                                    ]
+                                                },
+                                                {
+                                                    "name": "app",
+                                                    "type": "string",
+                                                    "values": [
+                                                        "myvendor.myapp@1.0.0",
+                                                        "myvendor.myapp@1.0.0",
+                                                        "myvendor.myapp@1.0.0",
+                                                        "myvendor.myapp@1.0.0",
+                                                        "myvendor.myapp@1.0.0",
+                                                        "myvendor.myapp@1.0.0",
+                                                        "myvendor.myapp@1.0.0",
+                                                        "myvendor.myapp@1.0.0",
+                                                        "myvendor.myapp@1.0.0",
+                                                        "myvendor.myapp@1.0.0"
+                                                    ]
+                                                },
+                                                {
+                                                    "name": "arrayElement(Attributes, 'status_code')",
+                                                    "type": "string",
+                                                    "values": [
+                                                        "200",
+                                                        "200",
+                                                        "200",
+                                                        "404",
+                                                        "200",
+                                                        "200",
+                                                        "200",
+                                                        "200",
+                                                        "200",
+                                                        "200"
+                                                    ]
+                                                },
+                                                {
+                                                    "name": "Sum",
+                                                    "type": "number",
+                                                    "values": [
+                                                        6,
+                                                        7,
+                                                        9,
+                                                        3,
+                                                        6,
+                                                        45,
+                                                        3,
+                                                        31,
+                                                        43,
+                                                        6
+                                                    ]
+                                                }
+                                            ],
+                                            "meta": {
+                                                "executedQueryString": "metrics query",
+                                                "pagination": {
+                                                    "hasMore": true,
+                                                    "page": 1,
+                                                    "pageSize": 10,
+                                                    "total": 120
+                                                },
+                                                "truncated": true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "error": {
+                                        "code": "400",
+                                        "message": "invalid request body: json: cannot unmarshal string into Go struct field MetricsQueryRequest.MetricsQueryParams.QueryParams.page of type int"
+                                    },
+                                    "timestamp": "2026-10-09T19:59:39Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Invalid token"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Forbidden"
+                                }
+                            }
+                        }
+                    },
+                    "408": {
+                        "description": "Request Timeout",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Query timeout"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Quota exceeded"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "appKey": [], "appToken": [] }]
+            }
+        },
+        "/api/extensions/observability/metrics/{tenant}/fields": {
+            "get": {
+                "tags": ["Metrics"],
+                "summary": "Get metrics fields",
+                "description": "> ⚠️ VTEX IO Observability is currently in beta, which means that we are working to improve it. If you have any questions, contact [our Support](https://supporticket.vtex.com/support).\r\n\r\nReturns the list of available fields (columns) for metrics queries for the given tenant.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --- | ----- | ----- |\r\n| VTEX IO | Infrastructure | **Log Access - Read-only** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).",
+                "parameters": [
+                    { "$ref": "#/components/parameters/Accept" },
+                    {
+                        "name": "tenant",
+                        "in": "path",
+                        "description": "Tenant identifier (VTEX account name).",
+                        "required": true,
+                        "style": "simple",
+                        "schema": { "type": "string", "example": "myaccount" }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Map of field names to field metadata (type, filterable, aggregatable).",
+                                    "additionalProperties": {
+                                        "type": "object",
+                                        "description": "Field metadata.",
+                                        "required": [
+                                            "aggregatable",
+                                            "filterable",
+                                            "type"
+                                        ],
+                                        "properties": {
+                                            "aggregatable": {
+                                                "type": "boolean",
+                                                "description": "Whether the field can be used in aggregations."
+                                            },
+                                            "filterable": {
+                                                "type": "boolean",
+                                                "description": "Whether the field can be used in query filters."
+                                            },
+                                            "type": {
+                                                "type": "string",
+                                                "description": "Field data type (e.g., `DateTime`, `String`)."
+                                            }
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "Attributes": {
+                                        "aggregatable": false,
+                                        "filterable": false,
+                                        "type": "Map(LowCardinality(String), String)"
+                                    },
+                                    "BucketCounts": {
+                                        "aggregatable": false,
+                                        "filterable": false,
+                                        "type": "AggregateFunction(sumForEach, Array(UInt64))"
+                                    },
+                                    "Count": {
+                                        "aggregatable": false,
+                                        "filterable": false,
+                                        "type": "AggregateFunction(sum, UInt64)"
+                                    },
+                                    "ExplicitBounds": {
+                                        "aggregatable": false,
+                                        "filterable": false,
+                                        "type": "AggregateFunction(any, Array(Float64))"
+                                    },
+                                    "MetricName": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "String"
+                                    },
+                                    "MetricType": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "LowCardinality(String)"
+                                    },
+                                    "ServiceName": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "LowCardinality(String)"
+                                    },
+                                    "Sum": {
+                                        "aggregatable": false,
+                                        "filterable": false,
+                                        "type": "AggregateFunction(sum, Float64)"
+                                    },
+                                    "TimestampTime": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "DateTime"
+                                    },
+                                    "Value": {
+                                        "aggregatable": false,
+                                        "filterable": false,
+                                        "type": "AggregateFunction(avg, Float64)"
+                                    },
+                                    "account": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "String"
+                                    },
+                                    "app": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "LowCardinality(String)"
+                                    },
+                                    "production": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "LowCardinality(String)"
+                                    },
+                                    "tenant": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "String"
+                                    },
+                                    "tenant_level": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "LowCardinality(String)"
+                                    },
+                                    "workspace": {
+                                        "aggregatable": false,
+                                        "filterable": true,
+                                        "type": "String"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Invalid token"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Forbidden"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Quota exceeded"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "appKey": [], "appToken": [] }]
+            }
+        },
+        "/api/extensions/observability/metrics/{tenant}/{app}/names": {
+            "get": {
+                "tags": ["Metrics"],
+                "summary": "Get metric names",
+                "description": "> ⚠️ VTEX IO Observability is currently in beta, which means that we are working to improve it. If you have any questions, contact [our Support](https://supporticket.vtex.com/support).\r\n\r\nList available metric names for a specific app within the given time range.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --- | ----- | ----- |\r\n| VTEX IO | Infrastructure | **Log Access - Read-only** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).",
+                "parameters": [
+                    { "$ref": "#/components/parameters/Accept" },
+                    {
+                        "name": "tenant",
+                        "in": "path",
+                        "description": "Tenant identifier (VTEX account name).",
+                        "required": true,
+                        "style": "simple",
+                        "schema": { "type": "string", "example": "myaccount" }
+                    },
+                    {
+                        "name": "app",
+                        "in": "path",
+                        "description": "App ID (e.g., myvendor.myapp@1.0.0).",
+                        "required": true,
+                        "style": "simple",
+                        "schema": { "type": "string", "example": "myvendor.myapp@1.0.0" }
+                    },
+                    {
+                        "name": "fromTime",
+                        "in": "query",
+                        "description": "Start of the time range (Unix timestamp in seconds).",
+                        "required": true,
+                        "style": "form",
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 1706630400
+                        }
+                    },
+                    {
+                        "name": "toTime",
+                        "in": "query",
+                        "description": "End of the time range (Unix timestamp in seconds).",
+                        "required": true,
+                        "style": "form",
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 1706716800
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "names": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string",
+                                                "description": "Metric name."
+                                            },
+                                            "description": "List of distinct metric names for the app."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "names": [
+                                        "cache_operations_total",
+                                        "http_client_cache_total",
+                                        "http_client_requests_total",
+                                        "http_handler_requests_total",
+                                        "http_server_requests_aborted_total",
+                                        "http_server_requests_closed_total",
+                                        "http_server_requests_total",
+                                        "io_app_operation_duration_milliseconds",
+                                        "render_errors_total",
+                                        "runtime_http_requests_duration_milliseconds",
+                                        "runtime_http_requests_total",
+                                        "runtime_http_response_size_bytes"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "error": {
+                                        "code": "400",
+                                        "message": "fromTime and toTime parameters are required"
+                                    },
+                                    "timestamp": "2026-08-26T22:58:29Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Invalid token"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Forbidden"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Quota exceeded"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "appKey": [], "appToken": [] }]
+            }
+        },
+        "/api/extensions/observability/{tenant}/apps": {
+            "get": {
+                "tags": ["Apps"],
+                "summary": "Get apps",
+                "description": "> ⚠️ VTEX IO Observability is currently in beta, which means that we are working to improve it. If you have any questions, contact [our Support](https://supporticket.vtex.com/support).\r\n\r\nList apps that have sent logs or metrics within the given time range.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --- | ----- | ----- |\r\n| VTEX IO | Infrastructure | **Log Access - Read-only** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).",
+                "parameters": [
+                    { "$ref": "#/components/parameters/Accept" },
+                    {
+                        "name": "tenant",
+                        "in": "path",
+                        "description": "Tenant identifier (VTEX account name).",
+                        "required": true,
+                        "style": "simple",
+                        "schema": { "type": "string", "example": "myaccount" }
+                    },
+                    {
+                        "name": "fromTime",
+                        "in": "query",
+                        "description": "Start of the time range (Unix timestamp in seconds).",
+                        "required": true,
+                        "style": "form",
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 1706630400
+                        }
+                    },
+                    {
+                        "name": "toTime",
+                        "in": "query",
+                        "description": "End of the time range (Unix timestamp in seconds).",
+                        "required": true,
+                        "style": "form",
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 1706716800
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "LogsApps": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string",
+                                                "description": "App name, including vendor and version."
+                                            },
+                                            "description": "List of app names that have logs in the time range."
+                                        },
+                                        "MetricsApps": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string",
+                                                "description": "App name, including vendor and version."
+                                            },
+                                            "description": "List of app names that have metrics in the time range."
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "LogsApps": [
+                                        "myvendor.app1@1.0.0",
+                                        "myvendor.app2@2.1.0"
+                                    ],
+                                    "MetricsApps": [
+                                        "myvendor.app1@1.0.0",
+                                        "myvendor.app3@1.5.0"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "error": {
+                                        "code": "400",
+                                        "message": "fromTime and toTime parameters are required"
+                                    },
+                                    "timestamp": "2026-08-26T22:58:29Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Invalid token"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Forbidden"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Quota exceeded"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "appKey": [], "appToken": [] }]
+            }
+        },
+        "/api/extensions/observability/capabilities": {
+            "get": {
+                "tags": ["Capabilities"],
+                "summary": "Get capabilities",
+                "description": "> ⚠️ VTEX IO Observability is currently in beta, which means that we are working to improve it. If you have any questions, contact [our Support](https://supporticket.vtex.com/support).\r\n\r\nReturns API capabilities including supported telemetry types (logs, metrics), available fields, operators, aggregations, and limits.\r\n\r\n## Permissions\r\n\r\nAny user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:\r\n\r\n| **Product** | **Category** | **Resource** |\r\n| --- | ----- | ----- |\r\n| VTEX IO | Infrastructure | **Log Access - Read-only** |\r\n\r\nThere are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.\r\n\r\nTo learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).",
+                "parameters": [{ "$ref": "#/components/parameters/Accept" }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/APICapabilities"
+                                },
+                                "example": {
+                                    "version": "1.0.0",
+                                    "telemetry_types": {
+                                        "logs": {
+                                            "name": "Logs",
+                                            "description": "Application logs with structured data and full-text search",
+                                            "operations": [
+                                                "query",
+                                                "fields",
+                                                "search"
+                                            ],
+                                            "fields": [
+                                                {
+                                                    "name": "ServiceName",
+                                                    "type": "LowCardinality(String)",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "Timestamp",
+                                                    "type": "DateTime64(9)",
+                                                    "filterable": false,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "TimestampTime",
+                                                    "type": "DateTime",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "TraceId",
+                                                    "type": "String",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "account",
+                                                    "type": "String",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "app",
+                                                    "type": "String",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "data",
+                                                    "type": "String",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "level",
+                                                    "type": "LowCardinality(String)",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "operationId",
+                                                    "type": "String",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "production",
+                                                    "type": "LowCardinality(String)",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "requestId",
+                                                    "type": "String",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "tenant",
+                                                    "type": "String",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "tenant_level",
+                                                    "type": "LowCardinality(String)",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "workspace",
+                                                    "type": "String",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                }
+                                            ],
+                                            "table_name": "telemetry.logs_distributed",
+                                            "engine": "ReplicatedMergeTree",
+                                            "special_features": [
+                                                "Full-text search",
+                                                "Structured attributes",
+                                                "Data truncation handling",
+                                                "Multi-tenant isolation"
+                                            ]
+                                        },
+                                        "metrics": {
+                                            "name": "Metrics",
+                                            "description": "Time-series metrics with aggregation support using AggregatingMergeTree",
+                                            "operations": [
+                                                "query",
+                                                "fields",
+                                                "aggregations",
+                                                "names"
+                                            ],
+                                            "fields": [
+                                                {
+                                                    "name": "Attributes",
+                                                    "type": "Map(LowCardinality(String), String)",
+                                                    "filterable": false,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "BucketCounts",
+                                                    "type": "AggregateFunction(sumForEach, Array(UInt64))",
+                                                    "filterable": false,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "Count",
+                                                    "type": "AggregateFunction(sum, UInt64)",
+                                                    "filterable": false,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "ExplicitBounds",
+                                                    "type": "AggregateFunction(any, Array(Float64))",
+                                                    "filterable": false,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "MetricName",
+                                                    "type": "String",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "MetricType",
+                                                    "type": "LowCardinality(String)",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "ServiceName",
+                                                    "type": "LowCardinality(String)",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "Sum",
+                                                    "type": "AggregateFunction(sum, Float64)",
+                                                    "filterable": false,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "TimestampTime",
+                                                    "type": "DateTime",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "Value",
+                                                    "type": "AggregateFunction(avg, Float64)",
+                                                    "filterable": false,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "account",
+                                                    "type": "String",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "app",
+                                                    "type": "LowCardinality(String)",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "production",
+                                                    "type": "LowCardinality(String)",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "tenant",
+                                                    "type": "String",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "tenant_level",
+                                                    "type": "LowCardinality(String)",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                },
+                                                {
+                                                    "name": "workspace",
+                                                    "type": "String",
+                                                    "filterable": true,
+                                                    "aggregatable": false
+                                                }
+                                            ],
+                                            "metric_types": [
+                                                "gauge",
+                                                "sum",
+                                                "histogram"
+                                            ],
+                                            "supported_aggregations": [
+                                                "sum",
+                                                "avg",
+                                                "count"
+                                            ],
+                                            "table_name": "telemetry.metrics_distributed",
+                                            "engine": "ReplicatedAggregatingMergeTree",
+                                            "special_features": [
+                                                "Automatic aggregation function mapping",
+                                                "Pre-aggregated data (1-minute intervals)",
+                                                "Optimized for time-series queries",
+                                                "Support for gauge, sum, and histogram metrics",
+                                                "Automatic MetricType detection"
+                                            ]
+                                        }
+                                    },
+                                    "operators": {
+                                        "between": "Between two values",
+                                        "eq": "Equal to",
+                                        "gt": "Greater than",
+                                        "gte": "Greater than or equal",
+                                        "in": "In list",
+                                        "is_not_null": "Is not null",
+                                        "is_null": "Is null",
+                                        "like": "Pattern matching (contains)",
+                                        "lt": "Less than",
+                                        "lte": "Less than or equal",
+                                        "ne": "Not equal",
+                                        "not_in": "Not in list",
+                                        "not_like": "Pattern not matching"
+                                    },
+                                    "aggregations": [
+                                        {
+                                            "function": "sum",
+                                            "description": "Sum of values",
+                                            "clickhouse_map": "sumMerge (for AggregatingMergeTree)",
+                                            "supported_types": ["metrics"]
+                                        },
+                                        {
+                                            "function": "avg",
+                                            "description": "Average of values",
+                                            "clickhouse_map": "avgMerge (for AggregatingMergeTree)",
+                                            "supported_types": ["metrics"]
+                                        },
+                                        {
+                                            "function": "count",
+                                            "description": "Count of records",
+                                            "clickhouse_map": "countMerge (for AggregatingMergeTree)",
+                                            "supported_types": [
+                                                "logs",
+                                                "metrics"
+                                            ]
+                                        }
+                                    ],
+                                    "max_page_size": 1000,
+                                    "default_page_size": 50,
+                                    "query_timeout": "30 seconds",
+                                    "notes": {
+                                        "aggregation_abstraction": "The API automatically maps standard aggregation functions (sum, avg, count) to ClickHouse Merge functions for optimal performance with AggregatingMergeTree tables. Clients don't need to know about sumMerge, avgMerge, etc.",
+                                        "automatic_detection": "The API automatically detects MetricType (gauge, sum, histogram) and applies the appropriate aggregation function.",
+                                        "metrics_optimization": "Metrics use AggregatingMergeTree with pre-aggregated data at 1-minute intervals for optimal query performance."
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Invalid token"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Forbidden"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                },
+                                "example": {
+                                    "message": "Quota exceeded"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{ "appKey": [], "appToken": [] }]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "appKey": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppKey",
+                "description": "Unique identifier of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            },
+            "appToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-VTEX-API-AppToken",
+                "description": "Secret token of the [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys)."
+            }
+        },
+        "parameters": {
+            "Content-Type": {
+                "name": "Content-Type",
+                "in": "header",
+                "description": "Type of the content being sent.",
+                "required": true,
+                "style": "simple",
+                "schema": { "type": "string", "example": "application/json" }
+            },
+            "Accept": {
+                "name": "Accept",
+                "in": "header",
+                "description": "HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand.",
+                "required": true,
+                "style": "simple",
+                "schema": { "type": "string", "example": "application/json" }
+            }
+        },
+        "schemas": {
+            "LogsQueryRequest": {
+                "type": "object",
+                "description": "Request body for logs query.",
+                "properties": {
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number for pagination (1-based).",
+                        "example": 1,
+                        "default": 1
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "description": "Number of records per page (max: 1000).",
+                        "example": 50,
+                        "default": 50
+                    },
+                    "filters": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "column": {
+                                    "$ref": "#/components/schemas/LogsColumn"
+                                },
+                                "operator": {
+                                    "$ref": "#/components/schemas/FilterOperator"
+                                },
+                                "value": {
+                                    "description": "Filter value (type depends on column). Required if operator is not `is_null` or `is_not_null`."
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "description": "Value type: `string`, `number`, `timestamp`. `timestamp` values can be provided in [RFC 3339 format](https://www.rfc-editor.org/info/rfc3339) as strings (e.g., `\"2024-01-01T00:00:00Z\"`) or [Unix timestamps](https://en.wikipedia.org/wiki/Unix_time) as integers (e.g., `1714857600000`)."
+                                }
+                            },
+                            "required": ["column", "operator", "type"],
+                            "description": "Single filter condition."
+                        },
+                        "description": "List of filters to apply to the query.",
+                        "default": []
+                    },
+                    "orders": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "description": "Single sort order.",
+                            "required": ["column", "dir"],
+                            "properties": {
+                                "column": {
+                                    "type": "string",
+                                    "description": "Column name to order by."
+                                },
+                                "dir": {
+                                    "type": "string",
+                                    "enum": ["asc", "desc"],
+                                    "description": "Sort direction (`asc` or `desc`)."
+                                }
+                            }
+                        },
+                        "description": "Sort order for results. When multiple items are provided, ordering follows the precedence of the items in the array.",
+                        "default": []
+                    },
+                    "columns": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/LogsColumn"
+                        },
+                        "description": "Columns to return in the result."
+                    },
+                    "distinct": {
+                        "type": "boolean",
+                        "description": "Whether to return distinct values (rows) only.",
+                        "default": false
+                    }
+                }
+            },
+            "MetricsQueryRequest": {
+                "type": "object",
+                "description": "Request body for metrics query.",
+                "properties": {
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number for pagination (1-based).",
+                        "example": 1,
+                        "default": 1
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "description": "Number of records per page (max: 1000).",
+                        "example": 50,
+                        "default": 50
+                    },
+                    "filters": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "column": {
+                                    "$ref": "#/components/schemas/MetricsColumn"
+                                },
+                                "operator": {
+                                    "$ref": "#/components/schemas/FilterOperator"
+                                },
+                                "value": {
+                                    "description": "Filter value (type depends on column). Required if operator is not `is_null` or `is_not_null`."
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "description": "Value type: `string`, `number`, `timestamp`. `timestamp` values can be provided in [RFC 3339 format](https://www.rfc-editor.org/info/rfc3339) as strings (e.g., `\"2024-01-01T00:00:00Z\"`) or [Unix timestamps](https://en.wikipedia.org/wiki/Unix_time) as integers (e.g., `1714857600000`)."
+                                }
+                            },
+                            "required": ["column", "operator", "type"],
+                            "description": "Single filter condition."
+                        },
+                        "description": "List of filters to apply to the query.",
+                        "default": []
+                    },
+                    "orders": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "description": "Single sort order.",
+                            "required": ["column", "dir"],
+                            "properties": {
+                                "column": {
+                                    "type": "string",
+                                    "description": "Column name to order by."
+                                },
+                                "dir": {
+                                    "type": "string",
+                                    "enum": ["asc", "desc"],
+                                    "description": "Sort direction (`asc` or `desc`)."
+                                }
+                            }
+                        },
+                        "description": "Sort order for results. When multiple items are provided, ordering follows the precedence of the items in the array.",
+                        "default": []
+                    },
+                    "aggregations": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "function": {
+                                    "type": "string",
+                                    "enum": ["sum", "avg", "count"],
+                                    "description": "Aggregation function. The following table shows the available functions:\r\n\r\n| Function | Description | Use Case |\r\n| :---- | :---- | :---- |\r\n| `sum` | Sum of values. | Total requests, counts. |\r\n| `avg` | Average of values. | Average response time. |\r\n| `count` | Count of records. | Number of events. |"
+                                },
+                                "column": {
+                                    "type": "string",
+                                    "description": "Column to aggregate. Use `Sum` for counter/histogram metrics and `Value` for gauge metrics."
+                                },
+                                "alias": {
+                                    "type": "string",
+                                    "description": "Optional alias for the result column."
+                                }
+                            },
+                            "required": ["function", "column"],
+                            "description": "Aggregation specification."
+                        },
+                        "description": "Aggregation functions to apply (`sum`, `avg`, `count`).",
+                        "default": []
+                    },
+                    "group_by": {
+                        "type": "object",
+                        "nullable": true,
+                        "default": null,
+                        "required": ["columns"],
+                        "properties": {
+                            "columns": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "description": "Column name to group by."
+                                },
+                                "description": "Columns to group by."
+                            }
+                        },
+                        "description": "Grouping configuration for aggregations."
+                    },
+                    "columns": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MetricsColumn"
+                        },
+                        "description": "Columns to return in the result."
+                    },
+                    "distinct": {
+                        "type": "boolean",
+                        "description": "Whether to return distinct rows only.",
+                        "default": false
+                    }
+                }
+            },
+            "LogsColumn": {
+                "title": "column",
+                "type": "string",
+                "description": "Column name to return. The following table shows the available log columns:\r\n\r\n| Column | Type | Description | Filterable |\r\n| :---- | :---- | :---- | :---- |\r\n| `TimestampTime` | `DateTime` | Timestamp of the log entry. | \u2705 |\r\n| `Timestamp` | `DateTime64(9)` | Timestamp of the log entry stored as a 64-bit integer with 9-digit precision. | \u274C |\r\n| `level` | `String` | Log level (`debug`, `info`, `warn`, `error`). | \u2705 |\r\n| `app` | `String` | App ID (e.g., myvendor.myapp@1.0.0). | \u2705 |\r\n| `account` | `String` | VTEX account name. | \u2705 |\r\n| `workspace` | `String` | Workspace name. | \u2705 |\r\n| `production` | `String` | `\"true\"` or `\"false\"`. | \u2705 |\r\n| `data` | `String` | Log message body (JSON or text). | \u2705 |\r\n| `operationId` | `String` | Operation identifier. | \u2705 |\r\n| `requestId` | `String` | Request identifier. | \u2705 |\r\n| `ServiceName` | `String` | Service name. | \u2705 |\r\n| `TraceId` | `String` | Distributed trace ID. | \u2705 |\r\n| `tenant` | `String` | Tenant identifier. | \u2705 |\r\n| `tenant_level` | `String` | Tenant level. | \u2705 |"
+            },
+            "MetricsColumn": {
+                "title": "column",
+                "type": "string",
+                "description": "Column name to return. The following table shows the available metric columns:\r\n\r\n| Column | Type | Description | Filterable |\r\n| :---- | :---- | :---- | :-: |\r\n| `TimestampTime` | DateTime | Timestamp of the metric entry rounded to the minute in [RFC 3339 format](https://www.rfc-editor.org/info/rfc3339). | \u2705 |\r\n| `MetricName` | String | Name of the metric. | \u2705 |\r\n| `MetricType` | String | Metric type: `gauge`, `sum`, or `histogram`. | \u2705 |\r\n| `Value` | Float64 | Aggregated average value (for gauge). | \u274C |\r\n| `Sum` | Float64 | Aggregated sum value. | \u274C |\r\n| `Count` | UInt64 | Aggregated count. | \u274C |\r\n| `app` | String | App ID (e.g., myvendor.myapp@1.0.0). | \u2705 |\r\n| `account` | String | VTEX account name. | \u2705 |\r\n| `workspace` | String | [Workspace](https://developers.vtex.com/docs/guides/vtex-io-documentation-workspace) name. | \u2705 |\r\n| `production` | String | Indicates if the app is installed in a production workspace. Possible values: `\"true\"` or `\"false\"`. | \u2705 |\r\n| `ServiceName` | String | Service name. | \u2705 |\r\n| `Attributes` | Map | Custom attributes map. | \u274C |\r\n| `tenant` | String | Tenant identifier. | \u2705 |\r\n| `tenant_level` | String | Tenant level. | \u2705 |\r\n| `BucketCounts` | AggregateFunction(sumForEach, Array(UInt64)) | List with the number of items in each [bucket](https://signoz.io/guides/what-is-a-bucket-in-prometheus/#what-is-a-bucket-in-prometheus). Valid only for `histogram` type metrics. | \u274C |\r\n| `ExplicitBounds` | AggregateFunction(any, Array(Float64)) | List with the bound values of [buckets](https://signoz.io/guides/what-is-a-bucket-in-prometheus/#what-is-a-bucket-in-prometheus). Valid only for `histogram` type metrics. | \u274C |"
+            },
+            "FilterOperator": {
+                "title": "operator",
+                "type": "string",
+                "description": "Filter operator. The following table shows the available operators:\n\n| Operator | Alias | Description | Example Value |\r\n| :---- | :---- | :---- | :---- |\r\n| `=` | `eq` | Equal to | `\"value\"` |\r\n| `>` | `gt` | Greater than | `100` |\r\n| `<` | `lt` | Less than | `100` |\r\n| `>=` | `gte` | Greater than or equal | `100` |\r\n| `<=` | `lte` | Less than or equal | `100` |\r\n| `!=` | `ne` | Not equal | `\"value\"` |\r\n| `LIKE` | `like` | Contains pattern | `\"search\"` |\r\n| `NOT LIKE` | `not_like` | Does not contain | `\"exclude\"` |\r\n| `IN` | `in` | In list | `[\"a\", \"b\", \"c\"]` |\r\n| `NOT IN` | `not_in` | Not in list | `[\"x\", \"y\"]` |\r\n| `BETWEEN` | `between` | Between two values | `[100, 200]` |\r\n| `IS NULL` | `is_null` | Value is null | N\/A |\r\n| `IS NOT NULL` | `is_not_null` | Value is not null | N\/A |"
+            },
+            "GrafanaDataFrameResponse": {
+                "type": "object",
+                "properties": {
+                    "refId": {
+                        "type": "string",
+                        "description": "Reference ID for the frame."
+                    },
+                    "name": { "type": "string", "description": "Frame name." },
+                    "fields": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "description": "Single field in Grafana DataFrame format.",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Field name."
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "description": "Field type. The available types are:\r\n\r\n- `time`: Timestamp values\r\n- `string`: Text values\r\n- `number`: Numeric values\r\n- `boolean`: Boolean values\r\n- `other`: Complex types (maps, arrays)"
+                                },
+                                "values": {
+                                    "type": "array",
+                                    "items": {
+                                        "description": "Field value. The type depends on the corresponding field `type`: `string` for `string` and `time` fields, `number` for `number` fields, `boolean` for `boolean` fields, or `object` (for maps) and `array` for `other` fields. Can be `null` for empty aggregations or nullable columns.",
+                                        "anyOf": [
+                                            {
+                                                "title": "String",
+                                                "type": "string",
+                                                "nullable": true,
+                                                "description": "Text value or RFC 3339 timestamp string (used for `string` and `time` fields)."
+                                            },
+                                            {
+                                                "title": "Number",
+                                                "type": "number",
+                                                "nullable": true,
+                                                "description": "Numeric value, such as `Value`, `Sum`, `Count`, or aggregation results (used for `number` fields). Can be `null` when an aggregation has no data."
+                                            },
+                                            {
+                                                "title": "Boolean",
+                                                "type": "boolean",
+                                                "nullable": true,
+                                                "description": "Boolean value (used for `boolean` fields)."
+                                            },
+                                            {
+                                                "title": "Object",
+                                                "type": "object",
+                                                "nullable": true,
+                                                "additionalProperties": true,
+                                                "description": "Key-value map object, such as `Attributes` (used for `other` fields)."
+                                            },
+                                            {
+                                                "title": "Array",
+                                                "type": "array",
+                                                "nullable": true,
+                                                "items": {
+                                                    "description": "Array element value."
+                                                },
+                                                "description": "Array value, such as `BucketCounts` or `ExplicitBounds` (used for `other` fields)."
+                                            }
+                                        ]
+                                    },
+                                    "description": "Array of values in the field."
+                                }
+                            }
+                        },
+                        "description": "Array of fields in Grafana DataFrame format."
+                    },
+                    "meta": {
+                        "type": "object",
+                        "description": "Optional metadata.",
+                        "properties": {
+                            "executedQueryString": {
+                                "type": "string",
+                                "description": "The executed query (logs or metrics query)."
+                            },
+                            "pagination": {
+                                "type": "object",
+                                "description": "Pagination metadata for the query results.",
+                                "properties": {
+                                    "hasMore": {
+                                        "type": "boolean",
+                                        "description": "Indicates whether more pages of results are available."
+                                    },
+                                    "page": {
+                                        "type": "integer",
+                                        "description": "Current page number (1-based)."
+                                    },
+                                    "pageSize": {
+                                        "type": "integer",
+                                        "description": "Number of records per page."
+                                    },
+                                    "total": {
+                                        "type": "integer",
+                                        "description": "Total number of matching records."
+                                    }
+                                }
+                            },
+                            "truncated": {
+                                "type": "boolean",
+                                "description": "Indicates whether the query results were truncated."
+                            }
+                        }
+                    }
+                },
+                "description": "Response in Grafana DataFrame format."
+            },
+            "ErrorMessage": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "description": "Error message."
+                    }
+                },
+                "description": "Error response body."
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "object",
+                        "description": "Error message.",
+                        "properties": {
+                            "code": {
+                                "type": "string",
+                                "description": "Error code."
+                            },
+                            "message": {
+                                "type": "string",
+                                "description": "Error message."
+                            }
+                        }
+                    },
+                    "timestamp": {
+                        "type": "string",
+                        "description": "Timestamp of the error."
+                    }
+                },
+                "description": "Error response body."
+            },
+            "APICapabilities": {
+                "type": "object",
+                "properties": {
+                    "version": {
+                        "type": "string",
+                        "description": "API version."
+                    },
+                    "telemetry_types": {
+                        "type": "object",
+                        "description": "Supported telemetry types (logs, metrics) and their fields.",
+                        "properties": {
+                            "logs": {
+                                "type": "object",
+                                "description": "Supported log fields.",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Telemetry type name (\"Logs\")."
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": "Telemetry type description."
+                                    },
+                                    "operations": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "Operation name."
+                                        },
+                                        "description": "Supported operations."
+                                    },
+                                    "fields": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string",
+                                                    "description": "Field name."
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "description": "Field type."
+                                                },
+                                                "filterable": {
+                                                    "type": "boolean",
+                                                    "description": "Whether the field can be used in query filters."
+                                                },
+                                                "aggregatable": {
+                                                    "type": "boolean",
+                                                    "description": "Whether the field can be used in query aggregations."
+                                                }
+                                            }
+                                        },
+                                        "description": "Supported fields."
+                                    },
+                                    "table_name": {
+                                        "type": "string",
+                                        "description": "Table name."
+                                    },
+                                    "engine": {
+                                        "type": "string",
+                                        "description": "Engine used to store the logs."
+                                    },
+                                    "special_features": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "Special feature."
+                                        },
+                                        "description": "Special features."
+                                    }
+                                }
+                            },
+                            "metrics": {
+                                "type": "object",
+                                "description": "Supported metric fields.",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Telemetry type name (\"Metrics\")."
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": "Telemetry type description."
+                                    },
+                                    "operations": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "Operation name."
+                                        },
+                                        "description": "Supported operations."
+                                    },
+                                    "fields": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string",
+                                                    "description": "Field name."
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "description": "Field type."
+                                                },
+                                                "filterable": {
+                                                    "type": "boolean",
+                                                    "description": "Whether the field can be used in query filters."
+                                                },
+                                                "aggregatable": {
+                                                    "type": "boolean",
+                                                    "description": "Whether the field can be used in query aggregations."
+                                                }
+                                            }
+                                        },
+                                        "description": "Supported fields."
+                                    },
+                                    "metric_types": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "Metric type."
+                                        },
+                                        "description": "Supported metric types."
+                                    },
+                                    "supported_aggregations": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "Aggregation function name."
+                                        },
+                                        "description": "Supported aggregation functions."
+                                    },
+                                    "table_name": {
+                                        "type": "string",
+                                        "description": "Table name."
+                                    },
+                                    "engine": {
+                                        "type": "string",
+                                        "description": "Engine used to store the metrics."
+                                    },
+                                    "special_features": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "Special feature."
+                                        },
+                                        "description": "Special features."
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "operators": {
+                        "type": "object",
+                        "description": "Supported filter operators.",
+                        "additionalProperties": {
+                            "type": "string",
+                            "description": "Filter operator description."
+                        }
+                    },
+                    "aggregations": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "description": "Aggregation function.",
+                            "properties": {
+                                "function": {
+                                    "type": "string",
+                                    "description": "Aggregation function name."
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "description": "Aggregation function description."
+                                },
+                                "clickhouse_map": {
+                                    "type": "string",
+                                    "description": "ClickHouse map function name."
+                                },
+                                "supported_types": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string",
+                                        "description": "Supported observability type (\"logs\" or \"metrics\")."
+                                    },
+                                    "description": "Supported data types."
+                                }
+                            }
+                        },
+                        "description": "Supported aggregation functions."
+                    },
+                    "max_page_size": {
+                        "type": "integer",
+                        "description": "Maximum allowed page size."
+                    },
+                    "default_page_size": {
+                        "type": "integer",
+                        "description": "Default page size."
+                    },
+                    "query_timeout": {
+                        "type": "string",
+                        "description": "Query timeout duration."
+                    },
+                    "notes": {
+                        "type": "object",
+                        "description": "Additional notes.",
+                        "additionalProperties": {
+                            "type": "string",
+                            "description": "Note message."
+                        }
+                    }
+                },
+                "description": "API capabilities response."
+            }
+        }
+    },
+    "security": [{ "appKey": [], "appToken": [] }],
+    "tags": [
+        { "name": "Logs" },
+        { "name": "Metrics" },
+        { "name": "Apps" },
+        { "name": "Capabilities" }
+    ]
+}
