@@ -1,0 +1,129 @@
+info:
+  name: List affiliates
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/fulfillment/pvt/affiliates"
+  headers:
+    - name: Accept
+      value: application/json
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: accountName
+      value: apiexamples
+      type: path
+    - name: environment
+      value: vtexcommercestable
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/fulfillment/pvt/affiliates - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/fulfillment/pvt/affiliates - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/fulfillment/pvt/affiliates - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/fulfillment/pvt/affiliates - Schema is valid", function () {
+          const schema = {"type":"array","items":{"description":"[Affiliate](https://help.vtex.com/en/tutorial/configuring-affiliates--tutorials_187) information.","type":"object","properties":{"id":{"description":"Three-letter identifier defined during the affiliate configuration creation. Vowels are not allowed.","type":"string"},"followUpEmail":{"description":"Email address in which the user will receive notifications about the integration.","type":"string"},"useSellerPaymentMethod":{"description":"Indicates if the store uses the payment split, seller payment method, (`true`) or not (`false`). Recommended for use only in VTEX-with-VTEX integrations because of compatibility of payment methods.","type":"boolean"},"name":{"description":"Affiliate name.","type":"string"},"salesChannel":{"description":"Number of the sales channel that will define the catalog assortment, prices, and the shipping strategy of items sent to the marketplace.","type":"string"},"searchURIEndpoint":{"description":"URL of the application that will receive products, price, and inventory notifications, among others. The Search Endpoint should be filled with the value: `http://productnotification.vtexcommerce.com.br/api/notification/{NameOfMarketplace}/{SellerID}`. For [external marketplaces](https://help.vtex.com/en/tutorial/marketplace-strategies-at-vtex--tutorials_402#integrating-with-an-external-marketplace), fill in the value: `https://{endpointDoAfiliado}/api/notification/`. Learn more in our article [How to confugure the affiliate endpoint](https://developers.vtex.com/docs/guides/external-marketplace-integration-price-update#how-to-configure-the-affiliate-endpoint).","type":["string","null"]},"searchURIEndpointVersion":{"description":"Search URI endpoint version. The default option is the only one available.","type":"string","default":"1.x.x."},"searchURIEndpointAvailableVersions":{"description":"Search URI endpoint available versions.","type":"array","items":{"description":"Search URI endpoint available version. The default option is the only one available.","type":"string","default":"1.x.x."}},"minimumValueAccumulated":{"description":"Minimum value accumulated in the cart to checkout the order.","type":["integer","null"]}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Lists all [affiliate](https://help.vtex.com/en/tutorial/configuring-affiliates--tutorials_187) configurations in a store.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Checkout | CheckoutResources | **Save Order Configuration** |
+  | Checkout | CheckoutResources | **Save OrderForm Configuration** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `accountName` | path | (Required) Name of the VTEX account that belongs to the marketplace. The notification will be posted into this account. |
+  | `environment` | path | (Required) Environment to use. Used as part of the URL. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "id": "LNG",
+      "followUpEmail": "your@email.com",
+      "useSellerPaymentMethod": false,
+      "name": "Lengow",
+      "salesChannel": "1",
+      "searchURIEndpoint": null,
+      "searchURIEndpointVersion": "1.x.x",
+      "searchURIEndpointAvailableVersions": [
+        "1.x.x"
+      ],
+      "minimumValueAccumulated": 5000
+    },
+    {
+      "id": "CNT",
+      "followUpEmail": "email@email.com",
+      "useSellerPaymentMethod": false,
+      "name": "Centauro - lojadobreno",
+      "salesChannel": "2",
+      "searchURIEndpoint": "http://centaurointegration.vtexinternal.com.br/api/centaurointegration/indexedstockkeepingunit?an=lojadobreno",
+      "searchURIEndpointVersion": "1.x.x",
+      "searchURIEndpointAvailableVersions": [
+        "1.x.x"
+      ],
+      "minimumValueAccumulated": 1000
+    },
+    {
+      "id": "MLC",
+      "followUpEmail": null,
+      "useSellerPaymentMethod": false,
+      "name": "Mercado Livre - lojadobreno - gold_special",
+      "salesChannel": "2",
+      "searchURIEndpoint": "http://meliintegration.vtexinternal.com/api/meliintegration/commercialcondition?an=lojadobreno&lt=gold_special",
+      "searchURIEndpointVersion": "1.x.x",
+      "searchURIEndpointAvailableVersions": [
+        "1.x.x"
+      ],
+      "minimumValueAccumulated": 2000
+    }
+  ]
+  ```

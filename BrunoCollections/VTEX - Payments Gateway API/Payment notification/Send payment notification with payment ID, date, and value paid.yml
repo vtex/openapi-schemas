@@ -1,0 +1,72 @@
+info:
+  name: Send payment notification with payment ID, date, and value paid
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/payments/pvt/payments/:paymentId/payment-notification"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: paymentId
+      value: B075A551595A43B0AD48DCD8EB481C7F
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "paymentDate": "01/01/2025",
+        "valuePaid": 50.1
+      }
+  auth:
+    type: apikey
+    key: X-VTEX-API-AppKey
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("[POST]::/api/payments/pvt/payments/:paymentId/payment-notification - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Sends a payment notification for an order using the payment ID, including the payment date and the value paid.
+
+  >ℹ️ This endpoint should only be used when the payment was not completed on its creation date or was partially completed (e.g., $50 out of $100). If the payment was made in full on the creation date, use the `GET` [Send payment notification with payment ID](https://developers.vtex.com/docs/api-reference/payments-gateway-api#get-/api/payments/pvt/payments/-paymentId-/payment-notification) endpoint instead. 
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | PCI Gateway | Payment-NotifyPayments | **Payments Notification** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** |
+  | --------------- | ----------------- |
+  | Payments Notifier | **Payments Notification** |
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `paymentId` | path | (Required) Payment identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |

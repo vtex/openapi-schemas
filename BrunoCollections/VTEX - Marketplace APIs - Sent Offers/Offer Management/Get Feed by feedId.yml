@@ -1,0 +1,92 @@
+info:
+  name: Get Feed by feedId
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/sent-offers/feeds/:feedId?an={{accountName}}"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: "{{accountName}}"
+      type: query
+    - name: feedId
+      value: vtex.amazon
+      type: path
+    - name: environment
+      value: vtexcommercestable
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/sent-offers/feeds/:feedId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/sent-offers/feeds/:feedId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/sent-offers/feeds/:feedId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/sent-offers/feeds/:feedId - Schema is valid", function () {
+          const schema = {"title":"RetrieveFeed","type":"object","example":{"account":"grocery1","id":"vtex.meli-classic","affiliateId":"vtex.meli-classic","salesChannel":"5","channelName":"Mercadolivre Classic","channelLogo":"https://s3.amazonaws.com/Marketplace-Integration/Bridge/logos/mercadolivre.png"},"properties":{"account":{"type":"string","description":"Seller's account name."},"id":{"type":"string","description":"Channel's ID."},"affiliateId":{"type":"string","description":"This attribute is created by the seller, in their VTEX store configuration."},"salesChannel":{"type":"string","description":"Sales channel (or [trade policy](https://help.vtex.com/en/tutorial/como-funciona-uma-politica-comercial--6Xef8PZiFm40kg2STrMkMV#master-data)) associated to the seller account created."},"channelName":{"type":"string","description":"Name of the channel where the offer was sent."},"channelLogo":{"type":"string","description":"Logo of the channel where the offer was sent."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  >❗The Offer Management module has been discontinued and is no longer supported. The module has been replaced by Offer Status.
+  To learn more, visit the [announcement](https://help.vtex.com/pt/announcements/modulo-status-dos-anuncios-para-integracoes-com-marketplaces-vtex--1EeGgit1Brq3mmm8qhv2m3).
+
+   In [Offer Management](https://developers.vtex.com/vtex-rest-api/docs/sent-offers-integration-guide-connectors), after you have [created the channel](https://developers.vtex.com/vtex-rest-api/reference/createchannel), the next step is to create a feed, which is a list of information about the seller's offers sent to the marketplace. 
+
+  This endpoint retrieves information about a specific feed by searching through its `feedId`.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `feedId` | path | (Required) The `feedId` attribute that identifies a feed between a seller and a channel, follows a standardized pattern that will be used by connectors when establishing the connection between the two. It follows the pattern `vendor.channel`. |
+  | `environment` | path | (Required) Environment to use. Used as part of the URL. |
+  | `an` | query | (Required) Name of the VTEX account. Used as query param. |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "account": "grocery1",
+    "id": "vtex.meli-classic",
+    "affiliateId": "vtex.meli-classic",
+    "salesChannel": "5",
+    "channelName": "Mercadolivre Classic",
+    "channelLogo": "https://s3.amazonaws.com/Marketplace-Integration/Bridge/logos/mercadolivre.png"
+  }
+  ```

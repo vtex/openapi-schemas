@@ -1,0 +1,83 @@
+info:
+  name: Create data erasure job
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/user-rights/forget/jobs"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "email": "user@example.com"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/user-rights/forget/jobs - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/user-rights/forget/jobs - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/user-rights/forget/jobs - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/user-rights/forget/jobs - Schema is valid", function () {
+          const schema = {"type":"object","required":["jobId"],"properties":{"jobId":{"type":"string","format":"uuid","description":"Unique identifier of the data erasure job. Use this ID to poll the job status via the [Get data erasure job status](https://developers.vtex.com/docs/api-reference/user-rights-api#get-/api/user-rights/forget/jobs/-jobId-) endpoint."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  > ⚠️ This endpoint is in **closed beta** and currently available for selected accounts only.
+
+  Creates a job to delete a user's personal data across VTEX applications ("Right to be Forgotten"). The request receives the user's email and returns a job ID that can be used to track the deletion progress via the [Get data erasure job status](https://developers.vtex.com/docs/api-reference/user-rights-api#get-/api/user-rights/forget/jobs/-jobId-) endpoint.
+
+  > ⚠️ This data erasure flow applies only to non-corporate shoppers. It doesn't apply to B2B buyers or Admin users.
+
+  >ℹ️ If no data is found for the given email, the job completes with `Success` status.
+
+  >ℹ️ The system automatically retries failed operations up to 10 times before marking the job as `Failed`.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`201`)
+
+  ```json
+  {
+    "jobId": "550e8400-e29b-41d4-a716-446655440000"
+  }
+  ```

@@ -1,0 +1,238 @@
+info:
+  name: Update payment rule by ID
+  type: http
+  seq: 8
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/pvt/rules/:ruleId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: ruleId
+      value: fe6c470b-f80b-4bb1-a75c-378617f8767a
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "id": "c997267e-39bf-4217-a890-a503f6a7dc47",
+        "name": "Test_API_2_Updated",
+        "salesChannels": [
+          {
+            "id": "1"
+          }
+        ],
+        "paymentSystem": {
+          "id": 8,
+          "name": "Hipercard",
+          "implementation": null
+        },
+        "connector": {
+          "implementation": "Vtex.PaymentGateway.Connectors.CieloV3Connector",
+          "affiliationId": "0a8488e6-0c30-4150-be96-b0dcaaa6a0cd"
+        },
+        "issuer": {
+          "name": "barclays"
+        },
+        "antifraud": null,
+        "installmentOptions": {
+          "dueDateType": 0,
+          "interestRateMethod": 1,
+          "minimumInstallmentValue": 400,
+          "installments": [
+            {
+              "ruleId": null,
+              "quantity": 12,
+              "value": 0,
+              "interestRate": 25,
+              "isExternalInstallmentService": null,
+              "interestTax": 0
+            }
+          ]
+        },
+        "isSelfAuthorized": null,
+        "requiresAuthentication": null,
+        "enabled": false,
+        "installmentsService": false,
+        "isDefault": null,
+        "beginDate": "2023-12-15T17:00:00Z",
+        "endDate": "2023-12-30T01:00:00Z",
+        "condition": {
+          "id": "1",
+          "pullRate": 15,
+          "name": null
+        },
+        "multiMerchantList": [],
+        "country": {
+          "name": null,
+          "isoCode": "br"
+        },
+        "dateIntervals": [
+          {
+            "start": "* * 12 * * 1,3,4 * -0300",
+            "end": "* * 19 * * 1,3,4 * -0300"
+          },
+          {
+            "start": "* * 09 * * * * -0300",
+            "end": "* * 21 * * * * -0300"
+          }
+        ],
+        "externalInterest": false,
+        "minimumValue": null,
+        "deadlines": [],
+        "cobrand": {
+          "name": null
+        },
+        "cardLevel": {
+          "name": "gold"
+        },
+        "excludedBinsRanges": null
+      }
+  auth:
+    type: apikey
+    key: X-VTEX-API-AppKey
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[PUT]::/api/pvt/rules/:ruleId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PUT]::/api/pvt/rules/:ruleId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[PUT]::/api/pvt/rules/:ruleId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[PUT]::/api/pvt/rules/:ruleId - Schema is valid", function () {
+          const schema = {"required":["id","name","salesChannels","paymentSystem","connector","issuer","antifraud","installmentOptions","isSelfAuthorized","requiresAuthentication","enabled","installmentsService","isDefault","beginDate","endDate","condition","multiMerchantList","country","dateIntervals"],"type":"object","description":"Payment rules information.","properties":{"id":{"type":"string","description":"Rule identification."},"name":{"type":"string","description":"Rule name."},"salesChannels":{"type":"array","description":"Array containing information about the Sales channel.","items":{"type":"object","description":"Sales channel information.","required":["id"],"properties":{"id":{"type":"string","description":"Sales channel identification."}}}},"paymentSystem":{"required":["id","name","implementation"],"type":"object","description":"Payment system information.","properties":{"id":{"type":"number","description":"Payment system identification."},"name":{"type":"string","description":"Payment system name."},"implementation":{"type":["string","null"],"description":"Payment system implementation class name."}}},"connector":{"required":["implementation","affiliationId"],"type":["object","null"],"description":"Connector (payment provider) information.","properties":{"implementation":{"type":"string","description":"Connector (payment provider) implementation class name."},"affiliationId":{"type":"string","description":"Affiliation connector (payment provider) identification."}}},"issuer":{"required":["name"],"type":"object","description":"Card issuer information.","properties":{"name":{"type":["string","null"],"description":"Card issuer name."}}},"antifraud":{"required":["implementation","affiliationId"],"type":["object","null"],"description":"Anti-fraud information.","properties":{"implementation":{"type":["string","null"],"description":"Connector (anti-fraud provider) implementation class name."},"affiliationId":{"type":["string","null"],"description":"Affiliation connector (anti-fraud provider) identification."}}},"installmentOptions":{"required":["dueDateType","interestRateMethod","minimumInstallmentValue","installments"],"type":["object","null"],"description":"Installment options information.","properties":{"dueDateType":{"type":"number","description":"Indicates whether the billing date will be at the end (0) or beginning of the period (1).","enum":[0,1]},"interestRateMethod":{"type":["number","null"],"description":"Indicates the type of interest to calculate the value of the installments (Compound Interest = `null` or `0`, Simple Interest Rate with Tax = `1` and Single Interest = `2`).","enum":[null,0,1,2]},"minimumInstallmentValue":{"type":"number","description":"Minimum value of each installment."},"installments":{"type":"array","description":"Array containing installments information.","items":{"required":["ruleId","quantity","value","interestRate","isExternalInstallmentService","interestTax"],"type":"object","description":"Installments information.","properties":{"ruleId":{"type":["string","null"],"description":"Rule identification."},"quantity":{"type":"integer","description":"Number of installments."},"value":{"type":"number","description":"Value of each installment."},"interestRate":{"type":"number","description":"Interest rate (percent 0.1 = 10%)."},"isExternalInstallmentService":{"type":["number","null"],"description":"Indicates the external installment system (if applicable)."},"interestTax":{"type":["number","null"],"description":"Interest tax (percent 0.1 = 10%)."}}}}}},"isSelfAuthorized":{"type":["boolean","null"],"description":"Indicates whether the payment is automatically authorized."},"requiresAuthentication":{"type":["boolean","null"],"description":"Indicates whether it is necessary to log in to make the payment."},"enabled":{"type":"boolean","description":"Indicates whether the rule is enabled in the store."},"installmentsService":{"type":"boolean","description":"Indicates whether any specific type of installment service is used."},"isDefault":{"type":["boolean","null"],"description":"Indicates whether this rule should be considered the default for a given payment condition."},"beginDate":{"type":["string","null"],"description":"Rule start date in [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html) format (`YYYY-MM-DDThh:mm:ss.fff`), if applicable."},"endDate":{"type":["string","null"],"description":"Rule end date in [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html) format (`YYYY-MM-DDThh:mm:ss.fff`), if applicable."},"condition":{"required":["id","pullRate","name"],"type":["object","null"],"description":"Commercial condition information.","properties":{"id":{"type":"string","description":"Commercial condition identification."},"pullRate":{"type":"number","description":"Indicates the minimum percentage of SKUs required in the cart using this commercial condition for it to be activated."},"name":{"type":["string","null"],"description":"Commercial condition information."}}},"multiMerchantList":{"type":["array","null"],"description":"Indicates the names of the accounts to which the rule is being applied exclusively.","items":{"type":"string","description":"Account names."}},"country":{"required":["name","isoCode"],"type":["object","null"],"description":"Information about rule application in a country.","properties":{"name":{"type":["string","null"],"description":"Country name."},"isoCode":{"type":"string","description":"Country code (ISO 3166 alpha-2)."}}},"dateIntervals":{"type":["array","null"],"description":"Array containing information about the periods (days and hours) in which the rule is enabled.","items":{"required":["start","end"],"type":"object","description":"Rule enablement period information.","properties":{"start":{"type":"string","description":"Time, days of the week, and GMT time zone in which the rule is activated. This data is available in [CRON format](https://en.wikipedia.org/wiki/Cron)."},"end":{"type":"string","description":"Time, days of the week and GMT time zone in which the rule is deactivated. This data is available in [CRON format](https://en.wikipedia.org/wiki/Cron)."}}}},"externalInterest":{"type":"boolean","description":"Indicates whether interest can be calculated externally."},"minimumValue":{"type":["number","null"],"description":"Minimum payment transaction amount for the rule to be applied."},"deadlines":{"type":"array","description":"Array containing information about the payment deadlines (applicable for credit payment method).","items":{"type":"object","description":"Payment deadlines information.","required":["paymentOptions"],"properties":{"paymentOptions":{"type":"array","description":"Array containing payment options information.","items":{"required":["days","interestRate"],"type":"object","description":"Payment options information.","properties":{"days":{"type":"number","description":"Deadline in days to make payment."},"interestRate":{"type":"number","description":"Interest rate applied (in percentage, e.g. `3.0` means 3%)."}}}}}}},"cobrand":{"required":["name"],"type":"object","description":"Information about the cobranded card.","properties":{"name":{"type":["string","null"],"description":"Card name."}}},"cardLevel":{"required":["name"],"type":"object","description":"Information about the card category.","properties":{"name":{"type":["string","null"],"description":"Card category name (e.g. standard, gold, premium)."}}},"excludedBinsRanges":{"type":["number","null"],"description":"Range of card bins excluded from application of this rule."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Updates information about a specific payment rule applied to the payment providers configured in your store.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | PCI Gateway | Payment-ManageStore | **Manage Store** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `ruleId` | path | (Required) Rule identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "c997267e-39bf-4217-a890-a503f6a7dc47",
+    "name": "Test_API_2_Updated",
+    "salesChannels": [
+      {
+        "id": "1"
+      }
+    ],
+    "paymentSystem": {
+      "id": 8,
+      "name": "Hipercard",
+      "implementation": null
+    },
+    "connector": {
+      "implementation": "Vtex.PaymentGateway.Connectors.CieloV3Connector",
+      "affiliationId": "0a8488e6-0c30-4150-be96-b0dcaaa6a0cd"
+    },
+    "issuer": {
+      "name": "barclays"
+    },
+    "antifraud": null,
+    "installmentOptions": {
+      "dueDateType": 0,
+      "interestRateMethod": 1,
+      "minimumInstallmentValue": 400,
+      "installments": [
+        {
+          "ruleId": null,
+          "quantity": 12,
+          "value": 0,
+          "interestRate": 25,
+          "isExternalInstallmentService": null,
+          "interestTax": 0
+        }
+      ]
+    },
+    "isSelfAuthorized": null,
+    "requiresAuthentication": null,
+    "enabled": false,
+    "installmentsService": false,
+    "isDefault": null,
+    "beginDate": "2023-12-15T17:00:00Z",
+    "endDate": "2023-12-30T01:00:00Z",
+    "condition": {
+      "id": "1",
+      "pullRate": 15,
+      "name": null
+    },
+    "multiMerchantList": [],
+    "country": {
+      "name": null,
+      "isoCode": "br"
+    },
+    "dateIntervals": [
+      {
+        "start": "* * 12 * * 1,3,4 * -0300",
+        "end": "* * 19 * * 1,3,4 * -0300"
+      },
+      {
+        "start": "* * 09 * * * * -0300",
+        "end": "* * 21 * * * * -0300"
+      }
+    ],
+    "externalInterest": false,
+    "minimumValue": null,
+    "deadlines": [],
+    "cobrand": {
+      "name": null
+    },
+    "cardLevel": {
+      "name": "gold"
+    },
+    "excludedBinsRanges": null
+  }
+  ```

@@ -1,0 +1,99 @@
+info:
+  name: Create Channel
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/sent-offers/channels?an=accountName"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: accountName
+      type: query
+    - name: environment
+      value: vtexcommercestable
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "vendor": "vtex",
+        "name": "Amazon",
+        "logo": "https://s3.amazonaws.com/Marketplace-Integration/Bridge/logos/madeiramadeira.png"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/sent-offers/channels - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/sent-offers/channels - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/sent-offers/channels - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/sent-offers/channels - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"id":{"type":"string","description":"The `feedId` attribute created by the connector that will identify sellers’ feeds with a channel. The `feedId` is always the same for the relation between sellers and channels, but connectors can create more than one `feedId` with a single marketplace, depending on their business rules. The `feedId` follows the standardized pattern `vendor.channel`.","default":"vtex.amazon"},"vendor":{"type":"string","description":"Name of the connector making the integration.","default":"vtex"},"name":{"type":"string","description":"Name of the channel with which the integration is being established.","default":"Amazon"},"logo":{"type":"string","description":"URL redirecting to the image file of the graphic symbol that identifies the marketplace. The file must in PNG format, and the image's dimension should be 300x300 pixels.","default":"https://marketplace.com/logos/logo.png"}},"title":"CreateChannel","example":{"id":"vtex.amazon","vendor":"vtex","name":"Amazon","logo":"https://marketplace.com/logos/logo.png"}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ❗The Offer Management module has been discontinued and is no longer supported. The module has been replaced by Offer Status.
+  To learn more, visit the [announcement](https://help.vtex.com/pt/announcements/modulo-status-dos-anuncios-para-integracoes-com-marketplaces-vtex--1EeGgit1Brq3mmm8qhv2m3).
+
+  The first step for connectors to integrate with [Offer Management](https://developers.vtex.com/vtex-rest-api/docs/sent-offers-integration-guide-connectors) is to create a channel, that represents the marketplace to where sellers will send their offers. 
+
+  This endpoint creates a channel and the integration developers should call it once for each marketplace. The information about the marketplace sent in the request will be shown to sellers in their [Offer Management UI](https://help.vtex.com/en/tutorial/offers-listing--7MRb9S78aBdZjFGpbuffpE). 
+
+  The `feedId` created by this call will apply to all sellers connected to the given channel, and will be necessary for the next step of the integration flow, which is to [activate feed](https://developers.vtex.com/docs/api-reference/marketplace-apis-offer-management#post-/api/sent-offers/feeds). 
+
+  >ℹ
+  > Offer Management is available for integrations with [Mercado Livre (Classic and Premium)](https://help.vtex.com/pt/tracks/configurar-integracao-do-mercado-livre--2YfvI3Jxe0CGIKoWIGQEIq), [Netshoes](https://help.vtex.com/pt/tracks/configurar-integracao-da-netshoes--5Ua87lhFg4m0kEcuyqmcCm), and VTEX marketplaces. For more information, see [Offer Management Integration Guide](https://developers.vtex.com/vtex-rest-api/docs/sent-offers-integration-guide-connectors).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `environment` | path | (Required) Environment to use. Used as part of the URL. |
+  | `an` | query | (Required) Name of the seller's VTEX account. Used as query param. |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`201`)
+
+  ```json
+  {
+    "id": "vtex.amazon",
+    "vendor": "vtex",
+    "name": "Amazon",
+    "logo": "https://marketplace.com/logos/logo.png"
+  }
+  ```

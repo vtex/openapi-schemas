@@ -1,0 +1,134 @@
+info:
+  name: List freight values
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/logistics/pvt/configuration/freights/:carrierId/:postalcode/values"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: carrierId
+      value: carrier-123
+      type: path
+    - name: postalcode
+      value: "12345000"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/logistics/pvt/configuration/freights/:carrierId/:postalcode/values - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/logistics/pvt/configuration/freights/:carrierId/:postalcode/values - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/logistics/pvt/configuration/freights/:carrierId/:postalcode/values - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/logistics/pvt/configuration/freights/:carrierId/:postalcode/values - Schema is valid", function () {
+          const schema = {"type":"array","description":"List of freight values.","items":{"required":["zipCodeStart","zipCodeEnd","weightStart","weightEnd","absoluteMoneyCost","pricePercent","pricePercentByWeight","maxVolume","timeCost","country","operationType","restrictedFreights","polygon","minimumValueInsurance"],"type":"object","description":"Freight values object.","properties":{"zipCodeStart":{"type":"string","description":"Postal code interval starting point."},"zipCodeEnd":{"type":"string","description":"Postal code interval ending point."},"weightStart":{"type":"number","description":"Minimum weight allowed."},"weightEnd":{"type":"number","description":"Maximum weight allowed."},"absoluteMoneyCost":{"type":"number","description":"Fixed shipping cost to be charged, in a decimal number."},"pricePercent":{"type":"number","description":"[Price-based additional shipping charge](https://help.vtex.com/en/tutorial/additional-shipping-costs--2vqGwMn0LabkOHY6zSHYNV), calculated based on the total price of the order, in decimal number. You must fill in this field with a percentage value. For example, for an additional charge of 10%, fill in the table with `10`."},"pricePercentByWeight":{"type":"number","description":"[Weight-based additional shipping charge](https://help.vtex.com/en/tutorial/additional-shipping-costs--2vqGwMn0LabkOHY6zSHYNV), calculated based on the total weight of the order."},"maxVolume":{"type":"number","description":"Maximum volume that can be transported by the carrier in cm³."},"timeCost":{"type":"string","description":"Delivery time frame informed by the carrier, in the format `DD.HH:MM:SS`."},"country":{"type":"string","description":"Three letter ISO code for the country for the given postal code."},"operationType":{"type":"integer","description":"Indicates the operation type, which can be `1` (Insert), `2` (Update) or `3`(Delete)."},"restrictedFreights":{"type":["array","null"],"items":{"type":"string","description":"Restricted freight postal codes."},"description":"List of postal codes where the delivery is restricted for the given carrier."},"polygon":{"type":"string","description":"Polygon ID, according to the [geolocation](https://help.vtex.com/en/tutorial/registering-geolocation/) feature."},"minimumValueInsurance":{"type":"number","description":"Insurance minimum value."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Lists freight values appointed to your store's carriers, searching by carrier ID and postal code (`cep`). The information is retrieved from your [shipping rate template](https://help.vtex.com/en/tutorial/shipping-rate-template--tutorials_127) configurations.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Logistics | Logistics access | **Logistics full access** |
+  | Logistics | Logistics access | **Logistics viewer** |
+  | Logistics | Logistics access | **Logistics shipping full access** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Logistics - Full access | Logistics full access |
+  | OMS - Full access | Logistics full access |
+  | Logistics - Full access | Logistics viewer |
+  | Logistics - Read only | Logistics viewer |
+  | Logistics - Full access | Logistics shipping full access |
+  | OMS - Full access | Logistics shipping full access |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `carrierId` | path | (Required) Carrier ID. |
+  | `postalcode` | path | (Required) Postal code of the area in which you wish to retrieve freight values for a given carrier, according to your [shipping rate template](https://help.vtex.com/en/tutorial/shipping-rate-template--tutorials_127) configurations. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "zipCodeStart": "01000001",
+      "zipCodeEnd": "05999999",
+      "weightStart": 250.001,
+      "weightEnd": 300,
+      "absoluteMoneyCost": 329.9,
+      "pricePercent": 0,
+      "pricePercentByWeight": 0,
+      "maxVolume": 100000000,
+      "timeCost": "2.00:00:00",
+      "country": "BRA",
+      "operationType": 0,
+      "restrictedFreights": [
+        "01056051"
+      ],
+      "polygon": "central_RJ",
+      "minimumValueInsurance": 0
+    },
+    {
+      "zipCodeStart": "01230020",
+      "zipCodeEnd": "06959949",
+      "weightStart": 1001.001,
+      "weightEnd": 10000,
+      "absoluteMoneyCost": 15,
+      "pricePercent": 0,
+      "pricePercentByWeight": 0,
+      "maxVolume": 900000000,
+      "timeCost": "1.00:00:00",
+      "country": "BRA",
+      "operationType": 0,
+      "restrictedFreights": [],
+      "polygon": "zone_RJ",
+      "minimumValueInsurance": 0
+    }
+  ]
+  ```

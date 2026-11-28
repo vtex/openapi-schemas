@@ -1,0 +1,101 @@
+info:
+  name: Product search autocomplete
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/buscaautocomplete?productNameContains=jeans"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: productNameContains
+      value: jeans
+      type: query
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/buscaautocomplete - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/buscaautocomplete - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/buscaautocomplete - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/buscaautocomplete - Schema is valid", function () {
+          const schema = {"type":"object","description":"The root schema comprises the entire JSON document.","example":{"itemsReturned":[{"items":[],"thumb":"","thumbUrl":null,"name":"Cacilds in Coronas","href":"https://merch.vtexcommercestable.com.br/coronas/Cacilds","criteria":"£Cacilds in Coronas¢/coronas/Cacilds"},{"items":[{"productId":"3","itemId":"5","name":"Llf","nameComplete":"Cacilds Llf","imageUrl":"https://merch.vteximg.com.br/arquivos/ids/172754-25-25/Diablo.jpg?v=637521970448770000"}],"thumb":"<img src=\"https://merch.vteximg.com.br/arquivos/ids/155400-25-25/image-433ec3e72d7e4b94964481e843c9dd88.jpg?v=637172099619830000\" width=\"25\" height=\"25\" alt=\"image-433ec3e72d7e4b94964481e843c9dd88\" id=\"\" />","thumbUrl":"https://merch.vteximg.com.br/arquivos/ids/172754-25-25/Diablo.jpg?v=637521970448770000","name":"cacilds - llf","href":"https://merch.vtexcommercestable.com.br/bay-max-3/p","criteria":null}]},"required":["itemsReturned"],"properties":{"itemsReturned":{"type":"array","description":"Autocomplete returned items.","items":{"type":"object","required":["items","thumb","thumbUrl","name","href","criteria"],"properties":{"items":{"type":"array","description":"Array of products.","items":{"type":"object","description":"Product information.","properties":{"productId":{"type":"string","description":"Product ID."},"itemId":{"type":"string","description":"Item ID."},"name":{"type":"string","description":"Product name."},"nameComplete":{"type":"string","description":"Complete product name."},"imageUrl":{"type":"string","description":"Product image URL."}}}},"thumb":{"type":"string","description":"Item thumbnail."},"thumbUrl":{"type":["string","null"],"description":"Item thumbnail URL."},"name":{"type":"string","description":"Item name."},"href":{"type":"string","description":"Item URL."},"criteria":{"type":["string","null"],"description":"Item criteria."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves product's information related to the searched string.
+  `{{searchString}} is the part of string the user is looking for.
+  E.g.: `ref` | `refrig` | `refrigerator`
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `productNameContains` | query | (Required) Part of the string that will be searched. |
+  | `Content-Type` | header | (Required) Type of the content being sent |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "itemsReturned": [
+      {
+        "items": [],
+        "thumb": "",
+        "thumbUrl": null,
+        "name": "Cacilds in Coronas",
+        "href": "https://merch.vtexcommercestable.com.br/coronas/Cacilds",
+        "criteria": "£Cacilds in Coronas¢/coronas/Cacilds"
+      },
+      {
+        "items": [
+          {
+            "productId": "3",
+            "itemId": "5",
+            "name": "Llf",
+            "nameComplete": "Cacilds Llf",
+            "imageUrl": "https://merch.vteximg.com.br/arquivos/ids/172754-25-25/Diablo.jpg?v=637521970448770000"
+          }
+        ],
+        "thumb": "<img src=\"https://merch.vteximg.com.br/arquivos/ids/155400-25-25/image-433ec3e72d7e4b94964481e843c9dd88.jpg?v=637172099619830000\" width=\"25\" height=\"25\" alt=\"image-433ec3e72d7e4b94964481e843c9dd88\" id=\"\" />",
+        "thumbUrl": "https://merch.vteximg.com.br/arquivos/ids/172754-25-25/Diablo.jpg?v=637521970448770000",
+        "name": "cacilds - llf",
+        "href": "https://merch.vtexcommercestable.com.br/bay-max-3/p",
+        "criteria": null
+      }
+    ]
+  }
+  ```

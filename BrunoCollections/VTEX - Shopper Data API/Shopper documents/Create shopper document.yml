@@ -1,0 +1,99 @@
+info:
+  name: Create shopper document
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/dataentities/shopper/documents?_schema=v1"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: _schema
+      value: v1
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+        "userId": "8abea412-4702-46fb-b835-3edb29d8a261",
+        "email": "john@vtex.com",
+        "firstName": "John",
+        "lastName": "Doe",
+        "document": "514.427.690-33",
+        "documentType": "cpf",
+        "cards": [],
+        "phone": "11917118990",
+        "phone2": "11987654321",
+        "marketingOptIn": true
+      }
+  auth:
+    type: apikey
+    key: VtexIdclientAutCookie
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/dataentities/shopper/documents - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/dataentities/shopper/documents - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/dataentities/shopper/documents - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/dataentities/shopper/documents - Schema is valid", function () {
+          const schema = {"type":"object","description":"Response object returned when a document is successfully created.","properties":{"Id":{"type":"string","description":"Unique identifier of the document, often prefixed with the entity name."},"Href":{"type":"string","description":"URL to access the document. May be empty if not applicable."},"DocumentId":{"type":"string","description":"Same as `Id`, used internally to identify the document."}},"required":["Id","DocumentId"]};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint creates a shopper entity document.
+
+  > ℹ️ The shopper schema supports additional properties. Clients can include extra properties (e.g., `phone2`, `marketingOptIn`) in the request body, and they will be persisted alongside the standard fields.## Permissions
+
+  This endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `_schema` | query | (Required) Schema name. The value must be `v1`. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "Id": "shopper-a26301e6-1a1e-11f0-b37f-e46d3d0578c6",
+    "Href": "",
+    "DocumentId": "a26301e6-1a1e-11f0-b37f-e46d3d0578c6"
+  }
+  ```

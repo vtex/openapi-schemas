@@ -1,0 +1,136 @@
+info:
+  name: Save card token
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/card-token-vault/tokens"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "providerId": "123579",
+        "card": {
+          "paymentSystemName": "Visa",
+          "paymentSystemId": "2",
+          "firstDigits": "411111",
+          "lastDigits": "1111",
+          "address": {
+            "addressType": "billing",
+            "postalCode": "12345678",
+            "street": "Main Street",
+            "neighborhood": "Downtown",
+            "city": "São Paulo",
+            "state": "SP",
+            "country": "Brazil",
+            "number": "123"
+          },
+          "holderName": "John Doe"
+        },
+        "cardTokenData": {
+          "type": "TOKEN_VALUE",
+          "value": "4111111111111111",
+          "expiration": "2030-12",
+          "label": "Primary credit card",
+          "useCvvForAuthorization": false
+        },
+        "email": "user@example.com"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/card-token-vault/tokens - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/card-token-vault/tokens - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/card-token-vault/tokens - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/card-token-vault/tokens - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"id":{"type":"string","description":"Unique identifier for the saved card token."},"accountName":{"type":"string","description":"Account name associated with this token."},"providerId":{"type":"string","description":"ID of the payment provider."},"card":{"type":"object","description":"Card information.","properties":{"paymentSystemId":{"type":"string","description":"ID of the payment system."},"paymentSystemName":{"type":"string","description":"Name of the payment system."},"firstDigits":{"type":"string","description":"First six digits of the card."},"lastDigits":{"type":"string","description":"Last four digits of the card."},"holderName":{"type":"string","description":"Cardholder's name."},"address":{"type":"object","description":"Billing address linked to the card.","properties":{"addressType":{"type":"string","description":"Type of address."},"addressId":{"type":["string","null"],"description":"Address ID."},"postalCode":{"type":"string","description":"Postal code."},"street":{"type":"string","description":"Street name."},"neighborhood":{"type":"string","description":"Neighborhood."},"city":{"type":"string","description":"City name."},"state":{"type":"string","description":"State or region."},"country":{"type":"string","description":"Country."},"number":{"type":"string","description":"Street number."},"complement":{"type":["string","null"],"description":"Address complement."}}}}},"cardTokenData":{"type":"object","description":"Token information for the card.","properties":{"type":{"type":"string","description":"Type of token."},"expiration":{"type":"string","description":"Expiration in YYYY-MM format."},"value":{"type":"string","description":"Token value."},"label":{"type":"string","description":"Label for the tokenized card."},"useCvvForAuthorization":{"type":"boolean","description":"Indicates if CVV is used for authorization."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Saves a new card token to the Card Token Vault.
+
+  >⚠️ This feature is only available for stores using B2B Buyer Portal, which is currently available to select accounts.
+
+  >ℹ️ This endpoint must use the `accountAuthCookie` value generated from the [Validate client login](https://developers.vtex.com/docs/api-reference/checkout-custom-card-payment-api#post-/api/vtexid/pub/authentication/classic/validate) endpoint.
+
+  ## Permissions
+
+  This endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "EAA2FC55554448D7B56DE57D9ACDE1B1",
+    "accountName": "gatewayqabrmkt",
+    "providerId": "123579",
+    "card": {
+      "paymentSystemId": "2",
+      "paymentSystemName": "Visa",
+      "firstDigits": "712737",
+      "lastDigits": "4791",
+      "holderName": "Nicole Kuhn",
+      "address": {
+        "addressType": "billing",
+        "addressId": null,
+        "postalCode": "97802532",
+        "street": "61898 Joesph Via",
+        "neighborhood": "Sylvester Stehr",
+        "city": "Emardside",
+        "state": "KO",
+        "country": "British Indian Ocean Territory (Chagos Archipelago)",
+        "number": "4",
+        "complement": null
+      }
+    },
+    "cardTokenData": {
+      "type": "TOKEN_VALUE",
+      "expiration": "2031-05",
+      "value": "7127376938244791",
+      "label": "01.A. Save 1 tokenized credit card via api using an external credential",
+      "useCvvForAuthorization": false
+    }
+  }
+  ```

@@ -1,0 +1,88 @@
+info:
+  name: List all gift card transactions cancellations
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{baseUrl}}/giftcards/:giftCardId/transactions/:transactionId/cancellations"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: giftCardId
+      value: "6"
+      type: path
+    - name: transactionId
+      value: b47690
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/giftcards/:giftCardId/transactions/:transactionId/cancellations - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/giftcards/:giftCardId/transactions/:transactionId/cancellations - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/giftcards/:giftCardId/transactions/:transactionId/cancellations - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/giftcards/:giftCardId/transactions/:transactionId/cancellations - Schema is valid", function () {
+          const schema = {"type":"array","items":{"description":"Transaction response information.","required":["oid","value","date"],"type":"object","properties":{"oid":{"type":"string","description":"Operation identification."},"value":{"type":"number","description":"Value information."},"date":{"type":"string","description":"Date information."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns all transactions cancelled for a specific gift card from a gift card provider.
+
+  > ℹ️ This request is made from VTEX to the gift card payment provider.
+
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `giftCardId` | path | (Required) Gift card identification. |
+  | `transactionId` | path | (Required) Transaction identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "oid": "7582d93baccc44e9867b0b861696fc0a",
+      "value": 4.1,
+      "date": "2019-03-19T14:35:16.7157238Z"
+    }
+  ]
+  ```

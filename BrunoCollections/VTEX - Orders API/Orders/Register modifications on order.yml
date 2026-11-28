@@ -1,0 +1,146 @@
+info:
+  name: Register modifications on order
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/oms/pvt/orders/:orderId/changes"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: orderId
+      value: 1172452900788-01
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "requestId": "change-request-0123",
+        "reason": "Stock shortage",
+        "discountValue": 100,
+        "incrementValue": 100,
+        "itemsRemoved": [
+          {
+            "id": "0",
+            "price": 2499,
+            "quantity": 1
+          }
+        ],
+        "itemsAdded": [
+          {
+            "id": "0",
+            "price": 2499,
+            "quantity": 1
+          }
+        ]
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/oms/pvt/orders/:orderId/changes - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/oms/pvt/orders/:orderId/changes - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/oms/pvt/orders/:orderId/changes - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/oms/pvt/orders/:orderId/changes - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"date":{"type":"string","description":"Date of order modification."},"orderId":{"type":"string","description":"ID of the order."},"receipt":{"type":"string","description":"Receipt identification."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This request allows [modifying an order](https://help.vtex.com/en/tutorial/changing-items-from-a-completed-order--tutorials_190) by:
+
+  - Adding items to an order.
+
+  - Removing items from an order.
+
+  - Applying discounts to the total value of the order.
+
+  - Incrementing the total value of the order. 
+
+  >❗ This endpoint is being deprecated in March 1st, 2026. We stopped providing support for this API since December 31st, 2025. If you wish to modify an order, you can use the [Create order modifications](https://developers.vtex.com/docs/api-reference/orders-api#patch-/api/order-system/orders/-changeOrderId-/changes) endpoint for an improved order modification experience.
+
+   > **Timeout settings:** This is a synchronous API, which means the application requests data and waits until a value is returned. This behavior can cause timeout errors. To avoid them, we recommend setting the timeout in 20 seconds.
+
+  In order modifications scenarios, it is possible to insert a [Partial invoice](https://help.vtex.com/en/tracks/orders--2xkTisx4SXOWXQel8Jg8sa/q9GPspTb9cHlMeAZfdEUe). The total value of the order will be updated after the insertion of the invoice, even when there is a partial invoice scenario. The updated value is settled by the VTEX Payment Gateway, and the customer reimbursement is automatic. 
+
+  This action can only be done for orders in the following status:
+
+  - `handling`
+
+  - `waiting-for-fulfillment`
+
+  - `ready for invoicing` 
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Checkout | CheckoutResources | **Orders Full Access** |
+  | OMS | OMS access | **Cancel order** |
+  | OMS | OMS access | **Change order** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Checkout Admin | Orders Full Access |
+  | OMS - Full access | <p>Cancel order</p><p>Change order</p> |
+  | IntegrationProfile - Fulfillment Oms | <p>Cancel order</p><p>Change order</p> |
+  | IntegrationProfile - Fulfillment Gateway | Cancel order |
+  | IntegrationProfile - Fulfillment Gateway Oms | <p>Cancel order</p><p>Change order</p> |
+  | inStore Sales Person | <p>Cancel order</p><p>Change order</p> |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `orderId` | path | (Required) ID that identifies the order in the seller. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "date": "2024-02-08T13:54:33.6868469+00:00",
+    "orderId": "v502538llux-01",
+    "receipt": "535d4581-a2a2-4fd2-a206-1c61eae91b1e"
+  }
+  ```

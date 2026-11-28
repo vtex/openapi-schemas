@@ -1,0 +1,172 @@
+opencollection: 1.0.0
+
+info:
+  name: VTEX - Intelligent Search Events API - Headless
+
+docs:
+  content: |-
+    Intelligent Search Events API is responsible for collecting the search events to improve your search results, such as page interactions and conversion, in a headless implementation. Some of the features improved by this collection are the possibility to sort the products by clicks or record the top search in the autocomplete.
+
+    >⚠️ **This API applies only to Headless scenarios**. It doesn't apply to stores using Store Framework, since they are already integrated with all Intelligent Search features.
+
+    ## Building the request body
+
+    In the following sections, we explain the required structure for the request body for saving events. Check the `POST` [Save events](https://developers.vtex.com/docs/api-reference/intelligent-search-events-api-headless#post-/event) endpoint reference for  more detailed field descriptions and examples.
+
+    Full request example (Session Ping):
+
+    ```json
+    curl --request post \
+    	--url https://sp.vtex.com/event-api/v1/{accountName}/event \
+    	--header 'Content-Type: application/json' \
+    	--data '{"session":"df66a4d239864d2e8497c89aea14a3ad","anonymous":"eed429ecf04a4a23ae7f4429033b48cd","url":"https://example.com/search/?query=zapatilha","agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0","type":"search.query","text":"zapatilha","misspelled":true,"match":392,"operator":"and"}'
+    ```
+
+    ### User identification
+
+    To identify the user, there are two required identifiers: `session` and `anonymous`.
+
+    - **session**: Identifier related to the current navigation, in UUID v4 format without dashes. The session cookie must be updated with each `session.ping` event, which is essential to determine if a session is active or has been closed. A session is automatically closed after 30 minutes without any `session.ping` event. Events registered for a session that has already been closed by the system are automatically disregarded. The session identifier changes if the user opens another tab in private navigation mode.
+
+    - **anonymous**: Identifier related to the user, in UUID v4 format without dashes. This information is kept in storage for one year. Similar to the session identifier, the anonymous identifier should be renewed to measure returning customers, though the lack of renewal is less critical due to the longer duration of this identifier.
+
+    These IDs must be generated uniquely and must not be copies of other identifiers or tokens from the platform. We recommend using a [Universally Unique Identifier (UUID) v4](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID) without dashes.
+
+    Sample JavaScript code to generate a random UUID without dashes:
+
+    ```js
+    window.crypto.randomUUID().replaceAll('-', '')
+    ```
+
+    >⚠️ The `session` and `anonymous` identifiers must be sent in every request.
+
+
+    ### Event type
+
+    To identify the events that occur in our search, the `type` field is required in the request. An event always depends on the previous one to be useful. The first two events (Session Ping and Search Query) are essential for basic search report information, suggestion APIs, most searched terms, and part of the relevance criteria composition. The last two events (Search Click and Page Confirmation) complement the search report and relevance criteria.
+
+    For autocomplete functionality, the Search Autocomplete Query and Search Autocomplete Click events follow a similar pattern: the query event tracks autocomplete searches, and the click event tracks product selections from autocomplete results. These events help improve autocomplete suggestions and track user interactions within the autocomplete feature.
+
+    The most common event types are the following:
+
+    | Event type | Value | Description |
+    | - | - | - |
+    | Session Ping | `session.ping` | Sends an ACK to the API to renew the session server-side. It should be sent every 1 minute. This event is essential to keep the session active. A session is automatically closed after 30 minutes without any `session.ping` event, and events registered for closed sessions are automatically disregarded. |
+    | Search Query | `search.query` | Sends a query event every time the shopper makes a full-text search. |
+    | Search Click | `search.click` |  Sends an event every time a shopper clicks on a product from a search page. |
+    | Page Confirmation |`page.confirmation` | Sends a confirmation informing the products that were bought. |
+    | Search Autocomplete Query | `search.autocomplete.query` | Sends a query event every time the shopper makes an autocomplete search. |
+    | Search Autocomplete Click | `search.autocomplete.click` | Sends an event every time a shopper clicks on a product from an autocomplete search. |
+
+    ### Request body examples per event type
+
+    The body is built by combining the user information, the event type, and add the optional fields. Below there is an example for each type of event.
+
+    #### Session Ping
+
+
+    ```json
+    {
+    	"session":"df66a4d239864d2e8497c89aea14a3ad",
+    	"anonymous":"eed429ecf04a4a23ae7f4429033b48cd",
+    	"url":"https://example.com/search/?query=zapatilha",
+    	"agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0",
+    	"type":"session.ping"
+    }
+    ```
+
+    #### Search Query
+
+    ```json
+    {
+    	"session":"df66a4d239864d2e8497c89aea14a3ad",
+    	"anonymous":"eed429ecf04a4a23ae7f4429033b48cd",
+    	"url":"https://example.com/search/?query=zapatilha",
+    	"agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0",
+    	"type":"search.query",
+    	"text":"zapatilha",
+    	"misspelled":true,
+    	"match":392,
+    	"operator":"and"
+    }
+    ```
+
+    #### Search Click
+
+    ```json
+    {
+    	"type": "search.click",
+    	"product": "12345",
+    	"position": 1,
+    	"url": "https://example.com/s?q=pneu&sort=score_desc&page=0",
+    	"text": "pneu",
+    	"agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+    	"anonymous": "1ce47e50-3f10-4556-95d3-57d4881c03a4",
+    	"session": "51a53ce3-096d-4740-a6d0-3cf86085ba13"
+    }
+    ```
+
+    #### Page Confirmation
+
+    ```json
+    {
+      "session":"df66a4d239864d2e8497c89aea14a3ad",
+      "anonymous":"eed429ecf04a4a23ae7f4429033b48cd",
+      "products": [
+        {
+          "product": "ABC123",
+          "price": 9.99,
+          "quantity": 3
+        },
+        {
+          "product": "XYZ789",
+          "price": 5.99,
+          "quantity": 2
+        }
+      ],
+      "order": "123ABC",
+      "type": "page.confirmation"
+    }
+    ```
+
+    #### Search Autocomplete Query
+
+    ```json
+    {
+    	"session":"df66a4d239864d2e8497c89aea14a3ad",
+    	"anonymous":"eed429ecf04a4a23ae7f4429033b48cd",
+    	"url":"https://example.com/search/?query=zapatilha",
+    	"agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:83.0) Gecko/20100101 Firefox/83.0",
+    	"type":"search.autocomplete.query",
+    	"text":"zapatilha",
+    	"misspelled":true,
+    	"match":392,
+    	"operator":"and"
+    }
+    ```
+
+    #### Search Autocomplete Click
+
+    ```json
+    {
+    	"type": "search.autocomplete.click",
+    	"product": "12345",
+    	"position": 1,
+    	"url": "https://example.com/s?q=pneu&sort=score_desc&page=0",
+    	"text": "pneu",
+    	"agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+    	"anonymous": "1ce47e50-3f10-4556-95d3-57d4881c03a4",
+    	"session": "51a53ce3-096d-4740-a6d0-3cf86085ba13"
+    }
+    ```
+
+    ### Finding search query information
+
+    Search query information such as `operator`, `fuzzy`, and `correction` is available in the Intelligent Search API response, which is part of the normal context of a search results page. Check the `GET` [Get list of products for a query](https://developers.vtex.com/docs/api-reference/intelligent-search-api#get-/product_search/-facets-?endpoint=get-/product_search/-facets-) endpoint reference for more information.
+  type: text/markdown
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

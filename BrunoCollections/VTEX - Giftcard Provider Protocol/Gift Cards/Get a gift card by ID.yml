@@ -1,0 +1,92 @@
+info:
+  name: Get a gift card by ID
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/giftcards/:giftCardId"
+  headers:
+    - name: Content-Type
+      value: application/vnd.vtex.giftcards.v1+json
+    - name: Accept
+      value: application/vnd.vtex.giftcards.v1+json
+  params:
+    - name: giftCardId
+      value: "5"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/giftcards/:giftCardId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/giftcards/:giftCardId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/giftcards/:giftCardId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/giftcards/:giftCardId - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"id":{"type":"string","description":"Gift card identification."},"redemptionToken":{"type":"string","description":"Gift card redemption token."},"redemptionCode":{"type":"string","description":"Gift card identification code used at checkout. Minimum of 6 characters."},"balance":{"type":"number","description":"Gift card current balance. For newly created gift cards, the balance will be 0.0."},"emissionDate":{"type":"string","description":"Gift card creation date."},"expiringDate":{"type":"string","description":"Gift card expiration date."},"currencyCode":{"type":"string","description":"Currency code in ISO 4217."},"discount":{"type":"boolean","description":"Discount information."},"transactions":{"type":"object","description":"Transactions information.","properties":{"href":{"type":"string","description":"Gift card resource URL. The number described in the URL refers to the gift card identification."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns information for a specific gift card from a gift card provider.
+
+  > ℹ️ This request is made from VTEX to the gift card payment provider.
+
+  > ℹ️ This endpoint must respond to the flow triggered by the [Add payment data](https://developers.vtex.com/docs/api-reference/checkout-api#post-/api/checkout/pub/orderForm/-orderFormId-/attachments/paymentData) endpoint within 1.5 seconds. If the response time exceeds 1.5 seconds, the Checkout UI will show an error message stating that the gift card is invalid.
+
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `giftCardId` | path | (Required) Gift card identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "id": "5",
+    "redemptionToken": "32ScL57220Vapb8pc50HJ3mWH1cl1L8x",
+    "redemptionCode": "***********ASDQ",
+    "balance": 870,
+    "emissionDate": "2014-04-24T20:22:58.163",
+    "expiringDate": "2016-01-01T00:00:00",
+    "currencyCode": "USD",
+    "discount": false,
+    "transactions": {
+      "href": "cards/954/transactions"
+    }
+  }
+  ```

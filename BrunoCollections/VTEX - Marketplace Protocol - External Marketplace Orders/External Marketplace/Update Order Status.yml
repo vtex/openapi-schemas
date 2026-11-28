@@ -1,0 +1,103 @@
+info:
+  name: Update Order Status
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/order-integration/orders/status"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: apiexamples
+      type: query
+      disabled: true
+    - name: accountName
+      value: apiexamples
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "marketplaceOrderId": "{{$guid}}",
+        "marketplaceOrderStatus": "approved",
+        "connectorName": "Skyhub",
+        "connectorEndpoint": "https://connector-endpoint.com/api/vtex"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[PUT]::/api/order-integration/orders/status - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PUT]::/api/order-integration/orders/status - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[PUT]::/api/order-integration/orders/status - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[PUT]::/api/order-integration/orders/status - Schema is valid", function () {
+          const schema = {"description":"Object for approving an order. Contains information about the approval status, errors (if any), and additional fields related to the approval process.","required":["marketplaceOrderId","accountName","code","flow","success","operationId","errors","fields","message"],"type":"object","properties":{"marketplaceOrderId":{"type":["string","null"],"description":"String that indicates the order's ID in the marketplace."},"accountName":{"type":["string","null"],"description":"String that indicates which account made the request."},"code":{"type":"string","description":"String with a internal Channel Order API code that classifies the response. The possible values returned in this field are described in the Response Codes section of this API Reference."},"flow":{"type":"string","description":"String containing the name of the flow responsible for the response. This field can contain the following values: \n\n`PlaceOrder`: when integrating new orders. \n\n`ApproveOrder`: when approving existing orders. \n\n`Unknown`: when we’re not able to identify the flow."},"success":{"type":"boolean","description":"Boolean that indicates if the response is successful or not."},"operationId":{"type":["string","null"],"description":"String GUID that identifies the operation in our service. This field can be used to help us analyze unexpected errors or behaviors."},"errors":{"type":["array","null"],"description":"List with errors related to the response, if there is any.","items":{"type":"object","description":"Object representing an error in the response.","required":["source","code","description"],"properties":{"source":{"type":"string","description":"Includes the following fields pointing out the context of the error: \n\n`Fulfillment` \n\n`Checkout` \n\n`Order Integration`.","enum":["Fulfillment","Checkout","Order Integration"]},"code":{"type":"string","description":"String containing the code returned by the source. Example value: If the source is `Fulfillment`, the code can be FMT005 to indicate that the item(s) in the order are not available."},"description":{"type":"string","description":"String containing the error message and description returned by the source."}}}},"fields":{"type":["object","null"],"description":"Structure with important fields for the connector. This structure is only returned if the response is successful. Includes the following fields: \n\n`mainOrderId`: String with the order's ID inside the main seller account in VTEX. \n\n`franchiseOrderId`: - String with the order's ID inside the franchise seller account in VTEX. Only returned if the order was integrated using the [Multilevel Omnichannel Inventory](https://help.vtex.com/en/tutorial/multilevel-omnichannel-inventory--7M1xyCZWUyCB7PcjNtOyw4) feature, that is: \n\n- `allowFranchises` field set to `true` when integrating the order \n\n- `SLA` chosen for the order is from a franchise account.","properties":{"mainOrderId":{"type":"string","description":"String with the order’s ID inside the main seller account in VTEX."},"franchiseOrderId":{"type":"string","description":"String with the order's ID inside the franchise seller account in VTEX. Only returned if the order was integrated using the [Multilevel Omnichannel Inventory](https://help.vtex.com/en/tutorial/multilevel-omnichannel-inventory--7M1xyCZWUyCB7PcjNtOyw4) feature."}}},"message":{"type":"string","description":"String with a message explaining the code returned in the response."}},"example":{"marketplaceOrderId":"7e62fcd3-827b-400d-be8a-f050a79c4976","accountName":null,"code":"SOI003","flow":"ApproveOrder","success":true,"operationId":null,"errors":null,"fields":null,"message":"Order successfully enqueued"}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  API request used to update an order status in VTEX.
+
+  This process is asynchronous and a notification with the order's integration results will be sent to the endpoint specified in the **connectiorEndpoint** field or the **connectiorEndpoint** [App Template](https://developers.vtex.com/vtex-rest-api/docs/external-marketplace-integration-app-template), if the connector uses our App template. The field **connectorName** is also optional for connectors that use our App Template and authenticate using the app's auth cookie. 
+
+  For a detailed explanation of the steps required to develop a custom connector to become an external marketplace for VTEX sellers, check out our complete [External Marketplace Integration Guide](https://developers.vtex.com/vtex-rest-api/docs/external-marketplace-integration-guide).
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `accountName` | path | (Required) Parameter should indicate the name of the VTEX account where the order is being integrated or updated, meaning the seller responsible for the order. |
+  | `an` | query | Parameter should indicate the name of the VTEX account where the order is being integrated or updated, meaning the seller responsible for the order. |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "marketplaceOrderId": "7e62fcd3-827b-400d-be8a-f050a79c4976",
+    "accountName": null,
+    "code": "SOI003",
+    "flow": "ApproveOrder",
+    "success": true,
+    "operationId": null,
+    "errors": null,
+    "fields": null,
+    "message": "Order successfully enqueued"
+  }
+  ```

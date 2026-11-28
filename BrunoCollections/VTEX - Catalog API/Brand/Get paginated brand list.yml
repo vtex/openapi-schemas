@@ -1,0 +1,121 @@
+info:
+  name: Get paginated brand list
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/catalog_system/pvt/brand/pagedlist?pageSize=5&page=1"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: pageSize
+      value: "5"
+      type: query
+    - name: page
+      value: "1"
+      type: query
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/catalog_system/pvt/brand/pagedlist - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/catalog_system/pvt/brand/pagedlist - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/catalog_system/pvt/brand/pagedlist - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/catalog_system/pvt/brand/pagedlist - Schema is valid", function () {
+          const schema = {"type":"object","required":["items","paging"],"properties":{"items":{"type":"array","description":"Array of objects with information of the store's brands.","items":{"type":"object","description":"Object containing brand information.","required":["id","name","isActive","imageUrl","title","metaTagDescription"],"properties":{"id":{"type":"integer","description":"Brand's unique numerical identifier."},"name":{"type":"string","description":"Brand name."},"isActive":{"type":"boolean","description":"Defines if the brand is active (`true`) or not (`false`)."},"title":{"type":"string","description":"Meta title for the brand page."},"metaTagDescription":{"type":"string","description":"Meta Description for the brand page. A brief description of the brand, displayed by search engines. Since search engines can only display less than 150 characters, we recommend not exceeding this character limit when creating the description."},"imageUrl":{"type":["string","null"],"description":"URL of the brand's image."}}}},"paging":{"type":"object","description":"Object with pagination information.","required":["page","perPage","total","pages"],"properties":{"page":{"type":"integer","description":"Page number of the brand list."},"perPage":{"type":"integer","description":"Quantity of brands per page."},"total":{"type":"integer","description":"Total of brands in the store."},"pages":{"type":"integer","description":"Total number of pages."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves all brands registered in the store's Catalog by page number.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Catalog | Content | **Brands** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `pageSize` | query | (Required) Quantity of brands per page. |
+  | `page` | query | (Required) Page number of the brand list. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "items": [
+      {
+        "id": 2000003,
+        "name": "AOC",
+        "isActive": true,
+        "title": "AOC",
+        "metaTagDescription": "AOC",
+        "imageUrl": null
+      },
+      {
+        "id": 2000004,
+        "name": "Calvin Klein",
+        "isActive": true,
+        "title": "",
+        "metaTagDescription": "",
+        "imageUrl": null
+      },
+      {
+        "id": 2000005,
+        "name": "Pets",
+        "isActive": true,
+        "title": "Pets",
+        "metaTagDescription": "Pets",
+        "imageUrl": null
+      }
+    ],
+    "paging": {
+      "page": 1,
+      "perPage": 20000,
+      "total": 201,
+      "pages": 1
+    }
+  }
+  ```

@@ -1,0 +1,154 @@
+info:
+  name: Get product and SKU IDs
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/catalog_system/pvt/products/GetProductAndSkuIds"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: categoryId
+      value: "1"
+      type: query
+      disabled: true
+    - name: _from
+      value: "1"
+      type: query
+      disabled: true
+    - name: _to
+      value: "10"
+      type: query
+      disabled: true
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/catalog_system/pvt/products/GetProductAndSkuIds - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/catalog_system/pvt/products/GetProductAndSkuIds - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/catalog_system/pvt/products/GetProductAndSkuIds - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/catalog_system/pvt/products/GetProductAndSkuIds - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"data":{"type":"object","description":"Object composed of product IDs and SKU IDs, where the parent ID is from products and the children IDs are from SKUs.","properties":{"Product ID":{"type":"array","description":"Array with SKU IDs of a certain product.","items":{"type":"integer","description":"Product SKU ID."}}}},"range":{"type":"object","description":"Object with information about the product and SKUs list.","properties":{"total":{"type":"integer","description":"Total quantity of products."},"from":{"type":"integer","description":"Initial product ID."},"to":{"type":"integer","description":"Final product ID."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves the IDs of products and SKUs.
+
+  >⚠️ The response body is limited to 250 records, but you can use the query params `_from` and `_to`.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Catalog | Content | **Product management** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `categoryId` | query | ID of the category from which you need to retrieve products and SKUs. |
+  | `_from` | query | Insert the ID that will start the request result. |
+  | `_to` | query | Insert the ID that will end the request result. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "data": {
+      "1": [
+        1,
+        123456,
+        310118449,
+        310118489,
+        7,
+        2
+      ],
+      "2": [
+        3,
+        310118450,
+        310118451,
+        4,
+        8
+      ],
+      "3": [
+        5
+      ],
+      "4": [
+        310118448
+      ],
+      "5": [
+        310118465
+      ],
+      "6": [],
+      "7": [
+        310118452
+      ],
+      "8": [
+        310118453,
+        310118459,
+        310118463
+      ],
+      "9": [
+        310118454,
+        310118455,
+        310118456,
+        310118457,
+        310118458,
+        310118460,
+        310118461,
+        310118462,
+        310118464
+      ],
+      "10": [],
+      "11": [],
+      "12": [
+        310118490
+      ]
+    },
+    "range": {
+      "total": 12,
+      "from": 1,
+      "to": 20
+    }
+  }
+  ```

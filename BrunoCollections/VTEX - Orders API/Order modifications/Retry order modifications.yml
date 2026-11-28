@@ -1,0 +1,177 @@
+info:
+  name: Retry order modifications
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/order-system/orders/:changeOrderId/changes/:changeRequestId/retry?an=storeName"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: storeName
+      type: query
+    - name: changeOrderId
+      value: v12772213qst-02
+      type: path
+    - name: changeRequestId
+      value: e8532a32-7f7e-434a-88ec-29609f0ede46
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "reason": "The client wants to change a weighable product.",
+        "replace": [
+          {
+            "from": {
+              "items": [
+                {
+                  "id": "1",
+                  "quantity": 1,
+                  "uniqueId": "1D6A12BD177140B2BAF0C042D2FAEE54",
+                  "price": 2499
+                }
+              ],
+              "customData": {
+                "customFields": [
+                  {
+                    "linkedEntity": {
+                      "type": "item",
+                      "id": "B2949D0A45244825B177D2F9F96DC711"
+                    },
+                    "fields": [
+                      {
+                        "name": "desktop",
+                        "value": "DSK-OLD"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "to": {
+              "items": [
+                {
+                  "id": "2",
+                  "quantity": 1,
+                  "uniqueId": "1D6A12BD177140B2BAF0C042D2FAEE54",
+                  "measurementUnit": "kg",
+                  "unitMultiplier": 3,
+                  "manualDiscountValue": 0,
+                  "manualIncrementValue": 0,
+                  "clientProfileData": [
+                    {
+                      "firstName": "Jane",
+                      "lastName": "Earhart",
+                      "documentType": "cpf",
+                      "document": "123456789",
+                      "phone": "55110988887777",
+                      "corporateName": null,
+                      "tradeName": null,
+                      "corporateDocument": null,
+                      "stateInscription": null,
+                      "corporatePhone": null,
+                      "isCorporate": false
+                    }
+                  ]
+                }
+              ],
+              "customData": {
+                "customFields": [
+                  {
+                    "linkedEntity": {
+                      "type": "item",
+                      "id": "B2949D0A45244825B133D2F9F96DC713"
+                    },
+                    "fields": [
+                      {
+                        "name": "desktop",
+                        "value": "DSK-NEW"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "shippingData": {
+                "logisticsInfo": [
+                  {
+                    "itemIndex": 0,
+                    "selectedSla": "Normal",
+                    "selectedDeliveryChannel": "delivery",
+                    "addressId": "9ec276fd3a604eb1aa151b5333ca5db6",
+                    "price": 1000
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("[POST]::/api/order-system/orders/:changeOrderId/changes/:changeRequestId/retry - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/order-system/orders/:changeOrderId/changes/:changeRequestId/retry - Response has empty Body", function () {
+          const data = res.getBody();
+          expect(data === undefined || data === null || data === "").to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint makes a new attempt to perform an order modification previously made using the [Create order modifications](https://developers.vtex.com/docs/api-reference/orders-api#patch-/api/order-system/orders/-changeOrderId-/changes) endpoint that, for some reason, was not completely processed.
+
+  To make this request, you need the `changeRequestId`, a unique change identification code that you get when you make a [Create order modifications](https://developers.vtex.com/docs/api-reference/orders-api#patch-/api/order-system/orders/-changeOrderId-/changes) request. When you retry to modify an order using the `changeRequestId`, instead of creating a new modification, you avoid duplications.
+
+  This endpoint's successful response status code is `204 No Content`, therefore with no response body.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Checkout | CheckoutResources | **Orders Full Access** |
+  | OMS | OMS access | **Cancel order** |
+  | OMS | OMS access | **Change order** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Checkout Admin | Orders Full Access |
+  | OMS - Full access | <p>Cancel order</p><p>Change order</p> |
+  | IntegrationProfile - Fulfillment Oms | <p>Cancel order</p><p>Change order</p> |
+  | IntegrationProfile - Fulfillment Gateway | Cancel order |
+  | IntegrationProfile - Fulfillment Gateway Oms | <p>Cancel order</p><p>Change order</p> |
+  | inStore Sales Person | <p>Cancel order</p><p>Change order</p> |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `changeOrderId` | path | (Required) Order ID of the order you wish to retry modification. |
+  | `changeRequestId` | path | (Required) Once you make an order modification, you generate a `requestId` code that identifies the modifications made to that order. This field should be filled with that code. There are no limits to modifications you can perform using the same `changeRequestId`, and we recommend keeping all modifications of a given order grouped by the same `changeRequestId`, so you will have a unified modification history. |
+  | `an` | query | (Required) Name of the VTEX account that created the order. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |

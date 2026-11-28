@@ -1,0 +1,143 @@
+info:
+  name: Evaluate payment policies
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/pvt/payment-systems/search?an=apiexamples"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: an
+      value: apiexamples
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+        "items": [
+          {
+            "id": "sku-01",
+            "collectionIds": [
+              139,
+              45
+            ],
+            "shippingData": {
+              "state": "NY"
+            }
+          },
+          {
+            "id": "sku-02",
+            "collectionIds": [
+              200
+            ],
+            "shippingData": {
+              "state": "NY"
+            }
+          }
+        ]
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/pvt/payment-systems/search - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/pvt/payment-systems/search - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/pvt/payment-systems/search - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/pvt/payment-systems/search - Schema is valid", function () {
+          const schema = {"type":"object","description":"Payment policy evaluation result returned by the Payment Information Service.","required":["paymentSystemAssignments","paymentSystemDefinitions"],"properties":{"paymentSystemAssignments":{"type":"object","description":"Map of item IDs to the payment system IDs allowed for each item.","additionalProperties":{"type":"array","items":{"type":"integer","format":"int32"}}},"paymentSystemDefinitions":{"type":"array","description":"Payment system metadata for the payment systems returned in the assignments.","items":{"required":["id","name","groupName"],"type":"object","description":"Available payment methods response body information.","properties":{"id":{"type":"number","description":"Payment method identification."},"name":{"type":"string","description":"Payment method name."},"requiresDocument":{"type":"boolean","description":"Indicates whether a document is required."},"implementation":{"type":"string","description":"Payment method implementation class name."},"connectorImplementation":{"type":"string","description":"Connector (payment provider) implementation class name."},"antifraudConnectorImplementation":{"type":["string","null"],"description":"Connector (anti-fraud provider) implementation class name."},"groupName":{"type":"string","description":"Payment group name."},"redirect":{"type":"boolean","description":"Indicates whether the payment method allows redirection."},"isCustom":{"type":"boolean","description":"Indicates whether it is custom."},"isSelfAuthorized":{"type":"boolean","description":"Indicates whether the payment is automatically authorized."},"requiresAuthentication":{"type":"boolean","description":"Indicates whether it is necessary to log in to make the payment."},"allowInstallments":{"type":"boolean","description":"Indicates whether the payment method allows installments."},"allowBinExclusion":{"type":"boolean","description":"Indicates whether it is possible to restrict the use of specific BIN codes (only applicable for cards)."},"allowMultiple":{"type":"boolean","description":"Indicates whether the method allows multiple payments. Example of `false`: debit card."},"allowIssuer":{"type":"boolean","description":"Indicates whether it is possible to identify the name of the bank responsible for issuing the card."},"allowCountry":{"type":"boolean","description":"Indicates whether it is possible to restrict a payment rule by the country where the purchase is made."},"allowCommercialPolicy":{"type":"boolean","description":"Indicates whether to restrict a payment rule by commercial policy type."},"allowCommercialCondition":{"type":"boolean","description":"Indicates whether to restrict a payment rule by commercial condition type."},"allowPeriod":{"type":"boolean","description":"Indicates whether it is possible to restrict a period for making the payment."},"isAvailable":{"type":"boolean","description":"Indicates whether the payment method is available for use."},"description":{"type":["string","null"],"description":"Description of the payment method."},"supportRecurrence":{"type":"boolean","description":"Indicates whether the payment method supports recurrence."},"validator":{"required":["regex","mask","cardCodeMask","cardCodeRegex","weights","useCvv","useExpirationDate","useCardHolderName","useBillingAddress","validCardLengths"],"type":"object","description":"Validator information.","properties":{"regex":{"type":["string","null"],"description":"[Regex](https://regexr.com/) information."},"mask":{"type":["string","null"],"description":"Validator mask."},"cardCodeMask":{"type":["string","null"],"description":"Card code regular mask."},"cardCodeRegex":{"type":["string","null"],"description":"Card code regular expression."},"weights":{"type":["array","null"],"description":"Array containing weigths information.","items":{"type":"integer","description":"Weigths information."}},"useCvv":{"type":"boolean","description":"Indicates whether it is necessary to use the CVV code to complete a transaction with payment made by card."},"useExpirationDate":{"type":"boolean","description":"Indicates whether it is necessary to use the expiration date to complete a card payment transaction."},"useCardHolderName":{"type":"boolean","description":"Indicates whether it is necessary to use the card holder name to complete a payment transaction made by card."},"useBillingAddress":{"type":"boolean","description":"Indicates whether it is necessary to use the billing address to complete a card payment transaction."},"validCardLengths":{"type":["string","null"],"description":"Information about valid card lengths."}}},"appDependencies":{"type":["string","null"],"description":"App dependencies information."},"displayDocument":{"type":"boolean","description":"Indicates whether a document is shown."},"dueDate":{"type":"string","description":"Payment due date."},"allowNotification":{"type":"boolean","description":"Indicates the possibility of payment notification (used by bank invoices and notes payable)."},"affiliationId":{"type":["string","null"],"description":"Affiliation connector (payment provider) identification."},"availablePayments":{"type":["string","null"],"description":"Information about payment availability."},"dueDateMinutes":{"type":"number","description":"Amount of time (in minutes) until the payment date (`dueDate`)."}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Evaluates active payment policy rules against cart item context and returns payment systems available for each item. Payment systems not mentioned in any matching rule remain available by default. You can also use this endpoint to validate which payment systems are available for cart items before checkout continues.
+
+  > ⚠️ This feature is in closed beta, meaning only specific customers can access it now. If you want to implement it in the future, please contact [our Support](https://support.vtex.com/hc/en-us/).
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | PCI Gateway | Payment-Make Payments | **View Payment Data** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `an` | query | (Required) Name of the VTEX account whose payment policy rules are being managed. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "paymentSystemAssignments": {
+      "sku-01": [
+        1,
+        4
+      ],
+      "sku-02": [
+        1,
+        4,
+        100
+      ]
+    },
+    "paymentSystemDefinitions": [
+      {
+        "id": 1,
+        "name": "Debit Card",
+        "groupName": "debitCard"
+      },
+      {
+        "id": 4,
+        "name": "Mastercard",
+        "groupName": "creditCard"
+      },
+      {
+        "id": 100,
+        "name": "EBT Card",
+        "groupName": "ebt"
+      }
+    ]
+  }
+  ```

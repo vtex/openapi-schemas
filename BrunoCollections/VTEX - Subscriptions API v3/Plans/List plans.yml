@@ -1,0 +1,137 @@
+info:
+  name: List plans
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/rns/pvt/plans"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: periodicity
+      value: elit eu dolor amet
+      type: query
+      disabled: true
+    - name: interval
+      value: elit eu dolor amet
+      type: query
+      disabled: true
+    - name: page
+      value: "1"
+      type: query
+      disabled: true
+    - name: size
+      value: "15"
+      type: query
+      disabled: true
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/rns/pvt/plans - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/rns/pvt/plans - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/rns/pvt/plans - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/rns/pvt/plans - Schema is valid", function () {
+          const schema = {"type":"array","items":{"type":"object","description":"Subscription [plan](https://help.vtex.com/en/tutorial/subscription-plans-beta--5kczKRqHEsrs1tYtRcY8wR) object.","properties":{"id":{"type":"string","description":"Subscription plan ID."},"frequencies":{"type":"array","description":"Array of the plan frequencies.","items":{"type":"object","description":"Information about the plan periodicity and interval.","properties":{"periodicity":{"type":["string","null"],"description":"Repurchase frequency requested by the customer, defines the subscriptions recurrence period.","enum":["DAILY","WEEKLY","MONTHLY","YEARLY"]},"interval":{"type":"integer","description":"Time interval configured between subscription orders, which depends on the periodicity. For a `DAILY` periodicity, the value will be days, for `MONTHLY` it will be months, and so on."}}}},"isActive":{"type":"boolean","description":"Defines if the plan is active (`true`) or not (`false`)."},"importInProgress":{"type":"boolean","description":"Defines if a SKU importing process is in progress (`true`) or not (`false`)."},"attachmentId":{"type":"integer","description":"Plan attachment ID."},"isValid":{"type":"boolean","description":"Defines if the plan is valid (`true`) or not (`false`)."},"validationMessages":{"type":["array","null"],"description":"List of validation messages.","items":{"type":"string","description":"Validation message."}},"validity":{"type":["object","null"],"description":"Information about the period during which the subscription plan will be valid.","properties":{"begin":{"type":"string","format":"date-time","description":"Subscription plan beginning date and time in [UTC time format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."},"end":{"type":["string","null"],"format":"date-time","description":"Subscription plan ending date and time in [UTC time format](https://learn.microsoft.com/en-us/rest/api/storageservices/formatting-datetime-values), as in `YYYY-MM-DDThh:mm:ssZ`."}}},"purchaseDays":{"type":"array","description":"Time reference in which subscription orders will be created.","items":{"type":"string","description":"Time reference in which subscription orders will be created. It will depend on the cycle periodicity, for `WEEKLY` subscriptions, for example, the purchase day could be `Sunday`. For `MONTHLY`, would be `7`, as in the 7th day of the month. When the subscription periodicity is `DAILY`, this field corresponds to `Not_Applicable`."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Lists subscription plans, based on filters defined in the query parameters.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Subscriptions | ApplicationAccess | **Subscription admin** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `periodicity` | query | Filter [subscription plans](https://help.vtex.com/en/tutorial/subscription-plans-beta--5kczKRqHEsrs1tYtRcY8wR) by available periodicity. |
+  | `interval` | query | Filter [subscription plans](https://help.vtex.com/en/tutorial/subscription-plans-beta--5kczKRqHEsrs1tYtRcY8wR) by available interval. |
+  | `page` | query | Page used for pagination. |
+  | `size` | query | Desired number of [subscription plans](https://help.vtex.com/en/tutorial/subscription-plans-beta--5kczKRqHEsrs1tYtRcY8wR) in the response. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "id": "catfood.subscription",
+      "frequencies": [
+        {
+          "periodicity": "DAILY",
+          "interval": 1
+        }
+      ],
+      "isActive": true,
+      "importInProgress": false,
+      "attachmentId": 40,
+      "isValid": true,
+      "validationMessages": [],
+      "validity": null,
+      "purchaseDays": [
+        "7"
+      ]
+    },
+    {
+      "id": "subscription.tshirt",
+      "frequencies": [
+        {
+          "periodicity": "MONTHLY",
+          "interval": 1
+        }
+      ],
+      "isActive": true,
+      "importInProgress": false,
+      "attachmentId": 39,
+      "isValid": true,
+      "validationMessages": [],
+      "validity": null,
+      "purchaseDays": [
+        "3"
+      ]
+    }
+  ]
+  ```

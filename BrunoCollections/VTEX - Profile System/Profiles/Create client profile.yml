@@ -1,0 +1,129 @@
+info:
+  name: Create client profile
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/storage/profile-system/profiles"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: ttl
+      value: "365"
+      type: query
+      disabled: true
+  body:
+    type: json
+    data: |-
+      {
+        "firstName": "John",
+        "lastName": "Doe",
+        "email": "john.doe@example.com",
+        "document": "12345678900",
+        "documentType": "CPF",
+        "birthDate": "1925-11-17",
+        "{customField}": "{value}"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[POST]::/api/storage/profile-system/profiles - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[POST]::/api/storage/profile-system/profiles - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[POST]::/api/storage/profile-system/profiles - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[POST]::/api/storage/profile-system/profiles - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"id":{"title":"id","type":"string","description":"ID of the client's profile."},"meta":{"title":"Profile metadata","type":"object","description":"Profile metadata.","required":["version","author","creationDate","lastUpdate"],"properties":{"version":{"type":"string","description":"Unique identifier of the profile version."},"author":{"type":"string","description":"Unique identifier of the user who created the profile."},"creationDate":{"type":"string","description":"Date when the profile was created in ISO 8601 format."},"lastUpdate":{"type":"string","description":"Date when the profile was last updated in ISO 8601 format."}}},"document":{"title":"Profile","type":"object","description":"Profile schema.","required":["firstName","lastName","email","document","documentType"],"properties":{"firstName":{"type":"string","description":"Client's first name."},"lastName":{"type":"string","description":"Client's last name."},"email":{"type":"string","description":"Client's email address."},"birthDate":{"type":"string","description":"Client's birth date in ISO 8601 format."},"document":{"type":"string","description":"Client's document."},"documentType":{"type":"string","description":"Type of document informed in `document`."},"{customField}":{"type":"string","description":"Name of custom field defined in [Create or delete custom fields](https://developers.vtex.com/docs/api-reference/profile-system#put-/api/storage/profile-system/schemas/profileSystem/custom). Can be of any type: string, number, boolean, array or object."}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Creates new client profile.
+
+
+  You can send custom fields in the request body and they will be saved as part of your document. Therefore, the schema and examples presented below may differ from yours. Your integration must be adapted accordingly.
+
+
+  The `id` field returned by this request is the `profileId` used to retrieve information on a specific profile later.
+
+
+  Learn more about the [Profile System](https://developers.vtex.com/vtex-rest-api/docs/profile-system) and its other API endpoints.
+
+  >⚠️ The Profile System is only compatible with stores using the PII data architecture from [Data Protection Plus](https://developers.vtex.com/docs/guides/data-protection-plus), which is in closed beta phase, only available in select regions.
+  >
+  > This feature is part of [VTEX Shield](https://help.vtex.com/en/tutorial/vtex-shield--2CVk6H9eY2CBtHjtDI7BFh). If you are already a VTEX customer and want to adopt VTEX Shield for your business, please contact [Commercial Support](https://help.vtex.com/en/tracks/support-at-vtex--4AXsGdGHqExp9ZkiNq9eMy/3KQWGgkPOwbFTPfBxL7YwZ). Additional fees may apply. If you are not yet a customer but are interested in this solution, please complete our [contact form](https://vtex.com/us-en/contact/).
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Profile System | Documents | **Get Item** |
+  | Profile System | Documents | **Save and Update Item** |
+  | Profile System | Documents | **Delete Item** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `ttl` | query | This parameter sets the the Time To Live (TTL), in days, of the specific document being created or updated with this request. After this period of time from the moment of the request, the document is deleted. By sending this parameter you override the TTL set for the schema. > Currently, the available default document schemas have no TTL. This means that documents are stored indefinitely, unless a TTL is sent when creating or updating. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`201`)
+
+  ```json
+  {
+    "id": "c2cbebba-214e-40b2-b68f-98f862e755d5",
+    "meta": {
+      "version": "27112371-a71b-45d6-b3bc-93436a3a0b4f",
+      "author": "82a2b53d-39be-4f49-bb7c-8971b58cb7dc",
+      "creationDate": "2022-01-05T15:41:37.5009471+00:00",
+      "lastUpdate": "2022-01-05T15:41:37.5009471+00:00"
+    },
+    "document": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john.doe@example.com",
+      "birthDate": "1925-11-17",
+      "document": "12345678911",
+      "documentType": "CPF",
+      "{customField}": "{value}"
+    }
+  }
+  ```

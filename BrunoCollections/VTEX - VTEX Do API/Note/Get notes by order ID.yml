@@ -1,0 +1,91 @@
+info:
+  name: Get notes by order ID
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/notes?target.id=1172452900788-01"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: target.id
+      value: 1172452900788-01
+      type: query
+    - name: perPage
+      value: "20"
+      type: query
+      disabled: true
+    - name: page
+      value: "3"
+      type: query
+      disabled: true
+    - name: reason
+      value: data-validation
+      type: query
+      disabled: true
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/notes - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/notes - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/notes - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/notes - Schema is valid", function () {
+          const schema = {};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves notes related to a specific order ID.
+
+  ## Permissions
+
+  This endpoint does not require [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `target.id` | query | (Required) Order ID. |
+  | `perPage` | query | Number of notes per page. Maximum: 30. |
+  | `page` | query | Number of the page to be retrieved. |
+  | `reason` | query | This parameter is relevant only for accounts using [Data Protection Plus](https://developers.vtex.com/docs/guides/data-protection-plus). When sending requests to this endpoint, accounts with the [PII data architecture](https://developers.vtex.com/docs/guides/pii-data-architecture-specifications) can use this parameter to declare the reason for requesting unmasked data. Otherwise, this endpoint will return masked PII data. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {}
+  ```

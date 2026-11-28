@@ -1,0 +1,89 @@
+info:
+  name: List all pets
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/pets?limit=-80109204"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: limit
+      value: "-80109204"
+      type: query
+    - name: accountName
+      value: "{{accountName}}"
+      type: path
+    - name: environment
+      value: "{{environment}}"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/pets - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/pets - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/pets - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/pets - Schema is valid", function () {
+          const schema = {"type":"array","items":{"required":["id","name"],"properties":{"id":{"type":"integer","format":"int64"},"name":{"type":"string"},"tag":{"type":"string"}},"type":"object"}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+        test("[GET]::/pets - Response header x-next is present", function () {
+          expect(res.getHeaders()).to.have.property("x-next");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `accountName` | path | Your VTEX account name |
+  | `environment` | path | (This can only be one of vtexcommercestable,myvtex) |
+  | `limit` | query | How many items to return at one time (max 100) |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "id": 84417126,
+      "name": "culpa ullamco non",
+      "tag": "ad proident commodo"
+    },
+    {
+      "id": 27895740,
+      "name": "voluptate pariatur ut ea id",
+      "tag": "Duis"
+    }
+  ]
+  ```

@@ -1,0 +1,103 @@
+info:
+  name: Update SKU service
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/catalog/pvt/skuservice/:skuServiceId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: skuServiceId
+      value: "5"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "SkuServiceTypeId": 2,
+        "SkuServiceValueId": 1,
+        "SkuId": 1,
+        "Name": "Test name",
+        "Text": "Text",
+        "IsActive": true
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[PUT]::/api/catalog/pvt/skuservice/:skuServiceId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[PUT]::/api/catalog/pvt/skuservice/:skuServiceId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[PUT]::/api/catalog/pvt/skuservice/:skuServiceId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[PUT]::/api/catalog/pvt/skuservice/:skuServiceId - Schema is valid", function () {
+          const schema = {"type":"object","description":"SKU service information.","properties":{"Id":{"type":"integer","description":"SKU service ID."},"SkuServiceTypeId":{"type":"integer","description":"SKU service type ID."},"SkuServiceValueId":{"type":"integer","description":"SKU service value ID."},"SkuId":{"type":"integer","description":"SKU ID."},"Name":{"type":"string","description":"SKU service name. Maximum of 50 characters."},"Text":{"type":"string","description":"Internal description of the SKU service. Maximum of 100 characters."},"IsActive":{"type":"boolean","description":"Defines if the SKU service is active or not."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Updates an SKU service.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Catalog | Commercial | **SKU Services** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `skuServiceId` | path | (Required) SKU service unique identifier. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "Id": 1,
+    "SkuServiceTypeId": 1,
+    "SkuServiceValueId": 1,
+    "SkuId": 1,
+    "Name": "name",
+    "Text": "text",
+    "IsActive": false
+  }
+  ```

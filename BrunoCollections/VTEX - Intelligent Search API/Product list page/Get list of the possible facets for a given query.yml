@@ -1,0 +1,260 @@
+info:
+  name: Get list of the possible facets for a given query
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{baseUrl}}/facets/:facets"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: query
+      value: shirt
+      type: query
+      disabled: true
+    - name: locale
+      value: en-US
+      type: query
+      disabled: true
+    - name: hideUnavailableItems
+      value: "false"
+      type: query
+      disabled: true
+    - name: removeHiddenFacets
+      value: "true"
+      type: query
+      disabled: true
+    - name: facets
+      value: category-1/clothing/category-2/shirt/category-3/man
+      type: path
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/facets/:facets - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/facets/:facets - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/facets/:facets - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/facets/:facets - Schema is valid", function () {
+          const schema = {"type":"object","description":"Response body object.","properties":{"facets":{"type":"array","description":"List of facets.","items":{"type":"object","description":"Facet information.","properties":{"values":{"type":"array","description":"Possible values.","items":{"type":"object","description":"Value information.","properties":{"id":{"type":"string","description":"Value ID."},"quantity":{"type":"number","description":"Number of resulting products."},"name":{"type":"string","description":"Human-readable format of the facet value."},"key":{"type":"string","description":"Facet key."},"value":{"type":"string","description":"Facet value."},"selected":{"type":"boolean","description":"Defines whether the value is selected (`true`) or not (`false`)."},"href":{"type":"string","description":"Query URL."}}}},"type":{"type":"string","description":"Facet type, which can be:\n\n - `TEXT`: The value is a simple text.\n - `PRICERANGE`: The value contains the property `range` representing the minimum and the maximum price for the query.\n - `DELIVERY`: The value represents a delivery option. Only appears in searches using [Delivery Promise](https://help.vtex.com/docs/tutorials/delivery-promise-beta).","enum":["TEXT","PRICERANGE","DELIVERY"]},"name":{"type":"string","description":"Human-readable format of the facet key."},"hidden":{"type":"boolean","description":"Defines whether the client-side should hide the facet (`true`) or not (`false`)."},"key":{"type":"string","description":"Facet key."},"quantity":{"type":"number","description":"Number of possible values."}}}},"sampling":{"type":"boolean","description":"Indicates whether there was sampling in the aggregation of facets or not. In search results that have many products, only the first 30000 will be aggregated to avoid performance issues."},"breadcrumb":{"type":"array","description":"Generated breadcrumb for the given query.","items":{"type":"object","description":"Breadcrumb information.","properties":{"name":{"type":"string","description":"Human-readable format of the facet key."},"href":{"type":"string","description":"Query link."}}}},"queryArgs":{"type":"object","description":"Term and facets used in the query.","properties":{"query":{"type":"string","description":"Search term used in the query."},"selectedFacets":{"type":"array","description":"Facets used in the query.","items":{"type":"object","description":"Selected facet information.","properties":{"key":{"type":"string","description":"facet key."},"value":{"type":"string","description":"facet value."}}}}}},"translated":{"type":"boolean","description":"Defines whether the facets were translated by Intelligent Search (`true`) or not (`false`)."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Lists the possible facets for a given query.
+
+  >ℹ️ Migrate to [Intelligent Search API v1](https://developers.vtex.com/docs/api-reference/intelligent-search-api-v1) for HTTP caching (`Cache-Control: public, max-age=600`), lower latency, and explicit regionalization without relying on the segment cookie. The new endpoint is: `GET` [List filters for a search](https://developers.vtex.com/docs/api-reference/intelligent-search-api-v1#get-/facets/-facets-). See the [migration guide](https://developers.vtex.com/docs/guides/migrating-to-intelligent-search-api-v1).
+
+  >⚠️ When possible, use the store's production domain in the URL (for example, `https://apiexamples.com/api/io/_v/api/intelligent-search`) for a better performance. This is particularly important for headless integrations. In case it's not possible to use the store's production URL, prefer using `https://{accountName}.vtexcommercestable.com.br/api/io/_v/api/intelligent-search`.
+
+  If using this option in a fully headless store with no store domain configured, follow these steps:
+  1. Configure a domain by following the [Configuring the store domain](https://help.vtex.com/docs/tutorials/configuring-the-store-domain) guide.
+  2. Send the `Host` header with the configured domain:
+  ```sh
+  curl --location 'https://{accountName}.vtexcommercestable.com.br/api/io/_v/api/intelligent-search/facets/' \
+  --header 'Accept: application/json' \
+  --header 'Content-Type: application/json' \
+  --header 'Host: {configured domain}'
+  ```
+
+  ## Permissions
+
+  This endpoint does not require [authentication](https://developers.vtex.com/docs/guides/authentication) or [permissions](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `facets` | path | (Required) ## Format The `facets` parameter follows the format: `/${facetKey1}/${facetValue1}/${facetKey2}/${facetValue2}/.../${facetKeyN}/${facetValueN}`. >⚠️ **Required:** Only the `trade-policy` facet is mandatory. All other facets are optional filters. The order in which the terms appear is not relevant to the search. You can also repeat the same `facetKey` several times for different values. For example: `category-1/shoes/color/blue/color/red/color/yellow`. ## Filter combinations When shoppers apply filters, the API combines them according to the following rules: - **Facets of the same type → OR (union):** When multiple values of the same facet are applied, the API returns the union of all products matching any of those values. - **Facets of different types → AND (intersection):** When different facet types are combined, the API returns only the products that satisfy all selected facet conditions simultaneously. ## Negative filters (NOT operator) To exclude a facet value, prefix the value with **`not:`** in the path segment: `/{facetKey}/not:{facetValue}/`. For example, `color/blue/size/not:42` keeps color blue and excludes size 42. Use the same `not:` prefix with the facet keys and values configured in your catalog. This supports use cases such as including products in one collection but excluding another. The NOT operator excludes specific values. The OR and AND rules in **Filter combinations** still describe how multiple positive facet selections combine. ## Available filters The `facets` parameter allows the following filters: \| `facetKey` \| Description \| Example \| \| - \| - \| - \| \| `trade-policy` **(required)** \| Filter by trade policy (sales channel) using `trade-policy/{tradePolicyId}`. Some integrations use the `salesChannel` query string for the same purpose when supported. \| `trade-policy/2` \| \| `category-${n}` *(optional)* \| Filter the search by category, where n represents the category tree level (1 = department, 2 = category, 3 = subcategory, and so on). Declare the full path from the root level through every parent down to the level you need. For example, using only `category-2/shirts` without the `category-1/...` segment is incorrect. \| `category-1/clothing/category-2/shirts` \| \| `brand` *(optional)* \| Filter by brand slug or identifier. \| `brand/acme` \| \| `{specificationName}` *(optional)* \| Filter by a catalog specification exposed as a search filter, using `{specificationName}/{specificationValue}` (for example `color/blue`). \| `color/blue` \| \| `productClusterIds` *(optional)* \| Filter by collection ID. \| `productClusterIds/262` \| \| `price` *(optional)* \| Filter by price range `${minPrice}:${maxPrice}`. \| `trade-policy/1/color/blue/price/100:500` (with `?query=shirt` on the full URL when using a text query). \| |
+  | `query` | query | Search term. It can contain any character. This parameter is named `query` in the API. The short form **`q`** is an alias for `query` and has the same semantics. You can search for products or SKUs using specific ID types by adding search parameters (query) at the end of the store URL, respecting one of the following structures: - **Single item search:** `?query=[id type]:[id_1]`. Example: `?query=product:98765` - **Multiple items search:** `?query=[id type]:[id_1];[id_2];[id_3]`. Example: `?query=product:98765;98743` >⚠️ All searched IDs should be of the same type. ## Search by ID On the Intelligent Search API, search products or SKUs by ID by sending the value in the `query` or `q` query parameter on requests such as `/product_search/{facets}`. The `{facets}` path must include the required `trade-policy` facet and any optional filters. - **Product ID:** `.../product_search/trade-policy/1?query=product:98765` or `.../product_search/trade-policy/1?query=product.id:98765`. - **SKU ID:** `.../product_search/trade-policy/1?query=sku.id:12345` or `.../product_search/trade-policy/1?query=sku:12345`. ## Supported ID types The possible value types for the ID segment are `product.id`, `sku.id`, `sku.ean`, `sku.reference`, `product.link`, or `id` (ProductID, ProductRefID, SKUID, SKURefID, and EAN). \| ID Type \| Query format \| Example \| \| - \| - \| - \| \| Product ID \| `?query=product:<id>` or `?query=product.id:<id>` \| `?query=product:98765` \| \| SKU ID \| `?query=sku:<id>` or `?query=sku.id:<id>` \| `?query=sku.id:12345` \| \| Reference ID \| `?query=sku.reference:<id>` \| `?query=sku.reference:REF123` \| \| EAN \| `?query=sku.ean:<id>` \| `?query=sku.ean:7891234567890` \| \| Slug \| `?query=product.link:<link>` \| `?query=product.link:blue-shirt` \| |
+  | `locale` | query | Indicates the target language as a BCP 47 language code. The Intelligent Search must have indexed the account in the target language. |
+  | `hideUnavailableItems` | query | Defines whether the result should hide unavailable items (`true`), or not (`false`). When set to `true`, only products with stock are returned; when set to `false`, the API includes unavailable products as well. A product is considered unavailable when `availableQuantity = 0`, while `availableQuantity = 10000` indicates that the product is available. Retailers may choose to show unavailable items for commercial reasons (for example, to signal that they offer those products even if temporarily out-of-stock). The recommended default is `true`. |
+  | `removeHiddenFacets` | query | When `true`, hidden facets are omitted from the response. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "facets": [
+      {
+        "values": [
+          {
+            "id": "47",
+            "quantity": 1,
+            "name": "Clothing",
+            "key": "category-2",
+            "value": "clothing",
+            "selected": false,
+            "href": "shirt/blue/clothing?map=ft,color,category"
+          }
+        ],
+        "type": "TEXT",
+        "name": "Category",
+        "hidden": false,
+        "key": "category-2",
+        "quantity": 1
+      },
+      {
+        "values": [
+          {
+            "quantity": 1,
+            "name": "",
+            "key": "price",
+            "selected": false,
+            "range": {
+              "from": 45,
+              "to": 50
+            }
+          }
+        ],
+        "type": "PRICERANGE",
+        "name": "Price",
+        "hidden": false,
+        "key": "price",
+        "quantity": 1
+      },
+      {
+        "values": [
+          {
+            "id": "2000045",
+            "quantity": 1,
+            "name": "New Offers!!",
+            "key": "brand",
+            "value": "new-offers--",
+            "selected": false,
+            "href": "shirt/blue/new-offers--?map=ft,color,brand"
+          }
+        ],
+        "type": "TEXT",
+        "name": "Brand",
+        "hidden": false,
+        "key": "brand",
+        "quantity": 1
+      },
+      {
+        "values": [
+          {
+            "id": "103",
+            "quantity": 1,
+            "name": "Blue",
+            "key": "color",
+            "value": "blue",
+            "selected": true,
+            "href": "shirt/blue/blue?map=ft,color,color"
+          }
+        ],
+        "type": "TEXT",
+        "name": "Color",
+        "hidden": true,
+        "key": "color",
+        "quantity": 1
+      },
+      {
+        "values": [
+          {
+            "id": "25",
+            "quantity": 1,
+            "name": "Apparel & Accessories",
+            "key": "category-1",
+            "value": "apparel---accessories",
+            "selected": false,
+            "href": "shirt/blue/apparel---accessories?map=ft,color,department"
+          }
+        ],
+        "type": "TEXT",
+        "name": "Department",
+        "hidden": false,
+        "key": "category-1",
+        "quantity": 1
+      },
+      {
+        "values": [
+          {
+            "id": "",
+            "quantity": 1,
+            "name": "Test",
+            "key": "filter-test",
+            "value": "test",
+            "selected": false,
+            "href": "shirt/blue/test?map=ft,color,filter-test"
+          }
+        ],
+        "type": "TEXT",
+        "name": "Filter Test",
+        "hidden": false,
+        "key": "filter-test",
+        "quantity": 1
+      },
+      {
+        "values": [
+          {
+            "id": "48",
+            "quantity": 1,
+            "name": "Tops",
+            "key": "category-3",
+            "value": "tops",
+            "selected": false,
+            "href": "shirt/blue/tops?map=ft,color,subcategory"
+          }
+        ],
+        "type": "TEXT",
+        "name": "Subcategory",
+        "hidden": false,
+        "key": "category-3",
+        "quantity": 1
+      }
+    ],
+    "sampling": false,
+    "breadcrumb": [
+      {
+        "name": "shirt",
+        "href": "/shirt?map=ft"
+      },
+      {
+        "name": "Blue",
+        "href": "/shirt/blue?map=ft,color"
+      }
+    ],
+    "queryArgs": {
+      "query": "shirt",
+      "selectedFacets": [
+        {
+          "key": "color",
+          "value": "blue"
+        },
+        {
+          "key": "ft",
+          "value": "shirt"
+        }
+      ]
+    },
+    "translated": false
+  }
+  ```

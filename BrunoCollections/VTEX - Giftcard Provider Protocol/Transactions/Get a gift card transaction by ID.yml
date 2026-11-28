@@ -1,0 +1,96 @@
+info:
+  name: Get a gift card transaction by ID
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{baseUrl}}/giftcards/:giftCardId/transactions/:transactionId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: giftCardId
+      value: "6"
+      type: path
+    - name: transactionId
+      value: b47690
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/giftcards/:giftCardId/transactions/:transactionId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/giftcards/:giftCardId/transactions/:transactionId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/giftcards/:giftCardId/transactions/:transactionId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/giftcards/:giftCardId/transactions/:transactionId - Schema is valid", function () {
+          const schema = {"type":"object","properties":{"value":{"type":"number","description":"Transaction value."},"description":{"type":"string","description":"Transaction description."},"date":{"type":"string","description":"Date of the transaction in [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html) format (`YYYY-MM-DDThh:mm:ss.fff`)."},"requestId":{"type":"string","description":"VTEX request identifier."},"settlement":{"type":"object","description":"Settlement transaction information.","properties":{"href":{"type":"string","description":"Gift card resource URL. The first number described in the URL refers to the gift card identification. The second number, refers to the transaction identification."}}},"cancellation":{"type":"object","description":"Cancellation transaction information.","properties":{"href":{"type":"string","description":"Gift card resource URL. The first number described in the URL refers to the gift card identification. The second number, refers to the transaction identification."}}},"authorization":{"type":"object","description":"Authorization transaction information.","properties":{"href":{"type":"string","description":"Gift card resource URL. The first number described in the URL refers to the gift card identification. The second number, refers to the transaction identification."}}},"operation":{"type":"string","description":"Operation information (`Credit` or `Debit`)."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns a specific transaction for a gift card from a gift card provider.
+
+  > ℹ️ This request is made from VTEX to the gift card payment provider.
+
+  ## Permissions
+
+  Check with your service provider to know what permissions are needed.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `giftCardId` | path | (Required) Gift card identification. |
+  | `transactionId` | path | (Required) Transaction identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "value": 140,
+    "description": "GiftCardProvider1",
+    "date": "2023-06-02T18:24:49.252855Z",
+    "settlement": {
+      "href": "/gatewayqa/giftcards/3b1abc17-988e-4a14-8b7f-31fc6a5b955c_24/transactions/e122ebd4501a4b3b93640b7444ac425d/settlements"
+    },
+    "cancellation": {
+      "href": "/gatewayqa/giftcards/3b1abc17-988e-4a14-8b7f-31fc6a5b955c_24/transactions/e122ebd4501a4b3b93640b7444ac425d/cancellations"
+    },
+    "authorization": {
+      "href": "/gatewayqa/giftcards/3b1abc17-988e-4a14-8b7f-31fc6a5b955c_24/transactions/e122ebd4501a4b3b93640b7444ac425d/authorization"
+    },
+    "operation": "Debit"
+  }
+  ```

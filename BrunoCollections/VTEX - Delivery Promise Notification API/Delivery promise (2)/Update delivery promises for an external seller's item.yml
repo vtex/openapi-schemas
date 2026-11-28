@@ -1,0 +1,108 @@
+info:
+  name: Update delivery promises for an external seller's item
+  type: http
+  seq: 2
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/api/delivery-promises/external-sellers/:sellerId/items/:itemId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: sellerId
+      value: TALD41516202766265
+      type: path
+    - name: itemId
+      value: 11167-10968-34
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "availability": 12,
+        "promises": [
+          {
+            "availability": 9,
+            "deliveryChannel": "delivery",
+            "deliveryZoneIds": [
+              "BRA_COUNTRY"
+            ],
+            "id": "Prime5Days",
+            "name": "Same Week",
+            "deliveryTime": "5.00:00:00"
+          },
+          {
+            "availability": 3,
+            "deliveryChannel": "pickup-in-point",
+            "deliveryZoneIds": [
+              "BRA_COUNTRY"
+            ],
+            "id": "Prime2Day",
+            "name": "Same Day",
+            "deliveryTime": "1.00:00:00"
+          }
+        ],
+        "timestamp": "2025-08-07T14:52:20"
+      }
+  auth:
+    type: apikey
+    key: X-VTEX-API-AppKey
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("[PATCH]::/api/delivery-promises/external-sellers/:sellerId/items/:itemId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Updates one or more delivery promises of a single [external seller's](https://help.vtex.com/en/tutorial/integration-guide-for-marketplaces-seller-non-vtex--yMji0ow0rQuYgQsg26Kus) item, identified by the path parameter `itemId`.
+
+  The Delivery Promise Notification API notifies the VTEX store of the external seller's product availability and delivery promises — that is, in which delivery zones, times, and methods the product is available.
+
+  >ℹ️ This API is intended only for [**external sellers**](https://help.vtex.com/en/tutorial/integration-guide-for-marketplaces-seller-non-vtex--yMji0ow0rQuYgQsg26Kus). It is not required for [franchise accounts](https://help.vtex.com/en/docs/tutorials/what-is-a-franchise-account), sellers using [VTEX Seller Portal](https://help.vtex.com/en/docs/tutorials/how-to-set-up-your-store-on-seller-portal), or [VTEX sellers](https://help.vtex.com/en/tutorial/integrating-with-marketplace) already integrated into the [marketplace ecosystem](https://help.vtex.com/en/tutorial/integrating-with-marketplace). In these cases, availability and delivery options are managed natively by VTEX.
+
+  Use this endpoint to update one or more delivery promises of a single external seller's item. A `PATCH` request always targets a single `itemId`, but you can update as many promises as needed within that item.
+
+  Each promise to be updated must be identified by `id` (the same value previously sent as `deliveryInfo.id` in a `PUT` request). This field is required because, without it, the API cannot determine which promise of that item should be updated.
+
+  >ℹ️ Before running a `PATCH` for an item, that item must have been previously created with a `PUT` request. `PATCH` is an update operation whose key is the `id` previously sent in the Update external product availability request.
+
+  ## Making a SKU unavailable
+
+  To make a SKU unavailable for a given delivery context, send a `PATCH` request with `availability: 0`. This action explicitly updates the [Delivery Promise](https://help.vtex.com/en/tutorial/delivery-promise-beta--p9EJH9GgxL0JceA6dBswd) state. Unlike [Seller Portal](https://help.vtex.com/en/docs/tutorials/how-to-set-up-your-store-on-seller-portal) integrations, this change is not automatically propagated and must be triggered via API.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Delivery Promises         | ProductAvailability | **Notify Product Availability Change** |
+  |  |  |  |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `sellerId` | path | (Required) External seller identifier. |
+  | `itemId` | path | (Required) Item identifier. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |

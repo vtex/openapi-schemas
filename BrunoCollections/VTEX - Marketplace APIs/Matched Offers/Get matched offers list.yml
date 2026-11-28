@@ -1,0 +1,172 @@
+info:
+  name: Get matched offers list
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/offer-manager/pvt/offers"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: sort
+      value: availability,desc
+      type: query
+      disabled: true
+    - name: rows
+      value: "20"
+      type: query
+      disabled: true
+    - name: start
+      value: "0"
+      type: query
+      disabled: true
+    - name: fq
+      value: skuId:172
+      type: query
+      disabled: true
+    - name: accountName
+      value: apiexamples
+      type: path
+    - name: environment
+      value: vtexcommercestable
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/offer-manager/pvt/offers - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/offer-manager/pvt/offers - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/offer-manager/pvt/offers - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/offer-manager/pvt/offers - Schema is valid", function () {
+          const schema = {"type":"array","description":"Response with the list of offers available on the Marketplace.","items":{"type":"object","description":"Array of SKUs in the offer.","properties":{"LastModified":{"type":"string","description":"Last date when the offer was modified."},"ProductId":{"type":"string","description":"Unique identifier of the seller's product. This is the ID that the marketplace will use for all references to this product."},"CategoryId":{"type":"integer","description":"Offer's Category ID that the product belongs to, configured in the Catalog. It should be the marketplace's category chosen for the offer to be matched with."},"BrandId":{"type":"integer","description":"Offer's brand ID that the product belongs to, configured in the Catalog. It should be the marketplace's brand chosen for the offer to be matched with."},"ProductName":{"type":"string","description":"Name of the offer's product."},"Skus":{"type":"array","description":"A list of SKUs (Stock Keeping Units) associated with the product. Each SKU contains detailed information about specific variants of the product, such as color, size, and other specifications.","items":{"description":"Details of the SKU (Stock Keeping Unit) associated with the product. This includes the SKU ID, EAN ID, reference ID, complete name, short name, active status, main image, and offers.","required":["SkuId","EanId","RefId","NameComplete","Name","IsActive","MainImage","Offers"],"type":"object","properties":{"SkuId":{"type":"string","description":"SKU's unique identifier number."},"EanId":{"type":["string","null"],"description":"EAN's unique identifier number."},"RefId":{"type":["string","null"],"description":"SKU's Reference ID."},"NameComplete":{"type":"string","description":"Complete name of the SKU."},"Name":{"type":"string","description":"Summarized name of the SKU."},"IsActive":{"type":"boolean","description":"Whether the SKU is active in the trade policy (true), or not (false).","default":true},"MainImage":{"type":"object","description":"Main image's information.","items":{"description":"Details of the main image associated with the product. This includes the image's ID, label, tag, path, and other attributes indicating its main and zoom size status, as well as additional text and last modification date.","required":["ImageId","ImageLabel","ImageTag","ImagePath","IsMain","IsZoomSize","ImageText","LastModified"],"type":"object","properties":{"ImageId":{"type":"string","description":"Code identifying the image's file."},"ImageLabel":{"type":["string","null"],"description":"Image's label."},"ImageTag":{"type":"string","description":"HTML tag for the selected image."},"ImagePath":{"type":"string","description":"Path for the image's file."},"IsMain":{"type":"boolean","description":"Whether the image is the main one or not.","default":true},"IsZoomSize":{"type":"boolean","description":"If zoom can be applied to the image.","default":true},"ImageText":{"type":"string","description":"Alt text for the image."},"LastModified":{"type":"string","description":"Date of the last change made to the image."}}}},"Offers":{"type":"array","items":{"description":"Details of an offer provided by a seller. This includes the seller's identification, SKU, offers per sales channel, and available trade policies.","required":["SellerId","SellerSkuId","OffersPerSalesChannel","AvailableSalesChannels"],"type":"object","properties":{"SellerId":{"type":"string","description":"ID of the seller in the marketplace. This ID must be created by the marketplace."},"SellerSkuId":{"type":"string","description":"Unique identifier of the SKU in the seller. This is the ID that the marketplace will use for future references to this SKU, such as price and inventory notifications."},"OffersPerSalesChannel":{"type":"array","description":"Each element in the array corresponds to an offer in a specific trade policy.","items":{"title":"OffersPerSalesChannel","description":"Details of offers available per trade policy. This includes pricing information and available quantity specific to each trade policy.","required":["SaleChannel","Price","ListPrice","PriceWithoutDiscount","AvailableQuantity"],"type":"object","properties":{"SaleChannel":{"type":"integer","description":"Sales channel ([trade policy](https://help.vtex.com/en/tutorial/how-trade-policies-work--6Xef8PZiFm40kg2STrMkMV)) of the SKU."},"Price":{"type":"integer","description":"SKU's price."},"ListPrice":{"type":"integer","description":"SKU's suggested selling price."},"PriceWithoutDiscount":{"type":"integer","description":"SKU's price without discount applied."},"AvailableQuantity":{"type":"integer","description":"Available SKU stock quantity."}}}},"AvailableSalesChannels":{"type":["string","null"],"description":"The sales channel ([trade policy](https://help.vtex.com/en/tutorial/how-trade-policies-work--6Xef8PZiFm40kg2STrMkMV)) ID in which the SKU is available."}}},"description":"Array with offers."}}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Offers are seller's products and SKUs that were sent to the marketplace, and already have their price and inventory level configured. 
+
+   This endpoint retrieves the available offers in a marketplace. It differs from the Get Suggestions endpoints, since it retrieves products that were already matched by the marketplace, and are currently in its catalog. 
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Seller Register | Seller Administration | **View Seller** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Seller manager | View Seller |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or application keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using application keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `accountName` | path | (Required) Name of the VTEX account that belongs to the marketplace. The notification will be posted into this account. |
+  | `environment` | path | (Required) Environment to use. Used as part of the URL. |
+  | `sort` | query | Criteria used to sort the list of offers. For sorting values in ascending order, use `asc`, while for descending order, use `desc`. To fill in the field, insert the sorting criteria, followed by 'asc', or 'desc', separated by a comma. You can sort by the following criteria: - **price:** sorts offers by price. *Ascending* goes from lowest to highest price, while *Descending* goes from highest to lowest price. - **name:** sorts offers by *productName*, in alphabetical order. *Ascending* goes from *A* to *Z*, while *Descending* goes from *Z* to *A*. - **availability:** availability in the sales channel (sc). The default value is 1. Ex. sort=availability,desc Ex. sort=name,asc Ex. price,desc |
+  | `rows` | query | Number of rows included in the response. Each row corresponds to a single offer. The default amount of rows in the response is 1, and the maximum amount is 50. To have more than one offer listed in the response, please add the `rows` parameter with a number greater than 1. |
+  | `start` | query | Number corresponding to the row from which the offer list will begin, used for pagination. Filters the list of offers by retrieving the offers starting from the row defined. The default value is 0, if the param is not included in the call. |
+  | `fq` | query | This filter query can be used to filter offers by the criteria described below. It should be filled in by following the format: `fq={{criteriaName}}:{{criteriaValue}}`. - **productId:** integer of the product ID - **productName:** string of the product's name - **skuId:** integer of the SKU ID - **eanId:** string of the EAN ID - **refId:** string of the Ref ID - **categoryId:** integer of the category ID - **brandId:** integer of the brand ID - **sellerId:** string of the seller ID - **sc:** integer of the sales channel's ID (trade policy in VTEX) Ex: skuId:172 Ex: categoryId:13 Ex. productName:Product example-123 |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "LastModified": "2021-05-06T21:37:24.262529",
+      "ProductId": "941947",
+      "CategoryId": 1563,
+      "BrandId": 2004291,
+      "ProductName": "Product Test 04 - Black - 40",
+      "Skus": [
+        {
+          "SkuId": "1070268",
+          "EanId": "768655",
+          "RefId": "1234",
+          "NameComplete": "Product Test 04 - Black - 40 Color:Black",
+          "Name": "Color:Black",
+          "IsActive": true,
+          "MainImage": {
+            "ImageId": "53878805",
+            "ImageLabel": null,
+            "ImageTag": "<img src=\"~/arquivos/ids/53878805-#width#-#height#/image-8b4364782e664d76a6ebc8702008e478.jpg\" width=\"#width#\" height=\"#height#\" alt=\"image-8b4364782e664d76a6ebc8702008e478\" id=\"\" />",
+            "ImagePath": "~/arquivos/ids/53878805-#width#-#height#/image-8b4364782e664d76a6ebc8702008e478.jpg",
+            "IsMain": true,
+            "IsZoomSize": true,
+            "ImageText": "image-8b4364782e664d76a6ebc8702008e478",
+            "LastModified": "2021-04-06T03:01:30.747"
+          },
+          "Offers": [
+            {
+              "SellerId": "1",
+              "SellerSkuId": "1070268",
+              "OffersPerSalesChannel": [
+                {
+                  "SaleChannel": 1,
+                  "Price": 0,
+                  "ListPrice": 0,
+                  "PriceWithoutDiscount": 0,
+                  "AvailableQuantity": 0
+                }
+              ],
+              "AvailableSalesChannels": null
+            },
+            {
+              "SellerId": "madesacms",
+              "SellerSkuId": "3298",
+              "OffersPerSalesChannel": [
+                {
+                  "SaleChannel": 0,
+                  "Price": 1200,
+                  "ListPrice": 1200,
+                  "PriceWithoutDiscount": 1200,
+                  "AvailableQuantity": 10000000
+                }
+              ],
+              "AvailableSalesChannels": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+  ```

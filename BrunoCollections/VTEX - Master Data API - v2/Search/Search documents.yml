@@ -1,0 +1,141 @@
+info:
+  name: Search documents
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/dataentities/:dataEntityName/search"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+    - name: REST-Range
+      value: resources=0-10
+  params:
+    - name: _fields
+      value: email,firstName,document
+      type: query
+      disabled: true
+    - name: _where
+      value: firstName is not null
+      type: query
+      disabled: true
+    - name: _schema
+      value: schema
+      type: query
+      disabled: true
+    - name: _sort
+      value: firstName ASC
+      type: query
+      disabled: true
+    - name: dataEntityName
+      value: Newsletter
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/dataentities/:dataEntityName/search - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/dataentities/:dataEntityName/search - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/dataentities/:dataEntityName/search - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/dataentities/:dataEntityName/search - Schema is valid", function () {
+          const schema = {"type":"array","description":"List of documents that correspond to the result of the search.","items":{"title":"Using_fields=_all","required":["id","accountId","accountName","dataEntityId"],"type":"object","description":"Document information.","properties":{"id":{"type":"string","description":"ID of the document."},"accountId":{"type":"string","description":"ID of the VTEX account."},"accountName":{"type":"string","description":"Name of the VTEX account."},"dataEntityId":{"type":"string","description":"Data entity name."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves Master Data v2 documents' information, while choosing which fields will be returned and filtering documents by specific fields.
+
+  > The response header `REST-Content-Range` indicates the total amount of results for that specific search. For example, it may return `resources 0-100/136108`, which indicates it has returned the first 100 results out of a total of 136108.
+
+  Below you can see some query examples and learn more about each query parameter.
+
+
+  Learn more about [Pagination in the Master Data API](https://developers.vtex.com/docs/guides/pagination-in-the-master-data-api).
+
+  >⚠️ Avoid sending too many requests with wildcards (`*`) in the search parameters or that use the `keyword` parameter. This may lead to this endpoint being temporarily blocked for your account. If this happens you will receive an error with status code `503`.
+
+  ## Query examples
+
+  | **Query Type** | **Example** |
+  |-|-|
+  | **Simple filter** | `/dataentities/Newsletter/search?email=my@email.com` |
+  | **Complex filter** | `/dataentities/Newsletter/search?_where=(firstName=Jon OR lastName=Smith) OR (createdIn between 2001-01-01 AND 2016-01-01)` |
+  | **Date range** | `/dataentities/Newsletter/search?_where=createdIn between 2001-01-01 AND 2016-01-01` |
+  | **Range numeric fields** | `/dataentities/Newsletter/search?_where=age between 18 AND 25` |
+  | **Partial filter** | `/dataentities/Newsletter/search?firstName=*Maria*` |
+  | **Filter for null values** | `/dataentities/Newsletter/search?_where=firstName is null` |
+  | **Filter for non-null values** | `/dataentities/Newsletter/search?_where=firstName is not null` |
+  | **Filter for difference** | `/dataentities/Newsletter/search?_where=firstName<>maria` |
+  | **Filter greater than** | `/dataentities/Newsletter/search?_where=number>5` |
+  | **Filter less than** | `/dataentities/Newsletter/search?_where=date<2001-01-01` |
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Dynamic Storage | Dynamic storage generic resources | **Read only documents** |
+  | Dynamic Storage | Dynamic storage generic resources | **Insert or update document (not remove)** |
+  | Dynamic Storage | Dynamic storage generic resources | **Full access to all documents** |
+  | Dynamic Storage | Dynamic storage generic resources | **Master Data administrator** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `dataEntityName` | path | (Required) Name of the data entity. |
+  | `_fields` | query | Fields that should be returned by document. Separate fields' names with commas. For example `_fields=email,firstName,document`. You can also use `_fields=_all` to fetch all fields. |
+  | `_where` | query | Defines a condition the document must comply with. When referring to fields, you can use a nested field up to the first level (e.g. `wishlistProduct.productName`). |
+  | `_schema` | query | Name of the [schema](https://developers.vtex.com/docs/guides/master-data-schema-lifecycle) that the document complies with. This field is required when using `_where` or `_fields` query parameters. |
+  | `_sort` | query | Defines sorting mode in two parts. The first part is the name of the field you want to sort by. It can be a nested field up to the first level (e.g. `wishlistProduct.productName`). In the second part, use `ASC` for ascending order or `DESC` for descending order. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+  | `REST-Range` | header | (Required) Specifies the range of documents to be returned in the response. The value should follow the format `resources={x}-{y}`, where: * `x`: Index of the first document in the returned array. * `y`: Index of the last document in the returned array + 1. This field controls pagination by defining the subset of documents to be retrieved. The maximum number of documents returned per query is limited to 100. For example, `resources=0-10` returns the first 10 documents. |
+
+  ## Example response (`200`)
+
+  ```json
+  [
+    {
+      "id": "b818cbda-e489-11e6-94f4-0ac138d2d42e",
+      "accountId": "14af940d-9300-4279-9355-61d44c2ff879",
+      "accountName": "apiexamples",
+      "dataEntityId": "Newsletter"
+    }
+  ]
+  ```

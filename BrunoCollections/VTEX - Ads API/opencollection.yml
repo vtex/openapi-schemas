@@ -1,0 +1,73 @@
+opencollection: 1.0.0
+
+info:
+  name: VTEX - Ads API
+
+request:
+  auth:
+    type: apikey
+    key: X-App-Id
+    value: "{{apiKey}}"
+    placement: header
+
+docs:
+  content: |-
+    VTEX Ads API enables merchants and marketplace operators to synchronize product catalogs, display ads in the storefront, record ad interactions, among other operations within the VTEX Ads platform.
+
+    This API is primarily used by:
+    - Store developers
+    - Marketplace operators
+    - Integration partners
+    - Advertising platform providers
+
+    With this API you can:
+    - Synchronize product catalog information for advertising
+    - Track ad impressions, clicks, and views
+    - Monitor conversion events and campaign performance
+    - Manage ad inventory and placements
+
+    >ℹ️ Learn more about [VTEX Ads](https://help.vtex.com/en/docs/tracks/retail-media).
+
+    ## Architecture
+
+    VTEX Ads is **cookie-less**. Identification and targeting rely on first-party identifiers — `user_id` and `session_id` — rather than third-party cookies, ensuring compliance with modern privacy regulations.
+
+    - **`session_id`:** Persistent visitor identifier, required in every ad query and event. It must remain stable for at least 14 days (the default conversion window). For mobile applications, send the device ID as the `session_id` (GAID on Android, IDFA on iOS) so that the session is maintained indefinitely.
+    - **`user_id`:** Unique customer identifier on the publisher's platform. It must be consistent across web, mobile app, and physical store. Required in conversion events; recommended for impressions, clicks, and views.
+
+    ## Before you begin
+
+    - **Base URLs.** The API is served from three hosts depending on the operation:
+        - `https://api-retail-media.newtail.com.br` — Catalog synchronization, Reports, Credit transfer webhook, and SSO.
+        - `https://newtail-media.newtail.com.br` — Ad query.
+        - `https://events.newtail-media.newtail.com.br` — Ads events notification (impression, click, view, conversion).
+    - **Authentication.** Catalog synchronization, Reports, and SSO endpoints require the `X-App-Id` and `X-Api-Key` headers. Ad query and ads event notifications are public and do not require authentication. The Credit transfer webhook uses a different scheme: `X-Api-Key` and `X-Secret-Key` (it does not use `X-App-Id`). Contact [our support](https://help.vtex.com/en/tutorial/how-does-vtex-support-work--2eAT5EyOvaLoHdIWDVaxC3) to obtain credentials.
+    - **Bulk operations.** A maximum of 500 objects per request and 3 simultaneous requests are allowed for catalog and inventory updates.
+    - **Event URLs.** The event URLs for tracking impressions, clicks, and views must not be constructed manually — always use the URLs returned by `POST` [Get ads](https://developers.vtex.com/docs/api-reference/vtex-ads-api#post-/v1/rma/-publisher_id-).
+    - **Browser-side events.** Use `navigator.sendBeacon()` to fire impression, view, click, and conversion events from the browser. It ensures asynchronous delivery even when the user navigates away or closes the page.
+    - **PII hashing.** All personally identifiable fields (`email_hashed`, `phone_hashed`, `social_id_hashed`, `first_name_hashed`, `last_name_hashed`) must be hashed with SHA-256 before being sent. Normalize values first (lowercase and trim; phone numbers in E.164 format).
+    - **Reports export.** Reports return JSON by default. Set `download=true` to receive an XLSX file (capped at 20,000 rows per export).
+    - **Rate limits.** Reports endpoints are limited to 100 requests per minute per account. This limit applies only to API Key-authenticated calls and does not affect normal platform use through the UI. Requests that exceed the limit receive `429 Too Many Requests` with "Rate limit exceeded for this account". Wait for the next window before retrying, and spread large export workloads over time. Contact [our support](https://help.vtex.com/en/tutorial/how-does-vtex-support-work--2eAT5EyOvaLoHdIWDVaxC3) if your integration needs a higher volume.
+    - **Ad query performance.** Apply a 500-600 ms timeout to ad query calls and prefer persistent HTTP connections (`Connection: keep-alive`).
+
+    ## Attribution and deduplication
+
+    - **Default conversion window:** 14 days from the user's interaction (click for product campaigns; view for banner, video, and sponsored brand campaigns).
+    - **Conversion idempotency:** Re-sending the same `order_id` within 30 days is ignored.
+    - **Event deduplication:** For the same user and ad, impressions are deduplicated for 1 minute and clicks for 1 hour.
+    - **Data latency:** Conversions appear in reports approximately 30 minutes (API integrations) or up to 2 hours (VTEX platform) after the order is placed.
+
+    | Parameter name | Description | Type |
+    | - | - | - |
+    | `X-App-Id` | Publisher App ID for authorization | Authentication header |
+    | `X-Api-Key` | API Key for authentication | Authentication header |
+    | `X-Secret-Key` | Secret key paired with `X-Api-Key` for the credit transfer webhook | Authentication header |
+    | `Content-Type` | Type of the content being sent | Request header |
+    | `Accept` | HTTP Client Negotiation Accept Header | Request header |
+  type: text/markdown
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

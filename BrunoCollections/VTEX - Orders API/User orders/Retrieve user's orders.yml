@@ -1,0 +1,149 @@
+info:
+  name: Retrieve user's orders
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/oms/user/orders"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: clientEmail
+      value: customer@mail.com
+      type: query
+      disabled: true
+    - name: page
+      value: "15"
+      type: query
+      disabled: true
+    - name: per_page
+      value: "15"
+      type: query
+      disabled: true
+    - name: text
+      value: PO24893
+      type: query
+      disabled: true
+    - name: status
+      value: ready-for-handling
+      type: query
+      disabled: true
+    - name: creation_date
+      value: "[2025-01-01T02:00:00.000Z TO 2025-04-08T23:59:59.999Z]"
+      type: query
+      disabled: true
+    - name: purchase_agent_id
+      value: 848a994a-1b6b-4dbd-5555-0455af24e0f2
+      type: query
+      disabled: true
+    - name: my_pending_approvals
+      value: "false"
+      type: query
+      disabled: true
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/oms/user/orders - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/oms/user/orders - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/oms/user/orders - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/oms/user/orders - Schema is valid", function () {
+          const schema = {"title":"Userorderslist","required":["list","facets","paging","stats"],"type":"object","description":"Order list object.","properties":{"list":{"type":"array","items":{"title":"List1","required":["orderId","creationDate","clientName","items","totalValue","paymentNames","status","statusDescription","marketPlaceOrderId","sequence","salesChannel","affiliateId","origin","workflowInErrorState","workflowInRetry","lastMessageUnread","ShippingEstimatedDate","ShippingEstimatedDateMax","ShippingEstimatedDateMin","orderIsComplete","listId","listType","authorizedDate","callCenterOperatorName","totalItems","currencyCode"],"type":"object","properties":{"orderId":{"type":"string","description":"Order ID is a unique code that identifies an order."},"creationDate":{"type":"string","description":"Order's creation date."},"clientName":{"type":"string","description":"Order's customer name."},"items":{"type":["array","null"],"items":{"title":"Item2","required":["seller","quantity","description","ean","refId","id","productId","sellingPrice","price"],"type":"object","properties":{"seller":{"type":"string","description":"Seller related to the order."},"quantity":{"type":"integer","description":"Quantity of SKUs."},"description":{"type":"string","description":"Description of items."},"ean":{"type":["string","null"],"description":"EAN of the SKU."},"refId":{"type":["string","null"],"description":"Item's reference ID."},"id":{"type":"string","description":"Item's SKU ID, which is a unique numerical identifier."},"productId":{"type":"string","description":"ID of the Product associated with the item."},"sellingPrice":{"type":"integer","description":"Details on item's selling price."},"price":{"type":"integer","description":"Item's price."}}},"description":"Information about order's items."},"totalValue":{"type":"integer","description":"Total value amount."},"paymentNames":{"type":["string","null"],"description":"Payment system name."},"status":{"type":"string","description":"Order [status](https://help.vtex.com/en/tutorial/order-flow-and-status--tutorials_196)."},"statusDescription":{"type":"string","description":"Status description which is displayed on the Admin panel. This field is deprecated and may not return any value."},"marketPlaceOrderId":{"type":["string","null"],"description":"Marketplace order ID."},"sequence":{"type":"string","description":"Six-digit string that follows the order ID. For example, in order `1268540501456-01 (501456)`, the sequence is `501456`."},"salesChannel":{"type":"string","description":"Sales channel (or [trade policy](https://help.vtex.com/tutorial/how-trade-policies-work--6Xef8PZiFm40kg2STrMkMV)) ID related to the order."},"affiliateId":{"type":"string","description":"Corresponds to the three-digits [affiliate](https://help.vtex.com/en/tutorial/configuring-affiliates--tutorials_187) identification code of the seller responsible for the order."},"origin":{"type":"string","description":"Order's [origin in the order flow](https://developers.vtex.com/docs/guides/orders-overview#understanding-order-flow-types), which can be `Marketplace`, `Fulfillment` or `Chain`."},"workflowInErrorState":{"type":"boolean","description":"If there is a work flow error (`true`) or not (`false`)."},"workflowInRetry":{"type":"boolean","description":"If the order is in a work flow retry (`true`) or not (`false`)."},"lastMessageUnread":{"type":["string","null"],"description":"Last sent transactional message."},"ShippingEstimatedDate":{"type":["string","null"],"description":"Estimate shipping date."},"ShippingEstimatedDateMax":{"type":["string","null"],"description":"The most extended shipping estimation possible."},"ShippingEstimatedDateMin":{"type":["string","null"],"description":"The least extended shipping estimation possible."},"orderIsComplete":{"type":"boolean","description":"If it is a completed order (`true`) or not (`false`). For more information, see [Order flow and status](https://help.vtex.com/en/tutorial/order-flow-and-status--tutorials_196)."},"listId":{"type":["string","null"],"description":"Related Gift List ID."},"listType":{"type":["string","null"],"description":"Related Gift list type."},"authorizedDate":{"type":["string","null"],"description":"Authorized order date."},"callCenterOperatorName":{"type":["string","null"],"description":"Call center operator responsible for the order."},"totalItems":{"type":"integer","description":"Order's total amount of items."},"currencyCode":{"type":["string","null"],"description":"Currency code in ISO 4217. For example, `BRL`."}}},"description":"List with user's orders details."},"facets":{"type":"array","items":{"type":"string"},"description":"Array containing facets information."},"paging":{"type":"object","description":"Pagination information.","required":["total","pages","currentPage","perPage"],"properties":{"total":{"type":"integer","description":"Total number of orders."},"pages":{"type":"integer","description":"Total number of pages."},"currentPage":{"type":"integer","description":"Number of the current page."},"perPage":{"type":"integer","description":"Number of orders per page."}}},"stats":{"title":"Stats2","required":["stats"],"type":"object","properties":{"stats":{"title":"Stats3","required":["totalValue","totalItems"],"type":"object","properties":{"totalValue":{"title":"TotalValue1","required":["Count","Max","Mean","Min","Missing","StdDev","Sum","SumOfSquares","Facets"],"type":"object","properties":{"Count":{"type":"integer"},"Max":{"type":"integer"},"Mean":{"type":"integer"},"Min":{"type":"integer"},"Missing":{"type":"integer"},"StdDev":{"type":"integer"},"Sum":{"type":"integer"},"SumOfSquares":{"type":"integer"},"Facets":{"type":"object"}}},"totalItems":{"title":"TotalItems1","required":["Count","Max","Mean","Min","Missing","StdDev","Sum","SumOfSquares","Facets"],"type":"object","properties":{"Count":{"type":"integer"},"Max":{"type":"integer"},"Mean":{"type":"integer"},"Min":{"type":"integer"},"Missing":{"type":"integer"},"StdDev":{"type":"integer"},"Sum":{"type":"integer"},"SumOfSquares":{"type":"integer"},"Facets":{"type":"object"}}}}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Lists all orders. 
+
+  > You can only access information from orders created in the last two years, and that same period is valid for customers through [My Account](https://help.vtex.com/en/tutorial/how-my-account-works--2BQ3GiqhqGJTXsWVuio3Xh). 
+
+   ## B2C orders  
+
+   You can use this endpoint to list all orders from a given customer, filtering by their email.  
+
+   ## B2B Buyer Portal orders  
+
+   You can use this endpoint to list orders by filtering with the following fields:  
+
+   - Text: texts in existing order fields, [custom fields](https://developers.vtex.com/docs/guides/custom-fields-integration), and [contact information fields](https://developers.vtex.com/docs/api-reference/b2b-contact-information-api#post-/api/dataentities/contact_information/documents). 
+
+   - Status: the current status of the orders you wish to list. 
+
+   - Creation date: the date the order was created. 
+
+   - The purchase agent ID: ID of the purchase agent that made the order. 
+
+   - Pending approval: You can also filter by orders which are pending approval (`true`) or orders which are not pending approval (`false`). 
+
+  >⚠️ When using the `text` field to filter by contact information, you must use the exact value of the field in the contact information. Partial matches are not supported. For example: If the user's first name is set to `John Henry`, you must write `John Henry` in the `text` field. Searching for `John` will return orders made by `John`, and not `John Henry`. 
+
+  > Note that this request should be made by an [user](https://developers.vtex.com/docs/guides/user-authentication-and-login) or [an appKey / appToken pair](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) that is associated with the [Call center operator](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy#call-center-operator) role. Otherwise, it will return only orders from the same email informed in the `clientEmail` query parameter. 
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | OMS | OMS access | **View order** |
+  | View My Contract Orders | My Account / OMS | **ViewMyContractOrders** |
+  | View My Org Unit Orders | My Account / OMS | **ViewMyOrgUnitOrders** |
+
+  You can [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) with that resource or use one of the following [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy):
+
+  | **Role** | **Resource** | 
+  | --------------- | ----------------- | 
+  | Call center operator | View order |
+  | OMS - Read only | View order |
+
+  >❗ Assigning a [predefined role](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) to users or API keys usually grants permission to multiple [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3). If some of these permissions are not necessary, consider creating a custom role instead. For more information regarding security, see [Best practices for using API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm). To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `clientEmail` | query | Customer email. This field is exclusive for B2C users. |
+  | `page` | query | Page number for result pagination. |
+  | `per_page` | query | Page quantity for result pagination. |
+  | `text` | query | Filter by text in existing order fields, custom fields, and contact information fields. This field is exclusive for B2B Buyer Portal users. |
+  | `status` | query | Order status. You can provide multiple values by repeating the query parameter. For example: - `status=payment-pending&status=handling` This field is exclusive for B2B Buyer Portal users. |
+  | `creation_date` | query | You can filter orders by creation date by concatenating the sufix `creationDate` with the range date in Timestamp format. This field accepts the value `*` for open ranges. For example: - `creationDate:[* TO 2025-04-08T23:59:59.999Z]` - `creationDate:[2025-01-01T02:00:00.000Z TO *]` This field is exclusive for B2B Buyer Portal users. |
+  | `purchase_agent_id` | query | ID of the purchase agent. You can provide multiple values by repeating the query parameter. For example: - `purchase_agent_id=848a994a-1b6b-4dbd-5555-0455af24e0f2&purchase_agent_id=848a994a-1b6b-4444-8498-0455af24e0f2` This field is exclusive for B2B Buyer Portal users. |
+  | `my_pending_approvals` | query | You can filter orders that are pending approval by the current user or by an organizational unit associated with the current user if it has `ViewMyOrgUnitOrders` permission. This field is exclusive for B2B Buyer Portal users. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  _Omitted here: 12 KB. See `OK` in PostmanCollections._

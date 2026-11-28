@@ -1,0 +1,90 @@
+info:
+  name: Get payment details
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/pvt/transactions/:transactionId/payments/:paymentId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: transactionId
+      value: A3BDE325F76B4B758B398D900DF06150
+      type: path
+    - name: paymentId
+      value: B2E754DCD7304D22866CB6F221CF0FEB
+      type: path
+  auth:
+    type: apikey
+    key: X-VTEX-API-AppKey
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/pvt/transactions/:transactionId/payments/:paymentId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/pvt/transactions/:transactionId/payments/:paymentId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/pvt/transactions/:transactionId/payments/:paymentId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/pvt/transactions/:transactionId/payments/:paymentId - Schema is valid", function () {
+          const schema = {"required":["id","paymentSystem","paymentSystemName","merchantName","group","userProfileId","isCustom","allowInstallments","requiresAuthentication","allowIssuer","allowNotification","isAvailable","description","authorizationDate","self","tid","returnCode","returnMessage","status","connector","ConnectorResponses","connectorResponse","ShowConnectorResponses","value","installmentsInterestRate","installmentsValue","referenceValue","installments","currencyCode","provider","isBillingAddressDifferent","isRegexValid","isLuhnValid","fields","sheets","originalPaymentId"],"type":"object","description":"Payment details information.","properties":{"id":{"type":"string","description":"Payment identification."},"paymentSystem":{"type":"number","description":"Payment system identification."},"paymentSystemName":{"type":"string","description":"Payment system name."},"merchantName":{"type":["string","null"],"description":"Merchant name."},"group":{"type":"string","description":"Payment group name."},"userProfileId":{"type":["string","null"],"description":"Unique ID associated with the customer profile."},"isCustom":{"type":"boolean","description":"Indicates whether it is custom."},"allowInstallments":{"type":"boolean","description":"Indicates whether the payment method allows installments."},"requiresAuthentication":{"type":"boolean","description":"Indicates whether it is necessary to log in to make the payment."},"allowIssuer":{"type":"boolean","description":"Indicates whether it is possible to identify the name of the bank responsible for issuing the card."},"allowNotification":{"type":"boolean","description":"Indicates the possibility of payment notification (used by bank invoices and notes payable)."},"isAvailable":{"type":"boolean","description":"Indicates whether the payment method is available for use."},"description":{"type":["string","null"],"description":"Description of the payment method."},"authorizationDate":{"type":["string","null"],"description":"Payment authorization date."},"self":{"required":["href"],"type":"object","description":"Object containing the payment system reference route.","properties":{"href":{"type":"string","description":"Payment system reference route."}}},"tid":{"type":["string","null"],"description":"Provider's unique identifier for the transaction."},"nsu":{"type":["string","null"],"description":"Provider's unique sequential number for the transaction."},"returnCode":{"type":["string","null"],"description":"Connector return code."},"returnMessage":{"type":["string","null"],"description":"Connector return message."},"status":{"type":"string","description":"Payment status."},"connector":{"type":["string","null"],"description":"Connector name."},"ConnectorResponses":{"type":["array","null"],"description":"Array containing connector responses information.","items":{"type":"object","description":"Connector responses information.","properties":{"Tid":{"type":"string","description":"Provider's unique identifier for the transaction."},"ReturnCode":{"type":["string","null"],"description":"Connector return code."},"Message":{"type":["string","null"],"description":"Connector return message."},"authId":{"type":["string","null"],"description":"Authorization identification."},"nsu":{"type":"string","description":"Provider's unique sequential number for the transaction."}}}},"connectorResponse":{"type":["array","null"],"description":"Array containing connector response information.","items":{"type":"object","description":"Connector response information.","properties":{"Tid":{"type":"string","description":"Provider's unique identifier for the transaction."},"ReturnCode":{"type":["string","null"],"description":"Connector return code."},"Message":{"type":["string","null"],"description":"Connector return message."},"authId":{"type":["string","null"],"description":"Authorization identification."},"nsu":{"type":"string","description":"Provider's unique sequential number for the transaction."}}}},"ShowConnectorResponses":{"type":"boolean","description":"Indicates whether to display connector responses."},"value":{"type":"number","description":"Payment value."},"installmentsInterestRate":{"type":"number","description":"The interest rate."},"installmentsValue":{"type":"number","description":"The value of each installment."},"referenceValue":{"type":"number","description":"Value amount of the payment without interest applied. This value is the same as the {value` field when `installmentsInterestRate` is 0.0."},"installments":{"type":"number","description":"Number of installments."},"currencyCode":{"type":["string","null"],"description":"Currency Code in ISO 4217 standard."},"provider":{"type":["string","null"],"description":"Provider name."},"isBillingAddressDifferent":{"type":["boolean","null"],"description":"Indicates whether the invoice address is different from the purchase delivery address."},"isRegexValid":{"type":["boolean","null"],"description":"Confirms that the [Regex](https://regexr.com/) rule is valid."},"isLuhnValid":{"type":["boolean","null"],"description":"Confirms that the [Luhn](https://en.wikipedia.org/wiki/Luhn_algorithm) rule is valid."},"fields":{"type":"array","items":{"required":["name","value"],"type":"object","description":"Payment parameters information.","properties":{"name":{"type":"string","description":"Payment parameter name."},"value":{"type":"string","description":"Payment parameter value."}}},"description":"Field containing information and values ​​of payment parameters."},"sheets":{"type":["string","null"],"description":"Sheets information."},"originalPaymentId":{"type":["string","null"],"description":"Original payment identification, if applicable."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns data about a specific payment made in your store.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | PCI Gateway | Payment-Make Payments | **View Payment Data** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint. To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `transactionId` | path | (Required) Transaction identification. |
+  | `paymentId` | path | (Required) Payment identification. |
+  | `Content-Type` | header | (Required) Type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  _Omitted here: 4 KB. See `OK` in PostmanCollections._

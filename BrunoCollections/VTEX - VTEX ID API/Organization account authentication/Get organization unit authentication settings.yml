@@ -1,0 +1,104 @@
+info:
+  name: Get organization unit authentication settings
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/vtexid/organization-units/:unitId/settings"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: unitId
+      value: 8d8b68e2-89e1-4d9f-b7c3-3a7f2c8e9d1a
+      type: path
+  auth:
+    type: apikey
+    key: X-VTEX-API-AppKey
+    value: "{{apiKey}}"
+    placement: header
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/vtexid/organization-units/:unitId/settings - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/vtexid/organization-units/:unitId/settings - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/vtexid/organization-units/:unitId/settings - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/vtexid/organization-units/:unitId/settings - Schema is valid", function () {
+          const schema = {"type":"object","description":"Authentication settings for the organization unit.","required":["authenticationMethods"],"properties":{"authenticationMethods":{"type":"array","description":"List of authentication methods available for the organization unit.","items":{"type":"object","description":"Single authentication method entry.","required":["type","name","status"],"properties":{"type":{"type":"string","description":"Machine-readable authentication method type: `Password` for password login or `OAuth` for SSO through an external identity provider.","enum":["Password","OAuth"]},"name":{"type":"string","description":"Human-readable label of the method, such as the configured identity provider name."},"status":{"type":"string","description":"Whether the method is enabled for this organization unit.","enum":["Enabled","Disabled"]}}}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Returns the authentication methods configured for an organization unit, such as password login and external identity provider (SSO), including whether each method is enabled.
+
+  >⚠️ This feature is only available for stores using [B2B Buyer Portal](https://help.vtex.com/en/docs/tutorials/b2b-buyer-portal), which is currently available to select accounts.
+
+  >ℹ️ These endpoints configure authentication methods for an organization unit (for example password or SSO). To manage unit hierarchy and membership, use the [Organization Units API](https://developers.vtex.com/docs/api-reference/organization-units-api). For more information about organization units, see [Organization units](https://help.vtex.com/docs/tutorials/organizational-units). Send the `VtexIdclientAutCookie` user token header, or the `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken` headers.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --------------- | ----------------- | ----------------- |
+  | Organization Units | units | **View_Organization_Unit** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `unitId` | path | (Required) Unique identifier (GUID) of the organization unit whose authentication settings are being read. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "authenticationMethods": [
+      {
+        "type": "Password",
+        "name": "Password",
+        "status": "Enabled"
+      },
+      {
+        "type": "OAuth",
+        "name": "PingFederate",
+        "status": "Enabled"
+      }
+    ]
+  }
+  ```

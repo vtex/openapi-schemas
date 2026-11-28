@@ -1,0 +1,122 @@
+info:
+  name: Get seller's approval settings
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{baseUrl}}/suggestions/configuration/seller/:sellerId"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Accept
+      value: application/json
+  params:
+    - name: sellerId
+      value: seller123
+      type: path
+    - name: accountName
+      value: apiexamples
+      type: path
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/suggestions/configuration/seller/:sellerId - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/suggestions/configuration/seller/:sellerId - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/suggestions/configuration/seller/:sellerId - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/suggestions/configuration/seller/:sellerId - Schema is valid", function () {
+          const schema = {"type":"object","description":"Represents the approval settings configured for a specific seller within the marketplace. This object includes details about the seller, their account, and how SKUs are mapped and approved.","properties":{"sellerId":{"type":"string","description":"A string that identifies the seller in the marketplace."},"accountId":{"type":"string","description":"Marketplace’s account ID."},"accountName":{"type":"string","description":"Marketplace’s account name."},"mapping":{"type":"object","default":{},"description":"SKU mapping information and product [specifications](https://developers.vtex.com/docs/guides/catalog-overview#configuring-initial-settings-mandatory).\n\n The properties included within `mapping` can change according to the product type, the `color` specification and its variations described in this example are just one of the possibilities. The values received in this call's payload for those properties depend on the seller's catalog architecture, and are not default. \n\nSee some examples of specifications: \n\n- Voltage \n\n- Power \n\n- Size \n\n- Height \n\n- Width.","properties":{"defaultColor":{"type":"string","description":"The field will indicate the default color predefined by the seller in cases where specific product colors are not defined. This field is neither mandatory nor default, it will depend on the architecture of the seller's catalog."},"searchColor":{"type":"string","description":"Field that provides the available colors to filter searches. This field is neither mandatory nor default, it will depend on the architecture of the seller's catalog."},"color1":{"type":"string","description":"`color1` available for search filter. This field is neither mandatory nor default, it will depend on the architecture of the seller's catalog."},"color2":{"type":"string","description":"`color2` available for search filter. This field is neither mandatory nor default, it will depend on the architecture of the seller's catalog."},"color":{"type":"string","description":"Indicates the predominant or main color of the product. This field is neither mandatory nor default, it will depend on the architecture of the seller's catalog."},"size":{"type":"string","description":"Indicates the size of the product. This field is neither mandatory nor default, it will depend on the architecture of the seller's catalog."}}},"matchFlux":{"type":"string","description":"This field determines the type of [approval configuration applied to SKUs received from a seller](https://developers.vtex.com/docs/api-reference/marketplace-apis-suggestions#put-/suggestions/configuration/seller/-sellerId-). \n\nThe possible values include:  \n\n-`default`, where the Matcher reviews the SKU, and approves it based on its score. \n\n-`manual`, for manual approvals through the Received SKU UI and Match API. \n\n-`autoApprove`, for every SKU received from a given seller to be approved automatically, regardless of the Matcher Score."}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  This endpoint retrieves the current Received SKUs approval settings applied to a specific seller. Its response includes: 
+
+  - `sellerId`: A string that identifies the seller in the marketplace. 
+
+  - `accountId`: Marketplace’s account ID. 
+
+  - `accountName`: Marketplace’s account name. 
+
+  - `mapping`: Mapping of SKU and product Specifications. 
+
+  - `matchFlux`: This field determines the type of approval configuration applied to SKUs received  from a seller. 
+
+  The possible values include:  
+
+  -`default`, where the Matcher reviews the SKU, and approves it based on its score. 
+
+  -`manual`, for manual approvals through the Received SKU UI and Match API. 
+
+  -`autoApprove`, for every SKU received from a given seller to be approved automatically, regardless of the Matcher Score.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/authentication-overview#api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | ---------- | ------------ | ------------ |
+  | Channels | UI resources | **Save suggestion rules** |
+  | Suggestion| Suggestion resources | **Main access** |
+  |Mapper| Suggestion resources| **Mapper**|
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `sellerId` | path | (Required) A string that identifies the seller in the marketplace. This ID must be created by the marketplace. |
+  | `accountName` | path | (Required) Name of the VTEX account that belongs to the marketplace. All data extracted, and changes added will be posted into this account. |
+  | `Content-Type` | header | (Required) Describes the type of the content being sent. |
+  | `Accept` | header | (Required) HTTP Client Negotiation Accept Header. Indicates the types of responses the client can understand |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "sellerId": "sellerexample",
+    "accountId": "d74dau71f-325a-4463-bd53-ae8b0453186ca",
+    "accountName": "marketplaceexample",
+    "mapping": {
+      "defaultColor": "white /black",
+      "searchColor": "color1, color2",
+      "color1": "black",
+      "color2": "white",
+      "color": "black",
+      "size": "EUR44"
+    },
+    "matchFlux": "autoApprove"
+  }
+  ```

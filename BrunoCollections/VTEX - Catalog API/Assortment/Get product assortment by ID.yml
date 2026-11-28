@@ -1,0 +1,96 @@
+info:
+  name: Get product assortment by ID
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/catalog/pvt/assortment/:productAssortmentID"
+  headers:
+    - name: Accept
+      value: application/json
+  params:
+    - name: productAssortmentID
+      value: "1"
+      type: path
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const Ajv = require("ajv");
+        const addFormats = require("ajv-formats");
+        const ajv = new Ajv({ allErrors: true, strict: false });
+        addFormats(ajv);
+
+        test("[GET]::/api/catalog/pvt/assortment/:productAssortmentID - Status code is 2xx", function () {
+          expect(res.getStatus()).to.be.at.least(200);
+          expect(res.getStatus()).to.be.below(300);
+        });
+
+        test("[GET]::/api/catalog/pvt/assortment/:productAssortmentID - Content-Type is application/json", function () {
+          expect(String(res.getHeader("content-type"))).to.include("application/json");
+        });
+
+        test("[GET]::/api/catalog/pvt/assortment/:productAssortmentID - Response has JSON Body", function () {
+          const data = res.getBody();
+          expect(data).to.not.be.undefined;
+          expect(data).to.not.be.null;
+        });
+
+        test("[GET]::/api/catalog/pvt/assortment/:productAssortmentID - Schema is valid", function () {
+          const schema = {"type":"object","description":"Object with information about a product assortment.","properties":{"Id":{"type":"integer","description":"Assortment's unique numerical identifier."},"Name":{"type":"string","description":"Assortment's unique name."},"CreatedAt":{"type":"string","format":"date-time","description":"Date and time when the assortment was created, in UTC format."},"UpdatedAt":{"type":"string","format":"date-time","description":"Date and time when the assortment was last updated, in UTC format."},"IncludedCollections":{"type":"array","description":"List of collection IDs explicitly allowed by the assortment.","items":{"type":"integer","description":"Included collection's unique numerical identifier."}},"ExcludedCollections":{"type":"array","description":"List of collection IDs explicitly restricted by the assortment.","items":{"type":"integer","description":"Excluded collection's unique numerical identifier."}}}};
+          const validate = ajv.compile(schema);
+          const valid = validate(res.getBody());
+          expect(valid, JSON.stringify(validate.errors)).to.be.true;
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retrieves the details of a product assortment given its unique identifier, including the list of included and excluded collections.
+
+  >⚠️ This feature is only available for stores using the B2B Buyer Portal, which is currently available to select accounts.
+
+  ## Permissions
+
+  Any user or [API key](https://developers.vtex.com/docs/guides/api-authentication-using-api-keys) must have at least one of the appropriate [License Manager resources](https://help.vtex.com/en/tutorial/license-manager-resources--3q6ztrC8YynQf6rdc6euk3) to be able to successfully run this request. Otherwise, they will receive a status code `403` error. These are the applicable resources for this endpoint:
+
+  | **Product** | **Category** | **Resource** |
+  | --- | ----- | ----- |
+  | Catalog | Content | **Product and SKU Management** |
+
+  There are no applicable [predefined roles](https://help.vtex.com/en/tutorial/predefined-roles--jGDurZKJHvHJS13LnO7Dy) for this resource list. You must [create a custom role](https://help.vtex.com/en/tutorial/roles--7HKK5Uau2H6wxE1rH5oRbc#creating-a-role) and add at least one of the resources above in order to use this endpoint.
+
+  To learn more about machine authentication at VTEX, see [Authentication overview](https://developers.vtex.com/docs/guides/authentication-overview#machine-authentication).
+
+  >❗ To prevent integrations from having excessive permissions, consider the [best practices for managing API keys](https://help.vtex.com/en/tutorial/best-practices-api-keys--7b6nD1VMHa49aI5brlOvJm) when assigning License Manager roles to integrations.
+
+  ## Parameters
+
+  | Name | In | Description |
+  | --- | --- | --- |
+  | `productAssortmentID` | path | (Required) Product assortment's unique numerical identifier. |
+  | `Accept` | header | (Required) HTTP Client Negotiation _Accept_ Header. Indicates the types of responses the client can understand. |
+
+  ## Example response (`200`)
+
+  ```json
+  {
+    "Id": 3,
+    "Name": "Electronics",
+    "CreatedAt": "2026-03-02T13:15:30.63",
+    "UpdatedAt": "2026-03-02T13:15:30.63",
+    "IncludedCollections": [
+      149
+    ],
+    "ExcludedCollections": [
+      150
+    ]
+  }
+  ```
